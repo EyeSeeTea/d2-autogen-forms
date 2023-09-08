@@ -14,7 +14,7 @@ export class Dhis2DataStoreConfigurationRepository implements DataStoreConfigura
     async getDatasets(): Promise<DataSet[]> {
         const { dataSets } = await this.api
             .get<{ dataSets: DataSet[] }>("/dataSets", {
-                fields: "id,name,code",
+                fields: "id,name,code,sections[id,code]",
                 filter: ["name:ilike:MAL", "name:ilike:NHWA"],
                 paging: false,
                 rootJunction: "OR",
