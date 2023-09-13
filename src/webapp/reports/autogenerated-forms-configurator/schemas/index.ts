@@ -1,5 +1,4 @@
 import _ from "lodash";
-import { sectionSchema } from "./section";
 import { getDataSetSchema } from "./dataSets";
 import { getDataElementSchema } from "./dataElements";
 import { getCatComboSchema } from "./categoryCombinations";
@@ -21,8 +20,8 @@ export const getJsonSchema = (sectionCodes: string[], dsCode: string) => {
     };
 };
 
-export function mergeWithSchema(codes: string[]) {
-    const result = _.map(codes, code => ({ [code]: sectionSchema }));
+export function mergeWithSchema(codes: string[], schema: any) {
+    const result = _.map(codes, code => ({ [code]: schema }));
     const mergedResult = _.merge({}, ...result);
 
     return mergedResult;
