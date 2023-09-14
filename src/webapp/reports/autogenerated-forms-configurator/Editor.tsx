@@ -6,6 +6,7 @@ import { getJsonSchema } from "./schemas";
 
 interface EditorProps {
     sections: { id: string; code: string }[];
+    dataElements: { id: string; code: string }[];
     dsCode: string;
     json: string | undefined;
     onChange: React.Dispatch<React.SetStateAction<string | undefined>>;
@@ -13,7 +14,7 @@ interface EditorProps {
 }
 
 export const Editor: React.FC<EditorProps> = React.memo(props => {
-    const { dsCode, handleEditorValidation, json, onChange, sections } = props;
+    const { dataElements, dsCode, handleEditorValidation, json, onChange, sections } = props;
     const valueGetter = useRef();
 
     useEffect(() => {
@@ -21,14 +22,15 @@ export const Editor: React.FC<EditorProps> = React.memo(props => {
             .init()
             .then((monaco: Monaco) => {
                 const sectionCodes = sections.map(section => section.code);
+                const dataElementCodes = dataElements.map(dataElement => dataElement.code);
 
                 monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
                     validate: true,
-                    schemas: [getJsonSchema(sectionCodes, dsCode)],
+                    schemas: [getJsonSchema(dataElementCodes, sectionCodes, dsCode)],
                 });
             })
             .catch(error => console.error("An error occurred during initialization of Monaco: ", error));
-    }, [dsCode, sections]);
+    }, [dataElements, dsCode, sections]);
 
     function handleEditorDidMount(_valueGetter: any) {
         valueGetter.current = _valueGetter;

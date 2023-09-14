@@ -3,7 +3,7 @@ import { getDataSetSchema } from "./dataSets";
 import { getDataElementSchema } from "./dataElements";
 import { getCatComboSchema } from "./categoryCombinations";
 
-export const getJsonSchema = (sectionCodes: string[], dsCode: string) => {
+export const getJsonSchema = (dataElementCodes: string[], sectionCodes: string[], dsCode: string) => {
     return {
         uri: "http://d2-autogen-forms/configurator.json",
         fileMatch: ["*"],
@@ -11,7 +11,7 @@ export const getJsonSchema = (sectionCodes: string[], dsCode: string) => {
             type: "object",
             properties: {
                 dataSets: getDataSetSchema(sectionCodes, dsCode),
-                dataElements: getDataElementSchema(),
+                dataElements: getDataElementSchema(dataElementCodes),
                 categoryCombinations: getCatComboSchema(),
             },
             required: ["dataSets"],

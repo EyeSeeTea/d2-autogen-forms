@@ -1,4 +1,12 @@
-import { textSchema } from ".";
+const textSchema = {
+    type: "object",
+    properties: {
+        type: "string",
+        code: "string",
+    },
+    required: ["code"],
+    additionalProperties: false,
+};
 
 export const sectionSchema = {
     type: "object",
