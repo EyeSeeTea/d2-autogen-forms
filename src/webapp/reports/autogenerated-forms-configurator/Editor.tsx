@@ -2,39 +2,47 @@ import React, { useEffect, useRef } from "react";
 import styled from "styled-components";
 import MonacoEditor, { Monaco, loader } from "@monaco-editor/react";
 import { CircularProgress } from "material-ui";
-import { getJsonSchema } from "./schemas";
+import { JsonSchemaProps, getJsonSchema } from "./schemas";
 
 interface EditorProps {
-    sections: { id: string; code: string }[];
-    dataElements: { id: string; code: string }[];
-    dsCode: string;
+    editorCodes: JsonSchemaProps;
     json: string | undefined;
     onChange: React.Dispatch<React.SetStateAction<string | undefined>>;
     handleEditorValidation(markers: any): void;
 }
 
 export const Editor: React.FC<EditorProps> = React.memo(props => {
-    const { dataElements, dsCode, handleEditorValidation, json, onChange, sections } = props;
+    const { handleEditorValidation, json, onChange, editorCodes } = props;
+    const { dataElements, dsCode, sectionCodes, deInSectionCodes } = editorCodes;
+
     const valueGetter = useRef();
 
     useEffect(() => {
         loader
             .init()
             .then((monaco: Monaco) => {
-                const sectionCodes = sections.map(section => section.code);
-                const dataElementCodes = dataElements.map(dataElement => dataElement.code);
-
                 monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
                     validate: true,
-                    schemas: [getJsonSchema(dataElementCodes, sectionCodes, dsCode)],
+                    schemas: [getJsonSchema({ dsCode, dataElements, deInSectionCodes, sectionCodes })],
                 });
             })
             .catch(error => console.error("An error occurred during initialization of Monaco: ", error));
-    }, [dataElements, dsCode, sections]);
+    }, [dataElements, deInSectionCodes, dsCode, sectionCodes]);
 
-    function handleEditorDidMount(_valueGetter: any) {
+    function handleEditorBeforeMount(_valueGetter: any) {
         valueGetter.current = _valueGetter;
     }
+
+    function handleEditorDidMount(editor: any, monaco: Monaco) {
+        editor.onKeyUp((e: any) => {
+            const position = editor.getPosition();
+            const text = editor.getModel().getLineContent(position.lineNumber).trim();
+            if (e.keyCode === monaco.KeyCode.Enter && !text) {
+                editor.trigger("", "editor.action.triggerSuggest", "");
+            }
+        });
+    }
+
     return (
         <StyledEditor
             loading={<CircularProgress />}
@@ -47,7 +55,8 @@ export const Editor: React.FC<EditorProps> = React.memo(props => {
             onChange={onChange}
             options={{ wordWrap: "on", minimap: { enabled: false } }}
             onValidate={handleEditorValidation}
-            beforeMount={handleEditorDidMount}
+            beforeMount={handleEditorBeforeMount}
+            onMount={handleEditorDidMount}
         />
     );
 });

@@ -1,26 +1,53 @@
-export const dataElementSchema = {
-    type: "object",
-    properties: {
-        selection: {
-            type: "object",
-            properties: {
-                optionSet: {
-                    type: "object",
-                    properties: {
-                        code: "string",
+import _ from "lodash";
+
+const defaultProperties = {
+    minProperties: 1,
+    additionalProperties: false,
+};
+
+export const dataElementSchema = (
+    dataElements: {
+        dataElementCode: string;
+        optionSetCode?: string | undefined;
+    }[]
+) => {
+    return _.chain(dataElements)
+        .map(item => ({
+            [item.dataElementCode]: {
+                type: "object",
+                properties: {
+                    selection: {
+                        properties: {
+                            optionSet: {
+                                properties: {
+                                    code: {
+                                        type: "string",
+                                        const: item.optionSetCode,
+                                    },
+                                },
+                                type: "object",
+                                ...defaultProperties,
+                            },
+                            isMultiple: {
+                                type: "boolean",
+                            },
+                            widget: { enum: ["dropdown", "radio", "sourceType"] },
+                            visible: {
+                                type: "object",
+                                properties: {
+                                    dataElementCode: { type: "string" },
+                                    value: { type: "string" },
+                                },
+                                ...defaultProperties,
+                            },
+                        },
+                        type: "object",
+                        ...defaultProperties,
                     },
                 },
-                isMultiple: {
-                    type: "boolean",
-                },
-                widget: { enum: ["dropdown", "radio", "sourceType"] },
-                visible: {
-                    dataElementCode: { type: "string" },
-                    value: { type: "string" },
-                },
+                ...defaultProperties,
             },
-            additionalProperties: false,
-        },
-    },
-    additionalProperties: false,
+        }))
+        .reduce((acc, item) => ({ ...acc, ...item }), {})
+        .value();
 };

@@ -1,10 +1,14 @@
-import { mergeWithSchema } from "..";
 import { dataElementSchema } from "./dataElement";
 
-export const getDataElementSchema = (dataElementCodes: string[]) => {
+const defaultProperties = {
+    minProperties: 1,
+    additionalProperties: false,
+};
+
+export const getDataElementSchema = (dataElements: { dataElementCode: string; optionSetCode?: string }[]) => {
     return {
         type: "object",
-        properties: mergeWithSchema(dataElementCodes, dataElementSchema),
-        additionalProperties: false,
+        properties: dataElementSchema(dataElements),
+        ...defaultProperties,
     };
 };

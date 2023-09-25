@@ -1,3 +1,4 @@
+import { JSONSchema7 } from "json-schema";
 import { mergeWithSchema } from "..";
 import { sectionSchema } from "./section";
 
@@ -10,17 +11,29 @@ export const viewTypes = [
     "grid-with-subnational-ous",
 ];
 
-export const textSchema = {
-    type: "object",
-    properties: {
-        type: "string",
-        code: "string",
-    },
-    required: ["code"],
+const defaultProperties = {
+    minProperties: 1,
     additionalProperties: false,
 };
 
-export const getDataSetSchema = (sectionCodes: string[], dsCode: string) => {
+const textSchema: JSONSchema7 = {
+    oneOf: [
+        {
+            type: "object",
+            properties: {
+                type: { type: "string" },
+                code: { type: "string" },
+            },
+            ...defaultProperties,
+        },
+        {
+            type: "string",
+        },
+    ],
+    ...defaultProperties,
+};
+
+export const getDataSetSchema = (dsCode: string, deInSectionCodes: string[], sectionCodes: string[]) => {
     return {
         type: "object",
         properties: {
@@ -29,8 +42,8 @@ export const getDataSetSchema = (sectionCodes: string[], dsCode: string) => {
                 properties: {
                     sections: {
                         type: "object",
-                        properties: mergeWithSchema(sectionCodes, sectionSchema),
-                        additionalProperties: false,
+                        properties: mergeWithSchema(sectionCodes, sectionSchema(deInSectionCodes)),
+                        ...defaultProperties,
                     },
                     texts: {
                         type: "object",
@@ -46,11 +59,27 @@ export const getDataSetSchema = (sectionCodes: string[], dsCode: string) => {
                         type: "boolean",
                     },
                 },
-                required: ["sections"],
-                additionalProperties: false,
+                ...defaultProperties,
             },
         },
-        required: [dsCode],
-        additionalProperties: false,
+        ...defaultProperties,
     };
 };
+
+// export const textSchema: JSONSchema7 = () => ({
+//     oneOf: [
+//         {
+//             type: "object",
+//             properties: {
+//                 type: { type: "string" },
+//                 code: { type: "string" },
+//             },
+//             ...defaultProperties,
+//         },
+//         {
+//             type: "string",
+//         },
+//     ],
+
+//     ...defaultProperties,
+// })
