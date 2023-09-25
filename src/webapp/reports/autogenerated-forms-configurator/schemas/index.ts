@@ -8,6 +8,7 @@ export interface JsonSchemaProps {
     deInSectionCodes: string[];
     dsCode: string;
     sectionCodes: string[];
+    categoryComboCodes: string[];
 }
 
 export const defaultProperties = {
@@ -16,7 +17,7 @@ export const defaultProperties = {
 };
 
 export const getJsonSchema = (props: JsonSchemaProps) => {
-    const { dsCode, dataElements, deInSectionCodes, sectionCodes } = props;
+    const { dsCode, dataElements, deInSectionCodes, sectionCodes, categoryComboCodes } = props;
 
     return {
         uri: "http://d2-autogen-forms/configurator.json",
@@ -26,7 +27,7 @@ export const getJsonSchema = (props: JsonSchemaProps) => {
             properties: {
                 dataSets: getDataSetSchema(dsCode, deInSectionCodes, sectionCodes),
                 dataElements: getDataElementSchema(dataElements),
-                categoryCombinations: getCatComboSchema(),
+                categoryCombinations: getCatComboSchema(categoryComboCodes),
             },
             ...defaultProperties,
         },
