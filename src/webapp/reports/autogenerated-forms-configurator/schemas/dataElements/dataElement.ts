@@ -1,9 +1,5 @@
 import _ from "lodash";
-
-const defaultProperties = {
-    minProperties: 1,
-    additionalProperties: false,
-};
+import { defaultProperties } from "..";
 
 export const dataElementSchema = (
     dataElements: {
@@ -13,12 +9,12 @@ export const dataElementSchema = (
 ) => {
     return _.chain(dataElements)
         .map(item => ({
-            [item.dataElementCode]: {
+            [item.dataElementCode]: defaultProperties({
                 type: "object",
                 properties: {
-                    selection: {
+                    selection: defaultProperties({
                         properties: {
-                            optionSet: {
+                            optionSet: defaultProperties({
                                 properties: {
                                     code: {
                                         type: "string",
@@ -26,27 +22,23 @@ export const dataElementSchema = (
                                     },
                                 },
                                 type: "object",
-                                ...defaultProperties,
-                            },
+                            }),
                             isMultiple: {
                                 type: "boolean",
                             },
                             widget: { enum: ["dropdown", "radio", "sourceType"] },
-                            visible: {
+                            visible: defaultProperties({
                                 type: "object",
                                 properties: {
                                     dataElementCode: { type: "string" },
                                     value: { type: "string" },
                                 },
-                                ...defaultProperties,
-                            },
+                            }),
                         },
                         type: "object",
-                        ...defaultProperties,
-                    },
+                    }),
                 },
-                ...defaultProperties,
-            },
+            }),
         }))
         .reduce((acc, item) => ({ ...acc, ...item }), {})
         .value();

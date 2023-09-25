@@ -1,29 +1,7 @@
-import { JSONSchema7 } from "json-schema";
-import { mergeWithSchema } from "..";
-const defaultProperties = {
-    minProperties: 1,
-    additionalProperties: false,
-};
-
-const textSchema: JSONSchema7 = {
-    oneOf: [
-        {
-            type: "object",
-            properties: {
-                type: { type: "string" },
-                code: { type: "string" },
-            },
-            ...defaultProperties,
-        },
-        {
-            type: "string",
-        },
-    ],
-    ...defaultProperties,
-};
+import { defaultProperties, mergeWithSchema, textSchema } from "..";
 
 export const sectionSchema = (deInSectionCodes: string[]) => {
-    return {
+    return defaultProperties({
         type: "object",
         properties: {
             disableComments: {
@@ -45,15 +23,14 @@ export const sectionSchema = (deInSectionCodes: string[]) => {
                     "grid-with-subnational-ous",
                 ],
             },
-            texts: {
+            texts: defaultProperties({
                 type: "object",
                 properties: {
-                    footer: { ...textSchema, ...defaultProperties },
-                    header: { ...textSchema, ...defaultProperties },
+                    footer: textSchema(),
+                    header: textSchema(),
                 },
-                ...defaultProperties,
-            },
-            toggle: {
+            }),
+            toggle: defaultProperties({
                 type: "object",
                 properties: {
                     type: {
@@ -63,12 +40,11 @@ export const sectionSchema = (deInSectionCodes: string[]) => {
                         enum: deInSectionCodes,
                     },
                 },
-                ...defaultProperties,
-            },
+            }),
             titleVariant: {
                 enum: ["h1", "h2", "h3", "h4", "h5", "h6"],
             },
-            tabs: {
+            tabs: defaultProperties({
                 type: "object",
                 properties: {
                     active: {
@@ -78,34 +54,35 @@ export const sectionSchema = (deInSectionCodes: string[]) => {
                         type: "number",
                     },
                 },
-                ...defaultProperties,
-            },
-            periods: {
+            }),
+            periods: defaultProperties({
                 type: "object",
                 properties: {
                     type: { const: "relative-interval" },
                     endOffset: { type: "number" },
                     startOffset: { type: "number" },
                 },
-                ...defaultProperties,
-            },
-            calculateTotals: mergeWithSchema([], {
-                type: "object",
-                properties: {
-                    totalDeCode: "string",
-                    disabled: "boolean",
-                },
-                ...defaultProperties,
             }),
-            rows: mergeWithSchema([], {
-                type: "object",
-                properties: {
-                    autoComputeTotals: "boolean",
-                    disabled: "boolean",
-                },
-                ...defaultProperties,
-            }),
+            calculateTotals: mergeWithSchema(
+                [],
+                defaultProperties({
+                    type: "object",
+                    properties: {
+                        totalDeCode: "string",
+                        disabled: "boolean",
+                    },
+                })
+            ),
+            rows: mergeWithSchema(
+                [],
+                defaultProperties({
+                    type: "object",
+                    properties: {
+                        autoComputeTotals: "boolean",
+                        disabled: "boolean",
+                    },
+                })
+            ),
         },
-        ...defaultProperties,
-    };
+    });
 };
