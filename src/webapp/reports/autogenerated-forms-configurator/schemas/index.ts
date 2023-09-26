@@ -18,8 +18,7 @@ export const getJsonSchema = (props: JsonSchemaProps) => {
     return {
         uri: "http://d2-autogen-forms/configurator.json",
         fileMatch: ["*"],
-        schema: defaultProperties({
-            type: "object",
+        schema: defaultObjectProperties({
             properties: {
                 dataSets: getDataSetSchema(dsCode, deInSectionCodes, sectionCodes),
                 dataElements: getDataElementSchema(dataElements),
@@ -29,16 +28,17 @@ export const getJsonSchema = (props: JsonSchemaProps) => {
     };
 };
 
-export function mergeWithSchema<T>(codes: string[], schema: T) {
+export function mergeArrayWithSchema<T>(codes: string[], schema: T) {
     const result = _.map(codes, code => ({ [code]: schema }));
     const mergedResult = _.merge({}, ...result);
 
     return mergedResult;
 }
 
-export function defaultProperties<T>(object: T) {
+export function defaultObjectProperties<T>(object: T) {
     return {
         ...object,
+        type: "object",
         minProperties: 1,
         additionalProperties: false,
     };
@@ -46,8 +46,8 @@ export function defaultProperties<T>(object: T) {
 
 export function textSchema(): JSONSchema7 {
     return {
-        oneOf: [
-            defaultProperties({
+        anyOf: [
+            defaultObjectProperties({
                 type: "object",
                 properties: {
                     type: { type: "string" },

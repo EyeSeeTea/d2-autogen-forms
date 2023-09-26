@@ -1,8 +1,7 @@
-import { defaultProperties, mergeWithSchema, textSchema } from "..";
+import { defaultObjectProperties, mergeArrayWithSchema, textSchema } from "..";
 
 export const sectionSchema = (deInSectionCodes: string[]) => {
-    return defaultProperties({
-        type: "object",
+    return defaultObjectProperties({
         properties: {
             disableComments: {
                 type: "boolean",
@@ -23,15 +22,13 @@ export const sectionSchema = (deInSectionCodes: string[]) => {
                     "grid-with-subnational-ous",
                 ],
             },
-            texts: defaultProperties({
-                type: "object",
+            texts: defaultObjectProperties({
                 properties: {
                     footer: textSchema(),
                     header: textSchema(),
                 },
             }),
-            toggle: defaultProperties({
-                type: "object",
+            toggle: defaultObjectProperties({
                 properties: {
                     type: {
                         const: "dataElement",
@@ -44,8 +41,7 @@ export const sectionSchema = (deInSectionCodes: string[]) => {
             titleVariant: {
                 enum: ["h1", "h2", "h3", "h4", "h5", "h6"],
             },
-            tabs: defaultProperties({
-                type: "object",
+            tabs: defaultObjectProperties({
                 properties: {
                     active: {
                         const: true,
@@ -55,28 +51,25 @@ export const sectionSchema = (deInSectionCodes: string[]) => {
                     },
                 },
             }),
-            periods: defaultProperties({
-                type: "object",
+            periods: defaultObjectProperties({
                 properties: {
                     type: { const: "relative-interval" },
                     endOffset: { type: "number" },
                     startOffset: { type: "number" },
                 },
             }),
-            calculateTotals: mergeWithSchema(
+            calculateTotals: mergeArrayWithSchema(
                 [],
-                defaultProperties({
-                    type: "object",
+                defaultObjectProperties({
                     properties: {
                         totalDeCode: "string",
                         disabled: "boolean",
                     },
                 })
             ),
-            rows: mergeWithSchema(
+            rows: mergeArrayWithSchema(
                 [],
-                defaultProperties({
-                    type: "object",
+                defaultObjectProperties({
                     properties: {
                         autoComputeTotals: "boolean",
                         disabled: "boolean",

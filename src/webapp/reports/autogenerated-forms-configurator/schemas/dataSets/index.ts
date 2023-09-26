@@ -1,4 +1,4 @@
-import { defaultProperties, mergeWithSchema, textSchema } from "..";
+import { defaultObjectProperties, mergeArrayWithSchema, textSchema } from "..";
 import { sectionSchema } from "./section";
 
 export const viewTypes = [
@@ -11,18 +11,14 @@ export const viewTypes = [
 ];
 
 export const getDataSetSchema = (dsCode: string, deInSectionCodes: string[], sectionCodes: string[]) => {
-    return defaultProperties({
-        type: "object",
+    return defaultObjectProperties({
         properties: {
-            [dsCode]: defaultProperties({
-                type: "object",
+            [dsCode]: defaultObjectProperties({
                 properties: {
-                    sections: defaultProperties({
-                        type: "object",
-                        properties: mergeWithSchema(sectionCodes, sectionSchema(deInSectionCodes)),
+                    sections: defaultObjectProperties({
+                        properties: mergeArrayWithSchema(sectionCodes, sectionSchema(deInSectionCodes)),
                     }),
                     texts: {
-                        type: "object",
                         properties: {
                             footer: textSchema(),
                             header: textSchema(),

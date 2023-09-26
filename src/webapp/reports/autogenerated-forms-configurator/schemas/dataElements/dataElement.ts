@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { defaultProperties } from "..";
+import { defaultObjectProperties } from "..";
 
 export const dataElementSchema = (
     dataElements: {
@@ -9,33 +9,29 @@ export const dataElementSchema = (
 ) => {
     return _.chain(dataElements)
         .map(item => ({
-            [item.dataElementCode]: defaultProperties({
-                type: "object",
+            [item.dataElementCode]: defaultObjectProperties({
                 properties: {
-                    selection: defaultProperties({
+                    selection: defaultObjectProperties({
                         properties: {
-                            optionSet: defaultProperties({
+                            optionSet: defaultObjectProperties({
                                 properties: {
                                     code: {
                                         type: "string",
                                         const: item.optionSetCode,
                                     },
                                 },
-                                type: "object",
                             }),
                             isMultiple: {
                                 type: "boolean",
                             },
                             widget: { enum: ["dropdown", "radio", "sourceType"] },
-                            visible: defaultProperties({
-                                type: "object",
+                            visible: defaultObjectProperties({
                                 properties: {
                                     dataElementCode: { type: "string" },
                                     value: { type: "string" },
                                 },
                             }),
                         },
-                        type: "object",
                     }),
                 },
             }),

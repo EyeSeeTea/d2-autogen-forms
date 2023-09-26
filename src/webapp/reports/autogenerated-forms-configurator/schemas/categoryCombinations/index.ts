@@ -1,12 +1,10 @@
-import { defaultProperties, mergeWithSchema } from "..";
+import { defaultObjectProperties, mergeArrayWithSchema } from "..";
 
 export const getCatComboSchema = (categoryComboCodes: string[]) => {
     return {
-        type: "object",
-        properties: mergeWithSchema(
+        properties: mergeArrayWithSchema(
             categoryComboCodes,
-            defaultProperties({
-                type: "object",
+            defaultObjectProperties({
                 properties: {
                     viewType: {
                         enum: ["name", "shortName"],
