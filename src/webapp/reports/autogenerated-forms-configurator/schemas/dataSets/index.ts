@@ -10,18 +10,23 @@ export const viewTypes = [
     "grid-with-subnational-ous",
 ];
 
-export const getDataSetSchema = (dsCode: string, deInSectionCodes: string[], sectionCodes: string[]) => {
+export const getDataSetSchema = (
+    constants: string[],
+    dsCode: string,
+    deInSectionCodes: string[],
+    sectionCodes: string[]
+) => {
     return defaultObjectProperties({
         properties: {
             [dsCode]: defaultObjectProperties({
                 properties: {
                     sections: defaultObjectProperties({
-                        properties: mergeArrayWithSchema(sectionCodes, sectionSchema(deInSectionCodes)),
+                        properties: mergeArrayWithSchema(sectionCodes, sectionSchema(constants, deInSectionCodes)),
                     }),
                     texts: {
                         properties: {
-                            footer: textSchema(),
-                            header: textSchema(),
+                            footer: textSchema(constants),
+                            header: textSchema(constants),
                         },
                     },
                     viewType: {

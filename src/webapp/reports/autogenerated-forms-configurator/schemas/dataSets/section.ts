@@ -1,6 +1,6 @@
 import { defaultObjectProperties, mergeArrayWithSchema, textSchema } from "..";
 
-export const sectionSchema = (deInSectionCodes: string[]) => {
+export const sectionSchema = (constants: string[], deInSectionCodes: string[]) => {
     return defaultObjectProperties({
         properties: {
             disableComments: {
@@ -24,8 +24,8 @@ export const sectionSchema = (deInSectionCodes: string[]) => {
             },
             texts: defaultObjectProperties({
                 properties: {
-                    footer: textSchema(),
-                    header: textSchema(),
+                    footer: textSchema(constants),
+                    header: textSchema(constants),
                 },
             }),
             toggle: defaultObjectProperties({
@@ -59,19 +59,12 @@ export const sectionSchema = (deInSectionCodes: string[]) => {
                 },
             }),
             calculateTotals: mergeArrayWithSchema(
-                [],
+                deInSectionCodes,
                 defaultObjectProperties({
                     properties: {
-                        totalDeCode: "string",
-                        disabled: "boolean",
-                    },
-                })
-            ),
-            rows: mergeArrayWithSchema(
-                [],
-                defaultObjectProperties({
-                    properties: {
-                        autoComputeTotals: "boolean",
+                        totalDeCode: {
+                            enum: deInSectionCodes,
+                        },
                         disabled: "boolean",
                     },
                 })

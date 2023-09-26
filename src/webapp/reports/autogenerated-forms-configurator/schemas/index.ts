@@ -5,6 +5,7 @@ import { getDataElementSchema } from "./dataElements";
 import { getCatComboSchema } from "./categoryCombinations";
 
 export interface JsonSchemaProps {
+    constants: string[];
     dataElements: { dataElementCode: string; optionSetCode?: string }[];
     deInSectionCodes: string[];
     dsCode: string;
@@ -13,14 +14,14 @@ export interface JsonSchemaProps {
 }
 
 export const getJsonSchema = (props: JsonSchemaProps) => {
-    const { dsCode, dataElements, deInSectionCodes, sectionCodes, categoryComboCodes } = props;
+    const { dsCode, dataElements, deInSectionCodes, sectionCodes, categoryComboCodes, constants } = props;
 
     return {
         uri: "http://d2-autogen-forms/configurator.json",
         fileMatch: ["*"],
         schema: defaultObjectProperties({
             properties: {
-                dataSets: getDataSetSchema(dsCode, deInSectionCodes, sectionCodes),
+                dataSets: getDataSetSchema(constants, dsCode, deInSectionCodes, sectionCodes),
                 dataElements: getDataElementSchema(dataElements),
                 categoryCombinations: getCatComboSchema(categoryComboCodes),
             },
@@ -44,14 +45,13 @@ export function defaultObjectProperties<T>(object: T) {
     };
 }
 
-export function textSchema(): JSONSchema7 {
+export function textSchema(constants: string[]): JSONSchema7 {
     return {
         anyOf: [
             defaultObjectProperties({
                 type: "object",
                 properties: {
-                    type: { type: "string" },
-                    code: { type: "string" },
+                    code: { enum: constants },
                 },
             }),
             {

@@ -27,7 +27,9 @@ export const dataElementSchema = (
                             widget: { enum: ["dropdown", "radio", "sourceType"] },
                             visible: defaultObjectProperties({
                                 properties: {
-                                    dataElementCode: { type: "string" },
+                                    dataElementCode: {
+                                        enum: dataElements.map(dataElement => dataElement.dataElementCode),
+                                    },
                                     value: { type: "string" },
                                 },
                             }),

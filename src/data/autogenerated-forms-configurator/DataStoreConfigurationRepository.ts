@@ -45,4 +45,12 @@ export class Dhis2DataStoreConfigurationRepository implements DataStoreConfigura
                     .value(),
             }));
     }
+
+    async getConstants(): Promise<string[]> {
+        const { constants } = await this.api
+            .get<{ constants: { code: string }[] }>("/constants?fields=id,code")
+            .getData();
+
+        return constants.filter(constant => constant.code).map(constant => constant.code);
+    }
 }

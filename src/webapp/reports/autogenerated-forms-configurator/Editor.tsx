@@ -13,7 +13,7 @@ interface EditorProps {
 
 export const Editor: React.FC<EditorProps> = React.memo(props => {
     const { handleEditorValidation, json, onChange, editorCodes } = props;
-    const { dataElements, dsCode, sectionCodes, deInSectionCodes, categoryComboCodes } = editorCodes;
+    const { constants, dataElements, dsCode, sectionCodes, deInSectionCodes, categoryComboCodes } = editorCodes;
 
     const valueGetter = useRef();
 
@@ -24,12 +24,19 @@ export const Editor: React.FC<EditorProps> = React.memo(props => {
                 monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
                     validate: true,
                     schemas: [
-                        getJsonSchema({ dsCode, dataElements, deInSectionCodes, sectionCodes, categoryComboCodes }),
+                        getJsonSchema({
+                            constants,
+                            dsCode,
+                            dataElements,
+                            deInSectionCodes,
+                            sectionCodes,
+                            categoryComboCodes,
+                        }),
                     ],
                 });
             })
             .catch(error => console.error("An error occurred during initialization of Monaco: ", error));
-    }, [categoryComboCodes, dataElements, deInSectionCodes, dsCode, sectionCodes]);
+    }, [categoryComboCodes, constants, dataElements, deInSectionCodes, dsCode, sectionCodes]);
 
     function handleEditorBeforeMount(_valueGetter: any) {
         valueGetter.current = _valueGetter;
