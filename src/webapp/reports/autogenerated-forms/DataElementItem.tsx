@@ -70,7 +70,7 @@ export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props 
                     columnTotal={columnTotal}
                     rowDataElements={rowDataElements}
                     columnDataElements={columnDataElements}
-                    cocId=""
+                    cocId={dataElementCocId}
                     rows={rows}
                 />
             </div>

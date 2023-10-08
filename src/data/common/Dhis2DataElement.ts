@@ -135,6 +135,7 @@ function getDataElement(dataElement: D2DataElement, config: Dhis2DataStoreDataFo
         name: dataElement.displayFormName || dataElement.displayName,
         description: dataElement.displayDescription,
         categoryCombos: categoryCombination,
+        disableComments: deConfig?.disableComments || false,
         options: optionSet
             ? { isMultiple: Boolean(deConfig?.selection?.isMultiple), items: optionSet.options }
             : undefined,

@@ -85,6 +85,7 @@ const DataStoreConfigCodec = Codec.interface({
         viewType: optional(oneOf([exactly("name"), exactly("shortName")])),
     }),
     dataElements: sectionConfig({
+        disableComments: optional(boolean),
         selection: optional(
             Codec.interface({
                 optionSet: optional(selector),
@@ -142,23 +143,13 @@ const DataStoreConfigCodec = Codec.interface({
                         )
                     )
                 ),
-                rows: optional(
-                    record(
-                        string,
-                        optional(
-                            Codec.interface({
-                                disabled: optional(boolean),
-                                autoComputeTotals: optional(boolean),
-                            })
-                        )
-                    )
-                ),
             })
         ),
     }),
 });
 
 interface DataElementConfig {
+    disableComments?: boolean;
     selection?: {
         optionSet?: OptionSet;
         isMultiple: boolean;
@@ -431,7 +422,6 @@ export class Dhis2DataStoreDataForm {
                         const config = {
                             ...baseConfig,
                             viewType,
-                            rows: sectionConfig.rows,
                             calculateTotals: sectionConfig.calculateTotals,
                         };
                         return [section.id, config] as [typeof section.id, typeof config];
@@ -468,9 +458,8 @@ export class Dhis2DataStoreDataForm {
             .toPairs()
             .map(([code, config]) => {
                 const optionSetSelector = config?.selection;
-                if (!optionSetSelector) return;
 
-                const optionSetRef = optionSetSelector.optionSet;
+                const optionSetRef = optionSetSelector?.optionSet;
                 const optionSet = optionSetRef
                     ? this.config.optionSets.find(optionSet => selectorMatches(optionSet, optionSetRef))
                     : undefined;
@@ -479,10 +468,11 @@ export class Dhis2DataStoreDataForm {
                 const deToHideValue = config.selection?.visible?.value;
 
                 const dataElementConfig: DataElementConfig = {
+                    disableComments: config.disableComments,
                     selection: {
-                        isMultiple: optionSetSelector.isMultiple || false,
+                        isMultiple: optionSetSelector?.isMultiple || false,
                         optionSet: optionSet,
-                        widget: optionSetSelector.widget,
+                        widget: optionSetSelector?.widget,
                         visible:
                             !_.isUndefined(deToHideCode) && !_.isUndefined(deToHideValue)
                                 ? { dataElementCode: deToHideCode, value: deToHideValue }

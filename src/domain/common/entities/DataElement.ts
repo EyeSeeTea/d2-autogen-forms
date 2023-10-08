@@ -13,6 +13,7 @@ interface DataElementBase {
     cocId?: string;
     orgUnit?: Id;
     related: { dataElement: DataElement; value: string } | undefined;
+    disabledComments?: boolean;
 }
 
 export interface DataElementBoolean extends DataElementBase {
