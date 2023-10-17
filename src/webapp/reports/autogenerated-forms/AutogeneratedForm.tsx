@@ -149,6 +149,7 @@ function useDataFormInfo(): [Maybe<DataFormInfo>, boolean] {
                 periods: DataFormM.getReferencedPeriods(dataForm, period),
             })
             .then(dataValues => {
+                setDataValues(undefined);
                 setDataValues(dataValues);
             })
             .finally(() => {
