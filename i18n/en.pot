@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2023-08-25T01:18:07.774Z\n"
-"PO-Revision-Date: 2023-08-25T01:18:07.774Z\n"
+"POT-Creation-Date: 2023-10-20T13:37:26.925Z\n"
+"PO-Revision-Date: 2023-10-20T13:37:26.925Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -42,4 +42,10 @@ msgid "View comment and audit history"
 msgstr ""
 
 msgid "Apply to all"
+msgstr ""
+
+msgid "Save"
+msgstr ""
+
+msgid "Data set"
 msgstr ""
