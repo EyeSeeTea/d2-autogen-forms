@@ -1,4 +1,5 @@
-export const dataStoreNamespace = "d2-reports";
+export const dataStoreNamespace = "d2-autogen-forms";
+export const dataStoreNamespaceOld = "d2-reports";
 export const constantPrefix = "D2 Report Storage";
 
 export type Namespace = typeof Namespaces[keyof typeof Namespaces];

@@ -15,7 +15,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
         const metadata = await this.getMetadata(options);
         const dataSet = metadata.dataSets[0];
         if (!dataSet) return Promise.reject(new Error("Data set not found"));
-        const config = await Dhis2DataStoreDataForm.build(this.api);
+        const config = await Dhis2DataStoreDataForm.build(this.api, dataSet.code);
         const sections = await this.getSections(dataSet, config, options.period, options.orgUnitId);
         const dataElements = _.flatMap(sections, section => section.dataElements);
         const dataElementsOptions = this.getDataElementsOptions(dataElements, config);
