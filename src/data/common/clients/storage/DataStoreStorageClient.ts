@@ -1,7 +1,7 @@
 import { D2Api, DataStore } from "../../../../types/d2-api";
 import { Instance } from "../../entities/Instance";
 import { getD2APiFromInstance } from "../../utils/d2-api";
-import { dataStoreNamespace } from "./Namespaces";
+import { Namespaces } from "./Namespaces";
 import { StorageClient } from "./StorageClient";
 
 export class DataStoreStorageClient extends StorageClient {
@@ -12,7 +12,9 @@ export class DataStoreStorageClient extends StorageClient {
         super();
         this.api = getD2APiFromInstance(instance);
         this.dataStore =
-            type === "user" ? this.api.userDataStore(dataStoreNamespace) : this.api.dataStore(dataStoreNamespace);
+            type === "user"
+                ? this.api.userDataStore(Namespaces.D2_AUTOGEN_FORMS)
+                : this.api.dataStore(Namespaces.D2_AUTOGEN_FORMS);
     }
 
     public async getObject<T extends object>(key: string): Promise<T | undefined> {
