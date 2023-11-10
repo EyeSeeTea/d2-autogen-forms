@@ -20,6 +20,27 @@ export interface GridWithCatOptionCombosProps {
     section: SectionSimple;
 }
 
+/*
+ * Convert data forms into the default data entry form, using the data elements and category option combinations. 
+An example for section ITNs:
+ *
+ *          Data element                                Category option combos
+ *    - ITNs - Basic                            [Public, Private, Community, Combined]
+ *    - ITNs - Extended - Written Policy        [Public, Private, Community, Combined]
+ *    - ITNs - Extended - Policy Implemented    [Public, Private, Community, Combined]
+ *    - ITNs - Extended - Policy Extra          [Public, Private, Community, Combined, default]
+ *
+ *    This will create this table:
+ *
+ *
+ *                                           |  Public  |  Private  |  Combined  |  Community  |  default
+ *    ----------------------------------------------------------------------------------------------------
+ *    ITNs - Basic                           |          |           |            |             |
+ *                     | Written Policy      |          |           |            |             |
+ *    ITNs - Extended  | Policy Implemented  |          |           |            |             |
+ *                     | Policy Extra        |          |           |            |             |
+ **/
+
 const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props => {
     const { dataFormInfo } = props;
     const classes = useStyles();
