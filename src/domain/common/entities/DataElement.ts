@@ -10,6 +10,11 @@ interface DataElementBase {
     description?: string;
     options?: Options;
     categoryCombos: CategoryCombos;
+    categoryOptionCombos: {
+        id: Id;
+        name: string;
+        shortName: string | undefined;
+    }[];
     cocId?: string;
     orgUnit?: Id;
     related: { dataElement: DataElement; value: string } | undefined;

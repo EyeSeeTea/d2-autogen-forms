@@ -60,6 +60,7 @@ const dataElementFields = {
         categoryOptionCombos: {
             id: true,
             name: true,
+            shortName: true,
             categoryOptions: true,
         },
     },
@@ -128,6 +129,7 @@ function getDataElement(dataElement: D2DataElement, config: Dhis2DataStoreDataFo
         name: dataElement.categoryCombo?.name,
         categoryOptionCombos: getCocOrdered(dataElement.categoryCombo as D2CategoryCombo, config),
     };
+    const categoryOptionCombos = dataElement.categoryCombo.categoryOptionCombos;
 
     const base = {
         id: dataElement.id,
@@ -135,6 +137,7 @@ function getDataElement(dataElement: D2DataElement, config: Dhis2DataStoreDataFo
         name: dataElement.displayFormName || dataElement.displayName,
         description: dataElement.displayDescription,
         categoryCombos: categoryCombination,
+        categoryOptionCombos: categoryOptionCombos,
         options: optionSet
             ? { isMultiple: Boolean(deConfig?.selection?.isMultiple), items: optionSet.options }
             : undefined,
