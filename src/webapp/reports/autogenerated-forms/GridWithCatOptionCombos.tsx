@@ -71,7 +71,10 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                                 {groupName ? (
                                     <>
                                         {idx === 0 && (
-                                            <DataTableCell className={classes.rowTitle} rowSpan={rows.length}>
+                                            <DataTableCell
+                                                className={classes.rowTitle}
+                                                rowSpan={rows.length.toString()}
+                                            >
                                                 <span>{groupName}</span>
                                             </DataTableCell>
                                         )}
