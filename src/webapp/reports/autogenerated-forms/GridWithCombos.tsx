@@ -28,7 +28,7 @@ const GridWithCombos: React.FC<GridWithCombosProps> = props => {
     return (
         <DataTableSection section={grid} dataFormInfo={dataFormInfo}>
             <DataTable className={classes.table} layout="fixed" width="initial">
-                <TableHead>
+                <TableHead className={classes.tableHeader}>
                     <DataTableRow>
                         {grid.parentColumns.length > 0 && <DataTableColumnHeader></DataTableColumnHeader>}
                         {grid.parentColumns.map(column => {
@@ -110,6 +110,7 @@ const useStyles = makeStyles({
             alignItems: "center",
         },
     },
+    tableHeader: { position: "sticky", top: 0, zIndex: 2 },
 });
 
 export default React.memo(GridWithCombos);
