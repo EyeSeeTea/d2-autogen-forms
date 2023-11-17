@@ -22,7 +22,6 @@ export interface GridWithTotalsProps {
 }
 
 const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
-    const topValue = "0";
     const { dataFormInfo, section } = props;
 
     const grid = React.useMemo(
@@ -36,7 +35,7 @@ const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
     return (
         <DataTableSection section={grid} dataFormInfo={dataFormInfo}>
             <DataTable className={classes.table} layout="fixed" width="initial">
-                <TableHead>
+                <TableHead className={classes.tableHeader}>
                     <DataTableRow>
                         <DataTableColumnHeader></DataTableColumnHeader>
                         <DataTableColumnHeader></DataTableColumnHeader>
@@ -59,34 +58,22 @@ const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
                                 <span className={classes.header}>#</span>{" "}
                             </DataTableColumnHeader>
                         ) : (
-                            <DataTableColumnHeader fixed top={topValue}></DataTableColumnHeader>
+                            <DataTableColumnHeader></DataTableColumnHeader>
                         )}
 
                         {fistSection ? (
-                            <DataTableColumnHeader
-                                className={classes.columnWidth}
-                                fixed
-                                top={topValue}
-                                key={`column-Total`}
-                            >
+                            <DataTableColumnHeader className={classes.columnWidth} key={`column-Total`}>
                                 <span>Total</span>
                             </DataTableColumnHeader>
                         ) : null}
 
                         {grid.columns.map(column =>
                             column.deName && column.cocName ? (
-                                <DataTableColumnHeader
-                                    fixed
-                                    top={topValue}
-                                    key={`column-${column.name}`}
-                                    className={classes.columnWidth}
-                                >
+                                <DataTableColumnHeader key={`column-${column.name}`} className={classes.columnWidth}>
                                     <span>{column.cocName}</span>
                                 </DataTableColumnHeader>
                             ) : (
                                 <DataTableColumnHeader
-                                    fixed
-                                    top={topValue}
                                     key={`column-${column.name}`}
                                     className={column.name === "Source Type" ? classes.source : classes.columnWidth}
                                 >
@@ -171,6 +158,7 @@ const useStyles = makeStyles({
             alignItems: "center",
         },
     },
+    tableHeader: { position: "sticky", top: 0, zIndex: 2 },
 });
 
 export default React.memo(GridWithTotals);
