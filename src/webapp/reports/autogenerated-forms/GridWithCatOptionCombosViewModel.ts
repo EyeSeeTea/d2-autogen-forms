@@ -35,15 +35,17 @@ export class GridWithCatOptionCombosViewModel {
     static get(section: Section): Grid {
         const subsections = _(section.dataElements)
             .flatMap(dataElement => {
-                const cocNames = dataElement.categoryOptionCombos.map(coc => coc.name);
-                return cocNames.flatMap(coc => ({
+                const categoryOptionCombos = dataElement.categoryOptionCombos;
+
+                return categoryOptionCombos.map(coc => ({
                     ...dataElement,
-                    cocId: dataElement.categoryCombos.categoryOptionCombos.find(c => c.name === coc)?.id || "cocId",
-                    name: `${coc} - ${_(dataElement.name).split(separator).last()}`,
+                    cocId: dataElement.categoryOptionCombos.find(c => c.name === coc.name)?.id,
+                    name: `${coc.name} - ${_(dataElement.name).split(separator).last()}`,
                     fullName: dataElement.name,
-                    cocName: coc,
+                    cocName: coc.name,
                 }));
             })
+            .filter(dataElement => dataElement.cocId !== undefined)
             .groupBy(dataElement => dataElement.cocName)
             .toPairs()
             .map(([groupName, dataElementsForGroup]): SubSectionGrid => {
