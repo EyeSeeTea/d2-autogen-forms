@@ -131,6 +131,7 @@ const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
                                                 columnTotal={item.columnTotal}
                                                 rowDataElements={row.rowDataElements}
                                                 columnDataElements={item.columnDataElements}
+                                                rowName={row.name}
                                             />
                                         </DataTableCell>
                                     ) : (
