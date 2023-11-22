@@ -63,8 +63,7 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
 
                 <TableBody>
                     {grid.rows.map(row => {
-                        const groupName = row.groupName;
-                        const rows = row.rows;
+                        const { groupName, rows } = row;
 
                         return rows.map((row, idx) => (
                             <DataTableRow key={`${groupName}-${idx}`}>
@@ -90,21 +89,19 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                                 )}
 
                                 {grid.columns.map(column => {
-                                    const dataElement = column.items.find(item =>
-                                        item.row.rows.map(row => row.deName).includes(row.deName)
-                                    )?.dataElement;
+                                    const dataElement = column.dataElements.find(de => de.name === row.name);
 
-                                    if (dataElement) {
-                                        return (
-                                            <DataTableCell key={[dataElement.id, column.name].join("-")}>
-                                                <DataElementItem
-                                                    dataElement={dataElement}
-                                                    dataFormInfo={dataFormInfo}
-                                                    noComment
-                                                />
-                                            </DataTableCell>
-                                        );
-                                    }
+                                    return dataElement ? (
+                                        <DataTableCell key={[dataElement.id, column.name].join("-")}>
+                                            <DataElementItem
+                                                dataElement={dataElement}
+                                                dataFormInfo={dataFormInfo}
+                                                noComment
+                                            />
+                                        </DataTableCell>
+                                    ) : (
+                                        <DataTableCell key={`cell-${idx}-${column.name}`}></DataTableCell>
+                                    );
                                 })}
                             </DataTableRow>
                         ));

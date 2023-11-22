@@ -18,7 +18,7 @@ interface SubSectionGrid {
 
 interface Column {
     name: string;
-    items: Array<{ row: Row; dataElement: DataElement | undefined }>;
+    dataElements: DataElement[];
 }
 
 interface Row {
@@ -73,12 +73,11 @@ export class GridWithCatOptionCombosViewModel {
 
         const columns: Column[] = _.orderBy(
             subsections.map(subsection => {
-                const items = rows.map(row => {
-                    const dataElement = subsection.dataElements.find(de => row.rows.map(r => r.name).includes(de.name));
-                    return { row, dataElement };
+                const dataElements = rows.flatMap(row => {
+                    return subsection.dataElements.filter(de => row.rows.map(r => r.name).includes(de.name));
                 });
 
-                return { name: subsection.name, items };
+                return { name: subsection.name, dataElements };
             }),
             [section.sortRowsBy ? section.sortRowsBy : ""]
         );
