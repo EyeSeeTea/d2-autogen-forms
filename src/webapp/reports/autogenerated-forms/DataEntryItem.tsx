@@ -16,6 +16,7 @@ import DateWidget from "./widgets/DateWidget";
 import YearPickerWidget from "./widgets/YearPickerWidget";
 import SourceTypeWidget from "./widgets/SourceTypeWidget";
 import { Row } from "./GridWithTotalsViewModel";
+import PercentageWidget from "./widgets/PercentageWidget";
 
 export interface DataEntryItemProps {
     dataElement: DataElement;
@@ -67,6 +68,8 @@ function getValueAccordingType(dataValue: DataValue) {
             return dataValue.isMultiple ? dataValue.values.join(",") : dataValue.value;
         case "NUMBER":
             return dataValue.isMultiple ? dataValue.values.join(",") : dataValue.value;
+        case "PERCENTAGE":
+            return dataValue.value;
         default:
             assertUnreachable(dataValue);
     }
@@ -111,6 +114,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
         switch (type) {
             case "BOOLEAN":
             case "FILE":
+            case "PERCENTAGE":
                 return <>Not supported</>;
             case "DATE":
                 return (
@@ -199,6 +203,15 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
             case "NUMBER":
                 return (
                     <NumberWidget
+                        dataValue={dataValue}
+                        onValueChange={notifyChange}
+                        state={state}
+                        disabled={disabled} //
+                    />
+                );
+            case "PERCENTAGE":
+                return (
+                    <PercentageWidget
                         dataValue={dataValue}
                         onValueChange={notifyChange}
                         state={state}
