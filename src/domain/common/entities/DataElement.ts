@@ -1,7 +1,13 @@
 import { Maybe } from "../../../utils/ts-utils";
 import { Code, Id } from "./Base";
 
-export type DataElement = DataElementBoolean | DataElementNumber | DataElementText | DataElementFile | DataElementDate;
+export type DataElement =
+    | DataElementBoolean
+    | DataElementNumber
+    | DataElementText
+    | DataElementPercentage
+    | DataElementFile
+    | DataElementDate;
 
 interface DataElementBase {
     id: Id;
@@ -10,6 +16,11 @@ interface DataElementBase {
     description?: string;
     options?: Options;
     categoryCombos: CategoryCombos;
+    categoryOptionCombos: {
+        id: Id;
+        name: string;
+        shortName: string | undefined;
+    }[];
     cocId?: string;
     orgUnit?: Id;
     related: { dataElement: DataElement; value: string } | undefined;
@@ -22,6 +33,11 @@ export interface DataElementBoolean extends DataElementBase {
 
 export interface DataElementNumber extends DataElementBase {
     type: "NUMBER";
+    numberType: NumberType;
+}
+
+export interface DataElementPercentage extends DataElementBase {
+    type: "PERCENTAGE";
     numberType: NumberType;
 }
 
@@ -55,7 +71,8 @@ type NumberType =
     | "INTEGER"
     | "INTEGER_NEGATIVE"
     | "INTEGER_POSITIVE"
-    | "INTEGER_ZERO_OR_POSITIVE";
+    | "INTEGER_ZERO_OR_POSITIVE"
+    | "PERCENTAGE";
 
 export type DataElementType = DataElement["type"];
 

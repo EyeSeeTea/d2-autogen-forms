@@ -155,6 +155,7 @@ function getMetadataQuery(options: { dataSetId: Id }) {
                             categoryOptionCombos: {
                                 id: true,
                                 name: true,
+                                shortName: true,
                             },
                         },
                     },

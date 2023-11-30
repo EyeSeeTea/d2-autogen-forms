@@ -60,6 +60,7 @@ const dataElementFields = {
         categoryOptionCombos: {
             id: true,
             name: true,
+            shortName: true,
             categoryOptions: true,
         },
     },
@@ -128,6 +129,7 @@ function getDataElement(dataElement: D2DataElement, config: Dhis2DataStoreDataFo
         name: dataElement.categoryCombo?.name,
         categoryOptionCombos: getCocOrdered(dataElement.categoryCombo as D2CategoryCombo, config),
     };
+    const categoryOptionCombos = dataElement.categoryCombo.categoryOptionCombos;
 
     const base = {
         id: dataElement.id,
@@ -135,6 +137,7 @@ function getDataElement(dataElement: D2DataElement, config: Dhis2DataStoreDataFo
         name: dataElement.displayFormName || dataElement.displayName,
         description: dataElement.displayDescription,
         categoryCombos: categoryCombination,
+        categoryOptionCombos: categoryOptionCombos,
         options: optionSet
             ? { isMultiple: Boolean(deConfig?.selection?.isMultiple), items: optionSet.options }
             : undefined,
@@ -158,6 +161,8 @@ function getDataElement(dataElement: D2DataElement, config: Dhis2DataStoreDataFo
             return { type: "FILE", related: undefined, ...base };
         case "DATE":
             return { type: "DATE", related: undefined, ...base };
+        case "PERCENTAGE":
+            return { type: "PERCENTAGE", numberType: "NUMBER", related: undefined, ...base };
         default:
             console.error(
                 `Data element [name=${dataElement.displayName}, id=${dataElement.id}, valueType=${dataElement.valueType}] skipped, valueType not supported`

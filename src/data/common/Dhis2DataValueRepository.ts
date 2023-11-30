@@ -75,6 +75,14 @@ export class Dhis2DataValueRepository implements DataValueRepository {
                                   value: dv.value,
                                   ...selector,
                               };
+                    case "PERCENTAGE":
+                        return {
+                            type: "PERCENTAGE",
+                            isMultiple: false,
+                            dataElement,
+                            value: dv.value,
+                            ...selector,
+                        };
                     case "BOOLEAN":
                         return {
                             type: "BOOLEAN",
@@ -279,6 +287,8 @@ export class Dhis2DataValueRepository implements DataValueRepository {
                 return (dataValue.isMultiple ? dataValue.values.join("; ") : dataValue.value) || "";
             case "FILE":
                 return dataValue.file?.id || "";
+            case "PERCENTAGE":
+                return dataValue.value || "";
             case "DATE": {
                 const val = dataValue.value;
                 return val ? [val.year, pad2(val.month), pad2(val.day)].join("-") : "";

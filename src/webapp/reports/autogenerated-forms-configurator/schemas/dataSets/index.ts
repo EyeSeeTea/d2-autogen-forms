@@ -6,6 +6,7 @@ export const viewTypes = [
     "grid",
     "grid-with-totals",
     "grid-with-combos",
+    "grid-with-cat-option-combos",
     "grid-with-periods",
     "grid-with-subnational-ous",
 ];
