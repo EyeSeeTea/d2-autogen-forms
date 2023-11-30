@@ -8,6 +8,7 @@ import DataEntryItem, { DataEntryItemProps } from "./DataEntryItem";
 import { DataValue } from "../../../domain/common/entities/DataValue";
 import { Row } from "./GridWithTotalsViewModel";
 import { isDev } from "../../..";
+import { Maybe } from "../../../utils/ts-utils";
 
 export interface DataElementItemProps {
     dataElement: DataElement;
@@ -21,6 +22,7 @@ export interface DataElementItemProps {
     rowDataElements?: DataElement[];
     columnDataElements?: DataElement[];
     rows?: Row[];
+    rowName?: string;
 }
 
 export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props => {
@@ -36,6 +38,7 @@ export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props 
         rowDataElements,
         columnDataElements,
         rows,
+        rowName,
     } = props;
 
     const classes = useStyles();
@@ -57,9 +60,33 @@ export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props 
         }
     };
 
+    const onClick = (dataElement: DataElement, rowName: Maybe<string>) => {
+        if (!isDev && rowName) {
+            const topBarDeNameEl = window.document.querySelector("#currentDataElement");
+            if (topBarDeNameEl) {
+                topBarDeNameEl.textContent = `${rowName} ${dataElement.name}`;
+            }
+        }
+    };
+
+    const onBlur = () => {
+        console.log("Leaving");
+        if (!isDev) {
+            const topBarDeNameEl = window.document.querySelector("#currentDataElement");
+            if (topBarDeNameEl) {
+                topBarDeNameEl.textContent = "No Data Element Selected";
+            }
+        }
+    };
+
     return !noComment ? (
         <div id={elId} className={classes.valueWrapper}>
-            <div className={`${classes.valueInput} sourcetype`} id={auditId}>
+            <div
+                onClick={() => onClick(dataElement, rowName)}
+                onBlur={() => onBlur()}
+                className={`${classes.valueInput} sourcetype`}
+                id={auditId}
+            >
                 <DataEntryItem
                     dataElement={dataElement}
                     dataFormInfo={dataFormInfo}
@@ -78,7 +105,13 @@ export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props 
         </div>
     ) : (
         <div id={elId} className={classes.valueWrapper}>
-            <div onDoubleClick={() => onDoubleClick()} className={`${classes.valueInput} entryfield2`} id={auditId}>
+            <div
+                onClick={() => onClick(dataElement, rowName)}
+                onBlur={() => onBlur()}
+                onDoubleClick={() => onDoubleClick()}
+                className={`${classes.valueInput} entryfield2`}
+                id={auditId}
+            >
                 <DataEntryItem
                     dataElement={dataElement}
                     dataFormInfo={dataFormInfo}
