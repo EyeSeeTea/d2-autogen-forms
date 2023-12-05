@@ -15,7 +15,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
         const metadata = await this.getMetadata(options);
         const dataSet = metadata.dataSets[0];
         if (!dataSet) return Promise.reject(new Error("Data set not found"));
-        const config = await Dhis2DataStoreDataForm.build(this.api);
+        const config = await Dhis2DataStoreDataForm.build(this.api, dataSet.code);
         const sections = await this.getSections(dataSet, config, options.period, options.orgUnitId);
         const dataElements = _.flatMap(sections, section => section.dataElements);
         const dataElementsOptions = this.getDataElementsOptions(dataElements, config);
@@ -80,13 +80,15 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                     .map(dataElementRef => {
                         const dataElement = dataElements[dataElementRef.id];
                         if (!dataElement) return undefined;
-                        const deHideConfig = configDataForm.dataElementsConfig[dataElementRef.code]?.selection?.visible;
+                        const deConfig = configDataForm.dataElementsConfig[dataElementRef.code];
+                        const deHideConfig = deConfig?.selection?.visible;
                         const d2DataElement = deHideConfig
                             ? section.dataElements.find(de => de.code === deHideConfig.dataElementCode)
                             : undefined;
                         const deRelated = d2DataElement ? dataElements[d2DataElement.id] : undefined;
                         return {
                             ...dataElement,
+                            disabledComments: deConfig?.disableComments || false,
                             related: deRelated
                                 ? { dataElement: deRelated, value: deHideConfig?.value || "" }
                                 : undefined,

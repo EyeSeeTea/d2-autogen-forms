@@ -57,7 +57,11 @@ export class GridViewModel {
         const rows = subsections.map(subsection => {
             const items = columns.map(column => {
                 const dataElement = subsection.dataElements.find(de => de.name === column.name);
-                return { column, dataElement, disableComments: section.disableComments };
+                return {
+                    column,
+                    dataElement,
+                    disableComments: section.disableComments || dataElement?.disabledComments || false,
+                };
             });
 
             return { name: subsection.name, items: items };
