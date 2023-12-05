@@ -70,7 +70,6 @@ export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props 
     };
 
     const onBlur = () => {
-        console.log("Leaving");
         if (!isDev) {
             const topBarDeNameEl = window.document.querySelector("#currentDataElement");
             if (topBarDeNameEl) {
