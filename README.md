@@ -190,6 +190,30 @@ ITNs - Extended  | Policy Implemented  |        |        |         |
                  | Policy Extra        |        |        |         |
 ```
 
+##### View mode: Grid with category option combos
+
+Data elements will by grouped by rows and columns using **data element formName**/**category option combo names** and `" - "` as a separator of subsections.
+
+An example, a section with data elements and associated category option combos:
+
+        Data element                                Category option combos
+    - ITNs - Basic                            [Public, Private, Community, Combined]
+    - ITNs - Extended - Written Policy        [Public, Private, Community, Combined]
+    - ITNs - Extended - Policy Implemented    [Public, Private, Community, Combined]
+    - ITNs - Extended - Policy Extra          [Public, Private, Community, Combined, default]
+
+This will create this table:
+
+```
+                                           |  Public  |  Private  |  Combined  |  Community  |  default
+    ----------------------------------------------------------------------------------------------------
+    ITNs - Basic                           |          |           |            |             |
+                     | Written Policy      |          |           |            |             |
+    ITNs - Extended  | Policy Implemented  |          |           |            |             |
+                     | Policy Extra        |          |           |            |             |
+
+```
+
 #### Development
 
 On development, you need to specify the orgUnit/dataSet/period manually on the URL:

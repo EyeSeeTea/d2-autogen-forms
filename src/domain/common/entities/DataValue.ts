@@ -7,6 +7,7 @@ import {
     DataElementDate,
     DataElementFile,
     DataElementNumber,
+    DataElementPercentage,
     DataElementText,
 } from "./DataElement";
 
@@ -35,6 +36,13 @@ export interface DataValueNumberMultiple extends DataValueBase {
     isMultiple: true;
     dataElement: DataElementNumber;
     values: string[];
+}
+
+export interface DataValuePercentage extends DataValueBase {
+    type: "PERCENTAGE";
+    isMultiple: false;
+    dataElement: DataElementPercentage;
+    value: Maybe<string>;
 }
 
 export interface DataValueTextSingle extends DataValueBase {
@@ -83,6 +91,7 @@ export type DataValue =
     | DataValueBoolean
     | DataValueNumberSingle
     | DataValueNumberMultiple
+    | DataValuePercentage
     | DataValueTextSingle
     | DataValueTextMultiple
     | DataValueFile
@@ -148,6 +157,8 @@ function getEmpty(dataElement: DataElement, base: DataValueBase): DataValue {
             return dataElement.options?.isMultiple
                 ? { ...base, dataElement, type: "TEXT", isMultiple: true, values: [] }
                 : { ...base, dataElement, type: "TEXT", isMultiple: false, value: "" };
+        case "PERCENTAGE":
+            return { ...base, dataElement, type: "PERCENTAGE", isMultiple: false, value: "" };
         case "FILE":
             return { ...base, dataElement, type: "FILE", file: undefined, isMultiple: false };
         case "DATE":
