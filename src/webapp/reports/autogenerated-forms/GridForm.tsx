@@ -3,9 +3,7 @@ import {
     DataTable,
     TableHead,
     DataTableRow,
-    DataTableColumnHeader,
     TableBody,
-    DataTableCell,
     // @ts-ignore
 } from "@dhis2/ui";
 import { GridViewModel } from "./GridFormViewModel";
@@ -14,6 +12,7 @@ import { Section } from "../../../domain/common/entities/DataForm";
 import { DataElementItem } from "./DataElementItem";
 import { makeStyles } from "@material-ui/core";
 import DataTableSection from "./DataTableSection";
+import { CustomDataTableCell, CustomDataTableColumnHeader } from "./datatables/CustomDataTables";
 
 /*
  * Convert data forms into table, using "-" as a separator. An example for section ITNs:
@@ -41,22 +40,32 @@ const GridForm: React.FC<GridFormProps> = props => {
     const classes = useStyles();
 
     return (
-        <DataTableSection section={grid} dataFormInfo={dataFormInfo}>
+        <DataTableSection section={grid} sectionStyles={props.section.styles} dataFormInfo={dataFormInfo}>
             <DataTable className={classes.table}>
                 <TableHead>
                     <DataTableRow>
                         {grid.useIndexes ? (
-                            <DataTableColumnHeader width="30px">
+                            <CustomDataTableColumnHeader
+                                backgroundColor={props.section.styles.columns.backgroundColor}
+                                width="30px"
+                            >
                                 <span className={classes.header}>#</span>{" "}
-                            </DataTableColumnHeader>
+                            </CustomDataTableColumnHeader>
                         ) : (
-                            <DataTableColumnHeader width="400px"></DataTableColumnHeader>
+                            <CustomDataTableColumnHeader
+                                backgroundColor={props.section.styles.columns.backgroundColor}
+                                width="400px"
+                            ></CustomDataTableColumnHeader>
                         )}
 
                         {grid.columns.map(column => (
-                            <DataTableColumnHeader className={classes.columnWidth} key={`column-${column.name}`}>
+                            <CustomDataTableColumnHeader
+                                backgroundColor={props.section.styles.columns.backgroundColor}
+                                className={classes.columnWidth}
+                                key={`column-${column.name}`}
+                            >
                                 <span>{column.name}</span>
-                            </DataTableColumnHeader>
+                            </CustomDataTableColumnHeader>
                         ))}
                     </DataTableRow>
                 </TableHead>
@@ -64,21 +73,27 @@ const GridForm: React.FC<GridFormProps> = props => {
                 <TableBody>
                     {grid.rows.map((row, idx) => (
                         <DataTableRow key={`policy-${row.name}`}>
-                            <DataTableCell>
+                            <CustomDataTableCell backgroundColor={props.section.styles.rows.backgroundColor}>
                                 <span>{grid.useIndexes ? (idx + 1).toString() : row.name}</span>
-                            </DataTableCell>
+                            </CustomDataTableCell>
 
                             {row.items.map((item, idx) =>
                                 item.dataElement ? (
-                                    <DataTableCell key={item.dataElement.id}>
+                                    <CustomDataTableCell
+                                        backgroundColor={props.section.styles.rows.backgroundColor}
+                                        key={item.dataElement.id}
+                                    >
                                         <DataElementItem
                                             noComment={item.disableComments}
                                             dataElement={item.dataElement}
                                             dataFormInfo={dataFormInfo}
                                         />
-                                    </DataTableCell>
+                                    </CustomDataTableCell>
                                 ) : (
-                                    <DataTableCell key={`cell-${idx}`}></DataTableCell>
+                                    <CustomDataTableCell
+                                        backgroundColor={props.section.styles.rows.backgroundColor}
+                                        key={`cell-${idx}`}
+                                    ></CustomDataTableCell>
                                 )
                             )}
                         </DataTableRow>

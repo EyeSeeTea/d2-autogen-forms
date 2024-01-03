@@ -6,14 +6,13 @@ import { GridWithCatOptionCombosViewModel } from "./GridWithCatOptionCombosViewM
 import DataTableSection from "./DataTableSection";
 import {
     DataTable,
-    DataTableCell,
-    DataTableColumnHeader,
     DataTableRow,
     TableBody,
     TableHead,
     // @ts-ignore
 } from "@dhis2/ui";
 import { DataElementItem } from "./DataElementItem";
+import { CustomDataTableCell, CustomDataTableColumnHeader } from "./datatables/CustomDataTables";
 
 export interface GridWithCatOptionCombosProps {
     dataFormInfo: DataFormInfo;
@@ -47,16 +46,23 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
     const grid = React.useMemo(() => GridWithCatOptionCombosViewModel.get(props.section), [props.section]);
 
     return (
-        <DataTableSection section={grid} dataFormInfo={dataFormInfo}>
+        <DataTableSection section={grid} dataFormInfo={dataFormInfo} sectionStyles={props.section.styles}>
             <DataTable className={classes.table} layout="fixed" width="initial">
                 <TableHead>
                     <DataTableRow>
-                        <DataTableColumnHeader width="400px" colSpan="2"></DataTableColumnHeader>
+                        <CustomDataTableColumnHeader
+                            backgroundColor={props.section.styles.columns.backgroundColor}
+                            width="400px"
+                            colSpan="2"
+                        ></CustomDataTableColumnHeader>
 
                         {grid.columns.map(column => (
-                            <DataTableColumnHeader key={column.name}>
+                            <CustomDataTableColumnHeader
+                                backgroundColor={props.section.styles.columns.backgroundColor}
+                                key={column.name}
+                            >
                                 <span>{column.name}</span>
-                            </DataTableColumnHeader>
+                            </CustomDataTableColumnHeader>
                         ))}
                     </DataTableRow>
                 </TableHead>
@@ -70,37 +76,49 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                                 {groupName ? (
                                     <>
                                         {idx === 0 && (
-                                            <DataTableCell
+                                            <CustomDataTableCell
+                                                backgroundColor={props.section.styles.rows.backgroundColor}
                                                 className={classes.rowTitle}
                                                 rowSpan={rows.length.toString()}
                                             >
                                                 <span>{groupName}</span>
-                                            </DataTableCell>
+                                            </CustomDataTableCell>
                                         )}
 
-                                        <DataTableCell>
+                                        <CustomDataTableCell
+                                            backgroundColor={props.section.styles.rows.backgroundColor}
+                                        >
                                             <span>{row.deName}</span>
-                                        </DataTableCell>
+                                        </CustomDataTableCell>
                                     </>
                                 ) : (
-                                    <DataTableCell colSpan="2">
+                                    <CustomDataTableCell
+                                        backgroundColor={props.section.styles.rows.backgroundColor}
+                                        colSpan="2"
+                                    >
                                         <span>{row.deName}</span>
-                                    </DataTableCell>
+                                    </CustomDataTableCell>
                                 )}
 
                                 {grid.columns.map(column => {
                                     const dataElement = column.dataElements.find(de => de.name === row.name);
 
                                     return dataElement ? (
-                                        <DataTableCell key={[dataElement.id, column.name].join("-")}>
+                                        <CustomDataTableCell
+                                            backgroundColor={props.section.styles.rows.backgroundColor}
+                                            key={[dataElement.id, column.name].join("-")}
+                                        >
                                             <DataElementItem
                                                 dataElement={dataElement}
                                                 dataFormInfo={dataFormInfo}
                                                 noComment
                                             />
-                                        </DataTableCell>
+                                        </CustomDataTableCell>
                                     ) : (
-                                        <DataTableCell key={`cell-${idx}-${column.name}`}></DataTableCell>
+                                        <CustomDataTableCell
+                                            backgroundColor={props.section.styles.rows.backgroundColor}
+                                            key={`cell-${idx}-${column.name}`}
+                                        ></CustomDataTableCell>
                                     );
                                 })}
                             </DataTableRow>

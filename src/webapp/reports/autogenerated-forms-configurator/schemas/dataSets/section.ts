@@ -1,6 +1,12 @@
 import { viewTypes } from ".";
 import { defaultObjectProperties, mergeArrayWithSchema, textSchema } from "..";
 
+const styleBgColor = {
+    backgroundColor: {
+        type: "string",
+    },
+};
+
 export const sectionSchema = (constants: string[], deInSectionCodes: string[]) => {
     const sectionProperties = {
         disableComments: {
@@ -39,6 +45,13 @@ export const sectionSchema = (constants: string[], deInSectionCodes: string[]) =
                 order: {
                     type: "number",
                 },
+            },
+        }),
+        styles: defaultObjectProperties({
+            properties: {
+                rows: defaultObjectProperties({ properties: styleBgColor }),
+                columns: defaultObjectProperties({ properties: styleBgColor }),
+                title: defaultObjectProperties({ properties: styleBgColor }),
             },
         }),
     };

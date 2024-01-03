@@ -3,6 +3,7 @@ import { getId, Id } from "../../domain/common/entities/Base";
 import { DataElement } from "../../domain/common/entities/DataElement";
 import { DataForm, defaultTexts, Section, SectionBase } from "../../domain/common/entities/DataForm";
 import { Period } from "../../domain/common/entities/DataValue";
+import { SectionStyle } from "../../domain/common/entities/SectionStyle";
 import { DataFormRepository } from "../../domain/common/repositories/DataFormRepository";
 import { D2Api, MetadataPick } from "../../types/d2-api";
 import { Dhis2DataElement } from "./Dhis2DataElement";
@@ -97,6 +98,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                     .compact()
                     .value(),
                 titleVariant: config?.titleVariant,
+                styles: SectionStyle.buildSectionStyles(config?.styles),
             };
 
             if (!config) return { viewType: "table", ...base };
