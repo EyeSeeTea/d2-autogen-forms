@@ -8,6 +8,7 @@ import { Option } from "../../domain/common/entities/DataElement";
 import { Period } from "../../domain/common/entities/DataValue";
 import { Texts } from "../../domain/common/entities/DataForm";
 import { titleVariant } from "../../domain/common/entities/TitleVariant";
+import { SectionStyle, SectionStyleAttrs } from "../../domain/common/entities/SectionStyle";
 
 interface DataSetConfig {
     texts: Texts;
@@ -26,6 +27,7 @@ interface BaseSectionConfig {
     tabs: { active: true; order: number } | { active: false };
     sortRowsBy: string;
     titleVariant: titleVariant;
+    styles: SectionStyleAttrs;
     disableComments: boolean;
 }
 
@@ -76,6 +78,27 @@ const titleVariantType = oneOf([
     exactly("h6"),
 ]);
 
+const stylesVariantType = Codec.interface({
+    title: optional(
+        Codec.interface({
+            backgroundColor: optional(string),
+            color: optional(string),
+        })
+    ),
+    columns: optional(
+        Codec.interface({
+            backgroundColor: optional(string),
+            color: optional(string),
+        })
+    ),
+    rows: optional(
+        Codec.interface({
+            backgroundColor: optional(string),
+            color: optional(string),
+        })
+    ),
+});
+
 const textsCodec = Codec.interface({
     header: optional(oneOf([string, selector])),
     footer: optional(oneOf([string, selector])),
@@ -120,6 +143,7 @@ const DataStoreConfigCodec = Codec.interface({
                     })
                 ),
                 titleVariant: optional(titleVariantType),
+                styles: optional(stylesVariantType),
                 tabs: optional(
                     Codec.interface({
                         active: exactly(true),
@@ -407,7 +431,9 @@ export class Dhis2DataStoreDataForm {
                         dataSetConfig?.disableComments,
                         sectionConfig.disableComments
                     ),
+                    styles: SectionStyle.buildSectionStyles(sectionConfig.styles),
                 };
+                // sectionConfig.styles?.title
 
                 const baseConfig = { ...base, viewType };
 

@@ -10,6 +10,7 @@ export interface DataTableProps {
     section: DataTableSectionObj;
     dataFormInfo: DataFormInfo;
     children: React.ReactNode;
+    sectionStyles?: Section["styles"];
 }
 
 interface DataTableSectionObj {
@@ -20,7 +21,7 @@ interface DataTableSectionObj {
 }
 
 const DataTableSection: React.FC<DataTableProps> = React.memo(props => {
-    const { section, children, dataFormInfo } = props;
+    const { section, children, dataFormInfo, sectionStyles } = props;
     const { toggle } = section;
     const classes = useStyles();
 
@@ -37,7 +38,9 @@ const DataTableSection: React.FC<DataTableProps> = React.memo(props => {
 
     return (
         <div className={classes.wrapper}>
-            <h3 className={titleStyle}>{section.name}</h3>
+            <div style={{ backgroundColor: sectionStyles?.title.backgroundColor }}>
+                <h3 className={titleStyle}>{section.name}</h3>
+            </div>
 
             <Html content={section.texts.header} />
 
@@ -62,7 +65,7 @@ const useStyles = makeStyles({
     wrapper: { margin: 10, border: "1px solid black", overflow: "auto", maxHeight: "100vh" },
     toggleWrapper: { margin: 10 },
     toggleTitle: { marginBottom: 10 },
-    title: { textAlign: "center" },
+    title: { textAlign: "center", margin: 0, padding: "1em" },
     subtitle: { textAlign: "center", marginBottom: 10 },
     h1: {
         fontSize: "6rem !important",
