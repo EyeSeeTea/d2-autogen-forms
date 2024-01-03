@@ -433,7 +433,6 @@ export class Dhis2DataStoreDataForm {
                     ),
                     styles: SectionStyle.buildSectionStyles(sectionConfig.styles),
                 };
-                // sectionConfig.styles?.title
 
                 const baseConfig = { ...base, viewType };
 
