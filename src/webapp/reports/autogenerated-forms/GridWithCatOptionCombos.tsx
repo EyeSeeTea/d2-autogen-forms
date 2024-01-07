@@ -13,6 +13,7 @@ import {
 } from "@dhis2/ui";
 import { DataElementItem } from "./DataElementItem";
 import { CustomDataTableCell, CustomDataTableColumnHeader } from "./datatables/CustomDataTables";
+import { DataTableCellFormula } from "./datatables/DataTableCellFormula";
 
 export interface GridWithCatOptionCombosProps {
     dataFormInfo: DataFormInfo;
@@ -124,6 +125,33 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                             </DataTableRow>
                         ));
                     })}
+                    <DataTableRow key="totals">
+                        {grid.summary && (
+                            <>
+                                <CustomDataTableCell
+                                    backgroundColor={props.section.styles.totals.backgroundColor}
+                                    key="total-empty-column"
+                                ></CustomDataTableCell>
+                                <CustomDataTableCell
+                                    backgroundColor={props.section.styles.totals.backgroundColor}
+                                    key="total-column-name"
+                                >
+                                    {grid.summary.cellName}
+                                </CustomDataTableCell>
+                                {grid.summary.cells.map(itemTotal => {
+                                    return (
+                                        <DataTableCellFormula
+                                            key={itemTotal.columnName}
+                                            dataFormInfo={dataFormInfo}
+                                            styles={props.section.styles}
+                                            total={itemTotal}
+                                            formula={grid.summary?.formula || ""}
+                                        />
+                                    );
+                                })}
+                            </>
+                        )}
+                    </DataTableRow>
                 </TableBody>
             </DataTable>
         </DataTableSection>

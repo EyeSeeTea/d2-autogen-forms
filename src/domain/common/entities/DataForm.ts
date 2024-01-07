@@ -48,6 +48,7 @@ export interface SectionBase {
     titleVariant: titleVariant;
     styles: SectionStyle;
     disableComments: boolean;
+    totals?: { dataElementsCodes: string[]; formula: string; texts?: { name: string } };
 }
 
 export interface SectionSimple extends SectionBase {
