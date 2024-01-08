@@ -119,6 +119,8 @@ const stylesType = Codec.interface({
 const textsCodec = Codec.interface({
     header: optional(oneOf([string, selector])),
     footer: optional(oneOf([string, selector])),
+    rowTotals: optional(oneOf([string, selector])),
+    totals: optional(oneOf([string, selector])),
 });
 
 const DataStoreConfigCodec = Codec.interface({
@@ -350,36 +352,26 @@ export class Dhis2DataStoreDataForm {
             .compact()
             .value();
 
-        const totalsTextsCodes = _(storeConfig.dataSets)
-            .values()
-            .flatMap(dataSet => _.values(dataSet.sections))
-            .flatMap(section => section.totals)
-            .flatMap(total => (total ? total.texts : undefined))
-            .map(text => (text ? text.name : undefined))
-            .compact()
-            .uniq()
-            .value();
-
         const codes = _(dataSetTexts)
             .concat(sectionTexts)
             .flatMap(t => [
                 typeof t.header !== "string" ? t.header : undefined,
                 typeof t.footer !== "string" ? t.footer : undefined,
+                typeof t.rowTotals !== "string" ? t.rowTotals : undefined,
+                typeof t.totals !== "string" ? t.totals : undefined,
             ])
             .compact()
             .map(selector => selector.code)
             .uniq()
             .value();
 
-        const constantsCodes = [...codes, ...totalsTextsCodes];
-
-        if (_.isEmpty(constantsCodes)) return [];
+        if (_.isEmpty(codes)) return [];
 
         const res = await api.metadata
             .get({
                 constants: {
                     fields: { id: true, code: true, displayDescription: true },
-                    filter: { code: { in: constantsCodes } },
+                    filter: { code: { in: codes } },
                 },
             })
             .getData();
@@ -453,6 +445,8 @@ export class Dhis2DataStoreDataForm {
                     texts: {
                         header: getText(sectionConfig?.texts?.header),
                         footer: getText(sectionConfig?.texts?.footer),
+                        rowTotals: getText(sectionConfig?.texts?.rowTotals),
+                        totals: getText(sectionConfig?.texts?.totals),
                     },
                     sortRowsBy: sectionConfig.sortRowsBy || "",
                     tabs: sectionConfig.tabs || { active: false },
@@ -462,11 +456,13 @@ export class Dhis2DataStoreDataForm {
                         sectionConfig.disableComments
                     ),
                     styles: SectionStyle.buildSectionStyles(sectionConfig.styles),
-                    totals: {
-                        dataElementsCodes: sectionConfig.totals?.dataElementsCodes || [],
-                        formula: sectionConfig.totals?.formula || "",
-                        texts: { name: getText({ code: sectionConfig.totals?.texts?.name || "" }) || "" },
-                    },
+                    totals: sectionConfig.totals
+                        ? {
+                              dataElementsCodes: sectionConfig.totals?.dataElementsCodes || [],
+                              formula: sectionConfig.totals?.formula || "",
+                              texts: { name: getText({ code: sectionConfig.totals?.texts?.name || "" }) || "" },
+                          }
+                        : undefined,
                 };
 
                 const baseConfig = { ...base, viewType };
@@ -510,6 +506,8 @@ export class Dhis2DataStoreDataForm {
             texts: {
                 header: getText(dataSetConfig?.texts?.header),
                 footer: getText(dataSetConfig?.texts?.footer),
+                rowTotals: getText(dataSetConfig?.texts?.rowTotals),
+                totals: getText(dataSetConfig?.texts?.totals),
             },
             sections: sections,
         };

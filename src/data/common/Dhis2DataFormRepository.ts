@@ -100,6 +100,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                 titleVariant: config?.titleVariant,
                 styles: SectionStyle.buildSectionStyles(config?.styles),
                 totals: config?.totals,
+                showRowTotals: section.showRowTotals,
             };
 
             if (!config) return { viewType: "table", ...base };
@@ -151,6 +152,7 @@ function getMetadataQuery(options: { dataSetId: Id }) {
                     id: true,
                     code: true,
                     displayName: true,
+                    showRowTotals: true,
                     dataElements: {
                         id: true,
                         code: true,

@@ -14,10 +14,6 @@ export interface Grid {
     summary: Maybe<Summary>;
 }
 
-export type Summary = { cells: CellTotal[]; formula: string; cellName: string };
-export type CellTotal = { columnName: string; items: TotalItem[] };
-type TotalItem = { dataElement: DataElement; categoryOptionCombo: CategoryOptionCombo };
-
 interface SubSectionGrid {
     name: string;
     dataElements: DataElement[];
@@ -31,6 +27,7 @@ interface Column {
 interface Row {
     groupName: string;
     rows: {
+        dataElement: DataElement;
         deName: string;
         name: string;
     }[];
@@ -73,7 +70,7 @@ export class GridWithCatOptionCombosViewModel {
             .map((group, groupName) => ({
                 groupName,
                 rows: group.map(de => {
-                    return { deName: _.last(de.name.split(separator)) ?? "", name: de.name };
+                    return { dataElement: de, deName: _.last(de.name.split(separator)) ?? "", name: de.name };
                 }),
             }))
             .value();
@@ -126,7 +123,7 @@ export class GridWithCatOptionCombosViewModel {
             texts: section.texts,
             summary: section.totals
                 ? {
-                      cellName: section.totals.texts?.name || "",
+                      cellName: section.texts?.totals || "",
                       formula: section.totals.formula,
                       cells: totals,
                   }
@@ -134,3 +131,7 @@ export class GridWithCatOptionCombosViewModel {
         };
     }
 }
+
+export type Summary = { cells: CellTotal[]; formula: string; cellName: string };
+export type CellTotal = { columnName: string; items: TotalItem[] };
+export type TotalItem = { dataElement: DataElement; categoryOptionCombo: CategoryOptionCombo };

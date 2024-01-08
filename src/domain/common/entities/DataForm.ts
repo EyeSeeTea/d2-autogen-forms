@@ -22,9 +22,11 @@ export interface DataForm {
 export interface Texts {
     header: Maybe<string>;
     footer: Maybe<string>;
+    rowTotals: Maybe<string>;
+    totals: Maybe<string>;
 }
 
-export const defaultTexts: Texts = { header: undefined, footer: undefined };
+export const defaultTexts: Texts = { header: undefined, footer: undefined, rowTotals: undefined, totals: undefined };
 
 const viewTypes = [
     "grid",
@@ -48,7 +50,8 @@ export interface SectionBase {
     titleVariant: titleVariant;
     styles: SectionStyle;
     disableComments: boolean;
-    totals?: { dataElementsCodes: string[]; formula: string; texts?: { name: string } };
+    totals?: { dataElementsCodes: string[]; formula: string };
+    showRowTotals: boolean;
 }
 
 export interface SectionSimple extends SectionBase {
