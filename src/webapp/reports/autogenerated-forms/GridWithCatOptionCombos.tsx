@@ -57,12 +57,17 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                         ></CustomDataTableColumnHeader>
 
                         {grid.columns.map(column => (
-                            <CustomDataTableColumnHeader
-                                backgroundColor={props.section.styles.columns.backgroundColor}
-                                key={column.name}
-                            >
-                                <span>{column.name}</span>
-                            </CustomDataTableColumnHeader>
+                            <>
+                                <CustomDataTableColumnHeader
+                                    backgroundColor={props.section.styles.columns.backgroundColor}
+                                    key={column.name}
+                                >
+                                    <div className={classes.header}>
+                                        <span>{column.name}</span>
+                                        <span className={classes.description}>{column.description}</span>
+                                    </div>
+                                </CustomDataTableColumnHeader>
+                            </>
                         ))}
                     </DataTableRow>
                 </TableHead>
@@ -131,10 +136,16 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
 };
 
 const useStyles = makeStyles({
-    wrapper: { margin: 10 },
-    header: { fontSize: "1.4em", fontWeight: "bold" as const },
+    header: {
+        fontSize: "1.2em",
+        fontWeight: "bold" as const,
+        flexDirection: "column",
+        textAlign: "center",
+        display: "flex",
+        padding: "4px",
+    },
+    description: { fontWeight: "normal" as const, fontSize: "0.8em" },
     table: { borderWidth: "3px !important", minWidth: "100%" },
-    columnWidth: { minWidth: "14.25em !important" },
     rowTitle: { fontSize: "1.2em", fontWeight: "bold" as const },
 });
 

@@ -6,7 +6,7 @@ import { Maybe, NonPartial } from "../../utils/ts-utils";
 import { Code, getCode, Id, NamedRef } from "../../domain/common/entities/Base";
 import { Option } from "../../domain/common/entities/DataElement";
 import { Period } from "../../domain/common/entities/DataValue";
-import { Texts } from "../../domain/common/entities/DataForm";
+import { CategoryDescription, Texts } from "../../domain/common/entities/DataForm";
 import { titleVariant } from "../../domain/common/entities/TitleVariant";
 import { SectionStyle, SectionStyleAttrs } from "../../domain/common/entities/SectionStyle";
 
@@ -28,6 +28,7 @@ interface BaseSectionConfig {
     sortRowsBy: string;
     titleVariant: titleVariant;
     styles: SectionStyleAttrs;
+    categoryDescriptions: CategoryDescription;
     disableComments: boolean;
 }
 
@@ -144,6 +145,7 @@ const DataStoreConfigCodec = Codec.interface({
                 ),
                 titleVariant: optional(titleVariantType),
                 styles: optional(stylesVariantType),
+                categoryDescriptions: optional(record(string, oneOf([string, selector]))),
                 tabs: optional(
                     Codec.interface({
                         active: exactly(true),
@@ -332,6 +334,14 @@ export class Dhis2DataStoreDataForm {
             .compact()
             .value();
 
+        const catOptionComboDescriptionCodes = _(storeConfig.dataSets)
+            .values()
+            .flatMap(dataSet => _.values(dataSet.sections))
+            .flatMap(section => _.values(section.categoryDescriptions))
+            .flatMap(text => [typeof text !== "string" ? text.code : undefined])
+            .compact()
+            .value();
+
         const codes = _(dataSetTexts)
             .concat(sectionTexts)
             .flatMap(t => [
@@ -340,6 +350,7 @@ export class Dhis2DataStoreDataForm {
             ])
             .compact()
             .map(selector => selector.code)
+            .concat(catOptionComboDescriptionCodes)
             .uniq()
             .value();
 
@@ -432,6 +443,7 @@ export class Dhis2DataStoreDataForm {
                         sectionConfig.disableComments
                     ),
                     styles: SectionStyle.buildSectionStyles(sectionConfig.styles),
+                    categoryDescriptions: _.mapValues(sectionConfig.categoryDescriptions, getText),
                 };
 
                 const baseConfig = { ...base, viewType };

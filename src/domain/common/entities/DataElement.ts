@@ -19,9 +19,11 @@ interface DataElementBase {
     categoryOptionCombos: {
         id: Id;
         name: string;
+        code: string | undefined;
         shortName: string | undefined;
     }[];
     cocId?: string;
+    cocCode?: string;
     orgUnit?: Id;
     related: { dataElement: DataElement; value: string } | undefined;
     disabledComments?: boolean;

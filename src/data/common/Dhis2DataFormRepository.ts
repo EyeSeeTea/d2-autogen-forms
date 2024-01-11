@@ -99,6 +99,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                     .value(),
                 titleVariant: config?.titleVariant,
                 styles: SectionStyle.buildSectionStyles(config?.styles),
+                categoryDescriptions: config?.categoryDescriptions,
             };
 
             if (!config) return { viewType: "table", ...base };
@@ -159,6 +160,7 @@ function getMetadataQuery(options: { dataSetId: Id }) {
                             categoryOptionCombos: {
                                 id: true,
                                 name: true,
+                                code: true,
                                 shortName: true,
                             },
                         },
