@@ -14,6 +14,7 @@ import { Section } from "../../../domain/common/entities/DataForm";
 import { DataElementItem } from "./DataElementItem";
 import { makeStyles } from "@material-ui/core";
 import DataTableSection from "./DataTableSection";
+import { fixHeaderClasses } from "./datatables/CustomDataTables";
 
 export interface GridWithCombosProps {
     dataFormInfo: DataFormInfo;
@@ -27,73 +28,77 @@ const GridWithCombos: React.FC<GridWithCombosProps> = props => {
 
     return (
         <DataTableSection section={grid} dataFormInfo={dataFormInfo}>
-            <DataTable className={classes.table} layout="fixed" width="initial">
-                <TableHead className={classes.tableHeader}>
-                    <DataTableRow>
-                        {grid.parentColumns.length > 0 && <DataTableColumnHeader></DataTableColumnHeader>}
-                        {grid.parentColumns.map(column => {
-                            return (
-                                <DataTableColumnHeader
-                                    key={column.name}
-                                    className={classes.centerSpan}
-                                    colSpan={String(column.colSpan)}
-                                >
-                                    <span>{column.name}</span>
-                                </DataTableColumnHeader>
-                            );
-                        })}
-                    </DataTableRow>
-
-                    <DataTableRow>
-                        {grid.useIndexes ? (
-                            <DataTableColumnHeader width="30px">
-                                <span className={classes.header}>#</span>{" "}
-                            </DataTableColumnHeader>
-                        ) : (
-                            <DataTableColumnHeader fixed top="0"></DataTableColumnHeader>
-                        )}
-
-                        {grid.columns.map(column => (
-                            <DataTableColumnHeader
-                                fixed
-                                top="0"
-                                key={`column-${column.name}`}
-                                className={
-                                    column.name === "Source type for HWF - (Inputs & Outputs)"
-                                        ? classes.source
-                                        : classes.columnWidth
-                                }
-                            >
-                                <span>{column.cocName}</span>
-                            </DataTableColumnHeader>
-                        ))}
-                    </DataTableRow>
-                </TableHead>
-
-                <TableBody>
-                    {grid.rows.map((row, idx) => (
-                        <DataTableRow key={`policy-${row.name}`}>
-                            <DataTableCell className={classes.td}>
-                                <span>{grid.useIndexes ? (idx + 1).toString() : row.name}</span>
-                            </DataTableCell>
-
-                            {row.items.map((item, idx) =>
-                                item.dataElement ? (
-                                    <DataTableCell key={item.dataElement.id + item.dataElement.cocId}>
-                                        <DataElementItem
-                                            dataElement={item.dataElement}
-                                            dataFormInfo={dataFormInfo}
-                                            noComment={item.column.name !== "Source type for HWF - (Inputs & Outputs)"}
-                                        />
-                                    </DataTableCell>
-                                ) : (
-                                    <DataTableCell key={`cell-${idx}`}></DataTableCell>
-                                )
-                            )}
+            <div className={classes.fixedHeaders}>
+                <DataTable className={classes.table} layout="fixed" width="initial">
+                    <TableHead className={classes.tableHeader}>
+                        <DataTableRow>
+                            {grid.parentColumns.length > 0 && <DataTableColumnHeader></DataTableColumnHeader>}
+                            {grid.parentColumns.map(column => {
+                                return (
+                                    <DataTableColumnHeader
+                                        key={column.name}
+                                        className={classes.centerSpan}
+                                        colSpan={String(column.colSpan)}
+                                    >
+                                        <span>{column.name}</span>
+                                    </DataTableColumnHeader>
+                                );
+                            })}
                         </DataTableRow>
-                    ))}
-                </TableBody>
-            </DataTable>
+
+                        <DataTableRow>
+                            {grid.useIndexes ? (
+                                <DataTableColumnHeader width="30px">
+                                    <span className={classes.header}>#</span>{" "}
+                                </DataTableColumnHeader>
+                            ) : (
+                                <DataTableColumnHeader fixed top="0"></DataTableColumnHeader>
+                            )}
+
+                            {grid.columns.map(column => (
+                                <DataTableColumnHeader
+                                    fixed
+                                    top="0"
+                                    key={`column-${column.name}`}
+                                    className={
+                                        column.name === "Source type for HWF - (Inputs & Outputs)"
+                                            ? classes.source
+                                            : classes.columnWidth
+                                    }
+                                >
+                                    <span>{column.cocName}</span>
+                                </DataTableColumnHeader>
+                            ))}
+                        </DataTableRow>
+                    </TableHead>
+
+                    <TableBody>
+                        {grid.rows.map((row, idx) => (
+                            <DataTableRow key={`policy-${row.name}`}>
+                                <DataTableCell className={classes.td}>
+                                    <span>{grid.useIndexes ? (idx + 1).toString() : row.name}</span>
+                                </DataTableCell>
+
+                                {row.items.map((item, idx) =>
+                                    item.dataElement ? (
+                                        <DataTableCell key={item.dataElement.id + item.dataElement.cocId}>
+                                            <DataElementItem
+                                                dataElement={item.dataElement}
+                                                dataFormInfo={dataFormInfo}
+                                                noComment={
+                                                    item.column.name !== "Source type for HWF - (Inputs & Outputs)"
+                                                }
+                                            />
+                                        </DataTableCell>
+                                    ) : (
+                                        <DataTableCell key={`cell-${idx}`}></DataTableCell>
+                                    )
+                                )}
+                            </DataTableRow>
+                        ))}
+                    </TableBody>
+                </DataTable>
+            </div>
         </DataTableSection>
     );
 };
@@ -111,6 +116,7 @@ const useStyles = makeStyles({
         },
     },
     tableHeader: { position: "sticky", top: 0, zIndex: 2 },
+    fixedHeaders: fixHeaderClasses.fixedHeaders,
 });
 
 export default React.memo(GridWithCombos);
