@@ -15,6 +15,7 @@ import { SectionWithTotals } from "../../../../src/domain/common/entities/DataFo
 import { DataElementItem } from "./DataElementItem";
 import { makeStyles } from "@material-ui/core";
 import DataTableSection from "./DataTableSection";
+import { fixHeaderClasses } from "./datatables/CustomDataTables";
 
 export interface GridWithTotalsProps {
     dataFormInfo: DataFormInfo;
@@ -34,115 +35,124 @@ const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
 
     return (
         <DataTableSection section={grid} dataFormInfo={dataFormInfo}>
-            <DataTable className={classes.table} layout="fixed" width="initial">
-                <TableHead className={classes.tableHeader}>
-                    <DataTableRow>
-                        <DataTableColumnHeader></DataTableColumnHeader>
-                        <DataTableColumnHeader></DataTableColumnHeader>
-                        {grid.parentColumns.map(column => {
-                            return (
-                                <DataTableColumnHeader
-                                    key={column.name}
-                                    className={classes.centerSpan}
-                                    colSpan={String(column.colSpan)}
-                                >
-                                    <span>{column.name}</span>
-                                </DataTableColumnHeader>
-                            );
-                        })}
-                        {section.id === "yzMn16Bp1wV" && <DataTableColumnHeader></DataTableColumnHeader>}
-                    </DataTableRow>
-                    <DataTableRow>
-                        {grid.useIndexes ? (
-                            <DataTableColumnHeader width="30px">
-                                <span className={classes.header}>#</span>{" "}
-                            </DataTableColumnHeader>
-                        ) : (
+            <div className={classes.fixedHeaders}>
+                <DataTable className={classes.table} layout="fixed" width="initial">
+                    <TableHead className={classes.tableHeader}>
+                        <DataTableRow>
                             <DataTableColumnHeader></DataTableColumnHeader>
-                        )}
-
-                        {fistSection ? (
-                            <DataTableColumnHeader className={classes.columnWidth} key={`column-Total`}>
-                                <span>Total</span>
-                            </DataTableColumnHeader>
-                        ) : null}
-
-                        {grid.columns.map(column =>
-                            column.deName && column.cocName ? (
-                                <DataTableColumnHeader key={`column-${column.name}`} className={classes.columnWidth}>
-                                    <span>{column.cocName}</span>
+                            <DataTableColumnHeader></DataTableColumnHeader>
+                            {grid.parentColumns.map(column => {
+                                return (
+                                    <DataTableColumnHeader
+                                        key={column.name}
+                                        className={classes.centerSpan}
+                                        colSpan={String(column.colSpan)}
+                                    >
+                                        <span>{column.name}</span>
+                                    </DataTableColumnHeader>
+                                );
+                            })}
+                            {section.id === "yzMn16Bp1wV" && <DataTableColumnHeader></DataTableColumnHeader>}
+                        </DataTableRow>
+                        <DataTableRow>
+                            {grid.useIndexes ? (
+                                <DataTableColumnHeader width="30px">
+                                    <span className={classes.header}>#</span>{" "}
                                 </DataTableColumnHeader>
                             ) : (
-                                <DataTableColumnHeader
-                                    key={`column-${column.name}`}
-                                    className={column.name === "Source Type" ? classes.source : classes.columnWidth}
-                                >
-                                    <span>{column.name}</span>
+                                <DataTableColumnHeader></DataTableColumnHeader>
+                            )}
+
+                            {fistSection ? (
+                                <DataTableColumnHeader className={classes.columnWidth} key={`column-Total`}>
+                                    <span>Total</span>
                                 </DataTableColumnHeader>
-                            )
-                        )}
-                    </DataTableRow>
-                </TableHead>
-
-                <TableBody>
-                    {grid.rows.map((row, idx) => (
-                        <DataTableRow key={`policy-${row.name}`}>
-                            <DataTableCell className={classes.td}>
-                                <p style={{ paddingLeft: row.includePadding ? `${row.includePadding * 10}px` : "0" }}>
-                                    {grid.useIndexes ? (idx + 1).toString() : row.name}
-                                </p>
-                            </DataTableCell>
-
-                            {fistSection && row.total ? (
-                                <DataTableCell key={row.total.id + row.total.cocId}>
-                                    <DataElementItem
-                                        dataElement={row.total}
-                                        dataFormInfo={dataFormInfo}
-                                        manualyDisabled={true}
-                                        noComment={true}
-                                    />
-                                </DataTableCell>
                             ) : null}
 
-                            {row.items.map((item, idx) => {
-                                if (item.column.name === "Source Type") {
-                                    return item.dataElement ? (
-                                        <DataTableCell key={item.dataElement.id + item.dataElement.cocId}>
-                                            <DataElementItem
-                                                dataElement={item.dataElement}
-                                                dataFormInfo={dataFormInfo}
-                                                noComment={false}
-                                                columnTotal={item.columnTotal}
-                                                rows={grid.rows}
-                                            />
-                                        </DataTableCell>
-                                    ) : (
-                                        <DataTableCell key={`cell-${idx}`}></DataTableCell>
-                                    );
-                                } else {
-                                    return item.dataElement ? (
-                                        <DataTableCell key={item.dataElement.id + item.dataElement.cocId}>
-                                            <DataElementItem
-                                                dataElement={item.dataElement}
-                                                dataFormInfo={dataFormInfo}
-                                                noComment={true}
-                                                manualyDisabled={item.disabled}
-                                                total={row.total}
-                                                columnTotal={item.columnTotal}
-                                                rowDataElements={row.rowDataElements}
-                                                columnDataElements={item.columnDataElements}
-                                                rowName={row.name}
-                                            />
-                                        </DataTableCell>
-                                    ) : (
-                                        <DataTableCell key={`cell-${idx}`}></DataTableCell>
-                                    );
-                                }
-                            })}
+                            {grid.columns.map(column =>
+                                column.deName && column.cocName ? (
+                                    <DataTableColumnHeader
+                                        key={`column-${column.name}`}
+                                        className={classes.columnWidth}
+                                    >
+                                        <span>{column.cocName}</span>
+                                    </DataTableColumnHeader>
+                                ) : (
+                                    <DataTableColumnHeader
+                                        key={`column-${column.name}`}
+                                        className={column.name === "Source Type" ? classes.source : classes.columnWidth}
+                                    >
+                                        <span>{column.name}</span>
+                                    </DataTableColumnHeader>
+                                )
+                            )}
                         </DataTableRow>
-                    ))}
-                </TableBody>
-            </DataTable>
+                    </TableHead>
+
+                    <TableBody>
+                        {grid.rows.map((row, idx) => (
+                            <DataTableRow key={`policy-${row.name}`}>
+                                <DataTableCell className={classes.td}>
+                                    <p
+                                        style={{
+                                            paddingLeft: row.includePadding ? `${row.includePadding * 10}px` : "0",
+                                        }}
+                                    >
+                                        {grid.useIndexes ? (idx + 1).toString() : row.name}
+                                    </p>
+                                </DataTableCell>
+
+                                {fistSection && row.total ? (
+                                    <DataTableCell key={row.total.id + row.total.cocId}>
+                                        <DataElementItem
+                                            dataElement={row.total}
+                                            dataFormInfo={dataFormInfo}
+                                            manualyDisabled={true}
+                                            noComment={true}
+                                        />
+                                    </DataTableCell>
+                                ) : null}
+
+                                {row.items.map((item, idx) => {
+                                    if (item.column.name === "Source Type") {
+                                        return item.dataElement ? (
+                                            <DataTableCell key={item.dataElement.id + item.dataElement.cocId}>
+                                                <DataElementItem
+                                                    dataElement={item.dataElement}
+                                                    dataFormInfo={dataFormInfo}
+                                                    noComment={false}
+                                                    columnTotal={item.columnTotal}
+                                                    rows={grid.rows}
+                                                />
+                                            </DataTableCell>
+                                        ) : (
+                                            <DataTableCell key={`cell-${idx}`}></DataTableCell>
+                                        );
+                                    } else {
+                                        return item.dataElement ? (
+                                            <DataTableCell key={item.dataElement.id + item.dataElement.cocId}>
+                                                <DataElementItem
+                                                    dataElement={item.dataElement}
+                                                    dataFormInfo={dataFormInfo}
+                                                    noComment={true}
+                                                    manualyDisabled={item.disabled}
+                                                    total={row.total}
+                                                    columnTotal={item.columnTotal}
+                                                    rowDataElements={row.rowDataElements}
+                                                    columnDataElements={item.columnDataElements}
+                                                    rowName={row.name}
+                                                />
+                                            </DataTableCell>
+                                        ) : (
+                                            <DataTableCell key={`cell-${idx}`}></DataTableCell>
+                                        );
+                                    }
+                                })}
+                            </DataTableRow>
+                        ))}
+                    </TableBody>
+                </DataTable>
+            </div>
         </DataTableSection>
     );
 };
@@ -160,6 +170,7 @@ const useStyles = makeStyles({
         },
     },
     tableHeader: { position: "sticky", top: 0, zIndex: 2 },
+    fixedHeaders: fixHeaderClasses.fixedHeaders,
 });
 
 export default React.memo(GridWithTotals);
