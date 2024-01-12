@@ -29,7 +29,12 @@ interface BaseSectionConfig {
     titleVariant: titleVariant;
     styles: SectionStyleAttrs;
     disableComments: boolean;
-    totals?: { dataElementsCodes: string[]; formula: string; texts?: { name: string } };
+    totals?: {
+        dataElementsCodes: string[];
+        formulas: Record<string, { formula: string }> | undefined;
+        formula: string;
+        texts?: { name: string };
+    };
 }
 
 interface BasicSectionConfig extends BaseSectionConfig {
@@ -79,14 +84,13 @@ const titleVariantType = oneOf([
     exactly("h6"),
 ]);
 
+const formulasType = Codec.interface({ formula: string });
+
 const totalsType = Codec.interface({
     dataElementsCodes: array(string),
-    formula: string,
-    texts: optional(
-        Codec.interface({
-            name: string,
-        })
-    ),
+    formulas: optional(record(string, formulasType)),
+    formula: optional(string),
+    texts: optional(Codec.interface({ name: string })),
 });
 
 const stylesType = Codec.interface({
@@ -461,6 +465,7 @@ export class Dhis2DataStoreDataForm {
                               dataElementsCodes: sectionConfig.totals?.dataElementsCodes || [],
                               formula: sectionConfig.totals?.formula || "",
                               texts: { name: getText({ code: sectionConfig.totals?.texts?.name || "" }) || "" },
+                              formulas: sectionConfig.totals?.formulas,
                           }
                         : undefined,
                 };

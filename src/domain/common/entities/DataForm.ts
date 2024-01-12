@@ -50,7 +50,11 @@ export interface SectionBase {
     titleVariant: titleVariant;
     styles: SectionStyle;
     disableComments: boolean;
-    totals?: { dataElementsCodes: string[]; formula: string };
+    totals?: {
+        dataElementsCodes: string[];
+        formula: string;
+        formulas: Record<string, { formula: string }> | undefined;
+    };
     showRowTotals: boolean;
 }
 

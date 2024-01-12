@@ -32,7 +32,7 @@ export const DataTableCellFormula: React.FC<DataTableCellFormulaProps> = props =
 
     return (
         <CustomDataTableCell backgroundColor={styles.totals.backgroundColor} key={total.columnName}>
-            <CustomInput value={totalValue} disabled readOnly />
+            <CustomInput value={!window.isNaN(Number(totalValue)) ? totalValue : ""} disabled readOnly />
         </CustomDataTableCell>
     );
 };

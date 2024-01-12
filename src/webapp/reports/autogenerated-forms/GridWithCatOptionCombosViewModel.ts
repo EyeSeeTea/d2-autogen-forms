@@ -35,6 +35,20 @@ interface Row {
 
 const separator = " - ";
 
+export function getFormulaByColumnName(section: Section, columnName: string): Maybe<string> {
+    if (!section.totals) return undefined;
+    if (!section.totals.formulas) return undefined;
+
+    const keys = Object.keys(section.totals.formulas);
+    const currentColumn = keys.find(key => key.toLowerCase() === columnName.toLowerCase());
+    if (!currentColumn) return section.totals.formula;
+
+    const columnFormula = section.totals.formulas[currentColumn];
+    if (!columnFormula) return section.totals.formula;
+
+    return columnFormula.formula;
+}
+
 export class GridWithCatOptionCombosViewModel {
     static get(section: Section): Grid {
         const subsections = _(section.dataElements)
@@ -110,7 +124,11 @@ export class GridWithCatOptionCombosViewModel {
                     .compact()
                     .value();
 
-                return { columnName: column.name, items: columnWithDataElements };
+                return {
+                    columnName: column.name,
+                    formula: getFormulaByColumnName(section, column.name) || section.totals?.formula || "",
+                    items: columnWithDataElements,
+                };
             })
             .value();
 
@@ -121,17 +139,11 @@ export class GridWithCatOptionCombosViewModel {
             rows: rows,
             toggle: section.toggle,
             texts: section.texts,
-            summary: section.totals
-                ? {
-                      cellName: section.texts?.totals || "",
-                      formula: section.totals.formula,
-                      cells: totals,
-                  }
-                : undefined,
+            summary: section.totals ? { cellName: section.texts?.totals || "", cells: totals } : undefined,
         };
     }
 }
 
-export type Summary = { cells: CellTotal[]; formula: string; cellName: string };
-export type CellTotal = { columnName: string; items: TotalItem[] };
+export type Summary = { cells: CellTotal[]; cellName: string };
+export type CellTotal = { formula: string; columnName: string; items: TotalItem[] };
 export type TotalItem = { dataElement: DataElement; categoryOptionCombo: CategoryOptionCombo };

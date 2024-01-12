@@ -163,7 +163,7 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                                             dataFormInfo={dataFormInfo}
                                             styles={props.section.styles}
                                             total={itemTotal}
-                                            formula={grid.summary?.formula || ""}
+                                            formula={itemTotal.formula}
                                         />
                                     );
                                 })}
