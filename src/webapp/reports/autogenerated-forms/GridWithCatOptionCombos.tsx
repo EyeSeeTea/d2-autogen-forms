@@ -57,17 +57,15 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                         ></CustomDataTableColumnHeader>
 
                         {grid.columns.map(column => (
-                            <>
-                                <CustomDataTableColumnHeader
-                                    backgroundColor={props.section.styles.columns.backgroundColor}
-                                    key={column.name}
-                                >
-                                    <div className={classes.header}>
-                                        <span>{column.name}</span>
-                                        <span className={classes.description}>{column.description}</span>
-                                    </div>
-                                </CustomDataTableColumnHeader>
-                            </>
+                            <CustomDataTableColumnHeader
+                                backgroundColor={props.section.styles.columns.backgroundColor}
+                                key={column.name}
+                            >
+                                <div className={classes.header}>
+                                    <span>{column.name}</span>
+                                    <span className={classes.description}>{column.description}</span>
+                                </div>
+                            </CustomDataTableColumnHeader>
                         ))}
                     </DataTableRow>
                 </TableHead>
@@ -138,15 +136,15 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
 const useStyles = makeStyles({
     header: {
         fontSize: "1.2em",
-        fontWeight: "bold" as const,
+        fontWeight: "bold",
         flexDirection: "column",
         textAlign: "center",
         display: "flex",
         padding: "4px",
     },
-    description: { fontWeight: "normal" as const, fontSize: "0.8em" },
+    description: { fontWeight: "normal", fontSize: "0.8em" },
     table: { borderWidth: "3px !important", minWidth: "100%" },
-    rowTitle: { fontSize: "1.2em", fontWeight: "bold" as const },
+    rowTitle: { fontSize: "1.2em", fontWeight: "bold" },
 });
 
 export default React.memo(GridWithCatOptionCombos);

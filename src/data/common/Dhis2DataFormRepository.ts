@@ -99,7 +99,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                     .value(),
                 titleVariant: config?.titleVariant,
                 styles: SectionStyle.buildSectionStyles(config?.styles),
-                categoryDescriptions: config?.categoryDescriptions,
+                columnsDescriptions: config?.columnsDescriptions,
             };
 
             if (!config) return { viewType: "table", ...base };

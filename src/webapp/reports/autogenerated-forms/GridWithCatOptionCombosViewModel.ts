@@ -76,7 +76,7 @@ export class GridWithCatOptionCombosViewModel {
         const columns: Column[] = _.orderBy(
             subsections.map(subsection => {
                 const cocCode = subsection.dataElements[0]?.cocCode || "";
-                const description = section.categoryDescriptions ? section.categoryDescriptions[cocCode] : undefined;
+                const description = section.columnsDescriptions ? section.columnsDescriptions[cocCode] : undefined;
                 const dataElements = rows.flatMap(row => {
                     return subsection.dataElements.filter(de => row.rows.map(r => r.name).includes(de.name));
                 });
