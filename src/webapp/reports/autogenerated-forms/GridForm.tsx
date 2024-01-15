@@ -13,6 +13,7 @@ import { DataElementItem } from "./DataElementItem";
 import { makeStyles } from "@material-ui/core";
 import DataTableSection from "./DataTableSection";
 import { CustomDataTableCell, CustomDataTableColumnHeader } from "./datatables/CustomDataTables";
+import { DataTableCellFormula } from "./datatables/DataTableCellFormula";
 
 /*
  * Convert data forms into table, using "-" as a separator. An example for section ITNs:
@@ -101,6 +102,27 @@ const GridForm: React.FC<GridFormProps> = props => {
                             )}
                         </DataTableRow>
                     ))}
+                    {grid.summary && (
+                        <DataTableRow key="total-custom-row">
+                            <CustomDataTableCell
+                                backgroundColor={props.section.styles.totals.backgroundColor}
+                                key="total-column-name"
+                            >
+                                {grid.summary.cellName}
+                            </CustomDataTableCell>
+                            {grid.summary.cells.map(itemTotal => {
+                                return (
+                                    <DataTableCellFormula
+                                        key={itemTotal.columnName}
+                                        dataFormInfo={dataFormInfo}
+                                        styles={props.section.styles}
+                                        total={itemTotal}
+                                        formula={itemTotal.formula}
+                                    />
+                                );
+                            })}
+                        </DataTableRow>
+                    )}
                 </TableBody>
             </DataTable>
         </DataTableSection>

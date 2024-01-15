@@ -42,7 +42,7 @@ const NumberWidget: React.FC<NumberWidgetProps> = props => {
     );
 };
 
-const CustomInput = styled.input`
+export const CustomInput = styled.input`
     width: 100%;
     box-sizing: border-box;
     font-size: 14px;

@@ -12,3 +12,10 @@ export const CustomDataTableColumnHeader = styled(DataTableColumnHeader)<{ backg
 export const CustomDataTableCell = styled(DataTableCell)<{ backgroundColor: string }>`
     background-color: ${props => props.backgroundColor} !important;
 `;
+
+export const fixHeaderClasses = {
+    fixedHeaders: {
+        overflow: "auto",
+        maxHeight: "100vh",
+    },
+};

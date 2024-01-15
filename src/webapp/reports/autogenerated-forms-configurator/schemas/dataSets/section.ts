@@ -22,6 +22,8 @@ export const sectionSchema = (constants: string[], deInSectionCodes: string[]) =
             properties: {
                 footer: textSchema(constants),
                 header: textSchema(constants),
+                rowTotals: textSchema(constants),
+                totals: textSchema(constants),
             },
         }),
         toggle: defaultObjectProperties({
@@ -52,8 +54,20 @@ export const sectionSchema = (constants: string[], deInSectionCodes: string[]) =
                 rows: defaultObjectProperties({ properties: styleBgColor }),
                 columns: defaultObjectProperties({ properties: styleBgColor }),
                 title: defaultObjectProperties({ properties: styleBgColor }),
+                totals: defaultObjectProperties({ properties: styleBgColor }),
             },
         }),
+        totals: {
+            type: "object",
+            properties: {
+                dataElementsCodes: { type: "array" },
+                formula: { type: "string" },
+                formulas: {
+                    type: "object",
+                    additionalProperties: { type: "object", properties: { formula: { type: "string" } } },
+                },
+            },
+        },
     };
 
     return {
