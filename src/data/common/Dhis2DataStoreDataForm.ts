@@ -94,8 +94,7 @@ const totalsType = Codec.interface({
     texts: optional(Codec.interface({ name: string })),
 });
 
-const 
-= Codec.interface({
+const stylesType = Codec.interface({
     title: optional(
         Codec.interface({
             backgroundColor: optional(string),
@@ -168,12 +167,8 @@ const DataStoreConfigCodec = Codec.interface({
                     })
                 ),
                 titleVariant: optional(titleVariantType),
-<<<<<<< feat/add-comments-to-cat-options
-                styles: optional(stylesVariantType),
                 columnsDescriptions: optional(record(string, oneOf([string, selector]))),
-
                 styles: optional(stylesType),
->>>>>>> development
                 tabs: optional(
                     Codec.interface({
                         active: exactly(true),
