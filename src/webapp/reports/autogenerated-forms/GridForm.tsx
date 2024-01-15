@@ -64,7 +64,10 @@ const GridForm: React.FC<GridFormProps> = props => {
                                 className={classes.columnWidth}
                                 key={`column-${column.name}`}
                             >
-                                <span>{column.name}</span>
+                                <div className={classes.header}>
+                                    <span>{column.name}</span>
+                                    <span className={classes.description}>{column.description}</span>
+                                </div>
                             </CustomDataTableColumnHeader>
                         ))}
                     </DataTableRow>
@@ -106,7 +109,15 @@ const GridForm: React.FC<GridFormProps> = props => {
 
 const useStyles = makeStyles({
     wrapper: { margin: 10 },
-    header: { fontSize: "1.4em", fontWeight: "bold" as const },
+    header: {
+        fontSize: "1.2em",
+        fontWeight: "bold",
+        flexDirection: "column",
+        textAlign: "center",
+        display: "flex",
+        padding: "4px",
+    },
+    description: { fontWeight: "normal", fontSize: "0.8em" },
     table: { borderWidth: "3px !important" },
     columnWidth: { minWidth: "14.25em !important" },
 });

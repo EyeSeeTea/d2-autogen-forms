@@ -60,7 +60,6 @@ const dataElementFields = {
         categoryOptionCombos: {
             id: true,
             name: true,
-            code: true,
             shortName: true,
             categoryOptions: true,
         },

@@ -44,7 +44,6 @@ export class GridWithCatOptionCombosViewModel {
                     name: `${coc.name} - ${_(dataElement.name).split(separator).last()}`,
                     fullName: dataElement.name,
                     cocName: coc.name,
-                    cocCode: coc.code,
                 }));
             })
             .filter(dataElement => dataElement.cocId !== undefined)
@@ -75,8 +74,9 @@ export class GridWithCatOptionCombosViewModel {
 
         const columns: Column[] = _.orderBy(
             subsections.map(subsection => {
-                const cocCode = subsection.dataElements[0]?.cocCode || "";
-                const description = section.columnsDescriptions ? section.columnsDescriptions[cocCode] : undefined;
+                const description = section.columnsDescriptions
+                    ? section.columnsDescriptions[subsection.name]
+                    : undefined;
                 const dataElements = rows.flatMap(row => {
                     return subsection.dataElements.filter(de => row.rows.map(r => r.name).includes(de.name));
                 });
