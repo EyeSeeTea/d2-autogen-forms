@@ -1,6 +1,8 @@
 import _ from "lodash";
 import { Section, Texts } from "../../../domain/common/entities/DataForm";
 import { DataElement } from "../../../domain/common/entities/DataElement";
+import { CategoryOptionCombo } from "../../../domain/common/entities/CategoryOptionCombo";
+import { Maybe } from "../../../utils/ts-utils";
 
 export interface Grid {
     id: string;
@@ -9,6 +11,7 @@ export interface Grid {
     rows: Row[];
     toggle: Section["toggle"];
     texts: Texts;
+    summary: Maybe<Summary>;
 }
 
 interface SubSectionGrid {
@@ -24,12 +27,27 @@ interface Column {
 interface Row {
     groupName: string;
     rows: {
+        dataElement: DataElement;
         deName: string;
         name: string;
     }[];
 }
 
 const separator = " - ";
+
+export function getFormulaByColumnName(section: Section, columnName: string): Maybe<string> {
+    if (!section.totals) return undefined;
+    if (!section.totals.formulas) return undefined;
+
+    const keys = Object.keys(section.totals.formulas);
+    const currentColumn = keys.find(key => key.toLowerCase() === columnName.toLowerCase());
+    if (!currentColumn) return section.totals.formula;
+
+    const columnFormula = section.totals.formulas[currentColumn];
+    if (!columnFormula) return section.totals.formula;
+
+    return columnFormula.formula;
+}
 
 export class GridWithCatOptionCombosViewModel {
     static get(section: Section): Grid {
@@ -66,7 +84,7 @@ export class GridWithCatOptionCombosViewModel {
             .map((group, groupName) => ({
                 groupName,
                 rows: group.map(de => {
-                    return { deName: _.last(de.name.split(separator)) ?? "", name: de.name };
+                    return { dataElement: de, deName: _.last(de.name.split(separator)) ?? "", name: de.name };
                 }),
             }))
             .value();
@@ -82,6 +100,38 @@ export class GridWithCatOptionCombosViewModel {
             [section.sortRowsBy ? section.sortRowsBy : ""]
         );
 
+        const totals = _(columns)
+            .map(column => {
+                const selectedDataElements = column.dataElements.filter(dataElement =>
+                    section.totals?.dataElementsCodes.includes(dataElement.code)
+                );
+
+                const columnWithDataElements = _(selectedDataElements)
+                    .map((dataElement): Maybe<TotalItem> => {
+                        if (dataElement.type !== "NUMBER") return undefined;
+                        const categoryOptionCombo = dataElement.categoryOptionCombos.find(
+                            coc => coc.name === column.name
+                        );
+                        if (!categoryOptionCombo) {
+                            console.warn(
+                                `Cannot found categoryOptionCombo in column ${column.name} for dataElement ${dataElement.code}`
+                            );
+                            return undefined;
+                        }
+
+                        return { dataElement, categoryOptionCombo };
+                    })
+                    .compact()
+                    .value();
+
+                return {
+                    columnName: column.name,
+                    formula: getFormulaByColumnName(section, column.name) || section.totals?.formula || "",
+                    items: columnWithDataElements,
+                };
+            })
+            .value();
+
         return {
             id: section.id,
             name: section.name,
@@ -89,6 +139,11 @@ export class GridWithCatOptionCombosViewModel {
             rows: rows,
             toggle: section.toggle,
             texts: section.texts,
+            summary: section.totals ? { cellName: section.texts?.totals || "", cells: totals } : undefined,
         };
     }
 }
+
+export type Summary = { cells: CellTotal[]; cellName: string };
+export type CellTotal = { formula: string; columnName: string; items: TotalItem[] };
+export type TotalItem = { dataElement: DataElement; categoryOptionCombo: CategoryOptionCombo };

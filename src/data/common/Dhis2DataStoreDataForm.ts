@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { D2Api } from "@eyeseetea/d2-api/2.34";
-import { boolean, Codec, exactly, GetType, oneOf, optional, record, string, number } from "purify-ts";
+import { boolean, Codec, exactly, GetType, oneOf, optional, record, string, number, array } from "purify-ts";
 import { Namespaces } from "./clients/storage/Namespaces";
 import { Maybe, NonPartial } from "../../utils/ts-utils";
 import { Code, getCode, Id, NamedRef } from "../../domain/common/entities/Base";
@@ -29,6 +29,12 @@ interface BaseSectionConfig {
     titleVariant: titleVariant;
     styles: SectionStyleAttrs;
     disableComments: boolean;
+    totals?: {
+        dataElementsCodes: string[];
+        formulas: Record<string, { formula: string }> | undefined;
+        formula: string;
+        texts?: { name: string };
+    };
 }
 
 interface BasicSectionConfig extends BaseSectionConfig {
@@ -78,7 +84,16 @@ const titleVariantType = oneOf([
     exactly("h6"),
 ]);
 
-const stylesVariantType = Codec.interface({
+const formulasType = Codec.interface({ formula: string });
+
+const totalsType = Codec.interface({
+    dataElementsCodes: array(string),
+    formulas: optional(record(string, formulasType)),
+    formula: optional(string),
+    texts: optional(Codec.interface({ name: string })),
+});
+
+const stylesType = Codec.interface({
     title: optional(
         Codec.interface({
             backgroundColor: optional(string),
@@ -97,11 +112,19 @@ const stylesVariantType = Codec.interface({
             color: optional(string),
         })
     ),
+    totals: optional(
+        Codec.interface({
+            backgroundColor: optional(string),
+            color: optional(string),
+        })
+    ),
 });
 
 const textsCodec = Codec.interface({
     header: optional(oneOf([string, selector])),
     footer: optional(oneOf([string, selector])),
+    rowTotals: optional(oneOf([string, selector])),
+    totals: optional(oneOf([string, selector])),
 });
 
 const DataStoreConfigCodec = Codec.interface({
@@ -143,7 +166,7 @@ const DataStoreConfigCodec = Codec.interface({
                     })
                 ),
                 titleVariant: optional(titleVariantType),
-                styles: optional(stylesVariantType),
+                styles: optional(stylesType),
                 tabs: optional(
                     Codec.interface({
                         active: exactly(true),
@@ -168,6 +191,7 @@ const DataStoreConfigCodec = Codec.interface({
                         )
                     )
                 ),
+                totals: optional(totalsType),
             })
         ),
     }),
@@ -337,6 +361,8 @@ export class Dhis2DataStoreDataForm {
             .flatMap(t => [
                 typeof t.header !== "string" ? t.header : undefined,
                 typeof t.footer !== "string" ? t.footer : undefined,
+                typeof t.rowTotals !== "string" ? t.rowTotals : undefined,
+                typeof t.totals !== "string" ? t.totals : undefined,
             ])
             .compact()
             .map(selector => selector.code)
@@ -423,6 +449,8 @@ export class Dhis2DataStoreDataForm {
                     texts: {
                         header: getText(sectionConfig?.texts?.header),
                         footer: getText(sectionConfig?.texts?.footer),
+                        rowTotals: getText(sectionConfig?.texts?.rowTotals),
+                        totals: getText(sectionConfig?.texts?.totals),
                     },
                     sortRowsBy: sectionConfig.sortRowsBy || "",
                     tabs: sectionConfig.tabs || { active: false },
@@ -432,6 +460,14 @@ export class Dhis2DataStoreDataForm {
                         sectionConfig.disableComments
                     ),
                     styles: SectionStyle.buildSectionStyles(sectionConfig.styles),
+                    totals: sectionConfig.totals
+                        ? {
+                              dataElementsCodes: sectionConfig.totals?.dataElementsCodes || [],
+                              formula: sectionConfig.totals?.formula || "",
+                              texts: { name: getText({ code: sectionConfig.totals?.texts?.name || "" }) || "" },
+                              formulas: sectionConfig.totals?.formulas,
+                          }
+                        : undefined,
                 };
 
                 const baseConfig = { ...base, viewType };
@@ -475,6 +511,8 @@ export class Dhis2DataStoreDataForm {
             texts: {
                 header: getText(dataSetConfig?.texts?.header),
                 footer: getText(dataSetConfig?.texts?.footer),
+                rowTotals: getText(dataSetConfig?.texts?.rowTotals),
+                totals: getText(dataSetConfig?.texts?.totals),
             },
             sections: sections,
         };

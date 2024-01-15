@@ -13,6 +13,9 @@ import {
 } from "@dhis2/ui";
 import { DataElementItem } from "./DataElementItem";
 import { CustomDataTableCell, CustomDataTableColumnHeader } from "./datatables/CustomDataTables";
+import { DataTableCellFormula } from "./datatables/DataTableCellFormula";
+import { DataTableCellRowTotal } from "./datatables/DataTableCellRowTotal";
+import { DataTableCellSummary } from "./datatables/DataTableCellSummary";
 
 export interface GridWithCatOptionCombosProps {
     dataFormInfo: DataFormInfo;
@@ -45,6 +48,8 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
     const classes = useStyles();
     const grid = React.useMemo(() => GridWithCatOptionCombosViewModel.get(props.section), [props.section]);
 
+    const showRowTotals = props.section.showRowTotals;
+
     return (
         <DataTableSection section={grid} dataFormInfo={dataFormInfo} sectionStyles={props.section.styles}>
             <DataTable className={classes.table} layout="fixed" width="initial">
@@ -64,6 +69,14 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                                 <span>{column.name}</span>
                             </CustomDataTableColumnHeader>
                         ))}
+                        {showRowTotals && (
+                            <CustomDataTableColumnHeader
+                                backgroundColor={props.section.styles.columns.backgroundColor}
+                                key="column-row-totals"
+                            >
+                                <div dangerouslySetInnerHTML={{ __html: grid.texts.rowTotals || "" }}></div>
+                            </CustomDataTableColumnHeader>
+                        )}
                     </DataTableRow>
                 </TableHead>
 
@@ -102,7 +115,6 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
 
                                 {grid.columns.map(column => {
                                     const dataElement = column.dataElements.find(de => de.name === row.name);
-
                                     return dataElement ? (
                                         <CustomDataTableCell
                                             backgroundColor={props.section.styles.rows.backgroundColor}
@@ -121,9 +133,50 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                                         ></CustomDataTableCell>
                                     );
                                 })}
+                                {showRowTotals && (
+                                    <DataTableCellRowTotal
+                                        dataFormInfo={dataFormInfo}
+                                        styles={props.section.styles}
+                                        dataElement={row.dataElement}
+                                    />
+                                )}
                             </DataTableRow>
                         ));
                     })}
+                    <DataTableRow key="totals">
+                        {grid.summary && (
+                            <>
+                                <CustomDataTableCell
+                                    backgroundColor={props.section.styles.totals.backgroundColor}
+                                    key="total-empty-column"
+                                ></CustomDataTableCell>
+                                <CustomDataTableCell
+                                    backgroundColor={props.section.styles.totals.backgroundColor}
+                                    key="total-column-name"
+                                >
+                                    {grid.summary.cellName}
+                                </CustomDataTableCell>
+                                {grid.summary.cells.map(itemTotal => {
+                                    return (
+                                        <DataTableCellFormula
+                                            key={itemTotal.columnName}
+                                            dataFormInfo={dataFormInfo}
+                                            styles={props.section.styles}
+                                            total={itemTotal}
+                                            formula={itemTotal.formula}
+                                        />
+                                    );
+                                })}
+                                {showRowTotals && (
+                                    <DataTableCellSummary
+                                        dataFormInfo={dataFormInfo}
+                                        styles={props.section.styles}
+                                        dataElements={grid.summary.cells}
+                                    />
+                                )}
+                            </>
+                        )}
+                    </DataTableRow>
                 </TableBody>
             </DataTable>
         </DataTableSection>
