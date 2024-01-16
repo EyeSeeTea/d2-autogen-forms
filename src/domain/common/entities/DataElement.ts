@@ -91,3 +91,7 @@ export type dataInputPeriodsType = Maybe<
         };
     }>
 >;
+
+export function getDataElementWithCode(dataElements: DataElement[], dataElementCode: string): DataElement | undefined {
+    return dataElements.find(dataElement => dataElement.code === dataElementCode);
+}
