@@ -22,6 +22,7 @@ interface SubSectionGrid {
 interface Column {
     name: string;
     dataElements: DataElement[];
+    description?: string;
 }
 
 interface Row {
@@ -91,11 +92,18 @@ export class GridWithCatOptionCombosViewModel {
 
         const columns: Column[] = _.orderBy(
             subsections.map(subsection => {
+                const description = section.columnsDescriptions
+                    ? section.columnsDescriptions[subsection.name]
+                    : undefined;
                 const dataElements = rows.flatMap(row => {
                     return subsection.dataElements.filter(de => row.rows.map(r => r.name).includes(de.name));
                 });
 
-                return { name: subsection.name, dataElements };
+                return {
+                    name: subsection.name,
+                    dataElements: dataElements,
+                    description: description,
+                };
             }),
             [section.sortRowsBy ? section.sortRowsBy : ""]
         );

@@ -24,6 +24,7 @@ interface SubSectionGrid {
 
 interface Column {
     name: string;
+    description?: string;
 }
 
 interface Row {
@@ -54,7 +55,11 @@ export class GridViewModel {
         const columns: Column[] = _(subsections)
             .flatMap(subsection => subsection.dataElements)
             .uniqBy(de => de.name)
-            .map(de => ({ name: de.name }))
+            .map(({ name }) => {
+                const description = section.columnsDescriptions ? section.columnsDescriptions[name] : undefined;
+
+                return { name: name, description: description };
+            })
             .value();
 
         const rows = subsections.map(subsection => {
