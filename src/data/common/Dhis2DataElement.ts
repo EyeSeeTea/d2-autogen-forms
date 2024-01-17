@@ -55,6 +55,7 @@ const dataElementFields = {
                 id: true,
                 name: true,
                 shortName: true,
+                formName: true,
             },
         },
         categoryOptionCombos: {
@@ -87,7 +88,7 @@ function makeCocOrderArray(namesArray: string[][]): string[] {
 function getCocOrdered(categoryCombo: D2CategoryCombo, config: Dhis2DataStoreDataForm) {
     const allCategoryOptions = categoryCombo.categories
         .map(c => {
-            return c.categoryOptions.flatMap(co => ({ name: co.name, shortName: co.shortName }));
+            return c.categoryOptions.flatMap(co => ({ name: co.name, shortName: co.shortName, formName: co.formName }));
         })
         .flatMap(categoriesOptions => {
             return categoriesOptions.map(co => co);
@@ -103,7 +104,7 @@ function getCocOrdered(categoryCombo: D2CategoryCombo, config: Dhis2DataStoreDat
             return coc.name === cocOrdered;
         });
         const categoryOption = allCategoryOptions.find(c => c.name === match?.name);
-        return match ? { ...match, shortName: categoryOption?.shortName } : [];
+        return match ? { ...match, shortName: categoryOption?.shortName, formName: categoryOption?.formName } : [];
     });
 
     const keyName = config.categoryCombinationsConfig[categoryCombo.code]?.viewType || "name";
