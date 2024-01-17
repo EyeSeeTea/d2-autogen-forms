@@ -65,14 +65,14 @@ export class GridWithPeriodsViewModel {
     }
 
     private static buildTabs(dataElements: DataElement[]): PeriodTab[] {
-        const allCategoryOptions = _(dataElements)
+        const uniqueCategoryOptions = _(dataElements)
             .flatMap(dataElement => dataElement.categoryCombos.categoryOptionCombos)
             .uniqBy(categoryOptionCombo => categoryOptionCombo.id)
             .value();
 
-        if (this.hasOnlyDefaultCategoryOption(allCategoryOptions)) return [];
+        if (this.hasOnlyDefaultCategoryOption(uniqueCategoryOptions)) return [];
 
-        return _(allCategoryOptions)
+        return _(uniqueCategoryOptions)
             .map(categoryOption => {
                 return { id: categoryOption.id, name: categoryOption.name };
             })
