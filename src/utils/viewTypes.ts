@@ -22,7 +22,7 @@ export function getColumnDescription(
     return compiled({ [dataElementCode]: value });
 }
 
-function getValueFromDataElement(dataFormInfo: DataFormInfo, dataElement: DataElement | undefined): Maybe<string> {
+function getValueFromDataElement(dataFormInfo: DataFormInfo, dataElement: Maybe<DataElement>): Maybe<string> {
     if (!dataElement) return undefined;
 
     const { categoryOptionComboId, orgUnitId, period } = dataFormInfo;
