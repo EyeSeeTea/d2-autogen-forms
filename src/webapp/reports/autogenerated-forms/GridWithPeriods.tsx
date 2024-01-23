@@ -16,6 +16,7 @@ import { makeStyles } from "@material-ui/core";
 import { DataElement } from "../../../domain/common/entities/DataElement";
 import DataTableSection from "./DataTableSection";
 import { Html } from "./Html";
+import { DataTableCellRowName } from "./datatables/DataTableCellRowName";
 
 /*
  * Convert data forms into table, using "-" as a separator. An example for section ITNs:
@@ -110,7 +111,10 @@ const GridWithPeriods: React.FC<GridWithPeriodsProps> = props => {
                                         )}
 
                                         <DataTableCell>
-                                            <span>{row2.dataElement.name}</span>
+                                            <DataTableCellRowName
+                                                html={row2.dataElement.htmlText}
+                                                name={row2.dataElement.name}
+                                            />
                                         </DataTableCell>
 
                                         <DataTableDataElementCell
