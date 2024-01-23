@@ -23,7 +23,10 @@ export type SectionConfig =
 
 interface BaseSectionConfig {
     texts: Texts;
-    toggle: { type: "none" } | { type: "dataElement"; code: Code };
+    toggle:
+        | { type: "none" }
+        | { type: "dataElement"; code: Code }
+        | { type: "dataElementExternal"; code: Code; condition: string | undefined };
     tabs: { active: true; order: number } | { active: false };
     sortRowsBy: string;
     titleVariant: titleVariant;
@@ -162,8 +165,9 @@ const DataStoreConfigCodec = Codec.interface({
                 texts: optional(textsCodec),
                 toggle: optional(
                     Codec.interface({
-                        type: exactly("dataElement"),
+                        type: oneOf([exactly("dataElement"), exactly("dataElementExternal")]),
                         code: string,
+                        condition: optional(string),
                     })
                 ),
                 titleVariant: optional(titleVariantType),
