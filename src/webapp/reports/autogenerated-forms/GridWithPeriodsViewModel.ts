@@ -1,14 +1,20 @@
 import _ from "lodash";
 import { Section, SectionWithPeriods, Texts } from "../../../domain/common/entities/DataForm";
 import { DataElement } from "../../../domain/common/entities/DataElement";
+import { Id } from "../../../domain/common/entities/Base";
+import {
+    CategoryOptionCombo,
+    DEFAULT_CATEGORY_OPTION_COMBO_CODE,
+} from "../../../domain/common/entities/CategoryOptionCombo";
 
-interface GridWithPeriodsI {
+export interface GridWithPeriodsI {
     id: string;
     name: string;
     rows: Row[];
     periods: string[];
     toggle: Section["toggle"];
     texts: Texts;
+    tabs: PeriodTab[];
 }
 
 interface DataElementRow {
@@ -54,6 +60,29 @@ export class GridWithPeriodsViewModel {
             periods: section.periods,
             toggle: section.toggle,
             texts: section.texts,
+            tabs: this.buildTabs(section.dataElements),
         };
     }
+
+    private static buildTabs(dataElements: DataElement[]): PeriodTab[] {
+        const uniqueCategoryOptions = _(dataElements)
+            .flatMap(dataElement => dataElement.categoryCombos.categoryOptionCombos)
+            .uniqBy(categoryOptionCombo => categoryOptionCombo.id)
+            .value();
+
+        if (this.hasOnlyDefaultCategoryOption(uniqueCategoryOptions)) return [];
+
+        return _(uniqueCategoryOptions)
+            .map(categoryOption => {
+                return { id: categoryOption.id, name: categoryOption.name };
+            })
+            .uniqBy(periodTab => periodTab.id)
+            .value();
+    }
+
+    private static hasOnlyDefaultCategoryOption(allCategoryOptions: CategoryOptionCombo[]): boolean {
+        return allCategoryOptions.filter(c => c.name === DEFAULT_CATEGORY_OPTION_COMBO_CODE).length === 1;
+    }
 }
+
+type PeriodTab = { id: Id | undefined; name: string };

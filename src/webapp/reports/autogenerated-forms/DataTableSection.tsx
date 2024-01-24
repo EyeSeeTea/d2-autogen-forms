@@ -49,7 +49,7 @@ const DataTableSection: React.FC<DataTableProps> = React.memo(props => {
                 <h3 className={titleStyle}>{section.name}</h3>
             </div>
 
-            <Html content={section.texts.header} />
+            <Html backgroundColor={sectionStyles?.title.backgroundColor} content={section.texts.header} />
 
             {toggle.type === "dataElement" && (
                 <div className={classes.toggleWrapper}>

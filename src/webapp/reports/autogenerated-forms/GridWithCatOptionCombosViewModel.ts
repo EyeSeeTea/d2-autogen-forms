@@ -54,15 +54,16 @@ export class GridWithCatOptionCombosViewModel {
     static get(section: Section): Grid {
         const subsections = _(section.dataElements)
             .flatMap(dataElement => {
-                const categoryOptionCombos = dataElement.categoryOptionCombos;
-
-                return categoryOptionCombos.map(coc => ({
-                    ...dataElement,
-                    cocId: dataElement.categoryOptionCombos.find(c => c.name === coc.name)?.id,
-                    name: `${coc.name} - ${_(dataElement.name).split(separator).last()}`,
-                    fullName: dataElement.name,
-                    cocName: coc.name,
-                }));
+                const categoryOptionCombos = dataElement.categoryCombos.categoryOptionCombos;
+                return categoryOptionCombos.map(coc => {
+                    return {
+                        ...dataElement,
+                        cocId: dataElement.categoryCombos.categoryOptionCombos.find(c => c.name === coc.name)?.id,
+                        name: `${coc.name} - ${_(dataElement.name).split(separator).last()}`,
+                        fullName: dataElement.name,
+                        cocName: coc.name,
+                    };
+                });
             })
             .filter(dataElement => dataElement.cocId !== undefined)
             .groupBy(dataElement => dataElement.cocName)
@@ -117,7 +118,7 @@ export class GridWithCatOptionCombosViewModel {
                 const columnWithDataElements = _(selectedDataElements)
                     .map((dataElement): Maybe<TotalItem> => {
                         if (dataElement.type !== "NUMBER") return undefined;
-                        const categoryOptionCombo = dataElement.categoryOptionCombos.find(
+                        const categoryOptionCombo = dataElement.categoryCombos.categoryOptionCombos.find(
                             coc => coc.name === column.name
                         );
                         if (!categoryOptionCombo) {

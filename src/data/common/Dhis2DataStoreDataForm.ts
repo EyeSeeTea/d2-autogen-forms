@@ -133,7 +133,7 @@ const textsCodec = Codec.interface({
 
 const DataStoreConfigCodec = Codec.interface({
     categoryCombinations: sectionConfig({
-        viewType: optional(oneOf([exactly("name"), exactly("shortName")])),
+        viewType: optional(oneOf([exactly("name"), exactly("shortName"), exactly("formName")])),
     }),
     dataElements: sectionConfig({
         disableComments: optional(boolean),
@@ -258,7 +258,7 @@ interface DataSet {
 }
 
 type CategoryCombinationConfig = {
-    viewType: "name" | "shortName" | undefined;
+    viewType: "name" | "shortName" | "formName" | undefined;
 };
 
 export class Dhis2DataStoreDataForm {
