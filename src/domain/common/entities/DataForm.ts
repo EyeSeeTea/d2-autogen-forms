@@ -52,7 +52,10 @@ export interface SectionBase {
     id: Id;
     name: string;
     dataElements: DataElement[];
-    toggle: { type: "none" } | { type: "dataElement"; dataElement: DataElement };
+    toggle:
+        | { type: "none" }
+        | { type: "dataElement"; dataElement: DataElement }
+        | { type: "dataElementExternal"; dataElement: DataElement; condition: string };
     texts: Texts;
     tabs: { active: boolean; order?: number };
     sortRowsBy: string;

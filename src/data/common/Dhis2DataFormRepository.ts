@@ -107,7 +107,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
 
             if (!config) return { viewType: "table", ...base };
 
-            const base2 = getSectionBaseWithToggle(config, base);
+            const base2 = getSectionBaseWithToggle(config, base, dataElements);
 
             switch (config.viewType) {
                 case "grid-with-periods":
@@ -175,7 +175,11 @@ function getMetadataQuery(options: { dataSetId: Id }) {
     } as const;
 }
 
-function getSectionBaseWithToggle(config: SectionConfig, base: SectionBase): SectionBase {
+function getSectionBaseWithToggle(
+    config: SectionConfig,
+    base: SectionBase,
+    dataElements: Record<string, DataElement>
+): SectionBase {
     const { toggle } = config;
 
     switch (toggle.type) {
@@ -187,6 +191,24 @@ function getSectionBaseWithToggle(config: SectionConfig, base: SectionBase): Sec
                     ...base,
                     toggle: { type: "dataElement", dataElement: toggleDataElement },
                     dataElements: _.without(base.dataElements, toggleDataElement),
+                };
+            } else {
+                console.warn(`Data element for toggle not found in section: ${toggle.code}`);
+                return base;
+            }
+        }
+        case "dataElementExternal": {
+            const allDataElements = _(dataElements).map(value => value);
+            const toggleDataElement = allDataElements.find(de => de.code === toggle.code);
+
+            if (toggleDataElement) {
+                return {
+                    ...base,
+                    toggle: {
+                        type: "dataElementExternal",
+                        dataElement: toggleDataElement,
+                        condition: toggle.condition || "",
+                    },
                 };
             } else {
                 console.warn(`Data element for toggle not found in section: ${toggle.code}`);

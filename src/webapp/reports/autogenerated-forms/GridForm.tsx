@@ -37,8 +37,8 @@ export interface GridFormProps {
 }
 
 const GridForm: React.FC<GridFormProps> = props => {
-    const { dataFormInfo } = props;
-    const grid = React.useMemo(() => GridViewModel.get(props.section), [props.section]);
+    const { dataFormInfo, section } = props;
+    const grid = React.useMemo(() => GridViewModel.get(section, dataFormInfo), [section, dataFormInfo]);
     const classes = useStyles();
 
     return (
@@ -68,7 +68,10 @@ const GridForm: React.FC<GridFormProps> = props => {
                             >
                                 <div className={classes.header}>
                                     <span>{column.name}</span>
-                                    <span className={classes.description}>{column.description}</span>
+                                    <span
+                                        className={classes.description}
+                                        dangerouslySetInnerHTML={{ __html: column.description || "" }}
+                                    ></span>
                                 </div>
                             </CustomDataTableColumnHeader>
                         ))}

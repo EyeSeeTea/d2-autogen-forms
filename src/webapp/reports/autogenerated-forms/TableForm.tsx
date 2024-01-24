@@ -23,7 +23,7 @@ export interface TableFormProps {
 
 const TableForm: React.FC<TableFormProps> = React.memo(props => {
     const { dataFormInfo } = props;
-    const section = React.useMemo(() => GridViewModel.get(props.section), [props.section]);
+    const section = React.useMemo(() => GridViewModel.get(props.section, dataFormInfo), [props.section, dataFormInfo]);
     const classes = useStyles();
 
     return (

@@ -1,9 +1,11 @@
 import React from "react";
 
-type HtmlProps = { content?: string };
+type HtmlProps = { backgroundColor?: string; content?: string };
 
 export const Html: React.FC<HtmlProps> = props => {
     if (!props.content) return null;
 
-    return <div dangerouslySetInnerHTML={{ __html: props.content }} />;
+    return (
+        <div style={{ backgroundColor: props.backgroundColor }} dangerouslySetInnerHTML={{ __html: props.content }} />
+    );
 };

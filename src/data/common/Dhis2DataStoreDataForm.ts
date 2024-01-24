@@ -23,7 +23,10 @@ export type SectionConfig =
 
 interface BaseSectionConfig {
     texts: Texts;
-    toggle: { type: "none" } | { type: "dataElement"; code: Code };
+    toggle:
+        | { type: "none" }
+        | { type: "dataElement"; code: Code }
+        | { type: "dataElementExternal"; code: Code; condition: string | undefined };
     tabs: { active: true; order: number } | { active: false };
     sortRowsBy: string;
     titleVariant: titleVariant;
@@ -131,7 +134,7 @@ const textsCodec = Codec.interface({
 
 const DataStoreConfigCodec = Codec.interface({
     categoryCombinations: sectionConfig({
-        viewType: optional(oneOf([exactly("name"), exactly("shortName")])),
+        viewType: optional(oneOf([exactly("name"), exactly("shortName"), exactly("formName")])),
     }),
     dataElements: sectionConfig({
         disableComments: optional(boolean),
@@ -164,8 +167,9 @@ const DataStoreConfigCodec = Codec.interface({
                 texts: optional(textsCodec),
                 toggle: optional(
                     Codec.interface({
-                        type: exactly("dataElement"),
+                        type: oneOf([exactly("dataElement"), exactly("dataElementExternal")]),
                         code: string,
+                        condition: optional(string),
                     })
                 ),
                 titleVariant: optional(titleVariantType),
@@ -257,7 +261,7 @@ interface DataSet {
 }
 
 type CategoryCombinationConfig = {
-    viewType: "name" | "shortName" | undefined;
+    viewType: "name" | "shortName" | "formName" | undefined;
 };
 
 export class Dhis2DataStoreDataForm {
