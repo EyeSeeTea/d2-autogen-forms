@@ -132,7 +132,7 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                                             <DataElementItem
                                                 dataElement={dataElement}
                                                 dataFormInfo={dataFormInfo}
-                                                noComment
+                                                noComment={dataElement.disabledComments}
                                             />
                                         </CustomDataTableCell>
                                     ) : (
