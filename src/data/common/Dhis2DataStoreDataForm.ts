@@ -382,6 +382,7 @@ export class Dhis2DataStoreDataForm {
                 typeof t.footer !== "string" ? t.footer : undefined,
                 typeof t.rowTotals !== "string" ? t.rowTotals : undefined,
                 typeof t.totals !== "string" ? t.totals : undefined,
+                typeof t.name !== "string" ? t.name : undefined,
             ])
             .compact()
             .map(selector => selector.code)
