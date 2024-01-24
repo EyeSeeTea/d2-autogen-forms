@@ -44,9 +44,12 @@ An example for section ITNs:
  **/
 
 const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props => {
-    const { dataFormInfo } = props;
+    const { dataFormInfo, section } = props;
     const classes = useStyles();
-    const grid = React.useMemo(() => GridWithCatOptionCombosViewModel.get(props.section), [props.section]);
+    const grid = React.useMemo(
+        () => GridWithCatOptionCombosViewModel.get(section, dataFormInfo),
+        [section, dataFormInfo]
+    );
 
     const showRowTotals = props.section.showRowTotals;
 
@@ -68,7 +71,10 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                             >
                                 <div className={classes.header}>
                                     <span>{column.name}</span>
-                                    <span className={classes.description}>{column.description}</span>
+                                    <span
+                                        className={classes.description}
+                                        dangerouslySetInnerHTML={{ __html: column.description || "" }}
+                                    ></span>
                                 </div>
                             </CustomDataTableColumnHeader>
                         ))}
