@@ -56,7 +56,7 @@ function isInputExpired(
     }
 }
 
-function getValueAccordingType(dataValue: DataValue) {
+export function getValueAccordingType(dataValue: DataValue) {
     switch (dataValue.type) {
         case "BOOLEAN":
             return dataValue.value;
