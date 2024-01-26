@@ -1,13 +1,16 @@
 import _ from "lodash";
+
 import { getId, Id } from "../../domain/common/entities/Base";
 import { DataElement } from "../../domain/common/entities/DataElement";
+import { Rule, RuleType } from "../../domain/common/entities/DataElementRule";
 import { DataForm, defaultTexts, Section, SectionBase } from "../../domain/common/entities/DataForm";
 import { Period } from "../../domain/common/entities/DataValue";
 import { SectionStyle } from "../../domain/common/entities/SectionStyle";
 import { DataFormRepository } from "../../domain/common/repositories/DataFormRepository";
 import { D2Api, MetadataPick } from "../../types/d2-api";
+import { Maybe } from "../../utils/ts-utils";
 import { Dhis2DataElement } from "./Dhis2DataElement";
-import { Dhis2DataStoreDataForm, SectionConfig, SubNational } from "./Dhis2DataStoreDataForm";
+import { DataElementConfig, Dhis2DataStoreDataForm, SectionConfig, SubNational } from "./Dhis2DataStoreDataForm";
 
 export class Dhis2DataFormRepository implements DataFormRepository {
     constructor(private api: D2Api) {}
@@ -64,7 +67,14 @@ export class Dhis2DataFormRepository implements DataFormRepository {
             .map(getId)
             .value();
 
+        const allDataElements = _(dataSet.sections)
+            .flatMap(section => section.dataElements)
+            .map(dataElement => ({ id: dataElement.id, code: dataElement.code }))
+            .value();
+
         const dataElements = await new Dhis2DataElement(this.api).get(dataElementIds);
+
+        const dataElementsRulesConfig = this.buildRulesFromConfig(dataElements, configDataForm, allDataElements);
 
         return dataSet.sections.map((section): Section => {
             const config = dataSetConfig.sections[section.id];
@@ -82,6 +92,13 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                         const dataElement = dataElements[dataElementRef.id];
                         if (!dataElement) return undefined;
                         const deConfig = configDataForm.dataElementsConfig[dataElementRef.code];
+
+                        const dataElementRules = this.getDataElementRules(
+                            dataElementsRulesConfig,
+                            dataElement,
+                            dataElements
+                        );
+
                         const deHideConfig = deConfig?.selection?.visible;
                         const d2DataElement = deHideConfig
                             ? section.dataElements.find(de => de.code === deHideConfig.dataElementCode)
@@ -93,6 +110,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                             related: deRelated
                                 ? { dataElement: deRelated, value: deHideConfig?.value || "" }
                                 : undefined,
+                            rules: dataElementRules,
                         };
                     })
                     .compact()
@@ -129,6 +147,88 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                     return { viewType: config.viewType, ...base2 };
             }
         });
+    }
+
+    private getDataElementRules(
+        dataElementsRulesConfig: RuleConfig[],
+        dataElement: DataElement,
+        dataElements: Record<string, DataElement>
+    ): Rule[] {
+        const rulesConfigByDataElement = dataElementsRulesConfig.filter(
+            dataElementActionConfig => dataElementActionConfig.id === dataElement.id
+        );
+        const dataElementRules = _(rulesConfigByDataElement)
+            .map((dataElementRuleConfig): Maybe<Rule> => {
+                const relatedDataElement = dataElements[dataElementRuleConfig.relatedDataElementId];
+                if (!relatedDataElement) return undefined;
+                return { type: dataElementRuleConfig.type, relatedDataElement, condition: dataElementRuleConfig.value };
+            })
+            .compact()
+            .value();
+        return dataElementRules;
+    }
+
+    private buildRulesFromConfig(
+        dataElements: Record<string, DataElement>,
+        configDataForm: Dhis2DataStoreDataForm,
+        allDataElements: BasicDataElement[]
+    ) {
+        return _(dataElements)
+            .flatMap((dataElement): Maybe<RuleConfig[]> => {
+                const dataElementConfig = configDataForm.dataElementsConfig[dataElement.code];
+                if (!dataElementConfig) return undefined;
+                if (!dataElementConfig.rules) return undefined;
+
+                const disabledDataElements = this.getRuleConfigByType(
+                    "disabled",
+                    dataElementConfig,
+                    allDataElements,
+                    dataElement
+                );
+                const visibleDataElements = this.getRuleConfigByType(
+                    "visible",
+                    dataElementConfig,
+                    allDataElements,
+                    dataElement
+                );
+
+                return [...disabledDataElements, ...visibleDataElements];
+            })
+            .compact()
+            .value();
+    }
+
+    private getRuleConfigByType(
+        ruleType: RuleType,
+        dataElementConfig: DataElementConfig,
+        allDataElements: BasicDataElement[],
+        dataElement: DataElement
+    ) {
+        const currentConfig = this.getCurrentConfigByRuleType(dataElementConfig, ruleType);
+        return _(currentConfig?.dataElements)
+            .map((dataElementCode): Maybe<RuleConfig> => {
+                const dataElementDetails = allDataElements.find(de => de.code === dataElementCode);
+                if (!dataElementDetails) return undefined;
+                return {
+                    type: ruleType,
+                    id: dataElementDetails.id,
+                    relatedDataElementId: dataElement.id,
+                    value: dataElementConfig.rules?.disabled.condition || "",
+                };
+            })
+            .compact()
+            .value();
+    }
+
+    private getCurrentConfigByRuleType(dataElementConfigRules: DataElementConfig, type: RuleType) {
+        switch (type) {
+            case "disabled":
+                return dataElementConfigRules.rules?.disabled;
+            case "visible":
+                return dataElementConfigRules.rules?.visible;
+            default:
+                return undefined;
+        }
     }
 }
 
@@ -218,3 +318,6 @@ function getSectionBaseWithToggle(
             return base;
     }
 }
+
+type RuleConfig = { type: RuleType; id: string; relatedDataElementId: string; value: string };
+type BasicDataElement = Pick<DataElement, "id" | "code">;

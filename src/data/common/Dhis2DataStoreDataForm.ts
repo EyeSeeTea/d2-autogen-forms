@@ -9,6 +9,7 @@ import { Period } from "../../domain/common/entities/DataValue";
 import { ColumnDescription, Texts } from "../../domain/common/entities/DataForm";
 import { titleVariant } from "../../domain/common/entities/TitleVariant";
 import { SectionStyle, SectionStyleAttrs } from "../../domain/common/entities/SectionStyle";
+import { DataElementRuleOptions } from "../../domain/common/entities/DataElementRule";
 
 interface DataSetConfig {
     texts: Texts;
@@ -131,12 +132,20 @@ const textsCodec = Codec.interface({
     totals: optional(oneOf([string, selector])),
 });
 
+const dataElementRuleCodec = optional(
+    record(
+        oneOf([exactly("visible"), exactly("disabled")]),
+        Codec.interface({ dataElements: array(string), condition: string })
+    )
+);
+
 const DataStoreConfigCodec = Codec.interface({
     categoryCombinations: sectionConfig({
         viewType: optional(oneOf([exactly("name"), exactly("shortName"), exactly("formName")])),
     }),
     dataElements: sectionConfig({
         disableComments: optional(boolean),
+        rules: dataElementRuleCodec,
         selection: optional(
             Codec.interface({
                 optionSet: optional(selector),
@@ -203,7 +212,8 @@ const DataStoreConfigCodec = Codec.interface({
     }),
 });
 
-interface DataElementConfig {
+export interface DataElementConfig {
+    rules?: DataElementRuleOptions;
     disableComments?: boolean;
     selection?: {
         optionSet?: OptionSet;
@@ -550,6 +560,7 @@ export class Dhis2DataStoreDataForm {
 
                 const dataElementConfig: DataElementConfig = {
                     disableComments: config.disableComments,
+                    rules: config.rules,
                     selection: {
                         isMultiple: optionSetSelector?.isMultiple || false,
                         optionSet: optionSet,
