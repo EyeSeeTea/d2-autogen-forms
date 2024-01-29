@@ -31,6 +31,7 @@ interface Column {
 
 interface Row {
     name: string;
+    htmlText: string;
     items: Array<{ column: Column; dataElement: DataElement | undefined; disableComments: boolean }>;
 }
 
@@ -76,7 +77,14 @@ export class GridViewModel {
                 };
             });
 
-            return { name: subsection.name, items: items };
+            const itemsWithHtmlText = _(items)
+                .map(item => item.dataElement?.htmlText)
+                .compact()
+                .value();
+
+            const firstItemWithHtmlText = _(itemsWithHtmlText).first() || "";
+
+            return { name: subsection.name, htmlText: firstItemWithHtmlText, items: items };
         });
 
         const useIndexes =

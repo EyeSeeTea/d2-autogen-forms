@@ -142,6 +142,7 @@ function getDataElement(dataElement: D2DataElement, config: Dhis2DataStoreDataFo
         options: optionSet
             ? { isMultiple: Boolean(deConfig?.selection?.isMultiple), items: optionSet.options }
             : undefined,
+        htmlText: undefined,
     };
 
     switch (valueType) {

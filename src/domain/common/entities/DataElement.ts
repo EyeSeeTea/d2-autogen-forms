@@ -25,6 +25,7 @@ interface DataElementBase {
     orgUnit?: Id;
     related: { dataElement: DataElement; value: string } | undefined;
     disabledComments?: boolean;
+    htmlText: Maybe<string>;
 }
 
 export interface DataElementBoolean extends DataElementBase {

@@ -14,6 +14,7 @@ import {
 import { makeStyles } from "@material-ui/core";
 import DataTableSection from "./DataTableSection";
 import { CustomDataTableCell, CustomDataTableColumnHeader } from "./datatables/CustomDataTables";
+import { DataTableCellRowName } from "./datatables/DataTableCellRowName";
 
 export interface TableFormProps {
     dataFormInfo: DataFormInfo;
@@ -43,7 +44,7 @@ const TableForm: React.FC<TableFormProps> = React.memo(props => {
                     {props.section.dataElements.map(dataElement => (
                         <DataTableRow key={dataElement.id}>
                             <CustomDataTableCell backgroundColor={props.section.styles.rows.backgroundColor}>
-                                <span>{dataElement.name}</span>
+                                <DataTableCellRowName html={dataElement.htmlText} name={dataElement.name} />
                             </CustomDataTableCell>
 
                             <CustomDataTableCell
