@@ -132,6 +132,7 @@ const PeriodTable: React.FC<PeriodTableProps> = props => {
                                     <DataTableCell colSpan={grid.periods.length.toString()}>
                                         <DataTableCell>
                                             <DataElementItem
+                                                noComment={row.dataElement.disabledComments}
                                                 dataElement={{ ...row.dataElement, cocId: categoryOptionComboId }}
                                                 dataFormInfo={dataFormInfo}
                                             />
@@ -190,6 +191,7 @@ const DataTableDataElementCell: React.FC<DataTableDataElementCellProps> = props 
             {periods.map(period => (
                 <DataTableCell key={[dataElement.id, period].join("-")}>
                     <DataElementItem
+                        noComment={dataElement.disabledComments}
                         dataElement={{ ...dataElement, cocId: cocId }}
                         dataFormInfo={dataFormInfo}
                         period={period}
