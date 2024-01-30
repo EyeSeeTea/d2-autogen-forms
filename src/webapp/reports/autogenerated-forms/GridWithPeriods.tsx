@@ -16,6 +16,7 @@ import { makeStyles, Tabs, Tab } from "@material-ui/core";
 import { DataElement } from "../../../domain/common/entities/DataElement";
 import DataTableSection from "./DataTableSection";
 import { Html } from "./Html";
+import { DataTableCellRowName } from "./datatables/DataTableCellRowName";
 
 /*
  * Convert data forms into table, using "-" as a separator. An example for section ITNs:
@@ -131,6 +132,7 @@ const PeriodTable: React.FC<PeriodTableProps> = props => {
                                     <DataTableCell colSpan={grid.periods.length.toString()}>
                                         <DataTableCell>
                                             <DataElementItem
+                                                noComment={row.dataElement.disabledComments}
                                                 dataElement={{ ...row.dataElement, cocId: categoryOptionComboId }}
                                                 dataFormInfo={dataFormInfo}
                                             />
@@ -152,7 +154,10 @@ const PeriodTable: React.FC<PeriodTableProps> = props => {
                                     )}
 
                                     <DataTableCell>
-                                        <span>{row2.dataElement.name}</span>
+                                        <DataTableCellRowName
+                                            html={row2.dataElement.htmlText}
+                                            name={row2.dataElement.name}
+                                        />
                                     </DataTableCell>
 
                                     <DataTableDataElementCell
@@ -186,6 +191,7 @@ const DataTableDataElementCell: React.FC<DataTableDataElementCellProps> = props 
             {periods.map(period => (
                 <DataTableCell key={[dataElement.id, period].join("-")}>
                     <DataElementItem
+                        noComment={dataElement.disabledComments}
                         dataElement={{ ...dataElement, cocId: cocId }}
                         dataFormInfo={dataFormInfo}
                         period={period}

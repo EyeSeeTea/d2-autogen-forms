@@ -27,6 +27,7 @@ interface DataElementBase {
     related: { dataElement: DataElement; value: string } | undefined;
     disabledComments?: boolean;
     rules: Rule[];
+    htmlText: Maybe<string>;
 }
 
 export interface DataElementBoolean extends DataElementBase {

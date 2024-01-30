@@ -130,6 +130,7 @@ const textsCodec = Codec.interface({
     footer: optional(oneOf([string, selector])),
     rowTotals: optional(oneOf([string, selector])),
     totals: optional(oneOf([string, selector])),
+    name: optional(oneOf([string, selector])),
 });
 
 const dataElementRuleCodec = optional(
@@ -159,6 +160,7 @@ const DataStoreConfigCodec = Codec.interface({
                 ),
             })
         ),
+        texts: optional(textsCodec),
     }),
 
     dataSets: sectionConfig({
@@ -215,6 +217,7 @@ const DataStoreConfigCodec = Codec.interface({
 export interface DataElementConfig {
     rules?: DataElementRuleOptions;
     disableComments?: boolean;
+    texts?: Texts;
     selection?: {
         optionSet?: OptionSet;
         isMultiple: boolean;
@@ -359,6 +362,12 @@ export class Dhis2DataStoreDataForm {
     }
 
     private static async getConstants(api: D2Api, storeConfig: DataFormStoreConfig["custom"]): Promise<Constant[]> {
+        const dataElementTexts = _(storeConfig.dataElements)
+            .values()
+            .map(x => (x.texts ? x.texts : undefined))
+            .compact()
+            .value();
+
         const dataSetTexts = _(storeConfig.dataSets)
             .values()
             .map(x => (x.texts ? x.texts : undefined))
@@ -380,13 +389,14 @@ export class Dhis2DataStoreDataForm {
             .compact()
             .value();
 
-        const codes = _(dataSetTexts)
+        const codes = _([...dataSetTexts, ...dataElementTexts])
             .concat(sectionTexts)
             .flatMap(t => [
                 typeof t.header !== "string" ? t.header : undefined,
                 typeof t.footer !== "string" ? t.footer : undefined,
                 typeof t.rowTotals !== "string" ? t.rowTotals : undefined,
                 typeof t.totals !== "string" ? t.totals : undefined,
+                typeof t.name !== "string" ? t.name : undefined,
             ])
             .compact()
             .map(selector => selector.code)
@@ -476,6 +486,7 @@ export class Dhis2DataStoreDataForm {
                         footer: getText(sectionConfig?.texts?.footer),
                         rowTotals: getText(sectionConfig?.texts?.rowTotals),
                         totals: getText(sectionConfig?.texts?.totals),
+                        name: getText(sectionConfig?.texts?.name),
                     },
                     sortRowsBy: sectionConfig.sortRowsBy || "",
                     tabs: sectionConfig.tabs || { active: false },
@@ -539,12 +550,14 @@ export class Dhis2DataStoreDataForm {
                 footer: getText(dataSetConfig?.texts?.footer),
                 rowTotals: getText(dataSetConfig?.texts?.rowTotals),
                 totals: getText(dataSetConfig?.texts?.totals),
+                name: getText(dataSetConfig?.texts?.name),
             },
             sections: sections,
         };
     }
 
     private getDataElementsConfig(): Record<Code, DataElementConfig> {
+        const constantsByCode = _.keyBy(this.config.constants, getCode);
         return _(this.config.custom.dataElements)
             .toPairs()
             .map(([code, config]) => {
@@ -561,6 +574,13 @@ export class Dhis2DataStoreDataForm {
                 const dataElementConfig: DataElementConfig = {
                     disableComments: config.disableComments,
                     rules: config.rules,
+                    texts: {
+                        header: this.getTextFromConstants(config.texts?.header, constantsByCode),
+                        footer: this.getTextFromConstants(config.texts?.footer, constantsByCode),
+                        rowTotals: this.getTextFromConstants(config.texts?.rowTotals, constantsByCode),
+                        totals: this.getTextFromConstants(config.texts?.totals, constantsByCode),
+                        name: this.getTextFromConstants(config.texts?.name, constantsByCode),
+                    },
                     selection: {
                         isMultiple: optionSetSelector?.isMultiple || false,
                         optionSet: optionSet,
@@ -577,6 +597,13 @@ export class Dhis2DataStoreDataForm {
             .compact()
             .fromPairs()
             .value();
+    }
+
+    private getTextFromConstants(
+        value: string | { code: string } | undefined,
+        constantsByCode: Record<string, Constant>
+    ): Maybe<string> {
+        return typeof value === "string" ? value : value ? constantsByCode[value.code]?.displayDescription : "";
     }
 }
 

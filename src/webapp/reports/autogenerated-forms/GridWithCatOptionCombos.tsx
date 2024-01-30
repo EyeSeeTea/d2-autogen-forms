@@ -16,6 +16,7 @@ import { CustomDataTableCell, CustomDataTableColumnHeader } from "./datatables/C
 import { DataTableCellFormula } from "./datatables/DataTableCellFormula";
 import { DataTableCellRowTotal } from "./datatables/DataTableCellRowTotal";
 import { DataTableCellSummary } from "./datatables/DataTableCellSummary";
+import { DataTableCellRowName } from "./datatables/DataTableCellRowName";
 
 export interface GridWithCatOptionCombosProps {
     dataFormInfo: DataFormInfo;
@@ -110,7 +111,7 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                                         <CustomDataTableCell
                                             backgroundColor={props.section.styles.rows.backgroundColor}
                                         >
-                                            <span>{row.deName}</span>
+                                            <DataTableCellRowName html={row.dataElement.htmlText} name={row.deName} />
                                         </CustomDataTableCell>
                                     </>
                                 ) : (
@@ -132,7 +133,7 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                                             <DataElementItem
                                                 dataElement={dataElement}
                                                 dataFormInfo={dataFormInfo}
-                                                noComment
+                                                noComment={dataElement.disabledComments}
                                             />
                                         </CustomDataTableCell>
                                     ) : (

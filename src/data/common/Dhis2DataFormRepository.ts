@@ -111,6 +111,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                                 ? { dataElement: deRelated, value: deHideConfig?.value || "" }
                                 : undefined,
                             rules: dataElementRules,
+                            htmlText: deConfig?.texts?.name,
                         };
                     })
                     .compact()
