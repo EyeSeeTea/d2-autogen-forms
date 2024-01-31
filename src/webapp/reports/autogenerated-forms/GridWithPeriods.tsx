@@ -124,6 +124,12 @@ const GridWithPeriods: React.FC<GridWithPeriodsProps> = props => {
                                                                 <DataTableCell>
                                                                     <span>{row3.dataElement.name}</span>
                                                                 </DataTableCell>
+
+                                                                <DataTableDataElementCell
+                                                                    periods={grid.periods}
+                                                                    dataElement={row3.dataElement}
+                                                                    dataFormInfo={dataFormInfo}
+                                                                />
                                                             </>
                                                         )}
                                                     </DataTableRow>
