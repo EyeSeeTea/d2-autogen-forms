@@ -1,6 +1,6 @@
 import React from "react";
 import { DataValue } from "../../../domain/common/entities/DataValue";
-import { assertUnreachable } from "../../../utils/ts-utils";
+import { assertUnreachable, Maybe } from "../../../utils/ts-utils";
 import BooleanDropdownWidget from "./widgets/BooleanDropdownWidget";
 import NumberWidget from "./widgets/NumberWidget";
 import TextWidget from "./widgets/TextWidget";
@@ -17,6 +17,7 @@ import YearPickerWidget from "./widgets/YearPickerWidget";
 import SourceTypeWidget from "./widgets/SourceTypeWidget";
 import { Row } from "./GridWithTotalsViewModel";
 import PercentageWidget from "./widgets/PercentageWidget";
+import { Rule } from "../../../domain/common/entities/DataElementRule";
 
 export interface DataEntryItemProps {
     dataElement: DataElement;
@@ -75,7 +76,11 @@ export function getValueAccordingType(dataValue: DataValue) {
     }
 }
 
-function isVisible(dataElement: DataElement, dataFormInfo: DataFormInfo, period: string | undefined) {
+function checkVisibleRelatedDataElement(
+    dataElement: DataElement,
+    dataFormInfo: DataFormInfo,
+    period: string | undefined
+) {
     if (dataElement.related) {
         const dataValue = dataFormInfo.data.values.getOrEmpty(dataElement.related.dataElement, {
             orgUnitId: dataElement.orgUnit || dataFormInfo.orgUnitId,
@@ -86,6 +91,30 @@ function isVisible(dataElement: DataElement, dataFormInfo: DataFormInfo, period:
         return dataElement.related.value === String(value);
     }
     return true;
+}
+
+type UseApplyRulesProps = { dataElement: DataElement; dataFormInfo: DataFormInfo; period: Maybe<string> };
+
+type UseApplyRulesReturn = { isVisible: boolean; isDisabled: boolean };
+
+function getValueAndVerifyCondition(rule: Rule, dataFormInfo: DataFormInfo, period: Maybe<string>) {
+    const dataValue = dataFormInfo.data.values.getOrEmpty(rule.relatedDataElement, {
+        orgUnitId: rule.relatedDataElement.orgUnit || dataFormInfo.orgUnitId,
+        period: period || dataFormInfo.period,
+        categoryOptionComboId: dataFormInfo.categoryOptionComboId,
+    });
+    const value = getValueAccordingType(dataValue);
+    return rule.condition === String(value);
+}
+
+function useApplyRules(props: UseApplyRulesProps): UseApplyRulesReturn {
+    const { dataElement, dataFormInfo, period } = props;
+    if (dataElement.rules.length === 0) return { isDisabled: false, isVisible: true };
+    const visibleRule = dataElement.rules.find(rule => rule.type === "visible");
+    const disabledRule = dataElement.rules.find(rule => rule.type === "disabled");
+    const visibleValue = visibleRule ? getValueAndVerifyCondition(visibleRule, dataFormInfo, period) : true;
+    const disabledValue = disabledRule ? getValueAndVerifyCondition(disabledRule, dataFormInfo, period) : false;
+    return { isDisabled: disabledValue, isVisible: visibleValue };
 }
 
 const DataEntryItem: React.FC<DataEntryItemProps> = props => {
@@ -106,7 +135,10 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
     const SingleComponent = config?.widget === "radio" ? SingleSelectRadioWidget : SingleSelectWidget;
     const BooleanComponent = config?.widget === "dropdown" ? BooleanDropdownWidget : YesNoWidget;
 
-    if (!isVisible(dataElement, dataFormInfo, props.period)) {
+    const { isVisible, isDisabled } = useApplyRules({ dataElement, dataFormInfo, period: props.period });
+
+    if (!isVisible) return null;
+    if (!checkVisibleRelatedDataElement(dataElement, dataFormInfo, props.period)) {
         return null;
     }
 
@@ -197,7 +229,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                         dataValue={dataValue}
                         onValueChange={notifyChange}
                         state={state}
-                        disabled={disabled} //
+                        disabled={isDisabled || disabled}
                     />
                 );
             case "NUMBER":
@@ -206,7 +238,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                         dataValue={dataValue}
                         onValueChange={notifyChange}
                         state={state}
-                        disabled={disabled} //
+                        disabled={isDisabled || disabled}
                     />
                 );
             case "PERCENTAGE":
@@ -215,7 +247,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                         dataValue={dataValue}
                         onValueChange={notifyChange}
                         state={state}
-                        disabled={disabled} //
+                        disabled={isDisabled || disabled}
                     />
                 );
             case "TEXT":
@@ -224,7 +256,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                         dataValue={dataValue}
                         onValueChange={notifyChange}
                         state={state}
-                        disabled={disabled} //
+                        disabled={isDisabled || disabled}
                     />
                 );
             case "FILE":
@@ -233,7 +265,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                         dataValue={dataValue}
                         onValueChange={notifyChange}
                         state={state}
-                        disabled={disabled} //
+                        disabled={isDisabled || disabled}
                     />
                 );
             case "DATE":
@@ -242,7 +274,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                         dataValue={dataValue}
                         onValueChange={notifyChange}
                         state={state}
-                        disabled={disabled} //
+                        disabled={isDisabled || disabled}
                     />
                 );
 

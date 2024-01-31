@@ -14,12 +14,7 @@ export class Dhis2DataElement {
 
         const resList = await promiseMap(idGroups, idsGroup =>
             this.api.metadata
-                .get({
-                    dataElements: {
-                        fields: dataElementFields,
-                        filter: { id: { in: idsGroup } },
-                    },
-                })
+                .get({ dataElements: { fields: dataElementFields, filter: { id: { in: idsGroup } } } })
                 .getData()
         );
 
@@ -142,6 +137,7 @@ function getDataElement(dataElement: D2DataElement, config: Dhis2DataStoreDataFo
         options: optionSet
             ? { isMultiple: Boolean(deConfig?.selection?.isMultiple), items: optionSet.options }
             : undefined,
+        rules: [],
         htmlText: undefined,
     };
 
