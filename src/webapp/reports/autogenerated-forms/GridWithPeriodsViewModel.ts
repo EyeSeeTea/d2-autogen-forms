@@ -16,14 +16,20 @@ interface DataElementRow {
     dataElement: DataElement;
 }
 
-type Row = { type: "group"; name: string; rows: DataElementRow[] } | DataElementRow;
+interface DataElementGroup {
+    type: "group";
+    name: string;
+    rows: DataElementRow[] | Row[];
+}
 
-const separator = " - ";
+type Row = DataElementGroup | DataElementRow;
+
+const separator = /:| - /;
 
 export class GridWithPeriodsViewModel {
     static get(section: SectionWithPeriods): GridWithPeriodsI {
         const rows = _(section.dataElements)
-            .groupBy(dataElement => _(dataElement.name).split(separator).initial().join(separator))
+            .groupBy(dataElement => processName(dataElement.name)[0])
             .toPairs()
             .map(([groupName, dataElementsForGroup]): Row => {
                 if (dataElementsForGroup.length === 1) {
@@ -32,16 +38,20 @@ export class GridWithPeriodsViewModel {
                         dataElement: dataElementsForGroup[0],
                     };
                 } else {
+                    const subGroups: DataElement[] = _.map(dataElementsForGroup, dataElement => {
+                        const [_group, ...subGroups] = processName(dataElement.name);
+                        const name = subGroups.join(" - ");
+
+                        return {
+                            ...dataElement,
+                            name: name,
+                        };
+                    });
+
                     return {
+                        name: processName(groupName)[0] ?? "",
                         type: "group",
-                        name: groupName,
-                        rows: dataElementsForGroup.map(de => ({
-                            type: "dataElement",
-                            dataElement: {
-                                ...de,
-                                name: _(de.name).split(separator).last() || "-",
-                            },
-                        })),
+                        rows: getSubGroupRows(subGroups),
                     };
                 }
             })
@@ -56,4 +66,41 @@ export class GridWithPeriodsViewModel {
             texts: section.texts,
         };
     }
+}
+
+const processName = (name: string): string[] => {
+    const [group, ...subGroups] = name.split(separator).map(part => part.trim());
+
+    return [group ?? "", subGroups.join(":")];
+};
+
+function getSubGroupRows(dataElements: DataElement[]): Row[] {
+    const rows: Row[] = _(dataElements)
+        .groupBy(dataElement => processName(dataElement.name)[0])
+        .toPairs()
+        .map(([groupName, dataElementsForGroup]): Row => {
+            if (dataElementsForGroup.length === 1) {
+                return {
+                    dataElement: dataElementsForGroup[0],
+                    type: dataElementsForGroup[0].type === "FILE" ? "dataElementFile" : "dataElement",
+                };
+            } else {
+                const rows: DataElementRow[] = _.map(dataElementsForGroup, item => ({
+                    dataElement: {
+                        ...item,
+                        name: _.last(processName(item.name)) ?? "",
+                    },
+                    type: item.type === "FILE" ? "dataElementFile" : "dataElement",
+                }));
+
+                return {
+                    name: groupName,
+                    type: "group",
+                    rows: rows,
+                };
+            }
+        })
+        .value();
+
+    return rows;
 }

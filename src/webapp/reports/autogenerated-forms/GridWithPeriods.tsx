@@ -51,7 +51,7 @@ const GridWithPeriods: React.FC<GridWithPeriodsProps> = props => {
             <DataTable className={classes.table}>
                 <TableHead>
                     <DataTableRow>
-                        <DataTableColumnHeader width="400px" colSpan="2"></DataTableColumnHeader>
+                        <DataTableColumnHeader width="400px" colSpan="3"></DataTableColumnHeader>
 
                         {grid.periods.map(period => (
                             <DataTableColumnHeader key={period}>
@@ -67,7 +67,7 @@ const GridWithPeriods: React.FC<GridWithPeriodsProps> = props => {
                             case "dataElement":
                                 return (
                                     <DataTableRow key={row.dataElement.id}>
-                                        <DataTableCell colSpan="2">
+                                        <DataTableCell colSpan="3">
                                             <span>{row.dataElement.name}</span>
                                         </DataTableCell>
 
@@ -81,7 +81,7 @@ const GridWithPeriods: React.FC<GridWithPeriodsProps> = props => {
                             case "dataElementFile":
                                 return (
                                     <DataTableRow key={row.dataElement.id}>
-                                        <DataTableCell colSpan="2">
+                                        <DataTableCell colSpan="3">
                                             <span>{row.dataElement.name}</span>
                                             <Html content={row.dataElement.description}></Html>
                                         </DataTableCell>
@@ -98,28 +98,52 @@ const GridWithPeriods: React.FC<GridWithPeriodsProps> = props => {
                                 );
 
                             case "group":
-                                return row.rows.map((row2, idx) => (
-                                    <DataTableRow key={`${idx}-${row.name}`}>
-                                        {idx === 0 && (
-                                            <DataTableCell
-                                                rowSpan={row.rows.length.toString()}
-                                                className={classes.rowTitle}
-                                            >
-                                                <span>{row.name}</span>
-                                            </DataTableCell>
-                                        )}
+                                return row.rows.map((row2, idx) => {
+                                    return (
+                                        <DataTableRow key={`${idx}-${row.name}`}>
+                                            {idx === 0 && (
+                                                <DataTableCell
+                                                    rowSpan={row.rows.length.toString()}
+                                                    className={classes.rowTitle}
+                                                >
+                                                    <span>{row.name}</span>
+                                                </DataTableCell>
+                                            )}
 
-                                        <DataTableCell>
-                                            <span>{row2.dataElement.name}</span>
-                                        </DataTableCell>
+                                            {row2.type === "group" ? (
+                                                row2.rows.map((row3, idx) => (
+                                                    <DataTableRow key={`${idx}-${row2.name}`}>
+                                                        {idx === 0 && (
+                                                            <DataTableCell rowSpan={row2.rows.length.toString()}>
+                                                                <span>{row2.name}</span>
+                                                            </DataTableCell>
+                                                        )}
 
-                                        <DataTableDataElementCell
-                                            periods={grid.periods}
-                                            dataElement={row2.dataElement}
-                                            dataFormInfo={dataFormInfo}
-                                        />
-                                    </DataTableRow>
-                                ));
+                                                        {row3.type !== "group" && (
+                                                            <>
+                                                                <DataTableCell>
+                                                                    <span>{row3.dataElement.name}</span>
+                                                                </DataTableCell>
+                                                            </>
+                                                        )}
+                                                    </DataTableRow>
+                                                ))
+                                            ) : (
+                                                <>
+                                                    <DataTableCell colSpan="2">
+                                                        <span>{row2.dataElement.name}</span>
+                                                    </DataTableCell>
+
+                                                    <DataTableDataElementCell
+                                                        periods={grid.periods}
+                                                        dataElement={row2.dataElement}
+                                                        dataFormInfo={dataFormInfo}
+                                                    />
+                                                </>
+                                            )}
+                                        </DataTableRow>
+                                    );
+                                });
                         }
                     })}
                 </TableBody>
