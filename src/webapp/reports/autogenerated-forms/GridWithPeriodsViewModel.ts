@@ -1,6 +1,7 @@
 import _ from "lodash";
 import { Section, SectionWithPeriods, Texts } from "../../../domain/common/entities/DataForm";
 import { DataElement } from "../../../domain/common/entities/DataElement";
+import { Maybe } from "../../../utils/ts-utils";
 
 interface GridWithPeriodsI {
     id: string;
@@ -19,17 +20,30 @@ interface DataElementRow {
 interface DataElementGroup {
     type: "group";
     name: string;
-    rows: DataElementRow[] | Row[];
+    rows: DataElementRow[];
 }
 
-type Row = DataElementGroup | DataElementRow;
+export interface DataElementSubGroupRow {
+    groupName: Maybe<string>;
+    subGroup: Maybe<string>;
+    colSpan: string;
+    dataElement: DataElement;
+    dataElementsPerSubGroup: number;
+}
+
+interface DataElementSubGroup {
+    type: "subGroup";
+    rows: DataElementSubGroupRow[];
+}
+
+type Row = DataElementGroup | DataElementSubGroup | DataElementRow;
 
 const separator = /:| - /;
 
 export class GridWithPeriodsViewModel {
     static get(section: SectionWithPeriods): GridWithPeriodsI {
         const rows = _(section.dataElements)
-            .groupBy(dataElement => processName(dataElement.name)[0])
+            .groupBy(dataElement => _(dataElement.name).split(separator).first())
             .toPairs()
             .map(([groupName, dataElementsForGroup]): Row => {
                 if (dataElementsForGroup.length === 1) {
@@ -38,21 +52,60 @@ export class GridWithPeriodsViewModel {
                         dataElement: dataElementsForGroup[0],
                     };
                 } else {
-                    const subGroups: DataElement[] = _.map(dataElementsForGroup, dataElement => {
-                        const [_group, ...subGroups] = processName(dataElement.name);
-                        const name = subGroups.join(" - ");
+                    const hasSubGroup = _(dataElementsForGroup).some(dataElement => isRowSubGroup(dataElement));
 
+                    if (hasSubGroup) {
+                        const subGroups = _(dataElementsForGroup)
+                            .map((dataElement, index) => {
+                                const hasSubGroup = isRowSubGroup(dataElement);
+                                if (!hasSubGroup) return undefined;
+
+                                return {
+                                    position: index,
+                                    subGroup: _(dataElement.name).split(separator).nth(1),
+                                };
+                            })
+                            .compact()
+                            .value();
+
+                        const uniqueSubGroups = _(subGroups)
+                            .uniqBy(subGroup => subGroup.subGroup)
+                            .value();
+
+                        const rows = dataElementsForGroup.map((dataElement, index) => {
+                            const hasSubGroup = isRowSubGroup(dataElement);
+                            const subGroup = uniqueSubGroups.find(subGroup => subGroup.position === index);
+
+                            return {
+                                groupName: index === 0 ? groupName : undefined,
+                                subGroup: subGroup ? subGroup.subGroup : undefined,
+                                colSpan: hasSubGroup ? "0" : "2",
+                                dataElement: {
+                                    ...dataElement,
+                                    name: _(dataElement.name).split(separator).last() || "-",
+                                },
+                                dataElementsPerSubGroup: subGroup
+                                    ? subGroups.filter(sg => sg.subGroup === subGroup.subGroup).length
+                                    : 0,
+                            };
+                        });
+
+                        return { type: "subGroup", rows: rows };
+                    } else {
                         return {
-                            ...dataElement,
-                            name: name,
+                            type: "group",
+                            name: groupName,
+                            rows: dataElementsForGroup.map(dataElement => {
+                                return {
+                                    type: "dataElement",
+                                    dataElement: {
+                                        ...dataElement,
+                                        name: _(dataElement.name).split(separator).last() || "-",
+                                    },
+                                };
+                            }),
                         };
-                    });
-
-                    return {
-                        name: processName(groupName)[0] ?? "",
-                        type: "group",
-                        rows: getSubGroupRows(subGroups),
-                    };
+                    }
                 }
             })
             .value();
@@ -68,39 +121,6 @@ export class GridWithPeriodsViewModel {
     }
 }
 
-const processName = (name: string): string[] => {
-    const [group, ...subGroups] = name.split(separator).map(part => part.trim());
-
-    return [group ?? "", subGroups.join(":")];
-};
-
-function getSubGroupRows(dataElements: DataElement[]): Row[] {
-    const rows: Row[] = _(dataElements)
-        .groupBy(dataElement => processName(dataElement.name)[0])
-        .toPairs()
-        .map(([groupName, dataElementsForGroup]): Row => {
-            if (dataElementsForGroup.length === 1) {
-                return {
-                    dataElement: dataElementsForGroup[0],
-                    type: dataElementsForGroup[0].type === "FILE" ? "dataElementFile" : "dataElement",
-                };
-            } else {
-                const rows: DataElementRow[] = _.map(dataElementsForGroup, item => ({
-                    dataElement: {
-                        ...item,
-                        name: _.last(processName(item.name)) ?? "",
-                    },
-                    type: item.type === "FILE" ? "dataElementFile" : "dataElement",
-                }));
-
-                return {
-                    name: groupName,
-                    type: "group",
-                    rows: rows,
-                };
-            }
-        })
-        .value();
-
-    return rows;
+function isRowSubGroup(dataElement: DataElement): boolean {
+    return dataElement.name.split(separator).length === 3;
 }
