@@ -1,7 +1,11 @@
 import React from "react";
 
-export const Html: React.FC<{ content: string | undefined }> = props => {
+type HtmlProps = { backgroundColor?: string; content?: string };
+
+export const Html: React.FC<HtmlProps> = props => {
     if (!props.content) return null;
 
-    return <div style={{ margin: 20 }} dangerouslySetInnerHTML={{ __html: props.content }} />;
+    return (
+        <div style={{ backgroundColor: props.backgroundColor }} dangerouslySetInnerHTML={{ __html: props.content }} />
+    );
 };

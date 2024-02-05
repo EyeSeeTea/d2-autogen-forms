@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import _ from "lodash";
 import { NamedRef } from "../../domain/common/entities/Base";
+import { DEFAULT_CATEGORY_OPTION_COMBO_CODE } from "../../domain/common/entities/CategoryOptionCombo";
 import { Config, translationKeys, Translations } from "../../domain/common/entities/Config";
 import { ReportType } from "../../domain/common/entities/ReportType";
 import { User } from "../../domain/common/entities/User";
@@ -66,7 +67,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
         const metadata$ = this.api.metadata.get({
             categoryOptionCombos: {
                 fields: { id: true, code: true },
-                filter: { code: { eq: "default" } },
+                filter: { code: { eq: DEFAULT_CATEGORY_OPTION_COMBO_CODE } },
             },
         });
 

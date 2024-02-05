@@ -24,6 +24,7 @@ export const sectionSchema = (constants: string[], deInSectionCodes: string[]) =
                 header: textSchema(constants),
                 rowTotals: textSchema(constants),
                 totals: textSchema(constants),
+                name: textSchema(constants),
             },
         }),
         toggle: defaultObjectProperties({

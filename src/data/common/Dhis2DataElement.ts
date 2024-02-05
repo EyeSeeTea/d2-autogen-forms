@@ -14,12 +14,7 @@ export class Dhis2DataElement {
 
         const resList = await promiseMap(idGroups, idsGroup =>
             this.api.metadata
-                .get({
-                    dataElements: {
-                        fields: dataElementFields,
-                        filter: { id: { in: idsGroup } },
-                    },
-                })
+                .get({ dataElements: { fields: dataElementFields, filter: { id: { in: idsGroup } } } })
                 .getData()
         );
 
@@ -55,6 +50,7 @@ const dataElementFields = {
                 id: true,
                 name: true,
                 shortName: true,
+                formName: true,
             },
         },
         categoryOptionCombos: {
@@ -87,7 +83,7 @@ function makeCocOrderArray(namesArray: string[][]): string[] {
 function getCocOrdered(categoryCombo: D2CategoryCombo, config: Dhis2DataStoreDataForm) {
     const allCategoryOptions = categoryCombo.categories
         .map(c => {
-            return c.categoryOptions.flatMap(co => ({ name: co.name, shortName: co.shortName }));
+            return c.categoryOptions.flatMap(co => ({ name: co.name, shortName: co.shortName, formName: co.formName }));
         })
         .flatMap(categoriesOptions => {
             return categoriesOptions.map(co => co);
@@ -103,7 +99,7 @@ function getCocOrdered(categoryCombo: D2CategoryCombo, config: Dhis2DataStoreDat
             return coc.name === cocOrdered;
         });
         const categoryOption = allCategoryOptions.find(c => c.name === match?.name);
-        return match ? { ...match, shortName: categoryOption?.shortName } : [];
+        return match ? { ...match, shortName: categoryOption?.shortName, formName: categoryOption?.formName } : [];
     });
 
     const keyName = config.categoryCombinationsConfig[categoryCombo.code]?.viewType || "name";
@@ -141,6 +137,8 @@ function getDataElement(dataElement: D2DataElement, config: Dhis2DataStoreDataFo
         options: optionSet
             ? { isMultiple: Boolean(deConfig?.selection?.isMultiple), items: optionSet.options }
             : undefined,
+        rules: [],
+        htmlText: undefined,
     };
 
     switch (valueType) {

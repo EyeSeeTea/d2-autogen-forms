@@ -22,11 +22,18 @@ export interface DataForm {
 export interface Texts {
     header: Maybe<string>;
     footer: Maybe<string>;
+    name: Maybe<string>;
     rowTotals: Maybe<string>;
     totals: Maybe<string>;
 }
 
-export const defaultTexts: Texts = { header: undefined, footer: undefined, rowTotals: undefined, totals: undefined };
+export const defaultTexts: Texts = {
+    header: undefined,
+    footer: undefined,
+    rowTotals: undefined,
+    totals: undefined,
+    name: undefined,
+};
 
 const viewTypes = [
     "grid",
@@ -45,7 +52,10 @@ export interface SectionBase {
     id: Id;
     name: string;
     dataElements: DataElement[];
-    toggle: { type: "none" } | { type: "dataElement"; dataElement: DataElement };
+    toggle:
+        | { type: "none" }
+        | { type: "dataElement"; dataElement: DataElement }
+        | { type: "dataElementExternal"; dataElement: DataElement; condition: string };
     texts: Texts;
     tabs: { active: boolean; order?: number };
     sortRowsBy: string;

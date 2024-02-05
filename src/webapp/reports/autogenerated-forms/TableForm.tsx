@@ -14,6 +14,7 @@ import {
 import { makeStyles } from "@material-ui/core";
 import DataTableSection from "./DataTableSection";
 import { CustomDataTableCell, CustomDataTableColumnHeader } from "./datatables/CustomDataTables";
+import { DataTableCellRowName } from "./datatables/DataTableCellRowName";
 
 export interface TableFormProps {
     dataFormInfo: DataFormInfo;
@@ -22,7 +23,7 @@ export interface TableFormProps {
 
 const TableForm: React.FC<TableFormProps> = React.memo(props => {
     const { dataFormInfo } = props;
-    const section = React.useMemo(() => GridViewModel.get(props.section), [props.section]);
+    const section = React.useMemo(() => GridViewModel.get(props.section, dataFormInfo), [props.section, dataFormInfo]);
     const classes = useStyles();
 
     return (
@@ -43,7 +44,7 @@ const TableForm: React.FC<TableFormProps> = React.memo(props => {
                     {props.section.dataElements.map(dataElement => (
                         <DataTableRow key={dataElement.id}>
                             <CustomDataTableCell backgroundColor={props.section.styles.rows.backgroundColor}>
-                                <span>{dataElement.name}</span>
+                                <DataTableCellRowName html={dataElement.htmlText} name={dataElement.name} />
                             </CustomDataTableCell>
 
                             <CustomDataTableCell
@@ -53,7 +54,7 @@ const TableForm: React.FC<TableFormProps> = React.memo(props => {
                                 <DataElementItem
                                     dataElement={dataElement}
                                     dataFormInfo={dataFormInfo}
-                                    noComment={!dataElement.name.includes("Source type")}
+                                    noComment={dataElement.disabledComments}
                                 />
                             </CustomDataTableCell>
                         </DataTableRow>

@@ -14,6 +14,7 @@ import { makeStyles } from "@material-ui/core";
 import DataTableSection from "./DataTableSection";
 import { CustomDataTableCell, CustomDataTableColumnHeader } from "./datatables/CustomDataTables";
 import { DataTableCellFormula } from "./datatables/DataTableCellFormula";
+import { DataTableCellRowName } from "./datatables/DataTableCellRowName";
 
 /*
  * Convert data forms into table, using "-" as a separator. An example for section ITNs:
@@ -36,8 +37,8 @@ export interface GridFormProps {
 }
 
 const GridForm: React.FC<GridFormProps> = props => {
-    const { dataFormInfo } = props;
-    const grid = React.useMemo(() => GridViewModel.get(props.section), [props.section]);
+    const { dataFormInfo, section } = props;
+    const grid = React.useMemo(() => GridViewModel.get(section, dataFormInfo), [section, dataFormInfo]);
     const classes = useStyles();
 
     return (
@@ -67,7 +68,10 @@ const GridForm: React.FC<GridFormProps> = props => {
                             >
                                 <div className={classes.header}>
                                     <span>{column.name}</span>
-                                    <span className={classes.description}>{column.description}</span>
+                                    <span
+                                        className={classes.description}
+                                        dangerouslySetInnerHTML={{ __html: column.description || "" }}
+                                    ></span>
                                 </div>
                             </CustomDataTableColumnHeader>
                         ))}
@@ -78,7 +82,10 @@ const GridForm: React.FC<GridFormProps> = props => {
                     {grid.rows.map((row, idx) => (
                         <DataTableRow key={`policy-${row.name}`}>
                             <CustomDataTableCell backgroundColor={props.section.styles.rows.backgroundColor}>
-                                <span>{grid.useIndexes ? (idx + 1).toString() : row.name}</span>
+                                <DataTableCellRowName
+                                    html={row.htmlText}
+                                    name={grid.useIndexes ? (idx + 1).toString() : row.name}
+                                />
                             </CustomDataTableCell>
 
                             {row.items.map((item, idx) =>

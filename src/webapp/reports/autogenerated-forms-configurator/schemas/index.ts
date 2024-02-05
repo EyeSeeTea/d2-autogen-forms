@@ -22,7 +22,7 @@ export const getJsonSchema = (props: JsonSchemaProps) => {
         schema: defaultObjectProperties({
             properties: {
                 dataSets: getDataSetSchema(constants, dsCode, deInSectionCodes, sectionCodes),
-                dataElements: getDataElementSchema(dataElements),
+                dataElements: getDataElementSchema(dataElements, constants),
                 categoryCombinations: getCatComboSchema(categoryComboCodes),
             },
         }),

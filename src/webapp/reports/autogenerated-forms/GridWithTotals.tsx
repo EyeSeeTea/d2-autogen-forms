@@ -38,22 +38,24 @@ const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
             <div className={classes.fixedHeaders}>
                 <DataTable className={classes.table} layout="fixed" width="initial">
                     <TableHead className={classes.tableHeader}>
-                        <DataTableRow>
-                            <DataTableColumnHeader></DataTableColumnHeader>
-                            <DataTableColumnHeader></DataTableColumnHeader>
-                            {grid.parentColumns.map(column => {
-                                return (
-                                    <DataTableColumnHeader
-                                        key={column.name}
-                                        className={classes.centerSpan}
-                                        colSpan={String(column.colSpan)}
-                                    >
-                                        <span>{column.name}</span>
-                                    </DataTableColumnHeader>
-                                );
-                            })}
-                            {section.id === "yzMn16Bp1wV" && <DataTableColumnHeader></DataTableColumnHeader>}
-                        </DataTableRow>
+                        {grid.parentColumns.length > 0 && (
+                            <DataTableRow>
+                                <DataTableColumnHeader></DataTableColumnHeader>
+                                <DataTableColumnHeader></DataTableColumnHeader>
+                                {grid.parentColumns.map(column => {
+                                    return (
+                                        <DataTableColumnHeader
+                                            key={column.name}
+                                            className={classes.centerSpan}
+                                            colSpan={String(column.colSpan)}
+                                        >
+                                            <span>{column.name}</span>
+                                        </DataTableColumnHeader>
+                                    );
+                                })}
+                                {section.id === "yzMn16Bp1wV" && <DataTableColumnHeader></DataTableColumnHeader>}
+                            </DataTableRow>
+                        )}
                         <DataTableRow>
                             {grid.useIndexes ? (
                                 <DataTableColumnHeader width="30px">

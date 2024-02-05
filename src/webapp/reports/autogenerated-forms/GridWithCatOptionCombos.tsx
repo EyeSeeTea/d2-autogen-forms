@@ -16,6 +16,7 @@ import { CustomDataTableCell, CustomDataTableColumnHeader } from "./datatables/C
 import { DataTableCellFormula } from "./datatables/DataTableCellFormula";
 import { DataTableCellRowTotal } from "./datatables/DataTableCellRowTotal";
 import { DataTableCellSummary } from "./datatables/DataTableCellSummary";
+import { DataTableCellRowName } from "./datatables/DataTableCellRowName";
 
 export interface GridWithCatOptionCombosProps {
     dataFormInfo: DataFormInfo;
@@ -44,9 +45,12 @@ An example for section ITNs:
  **/
 
 const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props => {
-    const { dataFormInfo } = props;
+    const { dataFormInfo, section } = props;
     const classes = useStyles();
-    const grid = React.useMemo(() => GridWithCatOptionCombosViewModel.get(props.section), [props.section]);
+    const grid = React.useMemo(
+        () => GridWithCatOptionCombosViewModel.get(section, dataFormInfo),
+        [section, dataFormInfo]
+    );
 
     const showRowTotals = props.section.showRowTotals;
 
@@ -68,7 +72,10 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                             >
                                 <div className={classes.header}>
                                     <span>{column.name}</span>
-                                    <span className={classes.description}>{column.description}</span>
+                                    <span
+                                        className={classes.description}
+                                        dangerouslySetInnerHTML={{ __html: column.description || "" }}
+                                    ></span>
                                 </div>
                             </CustomDataTableColumnHeader>
                         ))}
@@ -104,7 +111,7 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                                         <CustomDataTableCell
                                             backgroundColor={props.section.styles.rows.backgroundColor}
                                         >
-                                            <span>{row.deName}</span>
+                                            <DataTableCellRowName html={row.dataElement.htmlText} name={row.deName} />
                                         </CustomDataTableCell>
                                     </>
                                 ) : (
@@ -126,7 +133,7 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                                             <DataElementItem
                                                 dataElement={dataElement}
                                                 dataFormInfo={dataFormInfo}
-                                                noComment
+                                                noComment={dataElement.disabledComments}
                                             />
                                         </CustomDataTableCell>
                                     ) : (

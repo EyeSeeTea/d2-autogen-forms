@@ -1,16 +1,26 @@
 import _ from "lodash";
-import { defaultObjectProperties } from "..";
+import { defaultObjectProperties, textSchema } from "..";
 
 export const dataElementSchema = (
     dataElements: {
         dataElementCode: string;
         optionSetCode?: string | undefined;
-    }[]
+    }[],
+    constants: string[]
 ) => {
     return _.chain(dataElements)
         .map(item => ({
             [item.dataElementCode]: defaultObjectProperties({
                 properties: {
+                    texts: defaultObjectProperties({
+                        properties: {
+                            footer: textSchema(constants),
+                            header: textSchema(constants),
+                            rowTotals: textSchema(constants),
+                            totals: textSchema(constants),
+                            name: textSchema(constants),
+                        },
+                    }),
                     selection: defaultObjectProperties({
                         properties: {
                             optionSet: defaultObjectProperties({
