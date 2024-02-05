@@ -153,3 +153,5 @@ type PeriodTab = { id: Id | undefined; name: string };
 function isRowSubGroup(dataElement: DataElement): boolean {
     return dataElement.name.split(separator).length === 3;
 }
+
+type PeriodTab = { id: Id | undefined; name: string };

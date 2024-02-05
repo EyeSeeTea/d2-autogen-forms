@@ -199,6 +199,7 @@ const PeriodTable: React.FC<PeriodTableProps> = props => {
                                         <DataTableCell colSpan={subGroupRow.colSpan}>
                                             <span>{subGroupRow.dataElement.name}</span>
                                         </DataTableCell>
+                                    )}
 
                                         <DataTableDataElementCell
                                             periods={grid.periods}
