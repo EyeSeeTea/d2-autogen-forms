@@ -148,8 +148,6 @@ export class GridWithPeriodsViewModel {
     }
 }
 
-type PeriodTab = { id: Id | undefined; name: string };
-
 function isRowSubGroup(dataElement: DataElement): boolean {
     return dataElement.name.split(separator).length === 3;
 }
