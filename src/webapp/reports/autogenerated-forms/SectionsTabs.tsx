@@ -18,6 +18,7 @@ import GridWithCombos from "./GridWithCombos";
 import GridWithSubNational from "./GridWithSubNational";
 import GridWithCatOptionCombos from "./GridWithCatOptionCombos";
 import AppBar from "@material-ui/core/AppBar";
+import styled from "styled-components";
 
 export interface TabPanelProps {
     sections: Section[];
@@ -115,7 +116,7 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
 
     return (
         <Box sx={{ width: "100%" }}>
-            <AppBar position="sticky" color="default">
+            <StyledAppBar position="sticky" color="default">
                 <Tabs
                     value={activeTab}
                     onChange={handleChange}
@@ -140,7 +141,7 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
                         }
                     })}
                 </Tabs>
-            </AppBar>
+            </StyledAppBar>
             {sections.map(section => {
                 return (
                     <TabPanel
@@ -156,3 +157,8 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
 });
 
 export default React.memo(SectionsTabs);
+
+const StyledAppBar = styled(AppBar)`
+    top: 48px !important;
+    z-index: 1000 !important;
+`;
