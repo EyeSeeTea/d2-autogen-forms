@@ -115,7 +115,7 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
 
     return (
         <Box sx={{ width: "100%" }}>
-            <AppBar position="static" color="default">
+            <AppBar position="sticky" color="default">
                 <Tabs
                     value={activeTab}
                     onChange={handleChange}
