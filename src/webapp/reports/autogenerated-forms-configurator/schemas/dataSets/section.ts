@@ -30,10 +30,13 @@ export const sectionSchema = (constants: string[], deInSectionCodes: string[]) =
         toggle: defaultObjectProperties({
             properties: {
                 type: {
-                    const: "dataElement",
+                    enum: ["dataElement", "dataElementExternal"],
                 },
                 code: {
                     enum: deInSectionCodes,
+                },
+                condition: {
+                    type: "string",
                 },
             },
         }),
