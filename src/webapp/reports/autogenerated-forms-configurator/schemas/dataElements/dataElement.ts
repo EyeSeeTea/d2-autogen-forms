@@ -21,6 +21,28 @@ export const dataElementSchema = (
                             name: textSchema(constants),
                         },
                     }),
+                    rules: defaultObjectProperties({
+                        properties: {
+                            visible: defaultObjectProperties({
+                                properties: {
+                                    condition: { type: "string" },
+                                    dataElements: {
+                                        items: {
+                                            type: "string",
+                                            enum: dataElements.map(dataElement => dataElement.dataElementCode),
+                                        },
+                                        type: "array",
+                                    },
+                                },
+                            }),
+                            disabled: defaultObjectProperties({
+                                properties: {
+                                    condition: { type: "string" },
+                                    dataElements: { type: "array" },
+                                },
+                            }),
+                        },
+                    }),
                     selection: defaultObjectProperties({
                         properties: {
                             optionSet: defaultObjectProperties({
