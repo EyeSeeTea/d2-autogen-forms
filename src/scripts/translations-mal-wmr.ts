@@ -41,8 +41,8 @@ async function main() {
     const compositionRoot = getCompositionRoot(api);
     await compositionRoot.constants.import({
         path: args.path,
-        post: !_.isEmpty(args.post) || false,
-        export: !_.isEmpty(args.export) || false,
+        post: args.post === "true",
+        export: args.export === "true",
         autogenform: args.autogenform || "",
     });
 }
