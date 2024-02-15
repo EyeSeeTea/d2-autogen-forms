@@ -14,6 +14,7 @@ export interface GridWithPeriodsI {
     rows: Row[];
     periods: string[];
     toggle: Section["toggle"];
+    toggleMultiple: Section["toggleMultiple"];
     texts: Texts;
     tabs: PeriodTab[];
 }
@@ -124,6 +125,7 @@ export class GridWithPeriodsViewModel {
             toggle: section.toggle,
             texts: section.texts,
             tabs: this.buildTabs(section.dataElements),
+            toggleMultiple: section.toggleMultiple,
         };
     }
 

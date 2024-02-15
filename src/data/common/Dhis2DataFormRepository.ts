@@ -6,6 +6,7 @@ import { Rule, RuleType } from "../../domain/common/entities/DataElementRule";
 import { DataForm, defaultTexts, Section, SectionBase } from "../../domain/common/entities/DataForm";
 import { Period } from "../../domain/common/entities/DataValue";
 import { SectionStyle } from "../../domain/common/entities/SectionStyle";
+import { buildToggleMultiple } from "../../domain/common/entities/ToggleMultiple";
 import { DataFormRepository } from "../../domain/common/repositories/DataFormRepository";
 import { D2Api, MetadataPick } from "../../types/d2-api";
 import { Maybe } from "../../utils/ts-utils";
@@ -78,7 +79,6 @@ export class Dhis2DataFormRepository implements DataFormRepository {
 
         return dataSet.sections.map((section): Section => {
             const config = dataSetConfig.sections[section.id];
-
             const base: SectionBase = {
                 id: section.id,
                 name: section.displayName,
@@ -121,6 +121,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                 columnsDescriptions: config?.columnsDescriptions,
                 totals: config?.totals,
                 showRowTotals: section.showRowTotals,
+                toggleMultiple: config?.toggleMultiple ? buildToggleMultiple(config.toggleMultiple, dataElements) : [],
             };
 
             if (!config) return { viewType: "table", ...base };
@@ -214,7 +215,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                     type: ruleType,
                     id: dataElementDetails.id,
                     relatedDataElementId: dataElement.id,
-                    value: dataElementConfig.rules?.disabled.condition || "",
+                    value: dataElementConfig.rules?.disabled?.condition || "",
                 };
             })
             .compact()
@@ -298,7 +299,9 @@ function getSectionBaseWithToggle(
             }
         }
         case "dataElementExternal": {
-            const allDataElements = _(dataElements).map(value => value);
+            const allDataElements = _(dataElements)
+                .map(value => value)
+                .value();
             const toggleDataElement = allDataElements.find(de => de.code === toggle.code);
 
             if (toggleDataElement) {

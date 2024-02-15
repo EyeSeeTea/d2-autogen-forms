@@ -8,6 +8,7 @@ export interface Grid {
     columns: Column[];
     rows: Row[];
     toggle: Section["toggle"];
+    toggleMultiple: Section["toggleMultiple"];
     useIndexes: boolean;
     texts: Texts;
     parentColumns: ParentColumn[];
@@ -109,6 +110,7 @@ export class GridWithCombosViewModel {
             texts: section.texts,
             useIndexes: useIndexes,
             parentColumns: parentColumns.length === columns.length ? [] : parentColumns,
+            toggleMultiple: section.toggleMultiple,
         };
     }
 }

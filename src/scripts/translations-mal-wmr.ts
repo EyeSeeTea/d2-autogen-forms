@@ -1,4 +1,3 @@
-import _ from "lodash";
 import { ArgumentParser } from "argparse";
 
 import { getCompositionRoot } from "../compositionRoot";
