@@ -6,6 +6,7 @@ import { DataElement, dataInputPeriodsType } from "./DataElement";
 import { Period } from "./DataValue";
 import { SectionStyle } from "./SectionStyle";
 import { titleVariant } from "./TitleVariant";
+import { DataElementToggle } from "./ToggleMultiple";
 
 export interface DataForm {
     id: Id;
@@ -70,6 +71,7 @@ export interface SectionBase {
         formulas: Record<string, { formula: string }> | undefined;
     };
     showRowTotals: boolean;
+    toggleMultiple: DataElementToggle[];
 }
 
 export interface SectionSimple extends SectionBase {

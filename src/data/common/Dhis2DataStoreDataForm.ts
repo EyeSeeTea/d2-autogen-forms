@@ -10,6 +10,7 @@ import { ColumnDescription, Texts } from "../../domain/common/entities/DataForm"
 import { titleVariant } from "../../domain/common/entities/TitleVariant";
 import { SectionStyle, SectionStyleAttrs } from "../../domain/common/entities/SectionStyle";
 import { DataElementRuleOptions } from "../../domain/common/entities/DataElementRule";
+import { ToggleMultiple } from "../../domain/common/entities/ToggleMultiple";
 
 interface DataSetConfig {
     texts: Texts;
@@ -40,6 +41,7 @@ interface BaseSectionConfig {
         formula: string;
         texts?: { name: string };
     };
+    toggleMultiple: Maybe<ToggleMultiple[]>;
 }
 
 interface BasicSectionConfig extends BaseSectionConfig {
@@ -210,6 +212,7 @@ const DataStoreConfigCodec = Codec.interface({
                     )
                 ),
                 totals: optional(totalsType),
+                toggleMultiple: optional(array(Codec.interface({ dataElement: string, condition: string }))),
             })
         ),
     }),
@@ -506,6 +509,7 @@ export class Dhis2DataStoreDataForm {
                               formulas: sectionConfig.totals?.formulas,
                           }
                         : undefined,
+                    toggleMultiple: sectionConfig.toggleMultiple,
                 };
 
                 const baseConfig = { ...base, viewType };

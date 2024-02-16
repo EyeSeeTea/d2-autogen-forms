@@ -8,6 +8,7 @@ export interface Grid {
     columns: Column[];
     rows: Row[];
     toggle: Section["toggle"];
+    toggleMultiple: Section["toggleMultiple"];
     useIndexes: boolean;
     texts: Texts;
     parentColumns: ParentColumn[];
@@ -146,6 +147,7 @@ export class GridWithSubNationalViewModel {
             texts: section.texts,
             useIndexes: useIndexes,
             parentColumns,
+            toggleMultiple: section.toggleMultiple,
         };
     }
 }

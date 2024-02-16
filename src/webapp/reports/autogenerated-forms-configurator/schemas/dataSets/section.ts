@@ -40,6 +40,16 @@ export const sectionSchema = (constants: string[], deInSectionCodes: string[]) =
                 },
             },
         }),
+        toggleMultiple: {
+            type: "array",
+            items: defaultObjectProperties({
+                type: "object",
+                properties: {
+                    dataElement: { enum: deInSectionCodes },
+                    condition: { type: "string" },
+                },
+            }),
+        },
         titleVariant: {
             enum: ["h1", "h2", "h3", "h4", "h5", "h6"],
         },
