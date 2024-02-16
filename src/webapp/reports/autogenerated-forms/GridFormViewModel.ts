@@ -13,6 +13,7 @@ export interface Grid {
     columns: Column[];
     rows: Row[];
     toggle: Section["toggle"];
+    toggleMultiple: Section["toggleMultiple"];
     useIndexes: boolean;
     texts: Texts;
     titleVariant: titleVariant;
@@ -130,6 +131,7 @@ export class GridViewModel {
             columns: columns,
             rows: rows,
             toggle: section.toggle,
+            toggleMultiple: section.toggleMultiple,
             texts: section.texts,
             useIndexes: useIndexes,
             titleVariant: section.titleVariant,

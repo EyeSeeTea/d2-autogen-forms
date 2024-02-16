@@ -19,11 +19,12 @@ interface DataTableSectionObj {
     titleVariant?: Section["titleVariant"];
     texts: Section["texts"];
     toggle: Section["toggle"];
+    toggleMultiple: Section["toggleMultiple"];
 }
 
 const DataTableSection: React.FC<DataTableProps> = React.memo(props => {
     const { section, children, dataFormInfo, sectionStyles } = props;
-    const { toggle } = section;
+    const { toggle, toggleMultiple } = section;
     const classes = useStyles();
 
     const isSectionOpen = React.useMemo(() => {
@@ -39,9 +40,19 @@ const DataTableSection: React.FC<DataTableProps> = React.memo(props => {
         }
     }, [toggle, dataFormInfo]);
 
+    const isSectionVisible = React.useMemo(() => {
+        const value = toggleMultiple.every(toggle => {
+            const dataValue = dataFormInfo.data.values.getOrEmpty(toggle.dataElement, dataFormInfo);
+            const value = getValueAccordingType(dataValue);
+            return String(value) === toggle.condition;
+        });
+        return value;
+    }, [toggleMultiple, dataFormInfo]);
+
     const titleStyle = section.titleVariant ? `${classes.title} ${classes[section.titleVariant]}` : classes.title;
 
     if (toggle.type === "dataElementExternal" && !isSectionOpen) return null;
+    if (toggleMultiple.length > 0 && !isSectionVisible) return null;
 
     return (
         <div className={classes.wrapper}>

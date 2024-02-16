@@ -12,6 +12,7 @@ export class ValidateDatasetRulesUseCase {
 
     async execute(dataSetId: Id, options: ValidateUseCaseOptions): Promise<ValidationResult[]> {
         const rules = await this.getRules(dataSetId, options.cacheKey);
+        if (rules.length === 0) return [];
         const results = await this.ruleRepository.validate(dataSetId, options);
         return this.buildValidationRuleMessages(rules, results);
     }

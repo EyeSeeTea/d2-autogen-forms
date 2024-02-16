@@ -12,6 +12,7 @@ export interface Grid {
     columns: Column[];
     rows: Row[];
     toggle: Section["toggle"];
+    toggleMultiple: Section["toggleMultiple"];
     texts: Texts;
     summary: Maybe<Summary>;
 }
@@ -154,6 +155,7 @@ export class GridWithCatOptionCombosViewModel {
             columns: columns,
             rows: rows,
             toggle: section.toggle,
+            toggleMultiple: section.toggleMultiple,
             texts: section.texts,
             summary: section.totals ? { cellName: section.texts?.totals || "", cells: totals } : undefined,
         };
