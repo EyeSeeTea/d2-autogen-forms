@@ -10,6 +10,7 @@ export interface MatrixGrid {
     rows: DataElement[][];
     styles: Section["styles"];
     toggle: Section["toggle"];
+    toggleMultiple: Section["toggleMultiple"];
     texts: Texts;
 }
 
@@ -54,6 +55,7 @@ export class MatrixGridViewModel {
             rows: rows,
             styles: section.styles,
             toggle: section.toggle,
+            toggleMultiple: section.toggleMultiple,
             texts: section.texts,
         };
     }
