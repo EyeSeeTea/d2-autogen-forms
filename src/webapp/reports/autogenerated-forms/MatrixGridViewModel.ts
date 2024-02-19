@@ -37,16 +37,17 @@ export class MatrixGridViewModel {
             }))
             .value();
 
-        const rows = _(columns).reduce((acc: DataElement[][], column: Column) => {
-            column.rows.forEach((row, index) => {
-                if (!acc[index]) {
-                    acc[index] = [];
-                }
-                acc[index]?.push(row);
-            });
-
-            return acc;
-        }, []);
+        const rows: DataElement[][] = _(columns)
+            .flatMap(column =>
+                column.rows.map((row, index) => ({
+                    index,
+                    row,
+                }))
+            )
+            .groupBy("index")
+            .values()
+            .map(group => group.map(({ row }) => row))
+            .value();
 
         return {
             id: section.id,
