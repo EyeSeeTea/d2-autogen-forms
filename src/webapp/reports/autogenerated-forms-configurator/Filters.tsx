@@ -3,10 +3,10 @@ import i18n from "@eyeseetea/d2-ui-components/locales";
 import React from "react";
 import styled from "styled-components";
 import { NamedRef } from "../../../domain/common/entities/Base";
+import { useAutogenSchema } from "./useAutogenSchema";
 
 export interface ConfiguratorFiltersProps {
     values: ConfiguratorFilter;
-    options: FilterOptions;
     onChange: React.Dispatch<React.SetStateAction<ConfiguratorFilter>>;
 }
 
@@ -14,14 +14,11 @@ export interface ConfiguratorFilter {
     dataSetId: string;
 }
 
-interface FilterOptions {
-    dataSets: NamedRef[];
-}
-
 export const Filters: React.FC<ConfiguratorFiltersProps> = React.memo(props => {
-    const { values: filter, options: filterOptions, onChange } = props;
+    const { values: filter, onChange } = props;
 
-    const dataSetItems = useMemoOptionsFromNamedRef(filterOptions.dataSets);
+    const { dataSets } = useAutogenSchema(filter.dataSetId);
+    const dataSetItems = useMemoOptionsFromNamedRef(dataSets);
 
     const setDataSet = React.useCallback<SingleDropdownHandler>(
         dataSetId => onChange(prev => ({ ...prev, dataSetId: dataSetId ?? "" })),

@@ -4,6 +4,6 @@ export class GetDataSetsUseCase {
     constructor(private dataStoreConfigRepository: DataStoreConfigurationRepository) {}
 
     execute() {
-        return this.dataStoreConfigRepository.getDatasets();
+        return this.dataStoreConfigRepository.getDataSets();
     }
 }
