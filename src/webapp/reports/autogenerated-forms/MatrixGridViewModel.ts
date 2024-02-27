@@ -24,7 +24,7 @@ export class MatrixGridViewModel {
     static get(section: Section): MatrixGrid {
         const columns: Column[] = _(section.dataElements)
             .groupBy(dataElement => {
-                const [columnHeader, _columnDescription] = dataElement.name.split(" - ");
+                const columnHeader = _(dataElement.name).split(" - ").first();
                 return columnHeader;
             })
             .map((group, columnHeader) => ({
