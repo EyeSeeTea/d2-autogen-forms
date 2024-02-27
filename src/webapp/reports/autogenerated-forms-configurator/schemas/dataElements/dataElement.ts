@@ -6,7 +6,7 @@ export const dataElementSchema = (
         dataElementCode: string;
         optionSetCode?: string | undefined;
     }[],
-    constants: string[]
+    constantCodes: string[]
 ) => {
     return _.chain(dataElements)
         .map(item => ({
@@ -14,11 +14,11 @@ export const dataElementSchema = (
                 properties: {
                     texts: defaultObjectProperties({
                         properties: {
-                            footer: textSchema(constants),
-                            header: textSchema(constants),
-                            rowTotals: textSchema(constants),
-                            totals: textSchema(constants),
-                            name: textSchema(constants),
+                            footer: textSchema(constantCodes),
+                            header: textSchema(constantCodes),
+                            rowTotals: textSchema(constantCodes),
+                            totals: textSchema(constantCodes),
+                            name: textSchema(constantCodes),
                         },
                     }),
                     rules: defaultObjectProperties({
