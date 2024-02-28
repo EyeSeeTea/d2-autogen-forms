@@ -45,7 +45,7 @@ interface BaseSectionConfig {
 }
 
 interface BasicSectionConfig extends BaseSectionConfig {
-    viewType: "table" | "grid" | "grid-with-combos" | "grid-with-cat-option-combos";
+    viewType: "table" | "grid" | "grid-with-combos" | "grid-with-cat-option-combos" | "matrix-grid";
 }
 
 interface GridWithPeriodsSectionConfig extends BaseSectionConfig {
@@ -78,6 +78,7 @@ const viewType = oneOf([
     exactly("grid-with-totals"),
     exactly("grid-with-combos"),
     exactly("grid-with-cat-option-combos"),
+    exactly("matrix-grid"),
     exactly("grid-with-periods"),
     exactly("grid-with-subnational-ous"),
 ]);

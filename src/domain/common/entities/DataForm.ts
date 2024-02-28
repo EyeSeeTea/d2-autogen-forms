@@ -43,6 +43,7 @@ const viewTypes = [
     "grid-with-totals",
     "grid-with-combos",
     "grid-with-cat-option-combos",
+    "matrix-grid",
     "grid-with-subnational-ous",
 ] as const;
 export type ViewType = UnionFromValues<typeof DataFormM.viewTypes>;
@@ -74,7 +75,7 @@ export interface SectionBase {
 }
 
 export interface SectionSimple extends SectionBase {
-    viewType: "table" | "grid" | "grid-with-combos" | "grid-with-cat-option-combos";
+    viewType: "table" | "grid" | "grid-with-combos" | "grid-with-cat-option-combos" | "matrix-grid";
 }
 
 export interface SectionWithPeriods extends SectionBase {
