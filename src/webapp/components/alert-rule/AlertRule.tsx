@@ -4,11 +4,10 @@ import IconButton from "@material-ui/core/IconButton";
 import CloseIcon from "@material-ui/icons/Close";
 import InfoIcon from "@material-ui/icons/Info";
 
-export type AlertProps = { message: string; visible: boolean };
+export type AlertProps = { message: string; visible: boolean; onClose: () => void };
 
 export const AlertRule: React.FC<AlertProps> = props => {
-    const [visible, setVisible] = React.useState(props.visible);
-    const { message } = props;
+    const { message, onClose, visible } = props;
 
     if (!visible) return null;
 
@@ -16,7 +15,7 @@ export const AlertRule: React.FC<AlertProps> = props => {
         <AlertContent>
             <InfoIcon color="primary" />
             <p>{message}</p>
-            <IconButton onClick={() => setVisible(false)} size="small">
+            <IconButton onClick={() => onClose()} size="small">
                 <CloseIcon />
             </IconButton>
         </AlertContent>
