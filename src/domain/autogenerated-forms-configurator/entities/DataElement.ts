@@ -1,5 +1,5 @@
 import { Maybe } from "../../../utils/ts-utils";
-import { Code } from "./AutogenConfig";
+import { Code } from "../../common/entities/Base";
 import { CategoryCombo } from "./CategoryCombo";
 
 export interface DataElement {

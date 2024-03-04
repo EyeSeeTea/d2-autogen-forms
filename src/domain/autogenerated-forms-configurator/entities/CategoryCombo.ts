@@ -1,4 +1,5 @@
-import { Code, CodedRef } from "./AutogenConfig";
+import { Code } from "../../common/entities/Base";
+import { CodedRef } from "./AutogenConfig";
 
 export interface CategoryCombo {
     code: Code;

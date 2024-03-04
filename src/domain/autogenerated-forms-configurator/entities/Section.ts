@@ -1,4 +1,4 @@
-import { Code } from "./AutogenConfig";
+import { Code } from "../../common/entities/Base";
 import { DataElement } from "./DataElement";
 
 export interface Section {

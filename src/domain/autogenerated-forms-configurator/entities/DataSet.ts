@@ -1,4 +1,5 @@
-import { Code, CodedRef } from "./AutogenConfig";
+import { Code } from "../../common/entities/Base";
+import { CodedRef } from "./AutogenConfig";
 import { CategoryCombo } from "./CategoryCombo";
 import { DataElement, DataElementSchema } from "./DataElement";
 import { Section, SectionSchema } from "./Section";
