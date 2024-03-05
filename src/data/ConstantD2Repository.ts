@@ -12,10 +12,14 @@ import { writeFileSync } from "fs";
 export class ConstantD2Repository implements ConstantRepository {
     constructor(private api: D2Api) {}
 
-    async get(): Promise<string[]> {
-        const { constants } = await this.api.metadata.get({ constants: { fields: { code: true } } }).getData();
+    async get(): Promise<Constant[]> {
+        const { objects: constants } = await this.api.models.constants
+            .get({
+                fields: constantFields,
+            })
+            .getData();
 
-        return constants.filter(constant => constant.code).map(constant => constant.code);
+        return constants;
     }
 
     async save(constants: Constant[], options: SaveOptions): Promise<Stats> {
@@ -68,4 +72,14 @@ export class ConstantD2Repository implements ConstantRepository {
 
 type Dhis2Response = MetadataResponse & {
     response?: { stats: MetadataResponse["stats"]; typeReports: MetadataResponse["typeReports"] };
+};
+
+const constantFields = {
+    id: true,
+    name: true,
+    code: true,
+    description: true,
+    shortName: true,
+    translations: true,
+    value: true,
 };

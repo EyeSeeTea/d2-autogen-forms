@@ -12,7 +12,9 @@ export class GetAutogenConfigSchemaUseCase {
         if (!dataSetCode || !dataSet)
             return { sections: [], categoryComboCodes: [], dataElements: [], constantCodes: [] };
 
-        const constantCodes = await this.constantRepository.get();
+        const constants = await this.constantRepository.get();
+        const constantCodes = constants.map(constant => constant.code);
+
         const dataElements = this.getDataElements(dataSet);
         const sections = this.getSections(dataSet);
         const categoryComboCodes = this.getCategoryComboCodes(dataSet);
