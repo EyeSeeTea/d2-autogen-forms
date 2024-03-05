@@ -115,7 +115,7 @@ const PeriodTable: React.FC<PeriodTableProps> = props => {
                         case "dataElement":
                             return (
                                 <DataTableRow key={row.dataElement.id}>
-                                    <DataTableCell colSpan={hasRowsWithSubGroups ? "3" : "0"}>
+                                    <DataTableCell colSpan={hasRowsWithSubGroups ? "3" : "2"}>
                                         <span>{row.dataElement.name}</span>
                                     </DataTableCell>
 
