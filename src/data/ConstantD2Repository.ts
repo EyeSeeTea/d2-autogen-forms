@@ -12,6 +12,16 @@ import { writeFileSync } from "fs";
 export class ConstantD2Repository implements ConstantRepository {
     constructor(private api: D2Api) {}
 
+    async get(): Promise<Constant[]> {
+        const { objects: constants } = await this.api.models.constants
+            .get({
+                fields: constantFields,
+            })
+            .getData();
+
+        return constants;
+    }
+
     async save(constants: Constant[], options: SaveOptions): Promise<Stats> {
         const ids = constants.map(constant => constant.id);
         const result = await promiseMap(_.chunk(ids, 100), async constantIds => {
@@ -62,4 +72,14 @@ export class ConstantD2Repository implements ConstantRepository {
 
 type Dhis2Response = MetadataResponse & {
     response?: { stats: MetadataResponse["stats"]; typeReports: MetadataResponse["typeReports"] };
+};
+
+const constantFields = {
+    id: true,
+    name: true,
+    code: true,
+    description: true,
+    shortName: true,
+    translations: true,
+    value: true,
 };

@@ -1,20 +1,17 @@
-import { NamedRef } from "../../common/entities/Base";
+import { Code } from "../../common/entities/Base";
+import { CodedRef } from "./AutogenConfig";
+import { CategoryCombo } from "./CategoryCombo";
+import { DataElement, DataElementSchema } from "./DataElement";
+import { Section, SectionSchema } from "./Section";
 
-interface CodedRef {
-    id: string;
-    code: string;
-}
-
-interface DataElement extends CodedRef {
-    optionSet?: CodedRef;
-}
-
-interface Section extends CodedRef {
-    dataElements: DataElement[];
-}
-
-export interface DataSet extends NamedRef {
-    code: string;
+export interface DataSet extends CodedRef {
     sections: Section[];
-    dataSetElements: { dataElement: DataElement; categoryCombo?: CodedRef }[];
+    dataSetElements: { dataElement: DataElement; categoryCombo?: CategoryCombo }[];
+}
+
+export interface AutogenConfigSchema {
+    constantCodes: Code[];
+    sections: SectionSchema[];
+    categoryComboCodes: Code[];
+    dataElements: DataElementSchema[];
 }

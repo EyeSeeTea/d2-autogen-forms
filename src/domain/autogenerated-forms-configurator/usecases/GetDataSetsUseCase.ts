@@ -1,9 +1,9 @@
-import { DataStoreConfigurationRepository } from "../repositories/DataStoreConfigurationRepository";
+import { DataSetRepository } from "../repositories/DataSetRepository";
 
 export class GetDataSetsUseCase {
-    constructor(private dataStoreConfigRepository: DataStoreConfigurationRepository) {}
+    constructor(private dataSetRepository: DataSetRepository) {}
 
     execute() {
-        return this.dataStoreConfigRepository.getDatasets();
+        return this.dataSetRepository.get();
     }
 }

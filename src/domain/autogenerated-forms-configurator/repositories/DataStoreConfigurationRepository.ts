@@ -1,8 +1,6 @@
-import { DataSet } from "../entities/DataSet";
+import { AutogenConfig } from "../entities/AutogenConfig";
 
 export interface DataStoreConfigurationRepository {
-    getFormConfig(namespace: string): Promise<any>;
-    saveFormConfig(namespace: string, config: any): Promise<void>;
-    getDatasets(): Promise<DataSet[]>;
-    getConstants(): Promise<string[]>;
+    getFormConfig(namespace: string): Promise<AutogenConfig>;
+    saveFormConfig(namespace: string, config: AutogenConfig): Promise<void>;
 }

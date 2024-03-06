@@ -2,18 +2,24 @@ import React, { useEffect, useRef } from "react";
 import styled from "styled-components";
 import MonacoEditor, { Monaco, loader } from "@monaco-editor/react";
 import { CircularProgress } from "material-ui";
-import { JsonSchemaProps, getJsonSchema } from "./schemas";
+import { getAutogenConfigSchema } from "./schemas";
+import { useAutogenSchema } from "./useAutogenSchema";
+import { Code } from "../../../domain/common/entities/Base";
 
 interface EditorProps {
-    editorCodes: JsonSchemaProps;
+    dataSetCode: Code;
     json: string | undefined;
     onChange: React.Dispatch<React.SetStateAction<string | undefined>>;
-    handleEditorValidation(markers: any): void;
+    onValidate: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+interface Marker {
+    [key: string]: unknown;
 }
 
 export const Editor: React.FC<EditorProps> = React.memo(props => {
-    const { handleEditorValidation, json, onChange, editorCodes } = props;
-    const { constants, dataElements, dsCode, sectionCodes, deInSectionCodes, categoryComboCodes } = editorCodes;
+    const { dataSetCode, json, onChange, onValidate } = props;
+    const autogenConfigSchema = useAutogenSchema(dataSetCode);
 
     const valueGetter = useRef();
 
@@ -23,22 +29,13 @@ export const Editor: React.FC<EditorProps> = React.memo(props => {
             .then((monaco: Monaco) => {
                 monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
                     validate: true,
-                    schemas: [
-                        getJsonSchema({
-                            constants,
-                            dsCode,
-                            dataElements,
-                            deInSectionCodes,
-                            sectionCodes,
-                            categoryComboCodes,
-                        }),
-                    ],
+                    schemas: [getAutogenConfigSchema({ ...autogenConfigSchema, dataSetCode: dataSetCode })],
                 });
             })
-            .catch(error => console.error("An error occurred during initialization of Monaco: ", error));
-    }, [categoryComboCodes, constants, dataElements, deInSectionCodes, dsCode, sectionCodes]);
+            .catch(error => console.error("An error occurred during initialization of the editor: ", error));
+    }, [autogenConfigSchema, dataSetCode]);
 
-    function handleEditorBeforeMount(_valueGetter: any) {
+    function handleEditorBeforeMount(_valueGetter: Monaco) {
         valueGetter.current = _valueGetter;
     }
 
@@ -50,6 +47,10 @@ export const Editor: React.FC<EditorProps> = React.memo(props => {
                 editor.trigger("", "editor.action.triggerSuggest", "");
             }
         });
+    }
+
+    function handleEditorValidation(markers: Marker[]) {
+        return markers.length === 0 ? onValidate(true) : onValidate(false);
     }
 
     return (
