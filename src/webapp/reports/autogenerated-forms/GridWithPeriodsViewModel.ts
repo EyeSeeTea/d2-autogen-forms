@@ -7,6 +7,7 @@ import {
     DEFAULT_CATEGORY_OPTION_COMBO_CODE,
 } from "../../../domain/common/entities/CategoryOptionCombo";
 import { Maybe } from "../../../utils/ts-utils";
+import { getFormulaByColumnName, Summary, TotalItem } from "./GridWithCatOptionCombosViewModel";
 
 export interface GridWithPeriodsI {
     id: string;
@@ -17,6 +18,7 @@ export interface GridWithPeriodsI {
     toggleMultiple: Section["toggleMultiple"];
     texts: Texts;
     tabs: PeriodTab[];
+    summary: Maybe<Summary>;
 }
 
 interface DataElementRow {
@@ -117,6 +119,37 @@ export class GridWithPeriodsViewModel {
             })
             .value();
 
+        const totals = _(section.periods)
+            .map(column => {
+                const allDataElements = section.dataElements;
+                const selectedDataElements = allDataElements.filter(dataElement =>
+                    section.totals?.dataElementsCodes.includes(dataElement.code)
+                );
+
+                const columnWithDataElements = _(selectedDataElements)
+                    .map((dataElement): Maybe<TotalItem> => {
+                        if (dataElement.type !== "NUMBER") return undefined;
+                        const categoryOptionCombo = dataElement.categoryOptionCombos[0];
+                        if (!categoryOptionCombo) {
+                            console.warn(
+                                `Cannot found categoryOptionCombo in column ${column} for dataElement ${dataElement.code}`
+                            );
+                            return undefined;
+                        }
+
+                        return { dataElement, categoryOptionCombo };
+                    })
+                    .compact()
+                    .value();
+
+                return {
+                    columnName: column,
+                    formula: getFormulaByColumnName(section, "") || section.totals?.formula || "",
+                    items: columnWithDataElements,
+                };
+            })
+            .value();
+
         return {
             id: section.id,
             name: section.name,
@@ -126,6 +159,12 @@ export class GridWithPeriodsViewModel {
             texts: section.texts,
             tabs: this.buildTabs(section.dataElements),
             toggleMultiple: section.toggleMultiple,
+            summary: section.totals
+                ? {
+                      cellName: section.texts?.totals || "",
+                      cells: totals,
+                  }
+                : undefined,
         };
     }
 

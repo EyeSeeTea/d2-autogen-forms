@@ -17,6 +17,7 @@ import { DataTableCellFormula } from "./datatables/DataTableCellFormula";
 import { DataTableCellRowTotal } from "./datatables/DataTableCellRowTotal";
 import { DataTableCellSummary } from "./datatables/DataTableCellSummary";
 import { DataTableCellRowName } from "./datatables/DataTableCellRowName";
+import { Html } from "./Html";
 
 export interface GridWithCatOptionCombosProps {
     dataFormInfo: DataFormInfo;
@@ -164,7 +165,7 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                                     backgroundColor={props.section.styles.totals.backgroundColor}
                                     key="total-column-name"
                                 >
-                                    {grid.summary.cellName}
+                                    <Html content={grid.summary.cellName} />
                                 </CustomDataTableCell>
                                 {grid.summary.cells.map(itemTotal => {
                                     return (
