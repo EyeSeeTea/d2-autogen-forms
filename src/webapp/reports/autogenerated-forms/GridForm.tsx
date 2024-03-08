@@ -15,6 +15,7 @@ import DataTableSection from "./DataTableSection";
 import { CustomDataTableCell, CustomDataTableColumnHeader } from "./datatables/CustomDataTables";
 import { DataTableCellFormula } from "./datatables/DataTableCellFormula";
 import { DataTableCellRowName } from "./datatables/DataTableCellRowName";
+import _ from "lodash";
 
 /*
  * Convert data forms into table, using "-" as a separator. An example for section ITNs:
@@ -54,10 +55,12 @@ const GridForm: React.FC<GridFormProps> = props => {
                                 <span className={classes.header}>#</span>{" "}
                             </CustomDataTableColumnHeader>
                         ) : (
-                            <CustomDataTableColumnHeader
-                                backgroundColor={props.section.styles.columns.backgroundColor}
-                                width="400px"
-                            ></CustomDataTableColumnHeader>
+                            !_.isEmpty(grid.rows) && (
+                                <CustomDataTableColumnHeader
+                                    backgroundColor={props.section.styles.columns.backgroundColor}
+                                    width="800px"
+                                ></CustomDataTableColumnHeader>
+                            )
                         )}
 
                         {grid.columns.map(column => (
