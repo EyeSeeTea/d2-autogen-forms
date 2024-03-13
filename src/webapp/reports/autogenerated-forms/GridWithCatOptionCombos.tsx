@@ -158,10 +158,7 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                         {grid.summary && (
                             <>
                                 <CustomDataTableCell
-                                    backgroundColor={props.section.styles.totals.backgroundColor}
-                                    key="total-empty-column"
-                                ></CustomDataTableCell>
-                                <CustomDataTableCell
+                                    colSpan="2"
                                     backgroundColor={props.section.styles.totals.backgroundColor}
                                     key="total-column-name"
                                 >

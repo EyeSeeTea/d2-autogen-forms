@@ -216,7 +216,11 @@ const PeriodTable: React.FC<PeriodTableProps> = props => {
                 })}
                 {grid.summary && (
                     <DataTableRow key="total-custom-row">
-                        <CustomDataTableCell key="total-column-name-periods" colSpan={hasRowsWithSubGroups ? "3" : "2"}>
+                        <CustomDataTableCell
+                            backgroundColor={section.styles.totals.backgroundColor}
+                            key="total-column-name-periods"
+                            colSpan={hasRowsWithSubGroups ? "3" : "2"}
+                        >
                             <Html content={grid.summary.cellName} />
                         </CustomDataTableCell>
                         {grid.summary.cells.map(itemTotal => {
