@@ -55,8 +55,6 @@ export function getFormulaByColumnName(section: Section, columnName: string): Ma
 
 export class GridWithCatOptionCombosViewModel {
     static get(section: Section, dataFormInfo: DataFormInfo): Grid {
-        const dataSetDataElements = dataFormInfo.metadata.dataForm.dataElements;
-
         const subsections = _(section.dataElements)
             .flatMap(dataElement => {
                 const categoryOptionCombos = dataElement.categoryCombos.categoryOptionCombos;
@@ -98,12 +96,7 @@ export class GridWithCatOptionCombosViewModel {
 
         const columns: Column[] = _.orderBy(
             subsections.map(subsection => {
-                const columnDescription = getColumnDescription(
-                    section,
-                    dataFormInfo,
-                    dataSetDataElements,
-                    subsection.name
-                );
+                const columnDescription = getColumnDescription(section, dataFormInfo, subsection.name);
                 const columnDataElements = rows.flatMap(row => {
                     return subsection.dataElements.filter(de => row.rows.map(r => r.name).includes(de.name));
                 });

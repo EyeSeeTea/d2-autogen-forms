@@ -40,8 +40,6 @@ const separator = " - ";
 
 export class GridViewModel {
     static get(section: Section, dataFormInfo: DataFormInfo): Grid {
-        const dataSetDataElements = dataFormInfo.metadata.dataForm.dataElements;
-
         const dataElements = getDataElementsWithIndexProccessing(section);
 
         const subsections = _(dataElements)
@@ -62,7 +60,7 @@ export class GridViewModel {
             .flatMap(subsection => subsection.dataElements)
             .uniqBy(de => de.name)
             .map(({ name }) => {
-                const columnDescription = getColumnDescription(section, dataFormInfo, dataSetDataElements, name);
+                const columnDescription = getColumnDescription(section, dataFormInfo, name);
 
                 return { name: name, description: columnDescription };
             })
