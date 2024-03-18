@@ -157,7 +157,7 @@ const PeriodTable: React.FC<PeriodTableProps> = props => {
                                     {idx === 0 && (
                                         <DataTableCell rowSpan={row.rows.length.toString()}>
                                             <span className={classes.rowTitle}>{row.name}</span>
-                                            <span className={classes.rowDescription}>{row.groupDescription}</span>
+                                            <Html content={row.groupDescription} />
                                         </DataTableCell>
                                     )}
 
@@ -273,7 +273,6 @@ const useStyles = makeStyles({
     table: { borderWidth: "3px !important" },
     center: { textAlign: "center" },
     rowTitle: { fontSize: "1.2em", fontWeight: "bold" as const },
-    rowDescription: { fontSize: "1em", display: "block" },
 });
 
 export default React.memo(GridWithPeriods);
