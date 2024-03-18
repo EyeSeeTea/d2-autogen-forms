@@ -119,6 +119,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                 titleVariant: config?.titleVariant,
                 styles: SectionStyle.buildSectionStyles(config?.styles),
                 columnsDescriptions: config?.columnsDescriptions,
+                groupDescriptions: config?.groupDescriptions,
                 totals: config?.totals,
                 showRowTotals: section.showRowTotals,
                 toggleMultiple: config?.toggleMultiple ? buildToggleMultiple(config.toggleMultiple, dataElements) : [],

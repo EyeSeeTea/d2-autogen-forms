@@ -47,7 +47,7 @@ export interface GridWithPeriodsProps {
 const GridWithPeriods: React.FC<GridWithPeriodsProps> = props => {
     const [activeTab, setActiveTab] = React.useState(0);
     const { section, dataFormInfo } = props;
-    const grid = React.useMemo(() => GridWithPeriodsViewModel.get(props.section), [props.section]);
+    const grid = React.useMemo(() => GridWithPeriodsViewModel.get(section, dataFormInfo), [dataFormInfo, section]);
 
     const handleChange = (_: React.ChangeEvent<{}>, value: number) => {
         setActiveTab(value);
@@ -155,11 +155,9 @@ const PeriodTable: React.FC<PeriodTableProps> = props => {
                             return row.rows.map((row2, idx) => (
                                 <DataTableRow key={`${idx}-${row.name}`}>
                                     {idx === 0 && (
-                                        <DataTableCell
-                                            rowSpan={row.rows.length.toString()}
-                                            className={classes.rowTitle}
-                                        >
-                                            <span>{row.name}</span>
+                                        <DataTableCell rowSpan={row.rows.length.toString()}>
+                                            <span className={classes.rowTitle}>{row.name}</span>
+                                            <Html content={row.groupDescription} />
                                         </DataTableCell>
                                     )}
 
