@@ -104,7 +104,12 @@ export class GridWithPeriodsViewModel {
 
                         return { type: "subGroup", rows: rows };
                     } else {
-                        const groupDescription = getDescription(section.groupDescriptions, dataFormInfo, groupName);
+                        const firstDeInGroup = _(dataElementsForGroup).first()?.code || "";
+                        const groupDescription = getDescription(
+                            section.groupDescriptions,
+                            dataFormInfo,
+                            firstDeInGroup
+                        );
 
                         return {
                             type: "group",
