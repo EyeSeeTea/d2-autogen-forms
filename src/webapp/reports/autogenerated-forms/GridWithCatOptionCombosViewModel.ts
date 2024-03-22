@@ -119,9 +119,10 @@ export class GridWithCatOptionCombosViewModel {
                 const columnWithDataElements = _(selectedDataElements)
                     .map((dataElement): Maybe<TotalItem> => {
                         if (dataElement.type !== "NUMBER") return undefined;
-                        const categoryOptionCombo = dataElement.categoryCombos.categoryOptionCombos.find(
-                            coc => coc.formName === column.name
-                        );
+                        const categoryOptionCombo = dataElement.categoryCombos.categoryOptionCombos.find(coc => {
+                            const columnName = coc.formName ?? coc.name;
+                            return columnName === column.name;
+                        });
                         if (!categoryOptionCombo) {
                             console.warn(
                                 `Cannot found categoryOptionCombo in column ${column.name} for dataElement ${dataElement.code}`
