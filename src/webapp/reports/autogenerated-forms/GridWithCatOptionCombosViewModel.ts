@@ -64,7 +64,7 @@ export class GridWithCatOptionCombosViewModel {
                         cocId: dataElement.categoryCombos.categoryOptionCombos.find(c => c.name === coc.name)?.id,
                         name: `${coc.name} - ${_(dataElement.name).split(separator).last()}`,
                         fullName: dataElement.name,
-                        cocName: coc.formName,
+                        cocName: coc.formName ?? coc.name,
                     };
                 });
             })
