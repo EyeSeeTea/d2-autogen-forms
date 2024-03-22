@@ -64,7 +64,7 @@ export class GridWithCatOptionCombosViewModel {
                         cocId: dataElement.categoryCombos.categoryOptionCombos.find(c => c.name === coc.name)?.id,
                         name: `${coc.name} - ${_(dataElement.name).split(separator).last()}`,
                         fullName: dataElement.name,
-                        cocName: coc.name,
+                        cocName: coc.formName,
                     };
                 });
             })
@@ -120,7 +120,7 @@ export class GridWithCatOptionCombosViewModel {
                     .map((dataElement): Maybe<TotalItem> => {
                         if (dataElement.type !== "NUMBER") return undefined;
                         const categoryOptionCombo = dataElement.categoryCombos.categoryOptionCombos.find(
-                            coc => coc.name === column.name
+                            coc => coc.formName === column.name
                         );
                         if (!categoryOptionCombo) {
                             console.warn(
