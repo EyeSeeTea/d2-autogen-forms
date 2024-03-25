@@ -48,16 +48,20 @@ const dataElementFields = {
             name: true,
             categoryOptions: {
                 id: true,
+                code: true,
                 name: true,
                 shortName: true,
-                formName: true,
+                displayFormName: true,
             },
         },
         categoryOptionCombos: {
             id: true,
             name: true,
             shortName: true,
-            categoryOptions: true,
+            categoryOptions: {
+                id: true,
+                code: true,
+            },
         },
     },
 } as const;
@@ -83,7 +87,11 @@ function makeCocOrderArray(namesArray: string[][]): string[] {
 function getCocOrdered(categoryCombo: D2CategoryCombo, config: Dhis2DataStoreDataForm) {
     const allCategoryOptions = categoryCombo.categories
         .map(c => {
-            return c.categoryOptions.flatMap(co => ({ name: co.name, shortName: co.shortName, formName: co.formName }));
+            return c.categoryOptions.flatMap(co => ({
+                name: co.name,
+                shortName: co.shortName,
+                formName: co.displayFormName,
+            }));
         })
         .flatMap(categoriesOptions => {
             return categoriesOptions.map(co => co);
