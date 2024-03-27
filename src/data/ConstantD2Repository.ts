@@ -14,9 +14,7 @@ export class ConstantD2Repository implements ConstantRepository {
 
     async get(): Promise<Constant[]> {
         const { objects: constants } = await this.api.models.constants
-            .get({
-                fields: constantFields,
-            })
+            .get({ fields: constantFields, paging: false })
             .getData();
 
         return constants;
