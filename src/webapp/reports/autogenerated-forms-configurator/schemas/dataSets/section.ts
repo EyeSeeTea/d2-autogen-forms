@@ -26,7 +26,10 @@ export const sectionSchema = (
         groupDescriptions: {
             type: "object",
             additionalProperties: {
-                type: textSchema(constantCodes),
+                type: "object",
+                properties: {
+                    code: { enum: constantCodes },
+                },
             },
         },
         disableComments: {
