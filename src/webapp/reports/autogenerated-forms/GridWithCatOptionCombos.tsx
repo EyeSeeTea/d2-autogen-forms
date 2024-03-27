@@ -93,7 +93,7 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
 
                 <TableBody>
                     {grid.rows.map(row => {
-                        const { groupName, rows } = row;
+                        const { groupDescription, groupName, rows } = row;
 
                         return rows.map((row, idx) => (
                             <DataTableRow key={`${groupName}-${idx}`}>
@@ -102,10 +102,10 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                                         {idx === 0 && (
                                             <CustomDataTableCell
                                                 backgroundColor={props.section.styles.rows.backgroundColor}
-                                                className={classes.rowTitle}
                                                 rowSpan={rows.length.toString()}
                                             >
-                                                <span>{groupName}</span>
+                                                <span className={classes.rowTitle}>{groupName}</span>
+                                                <Html content={groupDescription} />
                                             </CustomDataTableCell>
                                         )}
 

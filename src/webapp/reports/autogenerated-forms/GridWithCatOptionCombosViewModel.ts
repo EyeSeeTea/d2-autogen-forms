@@ -30,6 +30,7 @@ interface Column {
 
 interface Row {
     groupName: string;
+    groupDescription: Maybe<string>;
     rows: {
         dataElement: DataElement;
         deName: string;
@@ -86,12 +87,18 @@ export class GridWithCatOptionCombosViewModel {
             .flatMap(subsection => subsection.dataElements)
             .uniqBy(de => de.name)
             .groupBy(de => _(de.name.split(separator)).initial().join(" - "))
-            .map((group, groupName) => ({
-                groupName,
-                rows: group.map(de => {
-                    return { dataElement: de, deName: _.last(de.name.split(separator)) ?? "", name: de.name };
-                }),
-            }))
+            .map((group, groupName) => {
+                const firstDeInGroup = _(group).first()?.code || "";
+                const groupDescription = getDescription(section.groupDescriptions, dataFormInfo, firstDeInGroup);
+
+                return {
+                    groupName: groupName,
+                    groupDescription: groupDescription,
+                    rows: group.map(de => {
+                        return { dataElement: de, deName: _.last(de.name.split(separator)) ?? "", name: de.name };
+                    }),
+                };
+            })
             .value();
 
         const columns: Column[] = _.orderBy(
