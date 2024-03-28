@@ -19,6 +19,7 @@ export interface Grid {
 
 interface SubSectionGrid {
     name: string;
+    code: Maybe<string>;
     dataElements: DataElement[];
 }
 
@@ -60,21 +61,28 @@ export class GridWithCatOptionCombosViewModel {
             .flatMap(dataElement => {
                 const categoryOptionCombos = dataElement.categoryCombos.categoryOptionCombos;
                 return categoryOptionCombos.map(coc => {
+                    const categoryOptionCombo = dataElement.categoryCombos.categoryOptionCombos.find(
+                        c => c.name === coc.name
+                    );
                     return {
                         ...dataElement,
-                        cocId: dataElement.categoryCombos.categoryOptionCombos.find(c => c.name === coc.name)?.id,
+                        cocId: categoryOptionCombo?.id,
                         name: `${coc.name} - ${_(dataElement.name).split(separator).last()}`,
                         fullName: dataElement.name,
-                        cocName: coc.name,
+                        cocName: coc.formName ?? coc.name,
+                        catOptionCode: _(coc.categoryOptions).first()?.code || "",
                     };
                 });
             })
             .filter(dataElement => dataElement.cocId !== undefined)
-            .groupBy(dataElement => dataElement.cocName)
+            .groupBy(dataElement => `${dataElement.cocName}--${dataElement.catOptionCode}`)
             .toPairs()
             .map(([groupName, dataElementsForGroup]): SubSectionGrid => {
+                const [name, code] = groupName.split("--");
+                if (!name) throw Error(`Cannot find column name: ${name}`);
                 return {
-                    name: groupName,
+                    name: name,
+                    code: code,
                     dataElements: dataElementsForGroup.map(dataElement => ({
                         ...dataElement,
                         name: dataElement.fullName,
@@ -103,7 +111,11 @@ export class GridWithCatOptionCombosViewModel {
 
         const columns: Column[] = _.orderBy(
             subsections.map(subsection => {
-                const columnDescription = getDescription(section.columnsDescriptions, dataFormInfo, subsection.name);
+                const columnDescription = getDescription(
+                    section.columnsDescriptions,
+                    dataFormInfo,
+                    subsection.code || ""
+                );
                 const columnDataElements = rows.flatMap(row => {
                     return subsection.dataElements.filter(de => row.rows.map(r => r.name).includes(de.name));
                 });
@@ -126,9 +138,10 @@ export class GridWithCatOptionCombosViewModel {
                 const columnWithDataElements = _(selectedDataElements)
                     .map((dataElement): Maybe<TotalItem> => {
                         if (dataElement.type !== "NUMBER") return undefined;
-                        const categoryOptionCombo = dataElement.categoryCombos.categoryOptionCombos.find(
-                            coc => coc.name === column.name
-                        );
+                        const categoryOptionCombo = dataElement.categoryCombos.categoryOptionCombos.find(coc => {
+                            const columnName = coc.formName ?? coc.name;
+                            return columnName === column.name;
+                        });
                         if (!categoryOptionCombo) {
                             console.warn(
                                 `Cannot found categoryOptionCombo in column ${column.name} for dataElement ${dataElement.code}`
