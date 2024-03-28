@@ -18,10 +18,20 @@ export const sectionSchema = (
     const dataElementCodes = dataElements.map(dataElement => dataElement.dataElementCode);
     const columnsDescriptions = _(sections)
         .flatMap(section => section.columnsDescriptions)
+        .uniq()
         .value();
 
     const sectionProperties = {
         columnsDescriptions: mergeArrayWithSchema(columnsDescriptions, textSchema(constantCodes)),
+        groupDescriptions: {
+            type: "object",
+            additionalProperties: {
+                type: "object",
+                properties: {
+                    code: { enum: constantCodes },
+                },
+            },
+        },
         disableComments: {
             type: "boolean",
         },

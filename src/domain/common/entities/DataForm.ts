@@ -48,7 +48,7 @@ const viewTypes = [
 ] as const;
 export type ViewType = UnionFromValues<typeof DataFormM.viewTypes>;
 
-export type ColumnDescription = Record<string, string | undefined> | undefined;
+export type DescriptionText = Maybe<Record<string, Maybe<string>>>;
 
 export interface SectionBase {
     id: Id;
@@ -63,7 +63,8 @@ export interface SectionBase {
     sortRowsBy: string;
     titleVariant: titleVariant;
     styles: SectionStyle;
-    columnsDescriptions: ColumnDescription;
+    columnsDescriptions: DescriptionText;
+    groupDescriptions: DescriptionText;
     disableComments: boolean;
     totals?: {
         dataElementsCodes: string[];

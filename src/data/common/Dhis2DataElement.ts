@@ -1,7 +1,7 @@
 import _ from "lodash";
 import { Id } from "../../domain/common/entities/Base";
 import { DataElement } from "../../domain/common/entities/DataElement";
-import { D2Api, D2CategoryCombo, MetadataPick } from "../../types/d2-api";
+import { D2Api, MetadataPick } from "../../types/d2-api";
 import { promiseMap } from "../../utils/promises";
 import { Dhis2DataStoreDataForm } from "./Dhis2DataStoreDataForm";
 
@@ -48,16 +48,20 @@ const dataElementFields = {
             name: true,
             categoryOptions: {
                 id: true,
+                code: true,
                 name: true,
                 shortName: true,
-                formName: true,
+                displayFormName: true,
             },
         },
         categoryOptionCombos: {
             id: true,
             name: true,
             shortName: true,
-            categoryOptions: true,
+            categoryOptions: {
+                id: true,
+                code: true,
+            },
         },
     },
 } as const;
@@ -80,10 +84,14 @@ function makeCocOrderArray(namesArray: string[][]): string[] {
     });
 }
 
-function getCocOrdered(categoryCombo: D2CategoryCombo, config: Dhis2DataStoreDataForm) {
+function getCocOrdered(categoryCombo: D2DataElement["categoryCombo"], config: Dhis2DataStoreDataForm) {
     const allCategoryOptions = categoryCombo.categories
         .map(c => {
-            return c.categoryOptions.flatMap(co => ({ name: co.name, shortName: co.shortName, formName: co.formName }));
+            return c.categoryOptions.flatMap(co => ({
+                name: co.name,
+                shortName: co.shortName,
+                formName: co.displayFormName,
+            }));
         })
         .flatMap(categoriesOptions => {
             return categoriesOptions.map(co => co);
@@ -123,7 +131,7 @@ function getDataElement(dataElement: D2DataElement, config: Dhis2DataStoreDataFo
     const categoryCombination = {
         id: dataElement.categoryCombo?.id,
         name: dataElement.categoryCombo?.name,
-        categoryOptionCombos: getCocOrdered(dataElement.categoryCombo as D2CategoryCombo, config),
+        categoryOptionCombos: getCocOrdered(dataElement.categoryCombo, config),
     };
     const categoryOptionCombos = dataElement.categoryCombo.categoryOptionCombos;
 

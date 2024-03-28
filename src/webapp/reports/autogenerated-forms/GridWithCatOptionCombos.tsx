@@ -17,6 +17,7 @@ import { DataTableCellFormula } from "./datatables/DataTableCellFormula";
 import { DataTableCellRowTotal } from "./datatables/DataTableCellRowTotal";
 import { DataTableCellSummary } from "./datatables/DataTableCellSummary";
 import { DataTableCellRowName } from "./datatables/DataTableCellRowName";
+import { Html } from "./Html";
 
 export interface GridWithCatOptionCombosProps {
     dataFormInfo: DataFormInfo;
@@ -92,7 +93,7 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
 
                 <TableBody>
                     {grid.rows.map(row => {
-                        const { groupName, rows } = row;
+                        const { groupDescription, groupName, rows } = row;
 
                         return rows.map((row, idx) => (
                             <DataTableRow key={`${groupName}-${idx}`}>
@@ -101,10 +102,10 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                                         {idx === 0 && (
                                             <CustomDataTableCell
                                                 backgroundColor={props.section.styles.rows.backgroundColor}
-                                                className={classes.rowTitle}
                                                 rowSpan={rows.length.toString()}
                                             >
-                                                <span>{groupName}</span>
+                                                <span className={classes.rowTitle}>{groupName}</span>
+                                                <Html content={groupDescription} />
                                             </CustomDataTableCell>
                                         )}
 
@@ -157,14 +158,11 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                         {grid.summary && (
                             <>
                                 <CustomDataTableCell
-                                    backgroundColor={props.section.styles.totals.backgroundColor}
-                                    key="total-empty-column"
-                                ></CustomDataTableCell>
-                                <CustomDataTableCell
+                                    colSpan="2"
                                     backgroundColor={props.section.styles.totals.backgroundColor}
                                     key="total-column-name"
                                 >
-                                    {grid.summary.cellName}
+                                    <Html content={grid.summary.cellName} />
                                 </CustomDataTableCell>
                                 {grid.summary.cells.map(itemTotal => {
                                     return (

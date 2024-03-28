@@ -17,6 +17,8 @@ import { DataElement } from "../../../domain/common/entities/DataElement";
 import DataTableSection from "./DataTableSection";
 import { Html } from "./Html";
 import { DataTableCellRowName } from "./datatables/DataTableCellRowName";
+import { CustomDataTableCell } from "./datatables/CustomDataTables";
+import { DataTableCellFormula } from "./datatables/DataTableCellFormula";
 
 /*
  * Convert data forms into table, using "-" as a separator. An example for section ITNs:
@@ -44,8 +46,8 @@ export interface GridWithPeriodsProps {
 
 const GridWithPeriods: React.FC<GridWithPeriodsProps> = props => {
     const [activeTab, setActiveTab] = React.useState(0);
-    const { dataFormInfo } = props;
-    const grid = React.useMemo(() => GridWithPeriodsViewModel.get(props.section), [props.section]);
+    const { section, dataFormInfo } = props;
+    const grid = React.useMemo(() => GridWithPeriodsViewModel.get(section, dataFormInfo), [dataFormInfo, section]);
 
     const handleChange = (_: React.ChangeEvent<{}>, value: number) => {
         setActiveTab(value);
@@ -70,12 +72,13 @@ const GridWithPeriods: React.FC<GridWithPeriodsProps> = props => {
                                 key={`${tabPeriod.id}_table`}
                                 grid={grid}
                                 dataFormInfo={dataFormInfo}
+                                section={section}
                             />
                         );
                     })}
                 </>
             ) : (
-                <PeriodTable grid={grid} dataFormInfo={dataFormInfo} />
+                <PeriodTable section={section} grid={grid} dataFormInfo={dataFormInfo} />
             )}
         </DataTableSection>
     );
@@ -85,10 +88,11 @@ type PeriodTableProps = {
     dataFormInfo: DataFormInfo;
     categoryOptionComboId?: string;
     grid: GridWithPeriodsI;
+    section: SectionWithPeriods;
 };
 
 const PeriodTable: React.FC<PeriodTableProps> = props => {
-    const { grid, dataFormInfo, categoryOptionComboId } = props;
+    const { grid, dataFormInfo, categoryOptionComboId, section } = props;
     const classes = useStyles();
 
     const hasRowsWithSubGroups = grid.rows.some(row => row.type === "subGroup");
@@ -151,11 +155,9 @@ const PeriodTable: React.FC<PeriodTableProps> = props => {
                             return row.rows.map((row2, idx) => (
                                 <DataTableRow key={`${idx}-${row.name}`}>
                                     {idx === 0 && (
-                                        <DataTableCell
-                                            rowSpan={row.rows.length.toString()}
-                                            className={classes.rowTitle}
-                                        >
-                                            <span>{row.name}</span>
+                                        <DataTableCell rowSpan={row.rows.length.toString()}>
+                                            <span className={classes.rowTitle}>{row.name}</span>
+                                            <Html content={row.groupDescription} />
                                         </DataTableCell>
                                     )}
 
@@ -210,6 +212,29 @@ const PeriodTable: React.FC<PeriodTableProps> = props => {
                             });
                     }
                 })}
+                {grid.summary && (
+                    <DataTableRow key="total-custom-row">
+                        <CustomDataTableCell
+                            backgroundColor={section.styles.totals.backgroundColor}
+                            key="total-column-name-periods"
+                            colSpan={hasRowsWithSubGroups ? "3" : "2"}
+                        >
+                            <Html content={grid.summary.cellName} />
+                        </CustomDataTableCell>
+                        {grid.summary.cells.map(itemTotal => {
+                            return (
+                                <DataTableCellFormula
+                                    key={itemTotal.columnName}
+                                    dataFormInfo={dataFormInfo}
+                                    styles={section.styles}
+                                    total={itemTotal}
+                                    formula={itemTotal.formula}
+                                    period={itemTotal.columnName}
+                                />
+                            );
+                        })}
+                    </DataTableRow>
+                )}
             </TableBody>
         </DataTable>
     );

@@ -65,7 +65,12 @@ type CategoryCombos = {
     categoryOptionCombos: {
         id: Id;
         name: string;
+        formName: string | undefined;
         shortName: string | undefined;
+        categoryOptions?: {
+            id: Id;
+            code: string;
+        }[];
     }[];
 };
 
