@@ -18,6 +18,7 @@ import { DataTableCellRowTotal } from "./datatables/DataTableCellRowTotal";
 import { DataTableCellSummary } from "./datatables/DataTableCellSummary";
 import { DataTableCellRowName } from "./datatables/DataTableCellRowName";
 import { Html } from "./Html";
+import { RowIndicatorItem } from "../../components/IndicatorItem/IndicatorItem";
 
 export interface GridWithCatOptionCombosProps {
     dataFormInfo: DataFormInfo;
@@ -185,6 +186,17 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                             </>
                         )}
                     </DataTableRow>
+                    {section.indicators.map(indicator => {
+                        return (
+                            <RowIndicatorItem
+                                key={`parent_${indicator.id}`}
+                                indicator={indicator}
+                                colSpan="2"
+                                dataFormInfo={dataFormInfo}
+                                periods={[dataFormInfo.period]}
+                            />
+                        );
+                    })}
                 </TableBody>
             </DataTable>
         </DataTableSection>
