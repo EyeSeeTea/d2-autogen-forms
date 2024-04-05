@@ -19,6 +19,8 @@ import { Html } from "./Html";
 import { DataTableCellRowName } from "./datatables/DataTableCellRowName";
 import { CustomDataTableCell } from "./datatables/CustomDataTables";
 import { DataTableCellFormula } from "./datatables/DataTableCellFormula";
+import { RowIndicatorItem } from "../../components/IndicatorItem/IndicatorItem";
+import { checkIndicatorDirection } from "../../../domain/common/entities/Indicator";
 
 /*
  * Convert data forms into table, using "-" as a separator. An example for section ITNs:
@@ -118,18 +120,36 @@ const PeriodTable: React.FC<PeriodTableProps> = props => {
                     switch (row.type) {
                         case "dataElement":
                             return (
-                                <DataTableRow key={row.dataElement.id}>
-                                    <DataTableCell colSpan={hasRowsWithSubGroups ? "3" : "2"}>
-                                        <span>{row.dataElement.name}</span>
-                                    </DataTableCell>
+                                <React.Fragment key={row.dataElement.id}>
+                                    {row.indicator && checkIndicatorDirection(row.indicator, "before") && (
+                                        <RowIndicatorItem
+                                            indicator={row.indicator}
+                                            colSpan={hasRowsWithSubGroups ? "3" : "2"}
+                                            dataFormInfo={dataFormInfo}
+                                            periods={grid.periods}
+                                        />
+                                    )}
+                                    <DataTableRow>
+                                        <DataTableCell colSpan={hasRowsWithSubGroups ? "3" : "2"}>
+                                            <span>{row.dataElement.name}</span>
+                                        </DataTableCell>
 
-                                    <DataTableDataElementCell
-                                        periods={grid.periods}
-                                        dataElement={row.dataElement}
-                                        dataFormInfo={dataFormInfo}
-                                        categoryOptionComboId={categoryOptionComboId}
-                                    />
-                                </DataTableRow>
+                                        <DataTableDataElementCell
+                                            periods={grid.periods}
+                                            dataElement={row.dataElement}
+                                            dataFormInfo={dataFormInfo}
+                                            categoryOptionComboId={categoryOptionComboId}
+                                        />
+                                    </DataTableRow>
+                                    {row.indicator && checkIndicatorDirection(row.indicator, "after") && (
+                                        <RowIndicatorItem
+                                            indicator={row.indicator}
+                                            colSpan={hasRowsWithSubGroups ? "3" : "2"}
+                                            dataFormInfo={dataFormInfo}
+                                            periods={grid.periods}
+                                        />
+                                    )}
+                                </React.Fragment>
                             );
                         case "dataElementFile":
                             return (
@@ -153,61 +173,105 @@ const PeriodTable: React.FC<PeriodTableProps> = props => {
 
                         case "group":
                             return row.rows.map((row2, idx) => (
-                                <DataTableRow key={`${idx}-${row.name}`}>
-                                    {idx === 0 && (
-                                        <DataTableCell rowSpan={row.rows.length.toString()}>
-                                            <span className={classes.rowTitle}>{row.name}</span>
-                                            <Html content={row.groupDescription} />
-                                        </DataTableCell>
-                                    )}
-
-                                    <DataTableCell colSpan={grid.rows.some(row => row.type === "subGroup") ? "2" : "0"}>
-                                        <DataTableCellRowName
-                                            html={row2.dataElement.htmlText}
-                                            name={row2.dataElement.name}
+                                <React.Fragment key={`${idx}-${row.name}`}>
+                                    {row2.indicator && checkIndicatorDirection(row2.indicator, "before") && (
+                                        <RowIndicatorItem
+                                            indicator={row2.indicator}
+                                            colSpan=""
+                                            dataFormInfo={dataFormInfo}
+                                            periods={grid.periods}
                                         />
-                                    </DataTableCell>
-
-                                    <DataTableDataElementCell
-                                        periods={grid.periods}
-                                        dataElement={row2.dataElement}
-                                        dataFormInfo={dataFormInfo}
-                                        categoryOptionComboId={categoryOptionComboId}
-                                    />
-                                </DataTableRow>
-                            ));
-                        case "subGroup":
-                            return row.rows.map((subGroupRow: DataElementSubGroupRow) => {
-                                return (
-                                    <DataTableRow key={subGroupRow.dataElement.id}>
-                                        {subGroupRow.groupName && (
+                                    )}
+                                    <DataTableRow>
+                                        {idx === 0 && (
                                             <DataTableCell
-                                                rowSpan={row.rows.length.toString()}
-                                                className={classes.rowTitle}
+                                                rowSpan={String(
+                                                    row.rows.length + row.rows.filter(x => Boolean(x.indicator)).length
+                                                )}
                                             >
-                                                <span>{subGroupRow.groupName}</span>
+                                                <span className={classes.rowTitle}>{row.name}</span>
+                                                <Html content={row.groupDescription} />
                                             </DataTableCell>
                                         )}
 
-                                        {subGroupRow.subGroup && (
-                                            <DataTableCell
-                                                rowSpan={subGroupRow.dataElementsPerSubGroup.toString()}
-                                                className={classes.rowTitle}
-                                            >
-                                                <span>{subGroupRow.subGroup}</span>
-                                            </DataTableCell>
-                                        )}
-
-                                        <DataTableCell colSpan={subGroupRow.colSpan}>
-                                            <span>{subGroupRow.dataElement.name}</span>
+                                        <DataTableCell
+                                            colSpan={grid.rows.some(row => row.type === "subGroup") ? "2" : "0"}
+                                        >
+                                            <DataTableCellRowName
+                                                html={row2.dataElement.htmlText}
+                                                name={row2.dataElement.name}
+                                            />
                                         </DataTableCell>
 
                                         <DataTableDataElementCell
                                             periods={grid.periods}
-                                            dataElement={subGroupRow.dataElement}
+                                            dataElement={row2.dataElement}
                                             dataFormInfo={dataFormInfo}
+                                            categoryOptionComboId={categoryOptionComboId}
                                         />
                                     </DataTableRow>
+                                    {row2.indicator && checkIndicatorDirection(row2.indicator, "after") && (
+                                        <RowIndicatorItem
+                                            indicator={row2.indicator}
+                                            colSpan=""
+                                            dataFormInfo={dataFormInfo}
+                                            periods={grid.periods}
+                                        />
+                                    )}
+                                </React.Fragment>
+                            ));
+                        case "subGroup":
+                            return row.rows.map((subGroupRow: DataElementSubGroupRow) => {
+                                return (
+                                    <React.Fragment key={subGroupRow.dataElement.id}>
+                                        {subGroupRow.indicator &&
+                                            checkIndicatorDirection(subGroupRow.indicator, "before") && (
+                                                <RowIndicatorItem
+                                                    indicator={subGroupRow.indicator}
+                                                    colSpan={subGroupRow.colSpan}
+                                                    dataFormInfo={dataFormInfo}
+                                                    periods={grid.periods}
+                                                />
+                                            )}
+                                        <DataTableRow>
+                                            {subGroupRow.groupName && (
+                                                <DataTableCell
+                                                    rowSpan={row.rows.length.toString()}
+                                                    className={classes.rowTitle}
+                                                >
+                                                    <span>{subGroupRow.groupName}</span>
+                                                </DataTableCell>
+                                            )}
+
+                                            {subGroupRow.subGroup && (
+                                                <DataTableCell
+                                                    rowSpan={subGroupRow.dataElementsPerSubGroup.toString()}
+                                                    className={classes.rowTitle}
+                                                >
+                                                    <span>{subGroupRow.subGroup}</span>
+                                                </DataTableCell>
+                                            )}
+
+                                            <DataTableCell colSpan={subGroupRow.colSpan}>
+                                                <span>{subGroupRow.dataElement.name}</span>
+                                            </DataTableCell>
+
+                                            <DataTableDataElementCell
+                                                periods={grid.periods}
+                                                dataElement={subGroupRow.dataElement}
+                                                dataFormInfo={dataFormInfo}
+                                            />
+                                        </DataTableRow>
+                                        {subGroupRow.indicator &&
+                                            checkIndicatorDirection(subGroupRow.indicator, "after") && (
+                                                <RowIndicatorItem
+                                                    indicator={subGroupRow.indicator}
+                                                    colSpan={subGroupRow.colSpan}
+                                                    dataFormInfo={dataFormInfo}
+                                                    periods={grid.periods}
+                                                />
+                                            )}
+                                    </React.Fragment>
                                 );
                             });
                     }
@@ -235,6 +299,18 @@ const PeriodTable: React.FC<PeriodTableProps> = props => {
                         })}
                     </DataTableRow>
                 )}
+
+                {grid.indicators.map(indicator => {
+                    return (
+                        <RowIndicatorItem
+                            key={`parent_${indicator.id}`}
+                            indicator={indicator}
+                            colSpan={hasRowsWithSubGroups ? "3" : "2"}
+                            dataFormInfo={dataFormInfo}
+                            periods={grid.periods}
+                        />
+                    );
+                })}
             </TableBody>
         </DataTable>
     );
