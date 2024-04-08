@@ -43,6 +43,7 @@ interface BaseSectionConfig {
         texts?: { name: string };
     };
     toggleMultiple: Maybe<ToggleMultiple[]>;
+    indicators?: Record<Code, IndicatorConfig>;
 }
 
 interface BasicSectionConfig extends BaseSectionConfig {
@@ -215,6 +216,16 @@ const DataStoreConfigCodec = Codec.interface({
                 ),
                 totals: optional(totalsType),
                 toggleMultiple: optional(array(Codec.interface({ dataElement: string, condition: string }))),
+                indicators: optional(
+                    sectionConfig({
+                        position: optional(
+                            Codec.interface({
+                                direction: oneOf([exactly("after"), exactly("before")]),
+                                dataElement: string,
+                            })
+                        ),
+                    })
+                ),
             })
         ),
     }),
@@ -231,6 +242,8 @@ export interface DataElementConfig {
         visible: { dataElementCode: string; value: string } | undefined;
     };
 }
+
+export type IndicatorConfig = { position: Maybe<{ dataElement: string; direction: "after" | "before" }> };
 
 interface OptionSet extends NamedRef {
     code: string;
@@ -513,6 +526,7 @@ export class Dhis2DataStoreDataForm {
                           }
                         : undefined,
                     toggleMultiple: sectionConfig.toggleMultiple,
+                    indicators: sectionConfig.indicators,
                 };
 
                 const baseConfig = { ...base, viewType };
