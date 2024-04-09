@@ -22,6 +22,22 @@ export const sectionSchema = (
         .value();
 
     const sectionProperties = {
+        indicators: {
+            type: "object",
+            additionalProperties: {
+                type: "object",
+                properties: {
+                    position: {
+                        type: "object",
+                        properties: {
+                            dataElement: { type: "string", enum: dataElementCodes },
+                            direction: { type: "string", enum: ["after", "before"] },
+                        },
+                        required: ["direction", "dataElement"],
+                    },
+                },
+            },
+        },
         columnsDescriptions: mergeArrayWithSchema(columnsDescriptions, textSchema(constantCodes)),
         groupDescriptions: {
             type: "object",
