@@ -12,7 +12,6 @@ export const viewTypes = [
     "matrix-grid",
     "grid-with-periods",
     "grid-with-subnational-ous",
-    "matrix-grid",
 ];
 
 export const getDataSetSchema = (

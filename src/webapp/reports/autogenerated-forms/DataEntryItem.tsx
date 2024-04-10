@@ -93,11 +93,11 @@ function checkVisibleRelatedDataElement(
     return true;
 }
 
-type UseApplyRulesProps = { dataElement: DataElement; dataFormInfo: DataFormInfo; period: Maybe<string> };
+export type UseApplyRulesProps = { dataElement: DataElement; dataFormInfo: DataFormInfo; period: Maybe<string> };
 
 type UseApplyRulesReturn = { isVisible: boolean; isDisabled: boolean };
 
-function getValueAndVerifyCondition(rule: Rule, dataFormInfo: DataFormInfo, period: Maybe<string>) {
+export function getValueAndVerifyCondition(rule: Rule, dataFormInfo: DataFormInfo, period: Maybe<string>) {
     const dataValue = dataFormInfo.data.values.getOrEmpty(rule.relatedDataElement, {
         orgUnitId: rule.relatedDataElement.orgUnit || dataFormInfo.orgUnitId,
         period: period || dataFormInfo.period,
@@ -107,14 +107,20 @@ function getValueAndVerifyCondition(rule: Rule, dataFormInfo: DataFormInfo, peri
     return rule.condition === String(value);
 }
 
-function useApplyRules(props: UseApplyRulesProps): UseApplyRulesReturn {
+export function useApplyRules(props: UseApplyRulesProps): UseApplyRulesReturn {
     const { dataElement, dataFormInfo, period } = props;
     if (dataElement.rules.length === 0) return { isDisabled: false, isVisible: true };
-    const visibleRule = dataElement.rules.find(rule => rule.type === "visible");
     const disabledRule = dataElement.rules.find(rule => rule.type === "disabled");
-    const visibleValue = visibleRule ? getValueAndVerifyCondition(visibleRule, dataFormInfo, period) : true;
     const disabledValue = disabledRule ? getValueAndVerifyCondition(disabledRule, dataFormInfo, period) : false;
+    const visibleValue = checkVisibleRule({ dataElement, dataFormInfo, period });
     return { isDisabled: disabledValue, isVisible: visibleValue };
+}
+
+export function checkVisibleRule(options: UseApplyRulesProps) {
+    const { dataElement, dataFormInfo, period } = options;
+    const visibleRule = dataElement.rules.find(rule => rule.type === "visible");
+    const visibleValue = visibleRule ? getValueAndVerifyCondition(visibleRule, dataFormInfo, period) : true;
+    return visibleValue;
 }
 
 const DataEntryItem: React.FC<DataEntryItemProps> = props => {

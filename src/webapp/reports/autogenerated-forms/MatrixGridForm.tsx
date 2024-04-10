@@ -14,6 +14,7 @@ import DataTableSection from "./DataTableSection";
 import { MatrixGridViewModel } from "./MatrixGridViewModel";
 import { CustomDataTableColumnHeader } from "./datatables/CustomDataTables";
 import { DataElementItem } from "./DataElementItem";
+import { checkVisibleRule } from "./DataEntryItem";
 
 export interface MatrixGridFormProps {
     dataFormInfo: DataFormInfo;
@@ -56,14 +57,22 @@ const MatrixGridForm: React.FC<MatrixGridFormProps> = props => {
                 <TableBody>
                     {grid.rows.map((row, index) => (
                         <DataTableRow key={index}>
-                            {row.map(dataElement => (
-                                <React.Fragment key={dataElement.id}>
-                                    <DataTableCell key={dataElement.id}>{dataElement.name}</DataTableCell>
-                                    <DataTableCell key={dataElement.name}>
-                                        <DataElementItem dataElement={dataElement} dataFormInfo={dataFormInfo} />
-                                    </DataTableCell>
-                                </React.Fragment>
-                            ))}
+                            {row.map(dataElement => {
+                                const isVisible = checkVisibleRule({
+                                    dataElement,
+                                    dataFormInfo,
+                                    period: dataFormInfo.period,
+                                });
+                                if (!isVisible) return null;
+                                return (
+                                    <React.Fragment key={dataElement.id}>
+                                        <DataTableCell key={dataElement.id}>{dataElement.name}</DataTableCell>
+                                        <DataTableCell key={dataElement.name}>
+                                            <DataElementItem dataElement={dataElement} dataFormInfo={dataFormInfo} />
+                                        </DataTableCell>
+                                    </React.Fragment>
+                                );
+                            })}
                         </DataTableRow>
                     ))}
                 </TableBody>
