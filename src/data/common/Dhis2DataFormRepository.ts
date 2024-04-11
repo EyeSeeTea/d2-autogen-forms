@@ -248,11 +248,22 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                     type: ruleType,
                     id: dataElementDetails.id,
                     relatedDataElementId: dataElement.id,
-                    value: dataElementConfig.rules?.disabled?.condition || "",
+                    value: this.getConditionValue(dataElementConfig, ruleType),
                 };
             })
             .compact()
             .value();
+    }
+
+    private getConditionValue(dataElementConfig: DataElementConfig, ruleType: RuleType) {
+        switch (ruleType) {
+            case "disabled":
+                return dataElementConfig.rules?.disabled?.condition || "";
+            case "visible":
+                return dataElementConfig.rules?.visible?.condition || "";
+            default:
+                throw Error(`Invalid rule type: ${ruleType}`);
+        }
     }
 
     private getCurrentConfigByRuleType(dataElementConfigRules: DataElementConfig, type: RuleType) {
