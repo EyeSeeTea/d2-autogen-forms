@@ -181,5 +181,5 @@ export default React.memo(SectionsTabs);
 
 const StyledAppBar = styled(AppBar)`
     top: 48px !important;
-    z-index: 1000 !important;
+    z-index: 100 !important;
 `;

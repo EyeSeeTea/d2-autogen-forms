@@ -1,7 +1,7 @@
 {
     "name": "d2-reports",
     "description": "DHIS2 Reports",
-    "version": "0.0.4",
+    "version": "0.1.1",
     "license": "GPL-3.0",
     "author": "EyeSeeTea team",
     "homepage": ".",
@@ -77,7 +77,7 @@
         "prepare": "husky install"
     },
     "appVersions": {
-        "configurator": "0.0.4"
+        "configurator": "0.1.1"
     },
     "husky": {
         "hooks": {

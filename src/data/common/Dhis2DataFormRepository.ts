@@ -1,17 +1,24 @@
 import _ from "lodash";
 
-import { getId, Id } from "../../domain/common/entities/Base";
+import { Code, getId, Id } from "../../domain/common/entities/Base";
 import { DataElement } from "../../domain/common/entities/DataElement";
 import { Rule, RuleType } from "../../domain/common/entities/DataElementRule";
 import { DataForm, defaultTexts, Section, SectionBase } from "../../domain/common/entities/DataForm";
 import { Period } from "../../domain/common/entities/DataValue";
+import { Indicator } from "../../domain/common/entities/Indicator";
 import { SectionStyle } from "../../domain/common/entities/SectionStyle";
 import { buildToggleMultiple } from "../../domain/common/entities/ToggleMultiple";
 import { DataFormRepository } from "../../domain/common/repositories/DataFormRepository";
 import { D2Api, MetadataPick } from "../../types/d2-api";
 import { Maybe } from "../../utils/ts-utils";
 import { Dhis2DataElement } from "./Dhis2DataElement";
-import { DataElementConfig, Dhis2DataStoreDataForm, SectionConfig, SubNational } from "./Dhis2DataStoreDataForm";
+import {
+    DataElementConfig,
+    Dhis2DataStoreDataForm,
+    IndicatorConfig,
+    SectionConfig,
+    SubNational,
+} from "./Dhis2DataStoreDataForm";
 
 export class Dhis2DataFormRepository implements DataFormRepository {
     constructor(private api: D2Api) {}
@@ -27,15 +34,16 @@ export class Dhis2DataFormRepository implements DataFormRepository {
         const dataSetConfig = config.getDataSetConfig(dataSet, options.period);
 
         return {
+            indicators: _(sections)
+                .flatMap(section => section.indicators)
+                .value(),
             id: dataSet.id,
             expiryDays: dataSet.expiryDays,
             dataInputPeriods: dataSet.dataInputPeriods,
             dataElements: _.flatMap(sections, section => section.dataElements),
             sections: sections,
             texts: dataSetConfig.texts,
-            options: {
-                dataElements: dataElementsOptions,
-            },
+            options: { dataElements: dataElementsOptions },
         };
     }
 
@@ -76,10 +84,11 @@ export class Dhis2DataFormRepository implements DataFormRepository {
         const dataElements = await new Dhis2DataElement(this.api).get(dataElementIds);
 
         const dataElementsRulesConfig = this.buildRulesFromConfig(dataElements, configDataForm, allDataElements);
-
         return dataSet.sections.map((section): Section => {
             const config = dataSetConfig.sections[section.id];
+            const sectionIndicators = this.buildIndicators(section.indicators);
             const base: SectionBase = {
+                indicators: this.buildIndicatorsWithConfig(sectionIndicators, config?.indicators),
                 id: section.id,
                 name: section.displayName,
                 toggle: { type: "none" },
@@ -154,6 +163,29 @@ export class Dhis2DataFormRepository implements DataFormRepository {
         });
     }
 
+    private buildIndicatorsWithConfig(
+        indicators: Indicator[],
+        indicatorsConfig: Maybe<Record<Code, IndicatorConfig>>
+    ): Indicator[] {
+        if (!indicatorsConfig) return indicators;
+        return _(indicators)
+            .map((indicator): Indicator => {
+                const config = indicatorsConfig[indicator.code];
+                if (!config) return indicator;
+                return {
+                    ...indicator,
+                    dataElement: config.position
+                        ? {
+                              code: config.position.dataElement,
+                              direction: config.position.direction,
+                          }
+                        : undefined,
+                };
+            })
+
+            .value();
+    }
+
     private getDataElementRules(
         dataElementsRulesConfig: RuleConfig[],
         dataElement: DataElement,
@@ -218,11 +250,22 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                     type: ruleType,
                     id: dataElementDetails.id,
                     relatedDataElementId: dataElement.id,
-                    value: dataElementConfig.rules?.disabled?.condition || "",
+                    value: this.getConditionValue(dataElementConfig, ruleType),
                 };
             })
             .compact()
             .value();
+    }
+
+    private getConditionValue(dataElementConfig: DataElementConfig, ruleType: RuleType) {
+        switch (ruleType) {
+            case "disabled":
+                return dataElementConfig.rules?.disabled?.condition || "";
+            case "visible":
+                return dataElementConfig.rules?.visible?.condition || "";
+            default:
+                throw Error(`Invalid rule type: ${ruleType}`);
+        }
     }
 
     private getCurrentConfigByRuleType(dataElementConfigRules: DataElementConfig, type: RuleType) {
@@ -234,6 +277,18 @@ export class Dhis2DataFormRepository implements DataFormRepository {
             default:
                 return undefined;
         }
+    }
+
+    private buildIndicators(d2Indicators: D2Indicator[]): Indicator[] {
+        return d2Indicators.map(d2Indicator => {
+            return {
+                id: d2Indicator.id,
+                code: d2Indicator.code,
+                description: d2Indicator.displayDescription,
+                formula: `((${d2Indicator.numerator})/(${d2Indicator.denominator}))*${d2Indicator.indicatorType.factor}`,
+                dataElement: undefined,
+            };
+        });
     }
 }
 
@@ -272,6 +327,7 @@ function getMetadataQuery(options: { dataSetId: Id }) {
                             },
                         },
                     },
+                    indicators: indicatorsFields,
                 },
             },
             filter: { id: { eq: options.dataSetId } },
@@ -326,5 +382,22 @@ function getSectionBaseWithToggle(
     }
 }
 
+const indicatorsFields = {
+    id: true,
+    code: true,
+    displayDescription: true,
+    numerator: true,
+    denominator: true,
+    indicatorType: { id: true, factor: true },
+} as const;
 type RuleConfig = { type: RuleType; id: string; relatedDataElementId: string; value: string };
 type BasicDataElement = Pick<DataElement, "id" | "code">;
+
+type D2Indicator = {
+    id: string;
+    code: string;
+    displayDescription: string;
+    numerator: string;
+    denominator: string;
+    indicatorType: { id: string; factor: number };
+};

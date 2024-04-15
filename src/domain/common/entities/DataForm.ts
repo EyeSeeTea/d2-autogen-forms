@@ -4,6 +4,7 @@ import { Maybe, UnionFromValues } from "../../../utils/ts-utils";
 import { Id } from "./Base";
 import { DataElement, dataInputPeriodsType } from "./DataElement";
 import { Period } from "./DataValue";
+import { Indicator } from "./Indicator";
 import { SectionStyle } from "./SectionStyle";
 import { titleVariant } from "./TitleVariant";
 import { DataElementToggle } from "./ToggleMultiple";
@@ -18,6 +19,7 @@ export interface DataForm {
     options: {
         dataElements: Record<Id, { widget: "dropdown" | "radio" | "sourceType" }>;
     };
+    indicators: Indicator[];
 }
 
 export interface Texts {
@@ -73,6 +75,7 @@ export interface SectionBase {
     };
     showRowTotals: boolean;
     toggleMultiple: DataElementToggle[];
+    indicators: Indicator[];
 }
 
 export interface SectionSimple extends SectionBase {
