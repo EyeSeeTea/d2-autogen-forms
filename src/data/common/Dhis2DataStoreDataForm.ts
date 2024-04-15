@@ -46,7 +46,7 @@ interface BaseSectionConfig {
 }
 
 interface BasicSectionConfig extends BaseSectionConfig {
-    viewType: "table" | "grid" | "grid-with-combos" | "grid-with-cat-option-combos" | "matrix-grid";
+    viewType: "grid-with-combos" | "grid-with-cat-option-combos" | "matrix-grid";
 }
 
 interface GridWithPeriodsSectionConfig extends BaseSectionConfig {
@@ -55,7 +55,7 @@ interface GridWithPeriodsSectionConfig extends BaseSectionConfig {
 }
 
 interface GridWithTotalsSectionConfig extends BaseSectionConfig {
-    viewType: "grid-with-totals";
+    viewType: "table" | "grid" | "grid-with-totals";
     calculateTotals: Record<string, CalculateTotalConfig | undefined> | undefined;
 }
 
@@ -526,6 +526,8 @@ export class Dhis2DataStoreDataForm {
                         };
                         return [section.id, config] as [typeof section.id, typeof config];
                     }
+                    case "table":
+                    case "grid":
                     case "grid-with-totals": {
                         const config = {
                             ...baseConfig,

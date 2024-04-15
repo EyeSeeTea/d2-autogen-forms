@@ -76,7 +76,7 @@ export interface SectionBase {
 }
 
 export interface SectionSimple extends SectionBase {
-    viewType: "table" | "grid" | "grid-with-combos" | "grid-with-cat-option-combos" | "matrix-grid";
+    viewType: "grid-with-combos" | "grid-with-cat-option-combos" | "matrix-grid";
 }
 
 export interface SectionWithPeriods extends SectionBase {
@@ -85,7 +85,7 @@ export interface SectionWithPeriods extends SectionBase {
 }
 
 export interface SectionWithTotals extends SectionBase {
-    viewType: "grid-with-totals";
+    viewType: "table" | "grid" | "grid-with-totals";
     calculateTotals: Record<string, CalculateTotalConfig | undefined> | undefined;
 }
 

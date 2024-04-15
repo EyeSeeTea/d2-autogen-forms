@@ -2,7 +2,7 @@ import _ from "lodash";
 import React from "react";
 // @ts-ignore
 import { MultiSelect, MultiSelectOption, Button } from "@dhis2/ui";
-import { Option, DataElement } from "../../../../domain/common/entities/DataElement";
+import { Option } from "../../../../domain/common/entities/DataElement";
 import { WidgetFeedback } from "../WidgetFeedback";
 import { DataValueTextMultiple } from "../../../../domain/common/entities/DataValue";
 import { WidgetProps } from "./WidgetBase";
@@ -16,7 +16,6 @@ export interface SourceTypeWidgetProps extends WidgetProps {
     dataFormInfo: DataFormInfo;
     options: Option<string>[];
     sourceTypeDEs: DataElementRefType[];
-    rowDataElements?: DataElement[];
     rows?: Row[];
 }
 

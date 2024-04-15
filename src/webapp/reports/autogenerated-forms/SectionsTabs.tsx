@@ -43,9 +43,21 @@ function TypeSwitch(props: TypeSwitchProps) {
 
     switch (viewType) {
         case "table":
-            return <TableForm key={`${section.id}+tab`} dataFormInfo={dataFormInfo} section={section} />;
+            return (
+                <TableForm
+                    key={`${section.id}+tab`}
+                    dataFormInfo={dataFormInfo}
+                    section={section as SectionWithTotals}
+                />
+            );
         case "grid":
-            return <GridForm key={`${section.id}+tab`} dataFormInfo={dataFormInfo} section={section} />;
+            return (
+                <GridForm
+                    key={`${section.id}+tab`}
+                    dataFormInfo={dataFormInfo}
+                    section={section as SectionWithTotals}
+                />
+            );
         case "grid-with-periods":
             return (
                 <GridWithPeriods

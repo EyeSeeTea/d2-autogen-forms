@@ -27,7 +27,6 @@ export interface DataEntryItemProps {
     manualyDisabled?: boolean;
     total?: DataElement;
     columnTotal?: DataElement;
-    rowDataElements?: DataElement[];
     columnDataElements?: DataElement[];
     cocId: string;
     rows?: Row[];
@@ -118,7 +117,7 @@ function useApplyRules(props: UseApplyRulesProps): UseApplyRulesReturn {
 }
 
 const DataEntryItem: React.FC<DataEntryItemProps> = props => {
-    const { dataElement, dataFormInfo, manualyDisabled: handDisabled, rowDataElements, rows } = props;
+    const { dataElement, dataFormInfo, manualyDisabled: handDisabled, rows } = props;
     const [dataValue, state, notifyChange] = useUpdatableDataValueWithFeedback(props);
 
     const { type } = dataValue;
@@ -177,7 +176,6 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                             state={state}
                             disabled={disabled}
                             sourceTypeDEs={sourceTypeDEs}
-                            rowDataElements={rowDataElements}
                             rows={rows}
                         />
                     );
@@ -287,7 +285,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
 };
 
 function useUpdatableDataValueWithFeedback(options: DataEntryItemProps) {
-    const { cocId, dataFormInfo, dataElement, total, columnTotal, rowDataElements, columnDataElements } = options;
+    const { cocId, dataFormInfo, dataElement, columnTotal, columnDataElements } = options;
     const [state, setState] = React.useState<WidgetState>("original");
     const selector = React.useMemo(() => {
         return {
@@ -314,8 +312,8 @@ function useUpdatableDataValueWithFeedback(options: DataEntryItemProps) {
     const notifyChange = React.useCallback(
         dataValue => {
             setState("saving");
-            if (total && columnTotal && rowDataElements && columnDataElements) {
-                saveWithTotals(dataValue, total, columnTotal, rowDataElements, columnDataElements, cocId)
+            if (columnTotal && columnDataElements && cocId) {
+                saveWithTotals(dataValue, columnTotal, columnDataElements, cocId)
                     .then(() => setState("saveSuccessful"))
                     .catch(() => setState("saveError"));
             } else {
@@ -324,7 +322,7 @@ function useUpdatableDataValueWithFeedback(options: DataEntryItemProps) {
                     .catch(() => setState("saveError"));
             }
         },
-        [columnDataElements, columnTotal, rowDataElements, save, saveWithTotals, total, cocId]
+        [columnDataElements, columnTotal, save, saveWithTotals, cocId]
     );
 
     return [dataValue, state, notifyChange] as const;

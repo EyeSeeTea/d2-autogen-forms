@@ -19,7 +19,6 @@ export interface DataElementItemProps {
     manualyDisabled?: boolean;
     total?: DataElement;
     columnTotal?: DataElement;
-    rowDataElements?: DataElement[];
     columnDataElements?: DataElement[];
     rows?: Row[];
     rowName?: string;
@@ -35,7 +34,6 @@ export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props 
         manualyDisabled,
         total,
         columnTotal,
-        rowDataElements,
         columnDataElements,
         rows,
         rowName,
@@ -94,9 +92,8 @@ export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props 
                     manualyDisabled={manualyDisabled}
                     total={total}
                     columnTotal={columnTotal}
-                    rowDataElements={rowDataElements}
                     columnDataElements={columnDataElements}
-                    cocId=""
+                    cocId={dataElementCocId}
                     rows={rows}
                 />
             </div>
@@ -119,7 +116,6 @@ export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props 
                     manualyDisabled={manualyDisabled}
                     total={total}
                     columnTotal={columnTotal}
-                    rowDataElements={rowDataElements}
                     columnDataElements={columnDataElements}
                     cocId={dataElementCocId}
                 />

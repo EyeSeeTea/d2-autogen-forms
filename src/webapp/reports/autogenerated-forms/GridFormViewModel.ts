@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { Section, Texts } from "../../../domain/common/entities/DataForm";
+import { Section, SectionWithTotals, Texts } from "../../../domain/common/entities/DataForm";
 import { DataElement } from "../../../domain/common/entities/DataElement";
 import { titleVariant } from "../../../domain/common/entities/TitleVariant";
 import { Maybe } from "../../../utils/ts-utils";
@@ -33,13 +33,20 @@ interface Column {
 interface Row {
     name: string;
     htmlText: string;
-    items: Array<{ column: Column; dataElement: DataElement | undefined; disableComments: boolean }>;
+    items: Array<{
+        column: Column;
+        columnTotal: DataElement | undefined;
+        columnDataElements: DataElement[];
+        dataElement: DataElement | undefined;
+        disabled: boolean;
+        disableComments: boolean;
+    }>;
 }
 
 const separator = " - ";
 
 export class GridViewModel {
-    static get(section: Section, dataFormInfo: DataFormInfo): Grid {
+    static get(section: SectionWithTotals, dataFormInfo: DataFormInfo): Grid {
         const dataElements = getDataElementsWithIndexProccessing(section);
 
         const subsections = _(dataElements)
@@ -48,10 +55,29 @@ export class GridViewModel {
             .map(
                 ([groupName, dataElementsForGroup]): SubSectionGrid => ({
                     name: groupName,
-                    dataElements: dataElementsForGroup.map(dataElement => ({
-                        ...dataElement,
-                        name: _(dataElement.name).split(separator).last() || "-",
-                    })),
+                    dataElements: dataElementsForGroup.flatMap(dataElement => {
+                        const deName = _(dataElement.name).split(separator).last() || "-";
+
+                        const cocNames = dataElement.categoryCombos.categoryOptionCombos.map(coc => coc.name);
+
+                        if (cocNames.length === 1 && cocNames[0] === "default") {
+                            return [
+                                {
+                                    ...dataElement,
+                                    cocId: dataElement.categoryCombos.categoryOptionCombos[0]?.id,
+                                    name: deName,
+                                },
+                            ];
+                        } else {
+                            return cocNames.map(coc => ({
+                                ...dataElement,
+                                cocId:
+                                    dataElement.categoryCombos.categoryOptionCombos.find(c => c.name === coc)?.id ||
+                                    "cocId",
+                                name: deName,
+                            }));
+                        }
+                    }),
                 })
             )
             .value();
@@ -66,12 +92,37 @@ export class GridViewModel {
             })
             .value();
 
+        const dataElementsByTotal = _(section.calculateTotals)
+            .groupBy(item => item?.totalDeCode)
+            .map((group, totalColumn) => ({
+                totalColumn,
+                dataElements: group.map(item => _.findKey(section.calculateTotals, obj => obj === item)),
+            }))
+            .value();
+
         const rows = subsections.map(subsection => {
             const items = columns.map(column => {
                 const dataElement = subsection.dataElements.find(de => de.name === column.name);
+                const deCalculateTotal =
+                    section.calculateTotals && dataElement?.code
+                        ? section.calculateTotals[dataElement.code]
+                        : undefined;
+
+                const parentTotal = deCalculateTotal
+                    ? dataElements.find(de => de.code === deCalculateTotal?.totalDeCode)
+                    : undefined;
+
+                const dataElementsInTotalColumn = dataElementsByTotal.find(x => x.totalColumn === parentTotal?.code);
+                const columnDataElements = dataElements.filter(de =>
+                    dataElementsInTotalColumn?.dataElements.includes(de.code)
+                );
+
                 return {
-                    column,
-                    dataElement,
+                    column: column,
+                    columnTotal: deCalculateTotal?.totalDeCode ? parentTotal : undefined,
+                    columnDataElements: columnDataElements,
+                    dataElement: dataElement,
+                    disabled: deCalculateTotal?.disabled ?? false,
                     disableComments: section.disableComments || dataElement?.disabledComments || false,
                 };
             });

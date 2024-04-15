@@ -88,8 +88,6 @@ const GridWithSubNational: React.FC<GridWithSubNationalProps> = props => {
                                             manualyDisabled={item.manualyDisabled}
                                             columnDataElements={item.columnDataElements}
                                             columnTotal={item.columnTotal}
-                                            total={item.total}
-                                            rowDataElements={item.columnDataElements}
                                             noComment={item.column.name !== "Source type for HWF - (Inputs & Outputs)"}
                                         />
                                     </DataTableCell>
