@@ -42,8 +42,6 @@ const GridForm: React.FC<GridFormProps> = props => {
     const grid = React.useMemo(() => GridViewModel.get(section, dataFormInfo), [section, dataFormInfo]);
     const classes = useStyles();
 
-    console.log({ grid });
-
     return (
         <DataTableSection section={grid} sectionStyles={props.section.styles} dataFormInfo={dataFormInfo}>
             <DataTable className={classes.table}>
