@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { Section, SectionWithTotals, Texts } from "../../../domain/common/entities/DataForm";
+import { Section, SectionGrid, Texts } from "../../../domain/common/entities/DataForm";
 import { DataElement } from "../../../domain/common/entities/DataElement";
 import { titleVariant } from "../../../domain/common/entities/TitleVariant";
 import { Maybe } from "../../../utils/ts-utils";
@@ -50,7 +50,7 @@ interface Row {
 const separator = " - ";
 
 export class GridViewModel {
-    static get(section: SectionWithTotals, dataFormInfo: DataFormInfo): Grid {
+    static get(section: SectionGrid, dataFormInfo: DataFormInfo): Grid {
         const dataElements = getDataElementsWithIndexProccessing(section);
 
         const subsections = _(dataElements)
@@ -59,29 +59,10 @@ export class GridViewModel {
             .map(
                 ([groupName, dataElementsForGroup]): SubSectionGrid => ({
                     name: groupName,
-                    dataElements: dataElementsForGroup.flatMap(dataElement => {
-                        const deName = _(dataElement.name).split(separator).last() || "-";
-
-                        const cocNames = dataElement.categoryCombos.categoryOptionCombos.map(coc => coc.name);
-
-                        if (cocNames.length === 1 && cocNames[0] === "default") {
-                            return [
-                                {
-                                    ...dataElement,
-                                    cocId: dataElement.categoryCombos.categoryOptionCombos[0]?.id,
-                                    name: deName,
-                                },
-                            ];
-                        } else {
-                            return cocNames.map(coc => ({
-                                ...dataElement,
-                                cocId:
-                                    dataElement.categoryCombos.categoryOptionCombos.find(c => c.name === coc)?.id ||
-                                    "cocId",
-                                name: deName,
-                            }));
-                        }
-                    }),
+                    dataElements: dataElementsForGroup.map(dataElement => ({
+                        ...dataElement,
+                        name: _(dataElement.name).split(separator).last() || "-",
+                    })),
                 })
             )
             .value();
@@ -125,7 +106,7 @@ export class GridViewModel {
 
                 return {
                     column: column,
-                    columnTotal: deCalculateTotal?.totalDeCode ? parentTotal : undefined,
+                    columnTotal: parentTotal,
                     columnDataElements: columnDataElements,
                     dataElement: dataElement,
                     disabled: deCalculateTotal?.disabled ?? false,

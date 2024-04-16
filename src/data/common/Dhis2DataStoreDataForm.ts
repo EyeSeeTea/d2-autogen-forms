@@ -19,6 +19,7 @@ interface DataSetConfig {
 
 export type SectionConfig =
     | BasicSectionConfig
+    | GridSectionConfig
     | GridWithPeriodsSectionConfig
     | GridWithTotalsSectionConfig
     | GridWithSubnationalSectionConfig;
@@ -50,14 +51,19 @@ interface BasicSectionConfig extends BaseSectionConfig {
     viewType: "grid-with-combos" | "grid-with-cat-option-combos" | "matrix-grid";
 }
 
+interface GridSectionConfig extends BaseSectionConfig {
+    viewType: "table" | "grid";
+    calculateTotals: CalculateTotalType;
+}
+
 interface GridWithPeriodsSectionConfig extends BaseSectionConfig {
     viewType: "grid-with-periods";
     periods: string[];
 }
 
 interface GridWithTotalsSectionConfig extends BaseSectionConfig {
-    viewType: "table" | "grid" | "grid-with-totals";
-    calculateTotals: Record<string, CalculateTotalConfig | undefined> | undefined;
+    viewType: "grid-with-totals";
+    calculateTotals: CalculateTotalType;
 }
 
 interface GridWithSubnationalSectionConfig extends BaseSectionConfig {
@@ -69,6 +75,8 @@ export type CalculateTotalConfig = {
     totalDeCode: Code | undefined;
     disabled: boolean | undefined;
 };
+
+export type CalculateTotalType = Record<string, CalculateTotalConfig | undefined> | undefined;
 
 const defaultViewType = "table";
 
