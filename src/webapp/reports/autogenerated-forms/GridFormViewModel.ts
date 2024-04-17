@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { Section, Texts } from "../../../domain/common/entities/DataForm";
+import { Section, SectionGrid, Texts } from "../../../domain/common/entities/DataForm";
 import { DataElement } from "../../../domain/common/entities/DataElement";
 import { titleVariant } from "../../../domain/common/entities/TitleVariant";
 import { Maybe } from "../../../utils/ts-utils";
@@ -39,7 +39,10 @@ interface Row {
     htmlText: string;
     items: Array<{
         column: Column;
+        columnTotal: DataElement | undefined;
+        columnDataElements: DataElement[];
         dataElement: DataElement | undefined;
+        disabled: boolean;
         disableComments: boolean;
     }>;
 }
@@ -47,7 +50,7 @@ interface Row {
 const separator = " - ";
 
 export class GridViewModel {
-    static get(section: Section, dataFormInfo: DataFormInfo): Grid {
+    static get(section: SectionGrid, dataFormInfo: DataFormInfo): Grid {
         const dataElements = getDataElementsWithIndexProccessing(section);
 
         const subsections = _(dataElements)
@@ -74,15 +77,39 @@ export class GridViewModel {
             })
             .value();
 
+        const dataElementsByTotal = _(section.calculateTotals)
+            .groupBy(item => item?.totalDeCode)
+            .map((group, totalColumn) => ({
+                totalColumn,
+                dataElements: group.map(item => _.findKey(section.calculateTotals, obj => obj === item)),
+            }))
+            .value();
+
         const rows = subsections.map(subsection => {
             const firstDataElement = _(subsection.dataElements).first();
             const indicator = getIndicatorRelatedToDataElement(section.indicators, firstDataElement?.code || "");
             const items = columns.map(column => {
                 const dataElement = subsection.dataElements.find(de => de.name === column.name);
+                const deCalculateTotal =
+                    section.calculateTotals && dataElement?.code
+                        ? section.calculateTotals[dataElement.code]
+                        : undefined;
+
+                const parentTotal = deCalculateTotal
+                    ? dataElements.find(de => de.code === deCalculateTotal?.totalDeCode)
+                    : undefined;
+
+                const dataElementsInTotalColumn = dataElementsByTotal.find(x => x.totalColumn === parentTotal?.code);
+                const columnDataElements = dataElements.filter(de =>
+                    dataElementsInTotalColumn?.dataElements.includes(de.code)
+                );
 
                 return {
-                    column,
-                    dataElement,
+                    column: column,
+                    columnTotal: parentTotal,
+                    columnDataElements: columnDataElements,
+                    dataElement: dataElement,
+                    disabled: deCalculateTotal?.disabled ?? false,
                     disableComments: section.disableComments || dataElement?.disabledComments || false,
                 };
             });

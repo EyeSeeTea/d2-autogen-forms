@@ -269,15 +269,13 @@ function useDataFormInfo(): [
     const saveWithTotals = useCallback<DataFormInfo["data"]["saveWithTotals"]>(
         async (
             dataValue: DataValueNumberSingle,
-            total: DataElement,
             columnTotal: DataElement,
-            rowDataElements: DataElement[],
             columnDataElements: DataElement[],
             cocId: string
         ) => {
             if (!dataValues) return dataValues;
             return compositionRoot.dataForms
-                .saveWithTotals(dataValues, dataValue, total, columnTotal, rowDataElements, columnDataElements, cocId)
+                .saveWithTotals(dataValues, dataValue, columnTotal, columnDataElements, cocId)
                 .then(newStore => {
                     setDataValues(prev => {
                         if (!prev) return undefined;
@@ -328,9 +326,7 @@ export interface DataFormInfo {
         ) => Promise<void>;
         saveWithTotals: (
             dataValue: DataValueNumberSingle,
-            total: DataElement,
             columnTotal: DataElement,
-            rowDataElements: DataElement[],
             columnDataElements: DataElement[],
             cocId: string
         ) => Promise<void>;

@@ -134,13 +134,15 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                 toggleMultiple: config?.toggleMultiple ? buildToggleMultiple(config.toggleMultiple, dataElements) : [],
             };
 
-            if (!config) return { viewType: "table", ...base };
+            if (!config) return { viewType: "table", calculateTotals: undefined, ...base };
 
             const base2 = getSectionBaseWithToggle(config, base, dataElements);
 
             switch (config.viewType) {
                 case "grid-with-periods":
                     return { viewType: config.viewType, periods: config.periods, ...base2 };
+                case "table":
+                case "grid":
                 case "grid-with-totals":
                     return { viewType: config.viewType, calculateTotals: config.calculateTotals, ...base2 };
                 case "grid-with-subnational-ous":

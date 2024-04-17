@@ -9,9 +9,7 @@ export class SaveGridWithTotalsValueUseCase {
     async execute(
         store: DataValueStore,
         dataValue: DataValueNumberSingle,
-        total: DataElement,
         columnTotal: DataElement,
-        rowDataElements: DataElement[],
         columnDataElements: DataElement[],
         cocId: string
     ): Promise<DataValueStore> {

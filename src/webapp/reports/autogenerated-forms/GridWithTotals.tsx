@@ -140,7 +140,6 @@ const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
                                                     manualyDisabled={item.disabled}
                                                     total={row.total}
                                                     columnTotal={item.columnTotal}
-                                                    rowDataElements={row.rowDataElements}
                                                     columnDataElements={item.columnDataElements}
                                                     rowName={row.name}
                                                 />

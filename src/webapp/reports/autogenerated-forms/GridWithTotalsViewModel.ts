@@ -29,7 +29,6 @@ export interface Row {
     name: string;
     includePadding: number;
     total?: DataElement;
-    rowDataElements?: DataElement[];
     rowDisabled?: boolean;
     items: Array<{
         column: Column;
@@ -148,25 +147,13 @@ export class GridWithTotalsViewModel {
                 };
             });
 
-            let rowDataElements;
-            if (hasTotals) {
-                rowDataElements = subsection.dataElements.flatMap(de => {
-                    if (de.name.endsWith("Total") || de.name.endsWith("Source Type")) {
-                        return [];
-                    } else {
-                        return de;
-                    }
-                });
-            }
-
             // Since we cannot add spaces or tabs in a form name
             // we're adding a little padding for each row number
             const includePadding = index ? index.split(".").length - 1 : 0;
             return {
                 name: subsection.name,
-                includePadding,
-                total,
-                rowDataElements: rowDataElements,
+                includePadding: includePadding,
+                total: total,
                 rowDisabled: false,
                 items: items,
             };

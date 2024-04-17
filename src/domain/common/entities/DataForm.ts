@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { CalculateTotalConfig, SubNational } from "../../../data/common/Dhis2DataStoreDataForm";
+import { CalculateTotalType, SubNational } from "../../../data/common/Dhis2DataStoreDataForm";
 import { Maybe, UnionFromValues } from "../../../utils/ts-utils";
 import { Id } from "./Base";
 import { DataElement, dataInputPeriodsType } from "./DataElement";
@@ -79,7 +79,7 @@ export interface SectionBase {
 }
 
 export interface SectionSimple extends SectionBase {
-    viewType: "table" | "grid" | "grid-with-combos" | "grid-with-cat-option-combos" | "matrix-grid";
+    viewType: "grid-with-combos" | "grid-with-cat-option-combos" | "matrix-grid";
 }
 
 export interface SectionWithPeriods extends SectionBase {
@@ -87,9 +87,14 @@ export interface SectionWithPeriods extends SectionBase {
     periods: string[];
 }
 
+export interface SectionGrid extends SectionBase {
+    viewType: "table" | "grid";
+    calculateTotals: CalculateTotalType;
+}
+
 export interface SectionWithTotals extends SectionBase {
     viewType: "grid-with-totals";
-    calculateTotals: Record<string, CalculateTotalConfig | undefined> | undefined;
+    calculateTotals: CalculateTotalType;
 }
 
 export interface SectionWithSubnationals extends SectionBase {
@@ -97,7 +102,7 @@ export interface SectionWithSubnationals extends SectionBase {
     subNationals: SubNational[];
 }
 
-export type Section = SectionSimple | SectionWithPeriods | SectionWithTotals | SectionWithSubnationals;
+export type Section = SectionSimple | SectionGrid | SectionWithPeriods | SectionWithTotals | SectionWithSubnationals;
 
 export class DataFormM {
     static viewTypes = viewTypes;
