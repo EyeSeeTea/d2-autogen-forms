@@ -15,7 +15,10 @@ export const sectionSchema = (
     dataElements: DataElementSchema[],
     constantCodes: string[]
 ) => {
-    const dataElementCodes = dataElements.map(dataElement => dataElement.dataElementCode);
+    const dataElementCodes = _(dataElements)
+        .map(dataElement => dataElement.dataElementCode)
+        .compact()
+        .value();
     const columnsDescriptions = _(sections)
         .flatMap(section => section.columnsDescriptions)
         .uniq()
@@ -123,6 +126,13 @@ export const sectionSchema = (
         },
     };
 
+    const calculateTotalsValidation = mergeArrayWithSchema(dataElementCodes, {
+        properties: {
+            totalDeCode: { type: "string", enum: _(dataElementCodes).compact().value() },
+            disabled: "boolean",
+        },
+    });
+
     return {
         type: "object",
         minProperties: 1,
@@ -144,17 +154,11 @@ export const sectionSchema = (
             if: { properties: { viewType: { const: "grid-with-totals" } } },
             then: {
                 properties: {
-                    calculateTotals: mergeArrayWithSchema(
-                        dataElementCodes,
-                        defaultObjectProperties({
-                            properties: {
-                                totalDeCode: {
-                                    enum: dataElementCodes,
-                                },
-                                disabled: "boolean",
-                            },
-                        })
-                    ),
+                    calculateTotals: {
+                        type: "object",
+                        properties: { ...calculateTotalsValidation },
+                        additionalProperties: false,
+                    },
                     ...sectionProperties,
                 },
             },
@@ -162,6 +166,11 @@ export const sectionSchema = (
                 if: { properties: { viewType: { const: "grid-with-subnational-ous" } } },
                 then: {
                     properties: {
+                        calculateTotals: {
+                            type: "object",
+                            properties: { ...calculateTotalsValidation },
+                            additionalProperties: false,
+                        },
                         subNationalDataset: {
                             type: "string",
                         },

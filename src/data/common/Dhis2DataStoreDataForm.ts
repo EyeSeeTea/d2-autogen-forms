@@ -68,6 +68,7 @@ interface GridWithTotalsSectionConfig extends BaseSectionConfig {
 
 interface GridWithSubnationalSectionConfig extends BaseSectionConfig {
     viewType: "grid-with-subnational-ous";
+    calculateTotals: CalculateTotalType;
     subNationalDataset: string;
 }
 
@@ -562,6 +563,7 @@ export class Dhis2DataStoreDataForm {
                         const config = {
                             ...baseConfig,
                             viewType,
+                            calculateTotals: sectionConfig.calculateTotals,
                             subNationalDataset: sectionConfig.subNationalDataset || "",
                         };
                         return [section.id, config] as [typeof section.id, typeof config];

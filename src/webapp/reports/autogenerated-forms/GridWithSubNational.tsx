@@ -55,13 +55,9 @@ const GridWithSubNational: React.FC<GridWithSubNationalProps> = props => {
                                 key={`column-${column.name}`}
                                 fixed
                                 top={topValue}
-                                className={
-                                    column.name === "Source type for HWF - (Inputs & Outputs)"
-                                        ? classes.source
-                                        : classes.columnWidth
-                                }
+                                className={classes.columnWidth}
                             >
-                                <span>{column.cocName}</span>
+                                <span>{column.deName}</span>
                             </DataTableColumnHeader>
                         ))}
                     </DataTableRow>
