@@ -1,6 +1,7 @@
 import _ from "lodash";
 import { Section, SectionWithSubnationals, Texts } from "../../../domain/common/entities/DataForm";
 import { DataElement } from "../../../domain/common/entities/DataElement";
+import { Maybe } from "../../../utils/ts-utils";
 
 export interface Grid {
     id: string;
@@ -44,6 +45,13 @@ type ParentColumn = {
 };
 
 const separator = " - ";
+
+function extractNumber(value: Maybe<string>): string {
+    if (!value) return "";
+    const regex = /^\d+(\.\d+)?/;
+    const result = value.match(regex);
+    return result && result[0] ? result[0] : "";
+}
 
 export class GridWithSubNationalViewModel {
     static get(section: SectionWithSubnationals): Grid {
@@ -91,35 +99,44 @@ export class GridWithSubNationalViewModel {
             .value();
 
         const parentColumns = _(columns)
-            .map(c => ({ name: c.deName || "" }))
+            .map(c => ({ name: extractNumber(c.deName) }))
             .value();
 
-        const columnsByRowIndex = _(columns)
-            .filter(column => column.level === 2)
-            .groupBy(c => c.rowIndex)
+        const dataElementsByTotal = _(section.calculateTotals)
+            .groupBy(item => item?.totalDeCode)
+            .map((group, totalColumn) => ({
+                totalColumn,
+                dataElements: group.map(item => _.findKey(section.calculateTotals, obj => obj === item)),
+            }))
             .value();
 
         const rows = _.orderBy(
             section.subNationals.map(subNational => {
-                let columnTotal: DataElement | undefined;
                 const items = columns.map(column => {
-                    const isLevelOne = column.level === 1;
-                    const isLevelTwo = column.level === 2;
-                    let dataElementsForColumns = undefined;
                     const dataElement = section.dataElements.find(de => de.name === column.name);
-                    if (isLevelOne) {
-                        columnTotal = dataElement;
-                    }
 
-                    const columnsForTotal = columnsByRowIndex[column.rowIndex]?.map(column => column.name) || [];
-                    dataElementsForColumns = section.dataElements.filter(de => columnsForTotal.includes(de.name));
+                    const deCalculateTotal =
+                        section.calculateTotals && dataElement?.code
+                            ? section.calculateTotals[dataElement.code]
+                            : undefined;
+
+                    const parentTotal = deCalculateTotal
+                        ? dataElements.find(de => de.code === deCalculateTotal?.totalDeCode)
+                        : undefined;
+
+                    const dataElementsInTotalColumn = dataElementsByTotal.find(
+                        x => x.totalColumn === parentTotal?.code
+                    );
+                    const columnDataElements = dataElements.filter(de =>
+                        dataElementsInTotalColumn?.dataElements.includes(de.code)
+                    );
 
                     return {
                         column,
-                        columnTotal: isLevelTwo ? columnTotal : undefined,
-                        total: _.merge({}, columnTotal, { name: "" }),
-                        manualyDisabled: isLevelOne && dataElementsForColumns.length > 0,
-                        columnDataElements: isLevelTwo ? dataElementsForColumns : undefined,
+                        columnTotal: parentTotal,
+                        total: _.merge({}, parentTotal, { name: "" }),
+                        manualyDisabled: deCalculateTotal?.disabled ?? false,
+                        columnDataElements: columnDataElements,
                         dataElement: _.merge({}, dataElement, { orgUnit: subNational.id }),
                     };
                 });

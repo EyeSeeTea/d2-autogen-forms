@@ -148,6 +148,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                 case "grid-with-subnational-ous":
                     return {
                         viewType: config.viewType,
+                        calculateTotals: config.calculateTotals,
                         subNationals: config?.subNationalDataset
                             ? _(configDataForm.subNationals)
                                   .filter((sn: SubNational) => sn.parentId === orgUnit)

@@ -99,6 +99,7 @@ export interface SectionWithTotals extends SectionBase {
 
 export interface SectionWithSubnationals extends SectionBase {
     viewType: "grid-with-subnational-ous";
+    calculateTotals: CalculateTotalType;
     subNationals: SubNational[];
 }
 
