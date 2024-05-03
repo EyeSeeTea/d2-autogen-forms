@@ -112,7 +112,7 @@ function getCocOrdered(categoryCombo: D2DataElement["categoryCombo"], config: Dh
         return match
             ? {
                   ...match,
-                  name: categoryOption?.displayName,
+                  name: categoryOption?.displayName || match.name,
                   shortName: categoryOption?.shortName,
                   formName: categoryOption?.formName,
               }
