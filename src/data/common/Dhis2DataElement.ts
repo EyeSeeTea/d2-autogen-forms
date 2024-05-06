@@ -119,8 +119,8 @@ function getCocOrdered(categoryCombo: D2DataElement["categoryCombo"], config: Dh
             : [];
     });
 
-    const keyName = config.categoryCombinationsConfig[categoryCombo.code]?.viewType || "name";
-    return result.map(x => ({ ...x, name: x[keyName] || "" }));
+    const keyName = config.categoryCombinationsConfig[categoryCombo.code]?.viewType || "formName";
+    return result.map(x => ({ ...x, name: x[keyName] || x.name || "" }));
 }
 
 function getDataElement(dataElement: D2DataElement, config: Dhis2DataStoreDataForm): DataElement | null {
