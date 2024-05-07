@@ -50,7 +50,8 @@ const dataElementFields = {
                 id: true,
                 code: true,
                 name: true,
-                shortName: true,
+                displayName: true,
+                displayShortName: true,
                 displayFormName: true,
             },
         },
@@ -89,7 +90,8 @@ function getCocOrdered(categoryCombo: D2DataElement["categoryCombo"], config: Dh
         .map(c => {
             return c.categoryOptions.flatMap(co => ({
                 name: co.name,
-                shortName: co.shortName,
+                displayName: co.displayName,
+                shortName: co.displayShortName,
                 formName: co.displayFormName,
             }));
         })
@@ -107,11 +109,18 @@ function getCocOrdered(categoryCombo: D2DataElement["categoryCombo"], config: Dh
             return coc.name === cocOrdered;
         });
         const categoryOption = allCategoryOptions.find(c => c.name === match?.name);
-        return match ? { ...match, shortName: categoryOption?.shortName, formName: categoryOption?.formName } : [];
+        return match
+            ? {
+                  ...match,
+                  name: categoryOption?.displayName || match.name,
+                  shortName: categoryOption?.shortName,
+                  formName: categoryOption?.formName,
+              }
+            : [];
     });
 
-    const keyName = config.categoryCombinationsConfig[categoryCombo.code]?.viewType || "name";
-    return result.map(x => ({ ...x, name: x[keyName] || "" }));
+    const keyName = config.categoryCombinationsConfig[categoryCombo.code]?.viewType || "formName";
+    return result.map(x => ({ ...x, name: x[keyName] || x.name || "" }));
 }
 
 function getDataElement(dataElement: D2DataElement, config: Dhis2DataStoreDataForm): DataElement | null {
