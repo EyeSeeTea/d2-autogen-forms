@@ -26,12 +26,20 @@ const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
     const { dataFormInfo, section } = props;
 
     const grid = React.useMemo(
-        () => GridWithTotalsViewModel.get(section, dataFormInfo.metadata.dataForm.dataElements),
-        [section, dataFormInfo.metadata.dataForm.dataElements]
+        () =>
+            GridWithTotalsViewModel.get(
+                section,
+                dataFormInfo.metadata.dataForm.dataElements,
+                dataFormInfo.metadata.dataForm.options.dataElements
+            ),
+        [section, dataFormInfo.metadata.dataForm.dataElements, dataFormInfo.metadata.dataForm.options.dataElements]
     );
     const classes = useStyles();
 
-    const fistSection = section.id !== "yzMn16Bp1wV";
+    const currentSectionIndex = dataFormInfo.metadata.dataForm.sections.findIndex(
+        allSections => allSections.id === section.id
+    );
+    const notFirstSection = currentSectionIndex !== 0;
 
     return (
         <DataTableSection section={grid} dataFormInfo={dataFormInfo}>
@@ -53,7 +61,7 @@ const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
                                         </DataTableColumnHeader>
                                     );
                                 })}
-                                {section.id === "yzMn16Bp1wV" && <DataTableColumnHeader></DataTableColumnHeader>}
+                                {!notFirstSection && <DataTableColumnHeader></DataTableColumnHeader>}
                             </DataTableRow>
                         )}
                         <DataTableRow>
@@ -65,7 +73,7 @@ const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
                                 <DataTableColumnHeader></DataTableColumnHeader>
                             )}
 
-                            {fistSection ? (
+                            {notFirstSection ? (
                                 <DataTableColumnHeader className={classes.columnWidth} key={`column-Total`}>
                                     <span>Total</span>
                                 </DataTableColumnHeader>
@@ -82,7 +90,7 @@ const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
                                 ) : (
                                     <DataTableColumnHeader
                                         key={`column-${column.name}`}
-                                        className={column.name === "Source Type" ? classes.source : classes.columnWidth}
+                                        className={column.isSourceType ? classes.source : classes.columnWidth}
                                     >
                                         <span>{column.name}</span>
                                     </DataTableColumnHeader>
@@ -104,7 +112,7 @@ const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
                                     </p>
                                 </DataTableCell>
 
-                                {fistSection && row.total ? (
+                                {notFirstSection && row.total ? (
                                     <DataTableCell key={row.total.id + row.total.cocId}>
                                         <DataElementItem
                                             dataElement={row.total}
@@ -116,7 +124,7 @@ const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
                                 ) : null}
 
                                 {row.items.map((item, idx) => {
-                                    if (item.column.name === "Source Type") {
+                                    if (item.column.isSourceType) {
                                         return item.dataElement ? (
                                             <DataTableCell key={item.dataElement.id + item.dataElement.cocId}>
                                                 <DataElementItem

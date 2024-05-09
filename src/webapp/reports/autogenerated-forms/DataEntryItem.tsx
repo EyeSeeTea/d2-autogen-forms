@@ -165,14 +165,6 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                 );
             case "TEXT":
                 if (config?.widget === "sourceType" && dataValue.isMultiple) {
-                    const sourceTypeDEs = dataFormInfo.metadata.dataForm.dataElements.flatMap(de => {
-                        if (de.name.endsWith(" - Source Type") && de.id !== dataValue.dataElement.id) {
-                            return { id: de.id, name: de.name };
-                        } else {
-                            return [];
-                        }
-                    });
-
                     return (
                         <SourceTypeWidget
                             dataValue={dataValue}
@@ -181,7 +173,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                             onValueChange={notifyChange}
                             state={state}
                             disabled={disabled}
-                            sourceTypeDEs={sourceTypeDEs}
+                            sourceTypeDEs={[]}
                             rows={rows}
                         />
                     );
