@@ -1,6 +1,7 @@
 import _ from "lodash";
 import { Section, SectionWithTotals, Texts } from "../../../domain/common/entities/DataForm";
 import { DataElement } from "../../../domain/common/entities/DataElement";
+import { Maybe } from "../../../utils/ts-utils";
 
 export interface Grid {
     id: string;
@@ -23,6 +24,7 @@ interface Column {
     name: string;
     deName?: string;
     cocName?: string;
+    isSourceType: boolean;
 }
 
 export interface Row {
@@ -47,7 +49,11 @@ type ParentColumn = {
 const separator = " - ";
 
 export class GridWithTotalsViewModel {
-    static get(section: SectionWithTotals, sectionDataElements: DataElement[]): Grid {
+    static get(
+        section: SectionWithTotals,
+        sectionDataElements: DataElement[],
+        dataElementsConfig: Record<string, { widget: Maybe<"dropdown" | "radio" | "sourceType"> }>
+    ): Grid {
         const dataElements = getDataElementsWithIndexProccessing(section);
 
         const subsections = _(dataElements)
@@ -63,15 +69,18 @@ export class GridWithTotalsViewModel {
             .uniqBy(de => de.name)
             .map(de => {
                 const categoryOptionCombos = de.categoryCombos.categoryOptionCombos;
+                const config = dataElementsConfig[de.id];
                 if (categoryOptionCombos.length !== 1 && categoryOptionCombos[0]?.name !== "default") {
                     return {
                         name: de.name,
                         deName: _(de.name).split(separator).head(),
                         cocName: _(de.name).split(separator).last(),
+                        isSourceType: false,
                     };
                 } else {
                     return {
                         name: de.name,
+                        isSourceType: config?.widget === "sourceType",
                     };
                 }
             })

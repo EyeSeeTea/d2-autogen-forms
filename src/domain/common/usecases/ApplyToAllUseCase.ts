@@ -25,7 +25,7 @@ export class ApplyToAllUseCase {
                     }
                     return acum;
                 }, "");
-                return suma.length > 0 ? row.items.find(x => x.column.name === "Source Type") : undefined;
+                return suma.length > 0 ? row.items.find(x => x.column.isSourceType) : undefined;
             })
             .compact()
             .value();
