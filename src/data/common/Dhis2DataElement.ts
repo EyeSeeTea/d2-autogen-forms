@@ -62,6 +62,10 @@ const dataElementFields = {
             categoryOptions: {
                 id: true,
                 code: true,
+                name: true,
+                displayName: true,
+                displayFormName: true,
+                displayShortName: true,
             },
         },
     },
@@ -108,7 +112,20 @@ function getCocOrdered(categoryCombo: D2DataElement["categoryCombo"], config: Dh
         const match = categoryCombo.categoryOptionCombos.find(coc => {
             return coc.name === cocOrdered;
         });
-        const categoryOption = allCategoryOptions.find(c => c.name === match?.name);
+
+        const optionsNames = match?.categoryOptions.map(co => co.displayName);
+        const optionsShortNames = match?.categoryOptions.map(co => co.displayShortName);
+        const optionsFormNames = match?.categoryOptions.map(co => co.displayFormName);
+
+        const categoryOption =
+            categoryCombo.categories.length === 1
+                ? allCategoryOptions.find(c => c.name === match?.name)
+                : {
+                      displayName: optionsNames?.join(", "),
+                      shortName: optionsShortNames?.join(", "),
+                      formName: optionsFormNames?.join(", "),
+                  };
+
         return match
             ? {
                   ...match,
