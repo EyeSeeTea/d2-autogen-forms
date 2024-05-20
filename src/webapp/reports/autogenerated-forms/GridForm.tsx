@@ -105,6 +105,7 @@ const GridForm: React.FC<GridFormProps> = props => {
                                             noComment={item.disableComments}
                                             dataElement={item.dataElement}
                                             dataFormInfo={dataFormInfo}
+                                            rows={grid.rows}
                                         />
                                     </CustomDataTableCell>
                                 ) : (

@@ -31,17 +31,19 @@ interface SubSectionGrid {
 interface Column {
     name: string;
     description?: string;
+    isSourceType: boolean;
 }
 
 interface Row {
     indicator: Maybe<Indicator>;
+    includePadding: number;
     name: string;
     htmlText: string;
     items: Array<{
         column: Column;
-        columnTotal: DataElement | undefined;
+        columnTotal: Maybe<DataElement>;
         columnDataElements: DataElement[];
-        dataElement: DataElement | undefined;
+        dataElement: Maybe<DataElement>;
         disabled: boolean;
         disableComments: boolean;
     }>;
@@ -51,6 +53,7 @@ const separator = " - ";
 
 export class GridViewModel {
     static get(section: SectionGrid, dataFormInfo: DataFormInfo): Grid {
+        const dataElementsConfig = dataFormInfo.metadata.dataForm.options.dataElements;
         const dataElements = getDataElementsWithIndexProccessing(section);
 
         const subsections = _(dataElements)
@@ -70,10 +73,10 @@ export class GridViewModel {
         const columns: Column[] = _(subsections)
             .flatMap(subsection => subsection.dataElements)
             .uniqBy(de => de.name)
-            .map(({ name }) => {
+            .map(({ id, name }) => {
                 const columnDescription = getDescription(section.columnsDescriptions, dataFormInfo, name);
-
-                return { name: name, description: columnDescription };
+                const config = dataElementsConfig[id];
+                return { isSourceType: isSourceTypeColumn(config?.widget), name: name, description: columnDescription };
             })
             .value();
 
@@ -121,7 +124,13 @@ export class GridViewModel {
 
             const firstItemWithHtmlText = _(itemsWithHtmlText).first() || "";
 
-            return { indicator: indicator, name: subsection.name, htmlText: firstItemWithHtmlText, items: items };
+            return {
+                includePadding: 0,
+                indicator: indicator,
+                name: subsection.name,
+                htmlText: firstItemWithHtmlText,
+                items: items,
+            };
         });
 
         const useIndexes =
@@ -232,4 +241,8 @@ function getSubsectionName(dataElement: DataElement): string {
     // Remove index from enumerated data elements (example: `Chemical name (1)` -> `Chemical name`)
     // so they are grouped with no need to edit each name in the metadata.
     return _(dataElement.name).split(separator).initial().join(separator);
+}
+
+export function isSourceTypeColumn(widget: Maybe<"dropdown" | "radio" | "sourceType">) {
+    return widget === "sourceType";
 }
