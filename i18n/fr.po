@@ -30,10 +30,10 @@ msgid "Clear"
 msgstr ""
 
 msgid "Back"
-msgstr "Volver"
+msgstr ""
 
 msgid "Help"
-msgstr "Ayuda"
+msgstr ""
 
 msgid "There are no sections in this data set. Check README for more details"
 msgstr ""
@@ -42,25 +42,13 @@ msgid "View comment and audit history"
 msgstr ""
 
 msgid "Upload file"
-msgstr "Subir fichero"
+msgstr "Téléverser fichier"
 
 msgid "Apply to all"
-msgstr "Aplicar a todos"
+msgstr "Appliquer à tous"
 
 msgid "Save"
 msgstr ""
 
 msgid "Data set"
 msgstr ""
-
-#~ msgid "Add"
-#~ msgstr "Añadir"
-
-#~ msgid "List"
-#~ msgstr "Listar"
-
-#~ msgid "Click to show feedback"
-#~ msgstr "Toca para ver feedback"
-
-#~ msgid "configuration"
-#~ msgstr "Configuración"
