@@ -1,7 +1,7 @@
 import { getDataElementWithCode, DataElement, DataElementBoolean, DataElementText } from "../DataElement";
 import { dataElementBase } from "./dataFixtures";
 
-describe("DataElement module", () => {
+describe("DataElement", () => {
     const dataElementBoolean: DataElementBoolean = {
         ...dataElementBase,
         id: "1",
