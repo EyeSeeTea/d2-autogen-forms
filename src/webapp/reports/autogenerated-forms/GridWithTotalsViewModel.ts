@@ -2,6 +2,7 @@ import _ from "lodash";
 import { Section, SectionWithTotals, Texts } from "../../../domain/common/entities/DataForm";
 import { DataElement } from "../../../domain/common/entities/DataElement";
 import { Maybe } from "../../../utils/ts-utils";
+import { isSourceTypeColumn } from "./GridFormViewModel";
 
 export interface Grid {
     id: string;
@@ -80,7 +81,7 @@ export class GridWithTotalsViewModel {
                 } else {
                     return {
                         name: de.name,
-                        isSourceType: config?.widget === "sourceType",
+                        isSourceType: isSourceTypeColumn(config?.widget),
                     };
                 }
             })
