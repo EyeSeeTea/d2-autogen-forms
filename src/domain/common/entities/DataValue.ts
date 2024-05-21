@@ -11,7 +11,7 @@ import {
     DataElementText,
 } from "./DataElement";
 
-interface DataValueBase {
+export interface DataValueBase {
     orgUnitId: Id;
     period: Period;
     categoryOptionComboId: Id;

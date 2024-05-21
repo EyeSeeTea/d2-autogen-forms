@@ -1,5 +1,5 @@
 import { getDataElementWithCode, DataElement, DataElementBoolean, DataElementText } from "../DataElement";
-import { dataElementBase } from "./dataFixtures";
+import { dataElementText as dataElementBase } from "./dataFixtures";
 
 describe("DataElement", () => {
     const dataElementBoolean: DataElementBoolean = {

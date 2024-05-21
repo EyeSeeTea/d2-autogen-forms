@@ -1,10 +1,11 @@
 import { DataForm, SectionBase, defaultTexts } from "../DataForm";
-import { DataElement } from "../DataElement";
+import { DataElementText } from "../DataElement";
+import { DataValue, DataValueBase, DataValueTextSingle } from "../DataValue";
 
-export const dataElementBase: DataElement = {
+export const dataElementText: DataElementText = {
     id: "1",
     code: "1",
-    name: `Element 1`,
+    name: "Element 1",
     type: "TEXT",
     categoryCombos: {
         id: "1",
@@ -37,7 +38,7 @@ export const sectionBase: Omit<SectionBase, "id" | "name" | "viewType"> = {
     showRowTotals: false,
     toggleMultiple: [],
     indicators: [],
-    dataElements: [dataElementBase],
+    dataElements: [dataElementText],
 };
 
 export const dataFormBase: Omit<DataForm, "sections"> = {
@@ -49,3 +50,19 @@ export const dataFormBase: Omit<DataForm, "sections"> = {
     options: { dataElements: {} },
     indicators: [],
 };
+
+export const dataValueBase: DataValueBase = {
+    orgUnitId: "org1",
+    period: "202101",
+    categoryOptionComboId: "coc1",
+};
+
+export const dataValueTextSingle: DataValueTextSingle = {
+    ...dataValueBase,
+    type: "TEXT",
+    isMultiple: false,
+    dataElement: dataElementText,
+    value: "Sample text",
+};
+
+export const dataValues: DataValue[] = [dataValueTextSingle];
