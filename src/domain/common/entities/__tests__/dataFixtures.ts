@@ -4,7 +4,7 @@ import { DataValue, DataValueBase, DataValueTextSingle } from "../DataValue";
 
 export const dataElementText: DataElementText = {
     id: "1",
-    code: "1",
+    code: "DE1",
     name: "Element 1",
     type: "TEXT",
     categoryCombos: {
