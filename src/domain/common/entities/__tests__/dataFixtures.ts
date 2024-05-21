@@ -1,7 +1,7 @@
 import { DataForm, SectionBase, defaultTexts } from "../DataForm";
 import { DataElement } from "../DataElement";
 
-const dataElementBase: DataElement = {
+export const dataElementBase: DataElement = {
     id: "1",
     code: "1",
     name: `Element 1`,
