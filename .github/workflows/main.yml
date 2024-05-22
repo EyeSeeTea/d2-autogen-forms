@@ -34,9 +34,6 @@ jobs:
             - name: Install dependencies
               run: yarn install --frozen-lockfile --silent
 
-            - name: Install translations
-              run: yarn localize
-
             - name: Run jest tests
               run: yarn test
 
