@@ -47,34 +47,3 @@ export const dataValueFile: DataValueFile = {
         url: "/path/to/file",
     },
 };
-
-// function givenDataValueText(overrides: Partial<DataValueTextSingle> = {}): DataValueTextSingle {
-//     return {
-//         dataElement: { ...dataElement, type: "TEXT" },
-//         period: "202101",
-//         orgUnitId: "ou1",
-//         categoryOptionComboId: "coc1",
-//         isMultiple: false,
-//         type: "TEXT",
-//         value: "10",
-//         ...overrides,
-//     };
-// }
-
-// function givenDataValueFile(overrides: Partial<DataValueFile> = {}): DataValueFile {
-//     return {
-//         dataElement: { ...dataElement, type: "FILE" },
-//         period: "202101",
-//         orgUnitId: "ou1",
-//         categoryOptionComboId: "coc1",
-//         isMultiple: false,
-//         type: "FILE",
-//         file: {
-//             id: "1",
-//             name: "Test file",
-//             size: 1024,
-//             url: "/path/to/file",
-//         },
-//         ...overrides,
-//     };
-// }
