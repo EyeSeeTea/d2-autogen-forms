@@ -1,3 +1,4 @@
+import { Id } from "../Base";
 import { DataFormM, DataForm, SectionWithPeriods, SectionSimple } from "../DataForm";
 import { Period } from "../DataValue";
 import { sectionBase, dataFormBase } from "./dataFixtures";
@@ -67,7 +68,7 @@ describe("DataFormM", () => {
     });
 });
 
-function createSectionSimple(id: string): SectionSimple {
+function createSectionSimple(id: Id): SectionSimple {
     return {
         id,
         name: `Section ${id}`,
@@ -76,7 +77,7 @@ function createSectionSimple(id: string): SectionSimple {
     };
 }
 
-function createSectionWithPeriods(id: string, periods: Period[]): SectionWithPeriods {
+function createSectionWithPeriods(id: Id, periods: Period[]): SectionWithPeriods {
     return {
         id,
         name: `Section ${id}`,
