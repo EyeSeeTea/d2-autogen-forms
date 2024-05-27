@@ -25,7 +25,7 @@ interface Column {
     cocName?: string;
 }
 
-interface Row {
+export interface Row {
     name: string;
     items: Array<{ column: Column; dataElement: DataElement | undefined }>;
 }

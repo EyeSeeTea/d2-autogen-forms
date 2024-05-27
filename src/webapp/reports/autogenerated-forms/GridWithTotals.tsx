@@ -41,6 +41,9 @@ const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
     );
     const notFirstSection = currentSectionIndex !== 0;
 
+    console.log(grid.rows.length, "grid.rows");
+    console.log(dataFormInfo.metadata.dataForm.dataElements.length, "dataElements.rows");
+
     return (
         <DataTableSection section={grid} dataFormInfo={dataFormInfo}>
             <div className={classes.fixedHeaders}>

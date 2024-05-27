@@ -54,6 +54,7 @@ export type DescriptionText = Maybe<Record<string, Maybe<string>>>;
 
 export interface SectionBase {
     id: Id;
+    code: string;
     name: string;
     dataElements: DataElement[];
     toggle:

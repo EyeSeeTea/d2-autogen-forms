@@ -90,6 +90,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
             const base: SectionBase = {
                 indicators: this.buildIndicatorsWithConfig(sectionIndicators, config?.indicators),
                 id: section.id,
+                code: section.code,
                 name: section.displayName,
                 toggle: { type: "none" },
                 texts: config?.texts || defaultTexts,
