@@ -185,11 +185,47 @@ const configModule4: DataSetConfigSheet = {
     },
 };
 
+const configMaturity: DataSetConfigSheet = {
+    "NHWA-MATURITY-S1": {
+        sheetName: "StockAndFlow",
+        cellRowName: "C",
+        cellRowNumber: 7,
+
+        columnName: "D",
+        columnStart: 6,
+    },
+    "NHWA-MATURITY-S2": {
+        sheetName: "Education",
+        cellRowName: "C",
+        cellRowNumber: 8,
+
+        columnName: "D",
+        columnStart: 7,
+    },
+    "NHWA-MATURITY-S3": {
+        sheetName: "FinanceAndExpenditures",
+        cellRowName: "C",
+        cellRowNumber: 8,
+
+        columnName: "D",
+        columnStart: 7,
+    },
+    "NHWA-MATURITY-S4": {
+        sheetName: "WorkingConditions",
+        cellRowName: "C",
+        cellRowNumber: 8,
+
+        columnName: "D",
+        columnStart: 7,
+    },
+};
+
 const dataSets: Record<Id, { id: Id; code: string; config: DataSetConfigSheet }> = {
     uc8uSqVVt4n: { id: "uc8uSqVVt4n", code: "NHWA-M1-2023", config: configModule1 },
     n1IjdYSRBJf: { id: "n1IjdYSRBJf", code: "NHWA-M2-2023", config: configModule2 },
     lk60JeHUWzI: { id: "lk60JeHUWzI", code: "NHWA-M3-2023", config: configModule3 },
     C2KobdLTeGa: { id: "C2KobdLTeGa", code: "NHWA-M4-2023", config: configModule4 },
+    DxXJfeiYMPD: { id: "DxXJfeiYMPD", code: "NHWA-MATURITY", config: configMaturity },
 };
 
 async function main() {
