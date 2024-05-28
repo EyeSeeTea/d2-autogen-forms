@@ -34,7 +34,7 @@ interface Column {
     isSourceType: boolean;
 }
 
-interface Row {
+export interface Row {
     indicator: Maybe<Indicator>;
     includePadding: number;
     name: string;
