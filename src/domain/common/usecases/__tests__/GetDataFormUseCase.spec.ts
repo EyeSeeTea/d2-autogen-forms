@@ -1,11 +1,11 @@
 import { Dhis2DataFormRepository } from "../../../../data/common/Dhis2DataFormRepository";
 import { GetDataFormUseCase } from "../GetDataFormUseCase";
 import { DataFormRepository } from "../../repositories/DataFormRepository";
-import { Id } from "@eyeseetea/d2-api";
 import { Period } from "../../entities/DataValue";
 import { mock, instance, when, verify, deepEqual } from "ts-mockito";
 import { DataForm } from "../../entities/DataForm";
 import { dataForm } from "./data/dataForm";
+import { Id } from "../../entities/Base";
 
 describe("GetDataFormUseCase", () => {
     let mockDataFormRepository: DataFormRepository;
