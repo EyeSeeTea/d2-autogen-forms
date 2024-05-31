@@ -27,7 +27,17 @@ export class Dhis2DataValueRepository implements DataValueRepository {
             })
             .getData();
 
-        const dataElements = await this.getDataElements(dataValues);
+        const dataSetResponse = await this.api.models.dataSets
+            .get({
+                fields: { id: true, code: true },
+                filter: { id: { eq: options.dataSetId } },
+            })
+            .getData();
+
+        const dataSetCode = dataSetResponse.objects[0]?.code;
+        if (!dataSetCode) throw new Error(`Data set not found: ${options.dataSetId}`);
+
+        const dataElements = await this.getDataElements(dataValues, dataSetCode);
 
         const dataValuesFiles = await this.getFileResourcesMapping(dataElements, dataValues);
 
@@ -161,9 +171,9 @@ export class Dhis2DataValueRepository implements DataValueRepository {
         );
     }
 
-    private async getDataElements(dataValues: DataValueSetsDataValue[]) {
+    private async getDataElements(dataValues: DataValueSetsDataValue[], dataSetCode: string) {
         const dataElementIds = dataValues.map(dv => dv.dataElement);
-        return new Dhis2DataElement(this.api).get(dataElementIds);
+        return new Dhis2DataElement(this.api).get(dataElementIds, dataSetCode);
     }
 
     async save(dataValue: DataValue): Promise<DataValue> {
