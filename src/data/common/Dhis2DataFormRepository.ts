@@ -81,7 +81,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
             .map(dataElement => ({ id: dataElement.id, code: dataElement.code }))
             .value();
 
-        const dataElements = await new Dhis2DataElement(this.api).get(dataElementIds);
+        const dataElements = await new Dhis2DataElement(this.api).get(dataElementIds, dataSet.code);
 
         const dataElementsRulesConfig = this.buildRulesFromConfig(dataElements, configDataForm, allDataElements);
         return dataSet.sections.map((section): Section => {

@@ -8,8 +8,8 @@ import { Dhis2DataStoreDataForm } from "./Dhis2DataStoreDataForm";
 export class Dhis2DataElement {
     constructor(private api: D2Api) {}
 
-    async get(ids: Id[]): Promise<Record<Id, DataElement>> {
-        const config = await Dhis2DataStoreDataForm.build(this.api);
+    async get(ids: Id[], dataSetCode: string): Promise<Record<Id, DataElement>> {
+        const config = await Dhis2DataStoreDataForm.build(this.api, dataSetCode);
         const idGroups = _(ids).uniq().chunk(100).value();
 
         const resList = await promiseMap(idGroups, idsGroup =>

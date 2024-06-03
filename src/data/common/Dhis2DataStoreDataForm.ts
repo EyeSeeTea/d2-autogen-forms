@@ -314,10 +314,16 @@ export class Dhis2DataStoreDataForm {
     }
 
     static async build(api: D2Api, dataSetCode?: string): Promise<Dhis2DataStoreDataForm> {
-        if (cachedStore) return cachedStore;
-
         const dataStore = api.dataStore(Namespaces.D2_AUTOGEN_FORMS);
-        if (!dataSetCode) throw Error(`Unable to load configuration: dataSetCode not defined`);
+        if (!dataSetCode) {
+            console.warn(`Unable to load configuration: dataSetCode not defined`);
+            return new Dhis2DataStoreDataForm({
+                optionSets: [],
+                constants: [],
+                custom: defaultDataStoreConfig,
+                subNationals: [],
+            });
+        }
         const storeValue = await dataStore.get<object>(dataSetCode).getData();
         if (!storeValue)
             return new Dhis2DataStoreDataForm({
@@ -350,8 +356,7 @@ export class Dhis2DataStoreDataForm {
             },
         });
 
-        cachedStore = new Dhis2DataStoreDataForm(config);
-        return cachedStore;
+        return new Dhis2DataStoreDataForm(config);
     }
 
     private static async getOptionSets(api: D2Api, storeConfig: DataFormStoreConfig["custom"]): Promise<OptionSet[]> {
@@ -650,8 +655,6 @@ interface Constant {
     code: Code;
     displayDescription: string;
 }
-
-let cachedStore: Dhis2DataStoreDataForm | undefined;
 
 function sectionConfig<T extends Record<string, Codec<any>>>(properties: T) {
     return optional(record(string, Codec.interface(properties)));
