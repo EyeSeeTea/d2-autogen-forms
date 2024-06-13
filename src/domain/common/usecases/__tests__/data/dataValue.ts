@@ -1,5 +1,10 @@
 import { DataElement } from "../../../entities/DataElement";
-import { DataValueNumberSingle, DataValueTextMultiple, DataValueTextSingle } from "../../../entities/DataValue";
+import {
+    DataValueFile,
+    DataValueTextSingle,
+    DataValueTextMultiple,
+    DataValueNumberSingle,
+} from "../../../entities/DataValue";
 
 export const dataElement: Omit<DataElement, "type"> = {
     id: "1",
@@ -58,4 +63,19 @@ export const dataValueNumberSingle: DataValueNumberSingle = {
     value: "10",
     type: "NUMBER",
     isMultiple: false,
+};
+
+export const dataValueFile: DataValueFile = {
+    dataElement: { ...dataElement, type: "FILE" },
+    period: "202101",
+    orgUnitId: "ou1",
+    categoryOptionComboId: "coc1",
+    isMultiple: false,
+    type: "FILE",
+    file: {
+        id: "1",
+        name: "Test file",
+        size: 1024,
+        url: "/path/to/file",
+    },
 };

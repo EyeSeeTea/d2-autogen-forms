@@ -1,7 +1,7 @@
 import { Maybe } from "../../../utils/ts-utils";
 import { Id } from "./Base";
 
-const allowedRules = [
+export const allowedRules = [
     {
         name: "equal_to",
         operator: "=",
