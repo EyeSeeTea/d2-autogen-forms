@@ -1,7 +1,12 @@
 import { DataElement } from "../../../entities/DataElement";
-import { DataValueFile, DataValueTextSingle } from "../../../entities/DataValue";
+import {
+    DataValueFile,
+    DataValueTextSingle,
+    DataValueTextMultiple,
+    DataValueNumberSingle,
+} from "../../../entities/DataValue";
 
-const dataElement: Omit<DataElement, "type"> = {
+export const dataElement: Omit<DataElement, "type"> = {
     id: "1",
     code: "DE1",
     name: "Element 1",
@@ -31,6 +36,33 @@ export const dataValueText: DataValueTextSingle = {
     isMultiple: false,
     type: "TEXT",
     value: "10",
+};
+
+export const dataValueTextMultiple: DataValueTextMultiple = {
+    dataElement: { ...dataElement, id: "de1", code: "de1", type: "TEXT" },
+    period: "202101",
+    orgUnitId: "ou1",
+    categoryOptionComboId: "coc1",
+    values: ["value1", "value2"],
+    type: "TEXT",
+    isMultiple: true,
+};
+
+export const dataValueNumberSingle: DataValueNumberSingle = {
+    dataElement: {
+        ...dataElement,
+        id: "de2",
+        code: "de2",
+        name: "Data Element 2",
+        type: "NUMBER",
+        numberType: "NUMBER",
+    },
+    period: "202101",
+    orgUnitId: "ou1",
+    categoryOptionComboId: "coc1",
+    value: "10",
+    type: "NUMBER",
+    isMultiple: false,
 };
 
 export const dataValueFile: DataValueFile = {
