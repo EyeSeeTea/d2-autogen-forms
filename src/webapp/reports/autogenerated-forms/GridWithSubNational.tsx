@@ -14,6 +14,7 @@ import { DataElementItem } from "./DataElementItem";
 import { makeStyles } from "@material-ui/core";
 import DataTableSection from "./DataTableSection";
 import { GridWithSubNationalViewModel } from "./GridWithSubNationalViewModel";
+import i18n from "../../../locales";
 
 export interface GridWithSubNationalProps {
     dataFormInfo: DataFormInfo;
@@ -44,10 +45,10 @@ const GridWithSubNational: React.FC<GridWithSubNationalProps> = props => {
 
                     <DataTableRow>
                         <DataTableColumnHeader fixed top={topValue}>
-                            Occupation
+                            {i18n.t("Occupation")}
                         </DataTableColumnHeader>
                         <DataTableColumnHeader fixed top={topValue}>
-                            Subnational level name
+                            {i18n.t("Subnational level name")}
                         </DataTableColumnHeader>
 
                         {grid.columns.map(column => (
