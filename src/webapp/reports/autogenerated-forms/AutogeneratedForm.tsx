@@ -174,6 +174,22 @@ function useDataFormInfo(): [
         style.setAttribute("id", "disabled-arrows-css");
         style.appendChild(document.createTextNode(css));
         head.appendChild(style);
+
+        function disableScrollInputs() {
+            if (
+                window.document.activeElement instanceof HTMLInputElement &&
+                window.document.activeElement.type === "number" &&
+                window.document.activeElement.classList.contains("noscroll")
+            ) {
+                window.document.activeElement.blur();
+            }
+        }
+
+        document.addEventListener("wheel", disableScrollInputs);
+
+        return () => {
+            document.removeEventListener("wheel", disableScrollInputs);
+        };
     }, []);
 
     useEffect(() => {

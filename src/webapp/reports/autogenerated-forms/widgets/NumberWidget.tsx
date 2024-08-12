@@ -22,6 +22,12 @@ const NumberWidget: React.FC<NumberWidgetProps> = props => {
         [onValueChange, dataValue]
     );
 
+    const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+            e.preventDefault();
+        }
+    };
+
     return (
         <WidgetFeedback state={props.state}>
             {disabled ? (
@@ -36,6 +42,8 @@ const NumberWidget: React.FC<NumberWidgetProps> = props => {
                     type="number"
                     onBlur={e => notifyChange({ value: e.target.value })}
                     defaultValue={dataValue.value}
+                    onKeyDown={onKeyDown}
+                    className="noscroll"
                 />
             )}
         </WidgetFeedback>
