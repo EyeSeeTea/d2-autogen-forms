@@ -142,7 +142,7 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
             const scrollRight = scrollWidth - clientWidth - scrollLeft;
 
             setShowLeftFade(scrollLeft > 0);
-            setShowRightFade(scrollRight > 0);
+            setShowRightFade(scrollRight > 10);
         };
 
         tabContainer.addEventListener("scroll", updateFadeVisibility);
@@ -197,8 +197,8 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
                     })}
                 </StyledTabs>
 
-                <FadedOverlay showLeftFade={showLeftFade} />
-                <FadedOverlay showRightFade={showRightFade} />
+                <FadedOverlay hidden={!showLeftFade} style={{ left: 0, transform: "rotate(180deg)" }} />
+                <FadedOverlay hidden={!showRightFade} style={{ right: 0 }} />
             </StyledAppBar>
             {sections.map(section => {
                 return (
@@ -233,16 +233,13 @@ const StyledTabs = styled(Tabs)`
     position: relative;
 `;
 
-const FadedOverlay = styled.div<{ showLeftFade?: boolean; showRightFade?: boolean }>`
+const FadedOverlay = styled.div<{ hidden?: boolean }>`
     position: absolute;
     top: 0;
-    left: ${props => (props.showLeftFade ? 0 : "auto")};
-    right: ${props => (props.showRightFade ? 0 : "auto")};
-    transform: ${props => (props.showLeftFade ? "rotate(180deg)" : "none")};
     width: 25%;
     height: 100%;
     background: linear-gradient(to left, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0));
     pointer-events: none;
-    transition: opacity 0.3s ease-in-out;
-    opacity: ${props => (!props.showLeftFade && !props.showRightFade ? 0 : 1)};
+    transition: opacity 0.5s ease-in-out;
+    opacity: ${props => (props.hidden ? 0 : 1)};
 `;
