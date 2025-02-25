@@ -1,5 +1,5 @@
-import React from "react";
-import { Tabs, Tab, Box } from "@material-ui/core";
+import React, { useEffect, useRef, useState } from "react";
+import { Tabs, Tab, Box, makeStyles } from "@material-ui/core";
 import {
     Section,
     SectionWithPeriods,
@@ -119,21 +119,66 @@ const TabPanel: React.FC<TabProps> = React.memo(props => {
 
 const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
     const { sections, dataFormInfo } = props;
-    const [activeTab, setActiveTab] = React.useState(0);
-    const handleChange = (event: React.ChangeEvent<{}>, value: number) => {
+
+    const [activeTab, setActiveTab] = useState(0);
+    const [showLeftFade, setShowLeftFade] = useState(false);
+    const [showRightFade, setShowRightFade] = useState(true);
+
+    const classes = useStyles();
+    const tabsRef = useRef<HTMLButtonElement>(null);
+
+    const handleChange = (_event: React.ChangeEvent<{}>, value: number) => {
         setActiveTab(value);
     };
+
+    useEffect(() => {
+        const tabContainer = document.querySelector(".MuiTabs-scroller.MuiTabs-scrollable") as HTMLDivElement | null;
+        const scrollButtons = document.querySelectorAll(".MuiTabs-scrollButtons");
+
+        if (!tabContainer) return;
+
+        const updateFadeVisibility = () => {
+            const { scrollLeft, scrollWidth, clientWidth } = tabContainer;
+            const scrollRight = scrollWidth - clientWidth - scrollLeft;
+
+            setShowLeftFade(scrollLeft > 0);
+            setShowRightFade(scrollRight > 0);
+        };
+
+        tabContainer.addEventListener("scroll", updateFadeVisibility);
+        updateFadeVisibility();
+
+        const handleScrollButtonClick = () => {
+            setTimeout(updateFadeVisibility, 100);
+        };
+
+        scrollButtons.forEach(button => {
+            button.addEventListener("click", handleScrollButtonClick);
+        });
+
+        return () => {
+            tabContainer.removeEventListener("scroll", updateFadeVisibility);
+            scrollButtons.forEach(button => {
+                button.removeEventListener("click", handleScrollButtonClick);
+            });
+        };
+    }, []);
 
     return (
         <Box sx={{ width: "100%" }}>
             <StyledAppBar position="sticky" color="default">
-                <Tabs
+                <StyledTabs
+                    ref={tabsRef}
                     value={activeTab}
                     onChange={handleChange}
                     indicatorColor="primary"
                     textColor="primary"
                     variant="scrollable"
-                    scrollButtons="auto"
+                    scrollButtons="on"
+                    TabScrollButtonProps={{
+                        style: { zIndex: 10 },
+                    }}
+                    className={classes.scrollButtons}
                 >
                     {sections.flatMap(section => {
                         const order = section.tabs.order;
@@ -150,7 +195,10 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
                             return [];
                         }
                     })}
-                </Tabs>
+                </StyledTabs>
+
+                <FadedOverlay showLeftFade={showLeftFade} />
+                <FadedOverlay showRightFade={showRightFade} />
             </StyledAppBar>
             {sections.map(section => {
                 return (
@@ -166,9 +214,35 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
     );
 });
 
+const useStyles = makeStyles({
+    scrollButtons: {
+        "& svg": {
+            fontSize: "3rem",
+        },
+    },
+});
+
 export default React.memo(SectionsTabs);
 
 const StyledAppBar = styled(AppBar)`
     top: 48px !important;
     z-index: 100 !important;
+`;
+
+const StyledTabs = styled(Tabs)`
+    position: relative;
+`;
+
+const FadedOverlay = styled.div<{ showLeftFade?: boolean; showRightFade?: boolean }>`
+    position: absolute;
+    top: 0;
+    left: ${props => (props.showLeftFade ? 0 : "auto")};
+    right: ${props => (props.showRightFade ? 0 : "auto")};
+    transform: ${props => (props.showLeftFade ? "rotate(180deg)" : "none")};
+    width: 25%;
+    height: 100%;
+    background: linear-gradient(to left, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0));
+    pointer-events: none;
+    transition: opacity 0.3s ease-in-out;
+    opacity: ${props => (!props.showLeftFade && !props.showRightFade ? 0 : 1)};
 `;
