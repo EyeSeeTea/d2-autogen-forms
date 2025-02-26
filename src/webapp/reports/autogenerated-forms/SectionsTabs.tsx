@@ -134,7 +134,7 @@ const ScrollButton: React.FC<ScrollButtonProps> = React.memo(props => {
 
     return (
         <StyledIconButton
-            style={{ position: "absolute" }}
+            style={{ position: "absolute", height: " max-content", width: "max-content" }}
             direction={direction}
             showLeftFade={showLeftFade}
             showRightFade={showRightFade}
@@ -296,7 +296,7 @@ const StyledIconButton = styled(IconButton)<Omit<ScrollButtonProps, "handleScrol
             : undefined};
     left: ${props => (props.direction === "left" ? "-1rem" : undefined)};
     right: ${props => (props.direction === "right" ? "1rem" : undefined)};
-    bottom: 30%;
+    bottom: -0.6rem;
     z-index: 10;
     color: inherit;
 `;
