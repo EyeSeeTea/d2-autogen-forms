@@ -103,7 +103,15 @@ export function getValueAndVerifyCondition(rule: Rule, dataFormInfo: DataFormInf
         categoryOptionComboId: dataFormInfo.categoryOptionComboId,
     });
     const value = getValueAccordingType(dataValue);
-    return rule.condition === String(value);
+
+    switch (dataValue.type) {
+        case "TEXT": {
+            const booleanFromTextValue = value !== "Not sure";
+            return rule.condition === String(booleanFromTextValue);
+        }
+        default:
+            return rule.condition === String(value);
+    }
 }
 
 export function useApplyRules(props: UseApplyRulesProps): UseApplyRulesReturn {
