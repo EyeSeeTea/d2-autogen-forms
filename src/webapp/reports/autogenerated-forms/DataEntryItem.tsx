@@ -102,9 +102,38 @@ export function getValueAndVerifyCondition(rule: Rule, dataFormInfo: DataFormInf
         period: period || dataFormInfo.period,
         categoryOptionComboId: dataFormInfo.categoryOptionComboId,
     });
+
+    return verifyConditionByDataValueType(dataValue, rule);
+}
+
+function verifyConditionByDataValueType(dataValue: DataValue, rule: Rule) {
     const value = getValueAccordingType(dataValue);
 
     switch (dataValue.type) {
+        case "NUMBER": {
+            const [operator, comparisonValue = ""] = rule.condition.split(" ");
+            const numericalValue = parseInt(value as string);
+            const numericalComparisonValue = parseInt(comparisonValue);
+
+            switch (operator) {
+                case ">":
+                    return numericalValue > numericalComparisonValue;
+                case "<":
+                    return numericalValue < numericalComparisonValue;
+                case ">=":
+                    return numericalValue >= numericalComparisonValue;
+                case "<=":
+                    return numericalValue <= numericalComparisonValue;
+                case "==":
+                case "===":
+                    return numericalValue === numericalComparisonValue;
+                case "!=":
+                case "!==":
+                    return numericalValue !== numericalComparisonValue;
+                default:
+                    throw new Error(`Unsupported operator: ${operator}`);
+            }
+        }
         case "TEXT": {
             const booleanFromTextValue = value !== "Not sure";
             return rule.condition === String(booleanFromTextValue);
