@@ -8,6 +8,7 @@ import { Indicator } from "./Indicator";
 import { SectionStyle } from "./SectionStyle";
 import { titleVariant } from "./TitleVariant";
 import { DataElementToggle } from "./ToggleMultiple";
+import { DataElementRuleOptions, TotalRule } from "./DataElementRule";
 
 export interface DataForm {
     id: Id;
@@ -20,6 +21,7 @@ export interface DataForm {
         dataElements: Record<Id, { widget: "dropdown" | "radio" | "sourceType" }>;
     };
     indicators: Indicator[];
+    totalRules: TotalRule[];
 }
 
 export interface Texts {
@@ -52,6 +54,8 @@ export type ViewType = UnionFromValues<typeof DataFormM.viewTypes>;
 
 export type DescriptionText = Maybe<Record<string, Maybe<string>>>;
 
+type FormulaRules = { formula: string; rules?: DataElementRuleOptions };
+
 export interface SectionBase {
     id: Id;
     name: string;
@@ -68,10 +72,9 @@ export interface SectionBase {
     columnsDescriptions: DescriptionText;
     groupDescriptions: DescriptionText;
     disableComments: boolean;
-    totals?: {
+    totals?: FormulaRules & {
         dataElementsCodes: string[];
-        formula: string;
-        formulas: Record<string, { formula: string }> | undefined;
+        formulas: Record<string, FormulaRules> | undefined;
     };
     showRowTotals: boolean;
     toggleMultiple: DataElementToggle[];

@@ -39,7 +39,7 @@ interface BaseSectionConfig {
     disableComments: boolean;
     totals?: {
         dataElementsCodes: string[];
-        formulas: Record<string, { formula: string }> | undefined;
+        formulas: Record<string, { formula: string; rules: DataElementRuleOptions | undefined }> | undefined;
         formula: string;
         texts?: { name: string };
     };
@@ -103,7 +103,14 @@ const titleVariantType = oneOf([
     exactly("h6"),
 ]);
 
-const formulasType = Codec.interface({ formula: string });
+const dataElementRuleCodec = optional(
+    record(
+        oneOf([exactly("visible"), exactly("disabled")]),
+        Codec.interface({ dataElements: array(string), condition: string })
+    )
+);
+
+const formulasType = Codec.interface({ formula: string, rules: dataElementRuleCodec });
 
 const totalsType = Codec.interface({
     dataElementsCodes: array(string),
@@ -146,13 +153,6 @@ const textsCodec = Codec.interface({
     totals: optional(oneOf([string, selector])),
     name: optional(oneOf([string, selector])),
 });
-
-const dataElementRuleCodec = optional(
-    record(
-        oneOf([exactly("visible"), exactly("disabled")]),
-        Codec.interface({ dataElements: array(string), condition: string })
-    )
-);
 
 const DataStoreConfigCodec = Codec.interface({
     categoryCombinations: sectionConfig({

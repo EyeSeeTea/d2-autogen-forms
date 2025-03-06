@@ -2,7 +2,7 @@ import _ from "lodash";
 
 import { Code, getId, Id } from "../../domain/common/entities/Base";
 import { DataElement } from "../../domain/common/entities/DataElement";
-import { Rule, RuleType } from "../../domain/common/entities/DataElementRule";
+import { DataElementRuleOptions, Rule, RuleType, TotalRule } from "../../domain/common/entities/DataElementRule";
 import { DataForm, defaultTexts, Section, SectionBase } from "../../domain/common/entities/DataForm";
 import { Period } from "../../domain/common/entities/DataValue";
 import { Indicator } from "../../domain/common/entities/Indicator";
@@ -32,6 +32,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
         const dataElements = _.flatMap(sections, section => section.dataElements);
         const dataElementsOptions = this.getDataElementsOptions(dataElements, config);
         const dataSetConfig = config.getDataSetConfig(dataSet, options.period);
+        const totalRules: TotalRule[] = this.getTotalRules(sections, dataElements);
 
         return {
             indicators: _(sections)
@@ -44,6 +45,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
             sections: sections,
             texts: dataSetConfig.texts,
             options: { dataElements: dataElementsOptions },
+            totalRules: totalRules,
         };
     }
 
@@ -162,6 +164,78 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                     return { viewType: config.viewType, ...base2 };
             }
         });
+    }
+
+    private getTotalRules(sections: Section[], dataElements: DataElement[]): TotalRule[] {
+        return sections.flatMap(section => {
+            const totalsFormulas = _(section.totals?.formulas).values();
+
+            return totalsFormulas
+                .map(formulaRules => {
+                    const { rules, formula } = formulaRules;
+                    if (!rules) return undefined;
+
+                    const visibleTotalRule = this.getTotalRuleByRuleType(
+                        "visible",
+                        rules,
+                        section,
+                        dataElements,
+                        formula
+                    );
+                    const disabledTotalRule = this.getTotalRuleByRuleType(
+                        "disabled",
+                        rules,
+                        section,
+                        dataElements,
+                        formula
+                    );
+
+                    return visibleTotalRule || disabledTotalRule;
+                })
+                .compact()
+                .value();
+        });
+    }
+
+    private getTotalRuleByRuleType(
+        ruleType: RuleType,
+        rules: DataElementRuleOptions,
+        section: Section,
+        dataElements: DataElement[],
+        formula: string
+    ): Maybe<TotalRule> {
+        const relatedDataElements = this.getRelatedDataElements(section, dataElements, formula);
+        const rule = rules[ruleType];
+        if (!rule) return undefined;
+
+        return {
+            type: ruleType,
+            dataElements: rule.dataElements.map(
+                dataElementCode => dataElements.find(de => de.code === dataElementCode)?.id ?? ""
+            ),
+            relatedDataElements: relatedDataElements,
+            condition: rule.condition,
+            formula: formula,
+        };
+    }
+
+    private getRelatedDataElements(section: Section, dataElements: DataElement[], formula: string): DataElement[] {
+        const dataElementCodesInFormula = formula.match(/\b[A-Za-z_][A-Za-z0-9_]*\b/g) || [];
+
+        const relatedDataElements = _(dataElementCodesInFormula)
+            .map(dataElementCode => {
+                const dataElement = dataElements.find(de => de.code === dataElementCode);
+                const isDataElementCodeIncluded = section.totals?.dataElementsCodes.includes(dataElementCode) ?? false;
+
+                if (!dataElement || !isDataElementCodeIncluded) return undefined;
+
+                return dataElements.find(de => de.id === dataElement.id);
+            })
+            .compact()
+            .uniqBy(de => de.id)
+            .value();
+
+        return relatedDataElements;
     }
 
     private buildIndicatorsWithConfig(

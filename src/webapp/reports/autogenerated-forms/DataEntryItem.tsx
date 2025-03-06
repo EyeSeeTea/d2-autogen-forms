@@ -1,5 +1,5 @@
 import React from "react";
-import { DataValue } from "../../../domain/common/entities/DataValue";
+import { DataValue, DateObj } from "../../../domain/common/entities/DataValue";
 import { assertUnreachable, Maybe } from "../../../utils/ts-utils";
 import BooleanDropdownWidget from "./widgets/BooleanDropdownWidget";
 import NumberWidget from "./widgets/NumberWidget";
@@ -17,7 +17,8 @@ import YearPickerWidget from "./widgets/YearPickerWidget";
 import SourceTypeWidget from "./widgets/SourceTypeWidget";
 import { Row } from "./GridWithTotalsViewModel";
 import PercentageWidget from "./widgets/PercentageWidget";
-import { Rule } from "../../../domain/common/entities/DataElementRule";
+import { Rule, TotalRule } from "../../../domain/common/entities/DataElementRule";
+import _ from "lodash";
 
 export interface DataEntryItemProps {
     dataElement: DataElement;
@@ -56,7 +57,9 @@ function isInputExpired(
     }
 }
 
-export function getValueAccordingType(dataValue: DataValue) {
+type Value = string | number | boolean | DateObj | undefined;
+
+export function getValueAccordingType(dataValue: DataValue): Value {
     switch (dataValue.type) {
         case "BOOLEAN":
             return dataValue.value;
@@ -92,18 +95,50 @@ function checkVisibleRelatedDataElement(
     return true;
 }
 
-export type UseApplyRulesProps = { dataElement: DataElement; dataFormInfo: DataFormInfo; period: Maybe<string> };
+export type UseApplyRulesProps = {
+    dataElement: DataElement;
+    dataFormInfo: DataFormInfo;
+    period: Maybe<string>;
+    totalRules?: TotalRule[];
+};
 
 type UseApplyRulesReturn = { isVisible: boolean; isDisabled: boolean };
 
-export function getValueAndVerifyCondition(rule: Rule, dataFormInfo: DataFormInfo, period: Maybe<string>) {
-    const dataValue = dataFormInfo.data.values.getOrEmpty(rule.relatedDataElement, {
-        orgUnitId: rule.relatedDataElement.orgUnit || dataFormInfo.orgUnitId,
-        period: period || dataFormInfo.period,
-        categoryOptionComboId: dataFormInfo.categoryOptionComboId,
-    });
+export function getValueAndVerifyCondition(
+    rule: Maybe<Rule>,
+    dataFormInfo: DataFormInfo,
+    period: Maybe<string>,
+    totalRule: Maybe<TotalRule>
+): Maybe<boolean> {
+    if (rule) {
+        const dataValue = dataFormInfo.data.values.getOrEmpty(rule.relatedDataElement, {
+            orgUnitId: rule.relatedDataElement.orgUnit || dataFormInfo.orgUnitId,
+            period: period || dataFormInfo.period,
+            categoryOptionComboId: dataFormInfo.categoryOptionComboId,
+        });
 
-    return verifyConditionByDataValueType(dataValue, rule);
+        return verifyConditionByDataValueType(dataValue, rule);
+    } else if (totalRule) {
+        const { formula, relatedDataElements } = totalRule;
+
+        const totalItems = _(relatedDataElements)
+            .map(relatedDataElement => {
+                const dataValue = dataFormInfo.data.values.getOrEmpty(relatedDataElement, {
+                    orgUnitId: relatedDataElement.orgUnit || dataFormInfo.orgUnitId,
+                    period: period || dataFormInfo.period,
+                    categoryOptionComboId: dataFormInfo.categoryOptionComboId,
+                });
+                const value = getValueAccordingType(dataValue);
+                return { [relatedDataElement.code]: value };
+            })
+            .compact()
+            .value();
+
+        const compiled = _.template(formula, {});
+        const totalValue = compiled(_.merge({}, ...totalItems));
+
+        return applyNumericComparison(totalRule, totalValue);
+    }
 }
 
 function verifyConditionByDataValueType(dataValue: DataValue, rule: Rule) {
@@ -111,28 +146,7 @@ function verifyConditionByDataValueType(dataValue: DataValue, rule: Rule) {
 
     switch (dataValue.type) {
         case "NUMBER": {
-            const [operator, comparisonValue = ""] = rule.condition.split(" ");
-            const numericalValue = parseInt(value as string);
-            const numericalComparisonValue = parseInt(comparisonValue);
-
-            switch (operator) {
-                case ">":
-                    return numericalValue > numericalComparisonValue;
-                case "<":
-                    return numericalValue < numericalComparisonValue;
-                case ">=":
-                    return numericalValue >= numericalComparisonValue;
-                case "<=":
-                    return numericalValue <= numericalComparisonValue;
-                case "==":
-                case "===":
-                    return numericalValue === numericalComparisonValue;
-                case "!=":
-                case "!==":
-                    return numericalValue !== numericalComparisonValue;
-                default:
-                    throw new Error(`Unsupported operator: ${operator}`);
-            }
+            return applyNumericComparison(rule, value);
         }
         case "TEXT": {
             const booleanFromTextValue = value !== "Not sure";
@@ -143,20 +157,61 @@ function verifyConditionByDataValueType(dataValue: DataValue, rule: Rule) {
     }
 }
 
+export function applyNumericComparison(rule: { condition: string }, value: Value) {
+    const [operator, comparisonValue = ""] = rule.condition.split(" ");
+    const numericalValue = parseInt(value as string);
+    const numericalComparisonValue = parseInt(comparisonValue);
+
+    switch (operator) {
+        case ">":
+            return numericalValue > numericalComparisonValue;
+        case "<":
+            return numericalValue < numericalComparisonValue;
+        case ">=":
+            return numericalValue >= numericalComparisonValue;
+        case "<=":
+            return numericalValue <= numericalComparisonValue;
+        case "==":
+        case "===":
+            return numericalValue === numericalComparisonValue;
+        case "!=":
+        case "!==":
+            return numericalValue !== numericalComparisonValue;
+        default:
+            throw new Error(`Unsupported operator: ${operator}`);
+    }
+}
+
 export function useApplyRules(props: UseApplyRulesProps): UseApplyRulesReturn {
     const { dataElement, dataFormInfo, period } = props;
-    if (dataElement.rules.length === 0) return { isDisabled: false, isVisible: true };
-    const disabledRule = dataElement.rules.find(rule => rule.type === "disabled");
-    const disabledValue = disabledRule ? getValueAndVerifyCondition(disabledRule, dataFormInfo, period) : false;
-    const visibleValue = checkVisibleRule({ dataElement, dataFormInfo, period });
+    const totalRules =
+        dataFormInfo.metadata.dataForm.totalRules?.filter(rule => rule.dataElements.includes(dataElement.id)) ?? [];
+    if (dataElement.rules.length === 0 && totalRules.length === 0) return { isDisabled: false, isVisible: true };
+
+    const disabledValue = checkDisabledRule({ dataElement, dataFormInfo, period });
+    const visibleValue = checkVisibleRule({ dataElement, dataFormInfo, period, totalRules });
+
     return { isDisabled: disabledValue, isVisible: visibleValue };
 }
 
-export function checkVisibleRule(options: UseApplyRulesProps) {
-    const { dataElement, dataFormInfo, period } = options;
+export function checkVisibleRule(options: UseApplyRulesProps): boolean {
+    const { dataElement, dataFormInfo, period, totalRules } = options;
     const visibleRule = dataElement.rules.find(rule => rule.type === "visible");
-    const visibleValue = visibleRule ? getValueAndVerifyCondition(visibleRule, dataFormInfo, period) : true;
-    return visibleValue;
+    const visibleDataElementTotalRule = totalRules?.find(rule => rule.type === "visible");
+
+    return visibleRule || visibleDataElementTotalRule
+        ? getValueAndVerifyCondition(visibleRule, dataFormInfo, period, visibleDataElementTotalRule) ?? true
+        : true;
+}
+
+export function checkDisabledRule(options: UseApplyRulesProps): boolean {
+    const { dataElement, dataFormInfo, period, totalRules } = options;
+    const disabledRule = dataElement.rules.find(rule => rule.type === "disabled");
+    const disabledDataElementTotalRule = totalRules?.find(rule => rule.type === "visible");
+
+    return disabledRule || disabledDataElementTotalRule
+        ? getValueAndVerifyCondition(disabledRule, dataFormInfo, period, disabledDataElementTotalRule) ?? false
+        : false;
 }
 
 const DataEntryItem: React.FC<DataEntryItemProps> = props => {
