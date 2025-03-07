@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Tabs, Tab, Box, makeStyles } from "@material-ui/core";
 import {
     Section,
@@ -152,7 +152,6 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
     const [activeTab, setActiveTab] = useState(0);
     const [showLeftFade, setShowLeftFade] = useState(false);
     const [showRightFade, setShowRightFade] = useState(true);
-    const tabsRef = useRef<HTMLButtonElement>(null);
 
     const handleChange = (_event: React.ChangeEvent<{}>, value: number) => {
         setActiveTab(value);
@@ -218,7 +217,6 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
                     handleScroll={handleScroll}
                 />
                 <StyledTabs
-                    ref={tabsRef}
                     value={activeTab}
                     onChange={handleChange}
                     indicatorColor="primary"
