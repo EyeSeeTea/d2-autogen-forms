@@ -65,10 +65,16 @@ const MatrixGridForm: React.FC<MatrixGridFormProps> = props => {
                                 if (!isVisible) return null;
                                 return (
                                     <React.Fragment key={dataElement.id}>
-                                        <CustomDataTableCell style={props.section.styles.rows} key={dataElement.id}>
+                                        <CustomDataTableCell
+                                            backgroundColor={props.section.styles.rows.backgroundColor}
+                                            key={dataElement.id}
+                                        >
                                             {dataElement.name}
                                         </CustomDataTableCell>
-                                        <CustomDataTableCell style={props.section.styles.rows} key={dataElement.name}>
+                                        <CustomDataTableCell
+                                            backgroundColor={props.section.styles.rows.backgroundColor}
+                                            key={dataElement.name}
+                                        >
                                             <DataElementItem dataElement={dataElement} dataFormInfo={dataFormInfo} />
                                         </CustomDataTableCell>
                                     </React.Fragment>

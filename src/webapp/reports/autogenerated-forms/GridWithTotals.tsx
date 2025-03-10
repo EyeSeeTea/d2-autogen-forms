@@ -46,12 +46,16 @@ const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
                     <TableHead className={classes.tableHeader}>
                         {grid.parentColumns.length > 0 && (
                             <DataTableRow>
-                                <CustomDataTableColumnHeader></CustomDataTableColumnHeader>
-                                <CustomDataTableColumnHeader></CustomDataTableColumnHeader>
+                                <CustomDataTableColumnHeader
+                                    backgroundColor={props.section.styles.columns.backgroundColor}
+                                ></CustomDataTableColumnHeader>
+                                <CustomDataTableColumnHeader
+                                    backgroundColor={props.section.styles.columns.backgroundColor}
+                                ></CustomDataTableColumnHeader>
                                 {grid.parentColumns.map(column => {
                                     return (
                                         <CustomDataTableColumnHeader
-                                            style={props.section.styles.columns}
+                                            backgroundColor={props.section.styles.columns.backgroundColor}
                                             key={column.name}
                                             className={classes.centerSpan}
                                             colSpan={String(column.colSpan)}
@@ -60,21 +64,30 @@ const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
                                         </CustomDataTableColumnHeader>
                                     );
                                 })}
-                                {!notFirstSection && <CustomDataTableColumnHeader></CustomDataTableColumnHeader>}
+                                {!notFirstSection && (
+                                    <CustomDataTableColumnHeader
+                                        backgroundColor={props.section.styles.columns.backgroundColor}
+                                    ></CustomDataTableColumnHeader>
+                                )}
                             </DataTableRow>
                         )}
                         <DataTableRow>
                             {grid.useIndexes ? (
-                                <CustomDataTableColumnHeader style={props.section.styles.columns} width="30px">
+                                <CustomDataTableColumnHeader
+                                    backgroundColor={props.section.styles.columns.backgroundColor}
+                                    width="30px"
+                                >
                                     <span className={classes.header}>#</span>{" "}
                                 </CustomDataTableColumnHeader>
                             ) : (
-                                <CustomDataTableColumnHeader></CustomDataTableColumnHeader>
+                                <CustomDataTableColumnHeader
+                                    backgroundColor={props.section.styles.columns.backgroundColor}
+                                ></CustomDataTableColumnHeader>
                             )}
 
                             {notFirstSection ? (
                                 <CustomDataTableColumnHeader
-                                    style={props.section.styles.columns}
+                                    backgroundColor={props.section.styles.columns.backgroundColor}
                                     className={classes.columnWidth}
                                     key={`column-Total`}
                                 >
@@ -85,7 +98,7 @@ const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
                             {grid.columns.map(column =>
                                 column.deName && column.cocName ? (
                                     <CustomDataTableColumnHeader
-                                        style={props.section.styles.columns}
+                                        backgroundColor={props.section.styles.columns.backgroundColor}
                                         key={`column-${column.name}`}
                                         className={classes.columnWidth}
                                     >
@@ -93,7 +106,7 @@ const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
                                     </CustomDataTableColumnHeader>
                                 ) : (
                                     <CustomDataTableColumnHeader
-                                        style={props.section.styles.columns}
+                                        backgroundColor={props.section.styles.columns.backgroundColor}
                                         key={`column-${column.name}`}
                                         className={column.isSourceType ? classes.source : classes.columnWidth}
                                     >
@@ -107,7 +120,10 @@ const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
                     <TableBody>
                         {grid.rows.map((row, idx) => (
                             <DataTableRow key={`policy-${row.name}`}>
-                                <CustomDataTableCell style={props.section.styles.rows} className={classes.td}>
+                                <CustomDataTableCell
+                                    backgroundColor={props.section.styles.rows.backgroundColor}
+                                    className={classes.td}
+                                >
                                     <p
                                         style={{
                                             paddingLeft: row.includePadding ? `${row.includePadding * 10}px` : "0",
@@ -119,7 +135,7 @@ const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
 
                                 {notFirstSection && row.total ? (
                                     <CustomDataTableCell
-                                        style={props.section.styles.rows}
+                                        backgroundColor={props.section.styles.rows.backgroundColor}
                                         key={row.total.id + row.total.cocId}
                                     >
                                         <DataElementItem
@@ -135,7 +151,7 @@ const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
                                     if (item.column.isSourceType) {
                                         return item.dataElement ? (
                                             <CustomDataTableCell
-                                                style={props.section.styles.rows}
+                                                backgroundColor={props.section.styles.rows.backgroundColor}
                                                 key={item.dataElement.id + item.dataElement.cocId}
                                             >
                                                 <DataElementItem
@@ -148,14 +164,14 @@ const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
                                             </CustomDataTableCell>
                                         ) : (
                                             <CustomDataTableCell
-                                                style={props.section.styles.rows}
+                                                backgroundColor={props.section.styles.rows.backgroundColor}
                                                 key={`cell-${idx}`}
                                             ></CustomDataTableCell>
                                         );
                                     } else {
                                         return item.dataElement ? (
                                             <CustomDataTableCell
-                                                style={props.section.styles.rows}
+                                                backgroundColor={props.section.styles.rows.backgroundColor}
                                                 key={item.dataElement.id + item.dataElement.cocId}
                                             >
                                                 <DataElementItem
@@ -171,7 +187,7 @@ const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
                                             </CustomDataTableCell>
                                         ) : (
                                             <CustomDataTableCell
-                                                style={props.section.styles.rows}
+                                                backgroundColor={props.section.styles.rows.backgroundColor}
                                                 key={`cell-${idx}`}
                                             ></CustomDataTableCell>
                                         );

@@ -31,12 +31,16 @@ const GridWithSubNational: React.FC<GridWithSubNationalProps> = props => {
             <DataTable className={classes.table} layout="fixed" width="initial">
                 <TableHead>
                     <DataTableRow>
-                        <CustomDataTableColumnHeader>SN</CustomDataTableColumnHeader>
-                        <CustomDataTableColumnHeader></CustomDataTableColumnHeader>
+                        <CustomDataTableColumnHeader backgroundColor={props.section.styles.columns.backgroundColor}>
+                            SN
+                        </CustomDataTableColumnHeader>
+                        <CustomDataTableColumnHeader
+                            backgroundColor={props.section.styles.columns.backgroundColor}
+                        ></CustomDataTableColumnHeader>
                         {grid.parentColumns.map((column, index) => {
                             return (
                                 <CustomDataTableColumnHeader
-                                    style={props.section.styles.columns}
+                                    backgroundColor={props.section.styles.columns.backgroundColor}
                                     key={index}
                                     className={classes.centerSpan}
                                 >
@@ -47,16 +51,24 @@ const GridWithSubNational: React.FC<GridWithSubNationalProps> = props => {
                     </DataTableRow>
 
                     <DataTableRow>
-                        <CustomDataTableColumnHeader style={props.section.styles.columns} fixed top={topValue}>
+                        <CustomDataTableColumnHeader
+                            backgroundColor={props.section.styles.columns.backgroundColor}
+                            fixed
+                            top={topValue}
+                        >
                             {i18n.t("Occupation")}
                         </CustomDataTableColumnHeader>
-                        <CustomDataTableColumnHeader style={props.section.styles.columns} fixed top={topValue}>
+                        <CustomDataTableColumnHeader
+                            backgroundColor={props.section.styles.columns.backgroundColor}
+                            fixed
+                            top={topValue}
+                        >
                             {i18n.t("Subnational level name")}
                         </CustomDataTableColumnHeader>
 
                         {grid.columns.map(column => (
                             <CustomDataTableColumnHeader
-                                style={props.section.styles.columns}
+                                backgroundColor={props.section.styles.columns.backgroundColor}
                                 key={`column-${column.name}`}
                                 fixed
                                 top={topValue}
@@ -71,11 +83,16 @@ const GridWithSubNational: React.FC<GridWithSubNationalProps> = props => {
                 <TableBody>
                     {grid.rows.map((row, idx) => (
                         <DataTableRow key={`policy-${row.name}`}>
-                            <CustomDataTableCell style={props.section.styles.rows} fixed left="0" width="90px">
+                            <CustomDataTableCell
+                                backgroundColor={props.section.styles.rows.backgroundColor}
+                                fixed
+                                left="0"
+                                width="90px"
+                            >
                                 Total
                             </CustomDataTableCell>
                             <CustomDataTableCell
-                                style={props.section.styles.rows}
+                                backgroundColor={props.section.styles.rows.backgroundColor}
                                 fixed
                                 left="90px"
                                 className={classes.td}
@@ -86,7 +103,7 @@ const GridWithSubNational: React.FC<GridWithSubNationalProps> = props => {
                             {row.items.map((item, idx) =>
                                 item.dataElement ? (
                                     <CustomDataTableCell
-                                        style={props.section.styles.rows}
+                                        backgroundColor={props.section.styles.rows.backgroundColor}
                                         key={item.dataElement.orgUnit + item.dataElement.id + item.dataElement.cocId}
                                     >
                                         <DataElementItem
@@ -100,7 +117,7 @@ const GridWithSubNational: React.FC<GridWithSubNationalProps> = props => {
                                     </CustomDataTableCell>
                                 ) : (
                                     <CustomDataTableCell
-                                        style={props.section.styles.rows}
+                                        backgroundColor={props.section.styles.rows.backgroundColor}
                                         key={`cell-${idx}`}
                                     ></CustomDataTableCell>
                                 )

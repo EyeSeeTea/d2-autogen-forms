@@ -31,12 +31,14 @@ const GridWithCombos: React.FC<GridWithCombosProps> = props => {
                     <TableHead className={classes.tableHeader}>
                         <DataTableRow>
                             {grid.parentColumns.length > 0 && (
-                                <CustomDataTableColumnHeader></CustomDataTableColumnHeader>
+                                <CustomDataTableColumnHeader
+                                    backgroundColor={props.section.styles.columns.backgroundColor}
+                                ></CustomDataTableColumnHeader>
                             )}
                             {grid.parentColumns.map(column => {
                                 return (
                                     <CustomDataTableColumnHeader
-                                        style={props.section.styles.columns}
+                                        backgroundColor={props.section.styles.columns.backgroundColor}
                                         key={column.name}
                                         className={classes.centerSpan}
                                         colSpan={String(column.colSpan)}
@@ -49,12 +51,15 @@ const GridWithCombos: React.FC<GridWithCombosProps> = props => {
 
                         <DataTableRow>
                             {grid.useIndexes ? (
-                                <CustomDataTableColumnHeader style={props.section.styles.columns} width="30px">
+                                <CustomDataTableColumnHeader
+                                    backgroundColor={props.section.styles.columns.backgroundColor}
+                                    width="30px"
+                                >
                                     <span className={classes.header}>#</span>{" "}
                                 </CustomDataTableColumnHeader>
                             ) : (
                                 <CustomDataTableColumnHeader
-                                    style={props.section.styles.columns}
+                                    backgroundColor={props.section.styles.columns.backgroundColor}
                                     fixed
                                     top="0"
                                 ></CustomDataTableColumnHeader>
@@ -62,7 +67,7 @@ const GridWithCombos: React.FC<GridWithCombosProps> = props => {
 
                             {grid.columns.map(column => (
                                 <CustomDataTableColumnHeader
-                                    style={props.section.styles.columns}
+                                    backgroundColor={props.section.styles.columns.backgroundColor}
                                     fixed
                                     top="0"
                                     key={`column-${column.name}`}
@@ -81,14 +86,17 @@ const GridWithCombos: React.FC<GridWithCombosProps> = props => {
                     <TableBody>
                         {grid.rows.map((row, idx) => (
                             <DataTableRow key={`policy-${row.name}`}>
-                                <CustomDataTableCell style={props.section.styles.rows} className={classes.td}>
+                                <CustomDataTableCell
+                                    backgroundColor={props.section.styles.rows.backgroundColor}
+                                    className={classes.td}
+                                >
                                     <span>{grid.useIndexes ? (idx + 1).toString() : row.name}</span>
                                 </CustomDataTableCell>
 
                                 {row.items.map((item, idx) =>
                                     item.dataElement ? (
                                         <CustomDataTableCell
-                                            style={props.section.styles.rows}
+                                            backgroundColor={props.section.styles.rows.backgroundColor}
                                             key={item.dataElement.id + item.dataElement.cocId}
                                         >
                                             <DataElementItem
@@ -101,7 +109,7 @@ const GridWithCombos: React.FC<GridWithCombosProps> = props => {
                                         </CustomDataTableCell>
                                     ) : (
                                         <CustomDataTableCell
-                                            style={props.section.styles.rows}
+                                            backgroundColor={props.section.styles.rows.backgroundColor}
                                             key={`cell-${idx}`}
                                         ></CustomDataTableCell>
                                     )
