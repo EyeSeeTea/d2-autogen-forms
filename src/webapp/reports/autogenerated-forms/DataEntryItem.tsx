@@ -38,8 +38,6 @@ function isInputExpired(
     dataInputPeriods: dataInputPeriodsType,
     expiryDays: number
 ) {
-    if (!expiryDays) return false;
-
     const periodToCheck = period ?? dataFormPeriod;
 
     const dataInputPeriod = dataInputPeriods?.find(p => p.period.id === periodToCheck);
