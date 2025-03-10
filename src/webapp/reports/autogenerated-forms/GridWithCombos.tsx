@@ -3,9 +3,7 @@ import {
     DataTable,
     TableHead,
     DataTableRow,
-    DataTableColumnHeader,
     TableBody,
-    DataTableCell,
     // @ts-ignore
 } from "@dhis2/ui";
 import { GridWithCombosViewModel } from "./GridWithCombosViewModel";
@@ -14,7 +12,7 @@ import { Section } from "../../../domain/common/entities/DataForm";
 import { DataElementItem } from "./DataElementItem";
 import { makeStyles } from "@material-ui/core";
 import DataTableSection from "./DataTableSection";
-import { fixHeaderClasses } from "./datatables/CustomDataTables";
+import { CustomDataTableCell, CustomDataTableColumnHeader, fixHeaderClasses } from "./datatables/CustomDataTables";
 
 export interface GridWithCombosProps {
     dataFormInfo: DataFormInfo;
@@ -27,36 +25,44 @@ const GridWithCombos: React.FC<GridWithCombosProps> = props => {
     const classes = useStyles();
 
     return (
-        <DataTableSection section={grid} dataFormInfo={dataFormInfo}>
+        <DataTableSection section={grid} sectionStyles={props.section.styles} dataFormInfo={dataFormInfo}>
             <div className={classes.fixedHeaders}>
                 <DataTable className={classes.table} layout="fixed" width="initial">
                     <TableHead className={classes.tableHeader}>
                         <DataTableRow>
-                            {grid.parentColumns.length > 0 && <DataTableColumnHeader></DataTableColumnHeader>}
+                            {grid.parentColumns.length > 0 && (
+                                <CustomDataTableColumnHeader></CustomDataTableColumnHeader>
+                            )}
                             {grid.parentColumns.map(column => {
                                 return (
-                                    <DataTableColumnHeader
+                                    <CustomDataTableColumnHeader
+                                        style={props.section.styles.columns}
                                         key={column.name}
                                         className={classes.centerSpan}
                                         colSpan={String(column.colSpan)}
                                     >
                                         <span>{column.name}</span>
-                                    </DataTableColumnHeader>
+                                    </CustomDataTableColumnHeader>
                                 );
                             })}
                         </DataTableRow>
 
                         <DataTableRow>
                             {grid.useIndexes ? (
-                                <DataTableColumnHeader width="30px">
+                                <CustomDataTableColumnHeader style={props.section.styles.columns} width="30px">
                                     <span className={classes.header}>#</span>{" "}
-                                </DataTableColumnHeader>
+                                </CustomDataTableColumnHeader>
                             ) : (
-                                <DataTableColumnHeader fixed top="0"></DataTableColumnHeader>
+                                <CustomDataTableColumnHeader
+                                    style={props.section.styles.columns}
+                                    fixed
+                                    top="0"
+                                ></CustomDataTableColumnHeader>
                             )}
 
                             {grid.columns.map(column => (
-                                <DataTableColumnHeader
+                                <CustomDataTableColumnHeader
+                                    style={props.section.styles.columns}
                                     fixed
                                     top="0"
                                     key={`column-${column.name}`}
@@ -67,7 +73,7 @@ const GridWithCombos: React.FC<GridWithCombosProps> = props => {
                                     }
                                 >
                                     <span>{column.cocName}</span>
-                                </DataTableColumnHeader>
+                                </CustomDataTableColumnHeader>
                             ))}
                         </DataTableRow>
                     </TableHead>
@@ -75,13 +81,16 @@ const GridWithCombos: React.FC<GridWithCombosProps> = props => {
                     <TableBody>
                         {grid.rows.map((row, idx) => (
                             <DataTableRow key={`policy-${row.name}`}>
-                                <DataTableCell className={classes.td}>
+                                <CustomDataTableCell style={props.section.styles.rows} className={classes.td}>
                                     <span>{grid.useIndexes ? (idx + 1).toString() : row.name}</span>
-                                </DataTableCell>
+                                </CustomDataTableCell>
 
                                 {row.items.map((item, idx) =>
                                     item.dataElement ? (
-                                        <DataTableCell key={item.dataElement.id + item.dataElement.cocId}>
+                                        <CustomDataTableCell
+                                            style={props.section.styles.rows}
+                                            key={item.dataElement.id + item.dataElement.cocId}
+                                        >
                                             <DataElementItem
                                                 dataElement={item.dataElement}
                                                 dataFormInfo={dataFormInfo}
@@ -89,9 +98,12 @@ const GridWithCombos: React.FC<GridWithCombosProps> = props => {
                                                     item.column.name !== "Source type for HWF - (Inputs & Outputs)"
                                                 }
                                             />
-                                        </DataTableCell>
+                                        </CustomDataTableCell>
                                     ) : (
-                                        <DataTableCell key={`cell-${idx}`}></DataTableCell>
+                                        <CustomDataTableCell
+                                            style={props.section.styles.rows}
+                                            key={`cell-${idx}`}
+                                        ></CustomDataTableCell>
                                     )
                                 )}
                             </DataTableRow>

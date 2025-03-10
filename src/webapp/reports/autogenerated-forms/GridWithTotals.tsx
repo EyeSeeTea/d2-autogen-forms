@@ -4,8 +4,6 @@ import {
     DataTable,
     TableHead,
     DataTableRow,
-    DataTableColumnHeader,
-    DataTableCell,
     TableBody,
     // @ts-ignore
 } from "@dhis2/ui";
@@ -15,7 +13,7 @@ import { SectionWithTotals } from "../../../../src/domain/common/entities/DataFo
 import { DataElementItem } from "./DataElementItem";
 import { makeStyles } from "@material-ui/core";
 import DataTableSection from "./DataTableSection";
-import { fixHeaderClasses } from "./datatables/CustomDataTables";
+import { CustomDataTableCell, CustomDataTableColumnHeader, fixHeaderClasses } from "./datatables/CustomDataTables";
 
 export interface GridWithTotalsProps {
     dataFormInfo: DataFormInfo;
@@ -42,58 +40,65 @@ const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
     const notFirstSection = currentSectionIndex !== 0;
 
     return (
-        <DataTableSection section={grid} dataFormInfo={dataFormInfo}>
+        <DataTableSection section={grid} sectionStyles={props.section.styles} dataFormInfo={dataFormInfo}>
             <div className={classes.fixedHeaders}>
                 <DataTable className={classes.table} layout="fixed" width="initial">
                     <TableHead className={classes.tableHeader}>
                         {grid.parentColumns.length > 0 && (
                             <DataTableRow>
-                                <DataTableColumnHeader></DataTableColumnHeader>
-                                <DataTableColumnHeader></DataTableColumnHeader>
+                                <CustomDataTableColumnHeader></CustomDataTableColumnHeader>
+                                <CustomDataTableColumnHeader></CustomDataTableColumnHeader>
                                 {grid.parentColumns.map(column => {
                                     return (
-                                        <DataTableColumnHeader
+                                        <CustomDataTableColumnHeader
+                                            style={props.section.styles.columns}
                                             key={column.name}
                                             className={classes.centerSpan}
                                             colSpan={String(column.colSpan)}
                                         >
                                             <span>{column.name}</span>
-                                        </DataTableColumnHeader>
+                                        </CustomDataTableColumnHeader>
                                     );
                                 })}
-                                {!notFirstSection && <DataTableColumnHeader></DataTableColumnHeader>}
+                                {!notFirstSection && <CustomDataTableColumnHeader></CustomDataTableColumnHeader>}
                             </DataTableRow>
                         )}
                         <DataTableRow>
                             {grid.useIndexes ? (
-                                <DataTableColumnHeader width="30px">
+                                <CustomDataTableColumnHeader style={props.section.styles.columns} width="30px">
                                     <span className={classes.header}>#</span>{" "}
-                                </DataTableColumnHeader>
+                                </CustomDataTableColumnHeader>
                             ) : (
-                                <DataTableColumnHeader></DataTableColumnHeader>
+                                <CustomDataTableColumnHeader></CustomDataTableColumnHeader>
                             )}
 
                             {notFirstSection ? (
-                                <DataTableColumnHeader className={classes.columnWidth} key={`column-Total`}>
+                                <CustomDataTableColumnHeader
+                                    style={props.section.styles.columns}
+                                    className={classes.columnWidth}
+                                    key={`column-Total`}
+                                >
                                     <span>Total</span>
-                                </DataTableColumnHeader>
+                                </CustomDataTableColumnHeader>
                             ) : null}
 
                             {grid.columns.map(column =>
                                 column.deName && column.cocName ? (
-                                    <DataTableColumnHeader
+                                    <CustomDataTableColumnHeader
+                                        style={props.section.styles.columns}
                                         key={`column-${column.name}`}
                                         className={classes.columnWidth}
                                     >
                                         <span>{column.cocName}</span>
-                                    </DataTableColumnHeader>
+                                    </CustomDataTableColumnHeader>
                                 ) : (
-                                    <DataTableColumnHeader
+                                    <CustomDataTableColumnHeader
+                                        style={props.section.styles.columns}
                                         key={`column-${column.name}`}
                                         className={column.isSourceType ? classes.source : classes.columnWidth}
                                     >
                                         <span>{column.name}</span>
-                                    </DataTableColumnHeader>
+                                    </CustomDataTableColumnHeader>
                                 )
                             )}
                         </DataTableRow>
@@ -102,7 +107,7 @@ const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
                     <TableBody>
                         {grid.rows.map((row, idx) => (
                             <DataTableRow key={`policy-${row.name}`}>
-                                <DataTableCell className={classes.td}>
+                                <CustomDataTableCell style={props.section.styles.rows} className={classes.td}>
                                     <p
                                         style={{
                                             paddingLeft: row.includePadding ? `${row.includePadding * 10}px` : "0",
@@ -110,23 +115,29 @@ const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
                                     >
                                         {grid.useIndexes ? (idx + 1).toString() : row.name}
                                     </p>
-                                </DataTableCell>
+                                </CustomDataTableCell>
 
                                 {notFirstSection && row.total ? (
-                                    <DataTableCell key={row.total.id + row.total.cocId}>
+                                    <CustomDataTableCell
+                                        style={props.section.styles.rows}
+                                        key={row.total.id + row.total.cocId}
+                                    >
                                         <DataElementItem
                                             dataElement={row.total}
                                             dataFormInfo={dataFormInfo}
                                             manualyDisabled={true}
                                             noComment={true}
                                         />
-                                    </DataTableCell>
+                                    </CustomDataTableCell>
                                 ) : null}
 
                                 {row.items.map((item, idx) => {
                                     if (item.column.isSourceType) {
                                         return item.dataElement ? (
-                                            <DataTableCell key={item.dataElement.id + item.dataElement.cocId}>
+                                            <CustomDataTableCell
+                                                style={props.section.styles.rows}
+                                                key={item.dataElement.id + item.dataElement.cocId}
+                                            >
                                                 <DataElementItem
                                                     dataElement={item.dataElement}
                                                     dataFormInfo={dataFormInfo}
@@ -134,13 +145,19 @@ const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
                                                     columnTotal={item.columnTotal}
                                                     rows={grid.rows}
                                                 />
-                                            </DataTableCell>
+                                            </CustomDataTableCell>
                                         ) : (
-                                            <DataTableCell key={`cell-${idx}`}></DataTableCell>
+                                            <CustomDataTableCell
+                                                style={props.section.styles.rows}
+                                                key={`cell-${idx}`}
+                                            ></CustomDataTableCell>
                                         );
                                     } else {
                                         return item.dataElement ? (
-                                            <DataTableCell key={item.dataElement.id + item.dataElement.cocId}>
+                                            <CustomDataTableCell
+                                                style={props.section.styles.rows}
+                                                key={item.dataElement.id + item.dataElement.cocId}
+                                            >
                                                 <DataElementItem
                                                     dataElement={item.dataElement}
                                                     dataFormInfo={dataFormInfo}
@@ -151,9 +168,12 @@ const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
                                                     columnDataElements={item.columnDataElements}
                                                     rowName={row.name}
                                                 />
-                                            </DataTableCell>
+                                            </CustomDataTableCell>
                                         ) : (
-                                            <DataTableCell key={`cell-${idx}`}></DataTableCell>
+                                            <CustomDataTableCell
+                                                style={props.section.styles.rows}
+                                                key={`cell-${idx}`}
+                                            ></CustomDataTableCell>
                                         );
                                     }
                                 })}
