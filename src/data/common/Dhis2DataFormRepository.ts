@@ -32,7 +32,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
         const dataElements = _.flatMap(sections, section => section.dataElements);
         const dataElementsOptions = this.getDataElementsOptions(dataElements, config);
         const dataSetConfig = config.getDataSetConfig(dataSet, options.period);
-        const totalRules: TotalRule[] = this.getTotalRules(sections, dataElements);
+        const totalRules = this.getTotalRules(sections, dataElements);
 
         return {
             indicators: _(sections)
@@ -221,15 +221,17 @@ export class Dhis2DataFormRepository implements DataFormRepository {
 
     private getRelatedDataElements(section: Section, dataElements: DataElement[], formula: string): DataElement[] {
         const dataElementCodesInFormula = formula.match(/\b[A-Za-z_][A-Za-z0-9_]*\b/g) || [];
+        const dataElementsByCode = _(dataElements)
+            .keyBy(de => de.code)
+            .value();
 
         const relatedDataElements = _(dataElementCodesInFormula)
             .map(dataElementCode => {
-                const dataElement = dataElements.find(de => de.code === dataElementCode);
+                const dataElement = dataElementsByCode[dataElementCode];
                 const isDataElementCodeIncluded = section.totals?.dataElementsCodes.includes(dataElementCode) ?? false;
 
                 if (!dataElement || !isDataElementCodeIncluded) return undefined;
-
-                return dataElements.find(de => de.id === dataElement.id);
+                return dataElement;
             })
             .compact()
             .uniqBy(de => de.id)

@@ -199,9 +199,7 @@ export function checkVisibleRule(options: UseApplyRulesProps): boolean {
     const visibleRule = dataElement.rules.find(rule => rule.type === "visible");
     const visibleDataElementTotalRule = totalRules?.find(rule => rule.type === "visible");
 
-    return visibleRule || visibleDataElementTotalRule
-        ? getValueAndVerifyCondition(visibleRule, dataFormInfo, period, visibleDataElementTotalRule) ?? true
-        : true;
+    return getValueAndVerifyCondition(visibleRule, dataFormInfo, period, visibleDataElementTotalRule) ?? true;
 }
 
 export function checkDisabledRule(options: UseApplyRulesProps): boolean {
@@ -209,9 +207,7 @@ export function checkDisabledRule(options: UseApplyRulesProps): boolean {
     const disabledRule = dataElement.rules.find(rule => rule.type === "disabled");
     const disabledDataElementTotalRule = totalRules?.find(rule => rule.type === "visible");
 
-    return disabledRule || disabledDataElementTotalRule
-        ? getValueAndVerifyCondition(disabledRule, dataFormInfo, period, disabledDataElementTotalRule) ?? false
-        : false;
+    return getValueAndVerifyCondition(disabledRule, dataFormInfo, period, disabledDataElementTotalRule) ?? false;
 }
 
 const DataEntryItem: React.FC<DataEntryItemProps> = props => {

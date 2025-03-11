@@ -39,7 +39,7 @@ interface BaseSectionConfig {
     disableComments: boolean;
     totals?: {
         dataElementsCodes: string[];
-        formulas: Record<string, { formula: string; rules: DataElementRuleOptions | undefined }> | undefined;
+        formulas: Maybe<Record<string, { formula: string; rules: Maybe<DataElementRuleOptions> }>>;
         formula: string;
         texts?: { name: string };
     };
