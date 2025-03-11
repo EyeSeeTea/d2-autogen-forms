@@ -98,7 +98,7 @@ function isTabHeader(order: string | undefined) {
     if (order === undefined) return false;
 
     const [_primaryTabIndex, secondaryTabIndex] = order.split(".");
-    if (secondaryTabIndex === undefined || secondaryTabIndex === "0" || secondaryTabIndex === "1") return true;
+    return secondaryTabIndex === undefined || secondaryTabIndex === "0" || secondaryTabIndex === "1";
 }
 
 const AutoFormComponent = React.memo(TypeSwitch);
@@ -107,7 +107,7 @@ const TabPanel: React.FC<TabProps> = React.memo(props => {
     const { section, dataFormInfo, value } = props;
     const { viewType, tabs } = section;
     const primaryTabIndex = tabs.order?.split(".")[0];
-    const index = tabs.order !== undefined && primaryTabIndex ? parseInt(primaryTabIndex) : -1;
+    const index = primaryTabIndex ? parseInt(primaryTabIndex) : -1;
 
     return (
         <div role="tabpanel" hidden={value !== index} id={`tabpanel-${index}`} aria-labelledby={`tab-${index}`}>

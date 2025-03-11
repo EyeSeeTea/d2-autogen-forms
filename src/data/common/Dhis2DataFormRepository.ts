@@ -171,8 +171,8 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                 }
             })
             .sortBy([
-                section => (section.tabs.order ? parseInt(section.tabs.order?.split(".")[0] || "0", 10) : 0),
-                section => (section.tabs.order ? parseInt(section.tabs.order?.split(".")[1] || "0", 10) : 0),
+                section => (section.tabs.order ? parseInt(section.tabs.order?.split(".")[0] || "0") : 0),
+                section => (section.tabs.order ? parseInt(section.tabs.order?.split(".")[1] || "0") : 0),
             ])
             .value();
     }
