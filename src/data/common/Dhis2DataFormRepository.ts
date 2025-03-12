@@ -167,6 +167,10 @@ export class Dhis2DataFormRepository implements DataFormRepository {
     }
 
     private getTotalRules(sections: Section[], dataElements: DataElement[]): TotalRule[] {
+        const dataElementsByCode: Record<Code, DataElement> = _(dataElements)
+            .keyBy(de => de.code)
+            .value();
+
         return sections.flatMap(section => {
             const totalsFormulas = _(section.totals?.formulas).values();
 
@@ -179,14 +183,14 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                         "visible",
                         rules,
                         section,
-                        dataElements,
+                        dataElementsByCode,
                         formula
                     );
                     const disabledTotalRule = this.getTotalRuleByRuleType(
                         "disabled",
                         rules,
                         section,
-                        dataElements,
+                        dataElementsByCode,
                         formula
                     );
 
@@ -201,7 +205,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
         ruleType: RuleType,
         rules: DataElementRuleOptions,
         section: Section,
-        dataElements: DataElement[],
+        dataElements: Record<Code, DataElement>,
         formula: string
     ): Maybe<TotalRule> {
         const relatedDataElements = this.getRelatedDataElements(section, dataElements, formula);
@@ -210,24 +214,23 @@ export class Dhis2DataFormRepository implements DataFormRepository {
 
         return {
             type: ruleType,
-            dataElements: rule.dataElements.map(
-                dataElementCode => dataElements.find(de => de.code === dataElementCode)?.id ?? ""
-            ),
+            dataElements: rule.dataElements.map(dataElementCode => dataElements[dataElementCode]?.id ?? ""),
             relatedDataElements: relatedDataElements,
             condition: rule.condition,
             formula: formula,
         };
     }
 
-    private getRelatedDataElements(section: Section, dataElements: DataElement[], formula: string): DataElement[] {
+    private getRelatedDataElements(
+        section: Section,
+        dataElements: Record<Code, DataElement>,
+        formula: string
+    ): DataElement[] {
         const dataElementCodesInFormula = formula.match(/\b[A-Za-z_][A-Za-z0-9_]*\b/g) || [];
-        const dataElementsByCode = _(dataElements)
-            .keyBy(de => de.code)
-            .value();
 
         const relatedDataElements = _(dataElementCodesInFormula)
             .map(dataElementCode => {
-                const dataElement = dataElementsByCode[dataElementCode];
+                const dataElement = dataElements[dataElementCode];
                 const isDataElementCodeIncluded = section.totals?.dataElementsCodes.includes(dataElementCode) ?? false;
 
                 if (!dataElement || !isDataElementCodeIncluded) return undefined;
