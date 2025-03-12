@@ -94,13 +94,11 @@ function TypeSwitch(props: TypeSwitchProps) {
     }
 }
 
-function isTabHeader(order: number | undefined) {
+function isTabHeader(order: string | undefined) {
     if (order === undefined) return false;
-    if (order % 1 === 0) return true;
 
-    if (order === Math.floor(order) + 0.1) {
-        return true;
-    }
+    const [_primaryTabIndex, secondaryTabIndex] = order.split(".");
+    return secondaryTabIndex === undefined || secondaryTabIndex === "0" || secondaryTabIndex === "1";
 }
 
 const AutoFormComponent = React.memo(TypeSwitch);
@@ -108,7 +106,8 @@ const AutoFormComponent = React.memo(TypeSwitch);
 const TabPanel: React.FC<TabProps> = React.memo(props => {
     const { section, dataFormInfo, value } = props;
     const { viewType, tabs } = section;
-    const index = tabs.order !== undefined ? Math.floor(tabs.order) : -1;
+    const primaryTabIndex = tabs.order?.split(".")[0];
+    const index = primaryTabIndex ? parseInt(primaryTabIndex) : -1;
 
     return (
         <div role="tabpanel" hidden={value !== index} id={`tabpanel-${index}`} aria-labelledby={`tab-${index}`}>
