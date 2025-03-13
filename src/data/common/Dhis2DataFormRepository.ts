@@ -84,84 +84,97 @@ export class Dhis2DataFormRepository implements DataFormRepository {
         const dataElements = await new Dhis2DataElement(this.api).get(dataElementIds, dataSet.code);
 
         const dataElementsRulesConfig = this.buildRulesFromConfig(dataElements, configDataForm, allDataElements);
-        return dataSet.sections.map((section): Section => {
-            const config = dataSetConfig.sections[section.id];
-            const sectionIndicators = this.buildIndicators(section.indicators);
-            const base: SectionBase = {
-                indicators: this.buildIndicatorsWithConfig(sectionIndicators, config?.indicators),
-                id: section.id,
-                name: section.displayName,
-                toggle: { type: "none" },
-                texts: config?.texts || defaultTexts,
-                tabs: config?.tabs || { active: false },
-                sortRowsBy: config?.sortRowsBy || "",
-                disableComments: config?.disableComments ?? false,
-                dataElements: _(section.dataElements)
-                    .map(dataElementRef => {
-                        const dataElement = dataElements[dataElementRef.id];
-                        if (!dataElement) return undefined;
-                        const deConfig = configDataForm.dataElementsConfig[dataElementRef.code];
 
-                        const dataElementRules = this.getDataElementRules(
-                            dataElementsRulesConfig,
-                            dataElement,
-                            dataElements
-                        );
+        return _(dataSet.sections)
+            .map((section): Section => {
+                const config = dataSetConfig.sections[section.id];
 
-                        const deHideConfig = deConfig?.selection?.visible;
-                        const d2DataElement = deHideConfig
-                            ? section.dataElements.find(de => de.code === deHideConfig.dataElementCode)
-                            : undefined;
-                        const deRelated = d2DataElement ? dataElements[d2DataElement.id] : undefined;
+                const sectionIndicators = this.buildIndicators(section.indicators);
+                const base: SectionBase = {
+                    indicators: this.buildIndicatorsWithConfig(sectionIndicators, config?.indicators),
+                    id: section.id,
+                    name: section.displayName,
+                    toggle: { type: "none" },
+                    texts: config?.texts || defaultTexts,
+                    tabs:
+                        config?.tabs && config.tabs.active
+                            ? { active: true, order: config.tabs.order.toString() }
+                            : { active: false },
+                    sortRowsBy: config?.sortRowsBy || "",
+                    disableComments: config?.disableComments ?? false,
+                    dataElements: _(section.dataElements)
+                        .map(dataElementRef => {
+                            const dataElement = dataElements[dataElementRef.id];
+                            if (!dataElement) return undefined;
+                            const deConfig = configDataForm.dataElementsConfig[dataElementRef.code];
+
+                            const dataElementRules = this.getDataElementRules(
+                                dataElementsRulesConfig,
+                                dataElement,
+                                dataElements
+                            );
+
+                            const deHideConfig = deConfig?.selection?.visible;
+                            const d2DataElement = deHideConfig
+                                ? section.dataElements.find(de => de.code === deHideConfig.dataElementCode)
+                                : undefined;
+                            const deRelated = d2DataElement ? dataElements[d2DataElement.id] : undefined;
+                            return {
+                                ...dataElement,
+                                disabledComments: deConfig?.disableComments || false,
+                                related: deRelated
+                                    ? { dataElement: deRelated, value: deHideConfig?.value || "" }
+                                    : undefined,
+                                rules: dataElementRules,
+                                htmlText: deConfig?.texts?.name,
+                            };
+                        })
+                        .compact()
+                        .value(),
+                    titleVariant: config?.titleVariant,
+                    styles: SectionStyle.buildSectionStyles(config?.styles),
+                    columnsDescriptions: config?.columnsDescriptions,
+                    groupDescriptions: config?.groupDescriptions,
+                    totals: config?.totals,
+                    showRowTotals: section.showRowTotals,
+                    toggleMultiple: config?.toggleMultiple
+                        ? buildToggleMultiple(config.toggleMultiple, dataElements)
+                        : [],
+                };
+
+                if (!config) return { viewType: "table", calculateTotals: undefined, ...base };
+
+                const base2 = getSectionBaseWithToggle(config, base, dataElements);
+
+                switch (config.viewType) {
+                    case "grid-with-periods":
+                        return { viewType: config.viewType, periods: config.periods, ...base2 };
+                    case "table":
+                    case "grid":
+                    case "grid-with-totals":
+                        return { viewType: config.viewType, calculateTotals: config.calculateTotals, ...base2 };
+                    case "grid-with-subnational-ous":
                         return {
-                            ...dataElement,
-                            disabledComments: deConfig?.disableComments || false,
-                            related: deRelated
-                                ? { dataElement: deRelated, value: deHideConfig?.value || "" }
-                                : undefined,
-                            rules: dataElementRules,
-                            htmlText: deConfig?.texts?.name,
+                            viewType: config.viewType,
+                            calculateTotals: config.calculateTotals,
+                            subNationals: config?.subNationalDataset
+                                ? _(configDataForm.subNationals)
+                                      .filter((sn: SubNational) => sn.parentId === orgUnit)
+                                      .sortBy(sn => sn.name)
+                                      .value()
+                                : [],
+                            ...base2,
                         };
-                    })
-                    .compact()
-                    .value(),
-                titleVariant: config?.titleVariant,
-                styles: SectionStyle.buildSectionStyles(config?.styles),
-                columnsDescriptions: config?.columnsDescriptions,
-                groupDescriptions: config?.groupDescriptions,
-                totals: config?.totals,
-                showRowTotals: section.showRowTotals,
-                toggleMultiple: config?.toggleMultiple ? buildToggleMultiple(config.toggleMultiple, dataElements) : [],
-            };
 
-            if (!config) return { viewType: "table", calculateTotals: undefined, ...base };
-
-            const base2 = getSectionBaseWithToggle(config, base, dataElements);
-
-            switch (config.viewType) {
-                case "grid-with-periods":
-                    return { viewType: config.viewType, periods: config.periods, ...base2 };
-                case "table":
-                case "grid":
-                case "grid-with-totals":
-                    return { viewType: config.viewType, calculateTotals: config.calculateTotals, ...base2 };
-                case "grid-with-subnational-ous":
-                    return {
-                        viewType: config.viewType,
-                        calculateTotals: config.calculateTotals,
-                        subNationals: config?.subNationalDataset
-                            ? _(configDataForm.subNationals)
-                                  .filter((sn: SubNational) => sn.parentId === orgUnit)
-                                  .sortBy(sn => sn.name)
-                                  .value()
-                            : [],
-                        ...base2,
-                    };
-
-                default:
-                    return { viewType: config.viewType, ...base2 };
-            }
-        });
+                    default:
+                        return { viewType: config.viewType, ...base2 };
+                }
+            })
+            .sortBy([
+                section => (section.tabs.order ? parseInt(section.tabs.order?.split(".")[0] || "0") : 0),
+                section => (section.tabs.order ? parseInt(section.tabs.order?.split(".")[1] || "0") : 0),
+            ])
+            .value();
     }
 
     private buildIndicatorsWithConfig(

@@ -67,7 +67,7 @@ export interface SectionBase {
         | { type: "dataElement"; dataElement: DataElement }
         | { type: "dataElementExternal"; dataElement: DataElement; condition: string };
     texts: Texts;
-    tabs: { active: boolean; order?: number };
+    tabs: { active: boolean; order?: string };
     sortRowsBy: string;
     titleVariant: titleVariant;
     styles: SectionStyle;

@@ -36,7 +36,7 @@ interface BaseSectionConfig {
         | { type: "none" }
         | { type: "dataElement"; code: Code }
         | { type: "dataElementExternal"; code: Code; condition: string | undefined };
-    tabs: { active: true; order: number } | { active: false };
+    tabs: { active: true; order: string | number } | { active: false };
     sortRowsBy: string;
     titleVariant: titleVariant;
     styles: SectionStyleAttrs;
@@ -203,7 +203,7 @@ const DataStoreConfigCodec = Codec.interface({
                 tabs: optional(
                     Codec.interface({
                         active: exactly(true),
-                        order: number,
+                        order: oneOf([string, number]),
                     })
                 ),
                 periods: optional(
