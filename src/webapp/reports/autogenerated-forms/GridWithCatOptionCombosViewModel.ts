@@ -138,7 +138,8 @@ export class GridWithCatOptionCombosViewModel {
         const summary = _(section.totals)
             .map((sectionTotal, key) => {
                 const cellTotals = columns.map(column => {
-                    const selectedDataElements = column.dataElements.filter(dataElement =>
+                    const allDataElements = dataFormInfo.metadata.dataForm.dataElements;
+                    const selectedDataElements = allDataElements.filter(dataElement =>
                         sectionTotal.dataElementsCodes.includes(dataElement.code)
                     );
 
