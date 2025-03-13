@@ -27,14 +27,14 @@ export interface Texts {
     footer: Maybe<string>;
     name: Maybe<string>;
     rowTotals: Maybe<string>;
-    totals: Maybe<string>;
+    totals: string[];
 }
 
 export const defaultTexts: Texts = {
     header: undefined,
     footer: undefined,
     rowTotals: undefined,
-    totals: undefined,
+    totals: [],
     name: undefined,
 };
 
@@ -52,6 +52,12 @@ export type ViewType = UnionFromValues<typeof DataFormM.viewTypes>;
 
 export type DescriptionText = Maybe<Record<string, Maybe<string>>>;
 
+export type Totals = {
+    dataElementsCodes: string[];
+    formula: Maybe<string>;
+    formulas: Maybe<Record<string, { formula: string }>>;
+};
+
 export interface SectionBase {
     id: Id;
     name: string;
@@ -68,11 +74,7 @@ export interface SectionBase {
     columnsDescriptions: DescriptionText;
     groupDescriptions: DescriptionText;
     disableComments: boolean;
-    totals?: {
-        dataElementsCodes: string[];
-        formula: string;
-        formulas: Record<string, { formula: string }> | undefined;
-    };
+    totals?: Record<string, Totals>;
     showRowTotals: boolean;
     toggleMultiple: DataElementToggle[];
     indicators: Indicator[];

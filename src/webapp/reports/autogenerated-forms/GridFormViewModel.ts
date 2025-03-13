@@ -19,7 +19,7 @@ export interface Grid {
     useIndexes: boolean;
     texts: Texts;
     titleVariant: titleVariant;
-    summary: Maybe<Summary>;
+    summary: Summary[];
     indicators: Indicator[];
 }
 
@@ -139,33 +139,40 @@ export class GridViewModel {
                 .groupBy(row => row.name.replace(/\s*\(\d+\)$/, ""))
                 .size() === 1;
 
-        const totals = _(columns)
-            .map(column => {
-                const allDataElements = subsections.flatMap(subSection => subSection.dataElements);
-                const selectedDataElements = allDataElements.filter(dataElement =>
-                    section.totals?.dataElementsCodes.includes(dataElement.code)
-                );
+        const summary = _(section.totals)
+            .map((sectionTotal, key) => {
+                const cellTotals = columns.map(column => {
+                    const allDataElements = subsections.flatMap(subSection => subSection.dataElements);
+                    const selectedDataElements = allDataElements.filter(dataElement =>
+                        sectionTotal.dataElementsCodes.includes(dataElement.code)
+                    );
 
-                const columnWithDataElements = _(selectedDataElements)
-                    .map((dataElement): Maybe<TotalItem> => {
-                        if (dataElement.type !== "NUMBER") return undefined;
-                        const categoryOptionCombo = dataElement.categoryOptionCombos[0];
-                        if (!categoryOptionCombo) {
-                            console.warn(
-                                `Cannot found categoryOptionCombo in column ${column.name} for dataElement ${dataElement.code}`
-                            );
-                            return undefined;
-                        }
+                    const columnWithDataElements = _(selectedDataElements)
+                        .map((dataElement): Maybe<TotalItem> => {
+                            if (dataElement.type !== "NUMBER") return undefined;
+                            const categoryOptionCombo = dataElement.categoryOptionCombos[0];
+                            if (!categoryOptionCombo) {
+                                console.warn(
+                                    `Cannot found categoryOptionCombo in column ${column.name} for dataElement ${dataElement.code}`
+                                );
+                                return undefined;
+                            }
 
-                        return { dataElement, categoryOptionCombo };
-                    })
-                    .compact()
-                    .value();
+                            return { dataElement, categoryOptionCombo };
+                        })
+                        .compact()
+                        .value();
+
+                    return {
+                        columnName: column.name,
+                        formula: getFormulaByColumnName(section, column.name) || sectionTotal.formula || "",
+                        items: columnWithDataElements,
+                    };
+                });
 
                 return {
-                    columnName: column.name,
-                    formula: getFormulaByColumnName(section, column.name) || section.totals?.formula || "",
-                    items: columnWithDataElements,
+                    cellName: key,
+                    cells: cellTotals,
                 };
             })
             .value();
@@ -189,12 +196,7 @@ export class GridViewModel {
             texts: section.texts,
             useIndexes: useIndexes,
             titleVariant: section.titleVariant,
-            summary: section.totals
-                ? {
-                      cellName: section.texts?.totals || "",
-                      cells: totals,
-                  }
-                : undefined,
+            summary: section.totals ? summary : [],
             dataElements: dataElements.map(dataElement => {
                 const indicator = getIndicatorRelatedToDataElement(section.indicators, dataElement.code);
                 return { ...dataElement, indicator };

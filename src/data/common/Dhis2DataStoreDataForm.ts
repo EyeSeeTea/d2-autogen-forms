@@ -6,7 +6,7 @@ import { Maybe, NonPartial } from "../../utils/ts-utils";
 import { Code, getCode, Id, NamedRef } from "../../domain/common/entities/Base";
 import { Option } from "../../domain/common/entities/DataElement";
 import { Period } from "../../domain/common/entities/DataValue";
-import { DescriptionText, Texts } from "../../domain/common/entities/DataForm";
+import { DescriptionText, Texts, Totals } from "../../domain/common/entities/DataForm";
 import { titleVariant } from "../../domain/common/entities/TitleVariant";
 import { SectionStyle, SectionStyleAttrs } from "../../domain/common/entities/SectionStyle";
 import { DataElementRuleOptions } from "../../domain/common/entities/DataElementRule";
@@ -24,6 +24,12 @@ export type SectionConfig =
     | GridWithTotalsSectionConfig
     | GridWithSubnationalSectionConfig;
 
+type SectionTotals = Totals & {
+    texts?: { name: string };
+};
+
+type TotalsConfig = SectionTotals | Record<string, SectionTotals>;
+
 interface BaseSectionConfig {
     texts: Texts;
     toggle:
@@ -37,12 +43,7 @@ interface BaseSectionConfig {
     columnsDescriptions: DescriptionText;
     groupDescriptions: DescriptionText;
     disableComments: boolean;
-    totals?: {
-        dataElementsCodes: string[];
-        formulas: Record<string, { formula: string }> | undefined;
-        formula: string;
-        texts?: { name: string };
-    };
+    totals?: Record<string, SectionTotals>;
     toggleMultiple: Maybe<ToggleMultiple[]>;
     indicators?: Record<Code, IndicatorConfig>;
 }
@@ -143,7 +144,7 @@ const textsCodec = Codec.interface({
     header: optional(oneOf([string, selector])),
     footer: optional(oneOf([string, selector])),
     rowTotals: optional(oneOf([string, selector])),
-    totals: optional(oneOf([string, selector])),
+    totals: optional(oneOf([string, selector, array(string)])),
     name: optional(oneOf([string, selector])),
 });
 
@@ -223,7 +224,7 @@ const DataStoreConfigCodec = Codec.interface({
                         )
                     )
                 ),
-                totals: optional(totalsType),
+                totals: optional(oneOf([totalsType, record(string, totalsType)])),
                 toggleMultiple: optional(array(Codec.interface({ dataElement: string, condition: string }))),
                 indicators: optional(
                     sectionConfig({
@@ -428,7 +429,7 @@ export class Dhis2DataStoreDataForm {
                 typeof t.header !== "string" ? t.header : undefined,
                 typeof t.footer !== "string" ? t.footer : undefined,
                 typeof t.rowTotals !== "string" ? t.rowTotals : undefined,
-                typeof t.totals !== "string" ? t.totals : undefined,
+                typeof t.totals !== "string" && !Array.isArray(t.totals) ? t.totals : undefined,
                 typeof t.name !== "string" ? t.name : undefined,
             ])
             .compact()
@@ -504,8 +505,6 @@ export class Dhis2DataStoreDataForm {
         const dataSetDefaultViewType = dataSetConfig?.viewType || defaultViewType;
         const constantsByCode = _.keyBy(this.config.constants, getCode);
 
-        const getText = (value: string | { code: string } | undefined) =>
-            typeof value === "string" ? value : value ? constantsByCode[value.code]?.displayDescription : "";
         const sections = _(dataSetConfig?.sections)
             .toPairs()
             .map(([code, sectionConfig]) => {
@@ -515,11 +514,11 @@ export class Dhis2DataStoreDataForm {
                 const base: BaseSectionConfig = {
                     toggle: sectionConfig.toggle || { type: "none" },
                     texts: {
-                        header: getText(sectionConfig?.texts?.header),
-                        footer: getText(sectionConfig?.texts?.footer),
-                        rowTotals: getText(sectionConfig?.texts?.rowTotals),
-                        totals: getText(sectionConfig?.texts?.totals),
-                        name: getText(sectionConfig?.texts?.name),
+                        header: this.getTextFromConstants(sectionConfig?.texts?.header, constantsByCode),
+                        footer: this.getTextFromConstants(sectionConfig?.texts?.footer, constantsByCode),
+                        rowTotals: this.getTextFromConstants(sectionConfig?.texts?.rowTotals, constantsByCode),
+                        totals: this.getTotalTextFromConstants(sectionConfig?.texts?.totals, constantsByCode),
+                        name: this.getTextFromConstants(sectionConfig?.texts?.name, constantsByCode),
                     },
                     sortRowsBy: sectionConfig.sortRowsBy || "",
                     tabs: sectionConfig.tabs || { active: false },
@@ -529,16 +528,13 @@ export class Dhis2DataStoreDataForm {
                         sectionConfig.disableComments
                     ),
                     styles: SectionStyle.buildSectionStyles(sectionConfig.styles),
-                    columnsDescriptions: _.mapValues(sectionConfig.columnsDescriptions, getText),
-                    groupDescriptions: _.mapValues(sectionConfig.groupDescriptions, getText),
-                    totals: sectionConfig.totals
-                        ? {
-                              dataElementsCodes: sectionConfig.totals?.dataElementsCodes || [],
-                              formula: sectionConfig.totals?.formula || "",
-                              texts: { name: getText({ code: sectionConfig.totals?.texts?.name || "" }) || "" },
-                              formulas: sectionConfig.totals?.formulas,
-                          }
-                        : undefined,
+                    columnsDescriptions: _.mapValues(sectionConfig.columnsDescriptions, columnDescription =>
+                        this.getTextFromConstants(columnDescription, constantsByCode)
+                    ),
+                    groupDescriptions: _.mapValues(sectionConfig.groupDescriptions, groupDescription =>
+                        this.getTextFromConstants(groupDescription, constantsByCode)
+                    ),
+                    totals: this.getSectionTotals(sectionConfig, constantsByCode),
                     toggleMultiple: sectionConfig.toggleMultiple,
                     indicators: sectionConfig.indicators,
                 };
@@ -585,14 +581,54 @@ export class Dhis2DataStoreDataForm {
 
         return {
             texts: {
-                header: getText(dataSetConfig?.texts?.header),
-                footer: getText(dataSetConfig?.texts?.footer),
-                rowTotals: getText(dataSetConfig?.texts?.rowTotals),
-                totals: getText(dataSetConfig?.texts?.totals),
-                name: getText(dataSetConfig?.texts?.name),
+                header: this.getTextFromConstants(dataSetConfig?.texts?.header, constantsByCode),
+                footer: this.getTextFromConstants(dataSetConfig?.texts?.footer, constantsByCode),
+                rowTotals: this.getTextFromConstants(dataSetConfig?.texts?.rowTotals, constantsByCode),
+                totals: this.getTotalTextFromConstants(dataSetConfig?.texts?.totals, constantsByCode),
+                name: this.getTextFromConstants(dataSetConfig?.texts?.name, constantsByCode),
             },
             sections: sections,
         };
+    }
+
+    private getSectionTotals(
+        sectionConfig: {
+            totals: Maybe<TotalsConfig>;
+            texts: Maybe<{
+                totals: Maybe<string | string[] | { code: string }>;
+            }>;
+        },
+        constantsByCode: Record<string, Constant>
+    ): Record<string, SectionTotals> | undefined {
+        const { totals, texts } = sectionConfig;
+        if (!totals || !texts?.totals) return undefined;
+
+        if (_.isPlainObject(totals) && Object.values(totals).every(value => _.isPlainObject(value))) {
+            const sectionTotalsMap = totals as Record<string, SectionTotals>;
+
+            return _.mapValues(sectionTotalsMap, sectionTotals => {
+                return {
+                    ...sectionTotals,
+                    texts: {
+                        name:
+                            this.getTextFromConstants({ code: sectionTotals.texts?.name || "" }, constantsByCode) || "",
+                    },
+                };
+            });
+        } else {
+            const sectionTotals = totals as SectionTotals;
+            const totalsText = this.getTotalTextFromConstants(texts.totals, constantsByCode)[0];
+
+            return {
+                [totalsText || ""]: {
+                    ...sectionTotals,
+                    texts: {
+                        name:
+                            this.getTextFromConstants({ code: sectionTotals.texts?.name || "" }, constantsByCode) || "",
+                    },
+                },
+            };
+        }
     }
 
     private getDataElementsConfig(): Record<Code, DataElementConfig> {
@@ -617,7 +653,7 @@ export class Dhis2DataStoreDataForm {
                         header: this.getTextFromConstants(config.texts?.header, constantsByCode),
                         footer: this.getTextFromConstants(config.texts?.footer, constantsByCode),
                         rowTotals: this.getTextFromConstants(config.texts?.rowTotals, constantsByCode),
-                        totals: this.getTextFromConstants(config.texts?.totals, constantsByCode),
+                        totals: this.getTotalTextFromConstants(config.texts?.totals, constantsByCode),
                         name: this.getTextFromConstants(config.texts?.name, constantsByCode),
                     },
                     selection: {
@@ -643,6 +679,22 @@ export class Dhis2DataStoreDataForm {
         constantsByCode: Record<string, Constant>
     ): Maybe<string> {
         return typeof value === "string" ? value : value ? constantsByCode[value.code]?.displayDescription : "";
+    }
+
+    private getTotalTextFromConstants(
+        value: Maybe<string | string[] | { code: string }>,
+        constantsByCode: Record<string, Constant>
+    ): string[] {
+        if (typeof value === "string") {
+            return [value];
+        } else if (Array.isArray(value)) {
+            return value;
+        } else if (value) {
+            const constant = constantsByCode[value.code];
+            return constant ? [constant.displayDescription] : [];
+        } else {
+            return [];
+        }
     }
 }
 

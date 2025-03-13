@@ -15,7 +15,7 @@ export interface Grid {
     toggle: Section["toggle"];
     toggleMultiple: Section["toggleMultiple"];
     texts: Texts;
-    summary: Maybe<Summary>;
+    summary: Summary[];
     indicators: Indicator[];
 }
 
@@ -45,14 +45,18 @@ const separator = " - ";
 
 export function getFormulaByColumnName(section: Section, columnName: string): Maybe<string> {
     if (!section.totals) return undefined;
-    if (!section.totals.formulas) return undefined;
 
-    const keys = Object.keys(section.totals.formulas);
-    const currentColumn = keys.find(key => key.toLowerCase() === columnName.toLowerCase());
-    if (!currentColumn) return section.totals.formula;
+    const allFormulas = _.flatMap(section.totals, totals => {
+        const mappedFormulas = _.map(totals.formulas, (value, key) => ({
+            columnKey: key.toLowerCase(),
+            formula: value.formula,
+        }));
 
-    const columnFormula = section.totals.formulas[currentColumn];
-    if (!columnFormula) return section.totals.formula;
+        return totals.formulas ? mappedFormulas : [];
+    });
+
+    const columnFormula = _.find(allFormulas, entry => entry.columnKey === columnName.toLowerCase());
+    if (!columnFormula) return undefined;
 
     return columnFormula.formula;
 }
@@ -131,35 +135,42 @@ export class GridWithCatOptionCombosViewModel {
             [section.sortRowsBy ? section.sortRowsBy : ""]
         );
 
-        const totals = _(columns)
-            .map(column => {
-                const selectedDataElements = column.dataElements.filter(dataElement =>
-                    section.totals?.dataElementsCodes.includes(dataElement.code)
-                );
+        const summary = _(section.totals)
+            .map((sectionTotal, key) => {
+                const cellTotals = columns.map(column => {
+                    const selectedDataElements = column.dataElements.filter(dataElement =>
+                        sectionTotal.dataElementsCodes.includes(dataElement.code)
+                    );
 
-                const columnWithDataElements = _(selectedDataElements)
-                    .map((dataElement): Maybe<TotalItem> => {
-                        if (dataElement.type !== "NUMBER") return undefined;
-                        const categoryOptionCombo = dataElement.categoryCombos.categoryOptionCombos.find(coc => {
-                            const columnName = coc.formName ?? coc.name;
-                            return columnName === column.name;
-                        });
-                        if (!categoryOptionCombo) {
-                            console.warn(
-                                `Cannot found categoryOptionCombo in column ${column.name} for dataElement ${dataElement.code}`
-                            );
-                            return undefined;
-                        }
+                    const columnWithDataElements = _(selectedDataElements)
+                        .map((dataElement): Maybe<TotalItem> => {
+                            if (dataElement.type !== "NUMBER") return undefined;
+                            const categoryOptionCombo = dataElement.categoryCombos.categoryOptionCombos.find(coc => {
+                                const columnName = coc.formName ?? coc.name;
+                                return columnName === column.name;
+                            });
+                            if (!categoryOptionCombo) {
+                                console.warn(
+                                    `Cannot found categoryOptionCombo in column ${column.name} for dataElement ${dataElement.code}`
+                                );
+                                return undefined;
+                            }
 
-                        return { dataElement, categoryOptionCombo };
-                    })
-                    .compact()
-                    .value();
+                            return { dataElement, categoryOptionCombo };
+                        })
+                        .compact()
+                        .value();
+
+                    return {
+                        columnName: column.name,
+                        formula: getFormulaByColumnName(section, column.name) || sectionTotal.formula || "",
+                        items: columnWithDataElements,
+                    };
+                });
 
                 return {
-                    columnName: column.name,
-                    formula: getFormulaByColumnName(section, column.name) || section.totals?.formula || "",
-                    items: columnWithDataElements,
+                    cellName: key,
+                    cells: cellTotals,
                 };
             })
             .value();
@@ -173,7 +184,7 @@ export class GridWithCatOptionCombosViewModel {
             toggle: section.toggle,
             toggleMultiple: section.toggleMultiple,
             texts: section.texts,
-            summary: section.totals ? { cellName: section.texts?.totals || "", cells: totals } : undefined,
+            summary: section.totals ? summary : [],
         };
     }
 }
