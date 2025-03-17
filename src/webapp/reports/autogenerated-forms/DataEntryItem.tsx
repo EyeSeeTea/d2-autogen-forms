@@ -141,7 +141,7 @@ export function getValueAndVerifyCondition(
     }
 }
 
-function verifyConditionByDataValueType(dataValue: DataValue, rule: Rule) {
+export function verifyConditionByDataValueType(dataValue: DataValue, rule: { condition: string }): boolean {
     const value = getValueAccordingType(dataValue);
 
     switch (dataValue.type) {
