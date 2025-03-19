@@ -17,7 +17,7 @@ import YearPickerWidget from "./widgets/YearPickerWidget";
 import SourceTypeWidget from "./widgets/SourceTypeWidget";
 import { Row } from "./GridWithTotalsViewModel";
 import PercentageWidget from "./widgets/PercentageWidget";
-import { Rule, TotalRule } from "../../../domain/common/entities/DataElementRule";
+import { DataElementTotalRule, Rule, SectionTotalRule } from "../../../domain/common/entities/DataElementRule";
 import _ from "lodash";
 
 export interface DataEntryItemProps {
@@ -99,7 +99,7 @@ export type UseApplyRulesProps = {
     dataElement: DataElement;
     dataFormInfo: DataFormInfo;
     period: Maybe<string>;
-    totalRules?: TotalRule[];
+    dataElementTotalRules?: DataElementTotalRule[];
 };
 
 type UseApplyRulesReturn = { isVisible: boolean; isDisabled: boolean };
@@ -108,7 +108,7 @@ export function getValueAndVerifyCondition(
     rule: Maybe<Rule>,
     dataFormInfo: DataFormInfo,
     period: Maybe<string>,
-    totalRule: Maybe<TotalRule>
+    dataElementTotalRule: Maybe<DataElementTotalRule>
 ): Maybe<boolean> {
     if (rule) {
         const dataValue = dataFormInfo.data.values.getOrEmpty(rule.relatedDataElement, {
@@ -118,27 +118,35 @@ export function getValueAndVerifyCondition(
         });
 
         return verifyConditionByDataValueType(dataValue, rule);
-    } else if (totalRule) {
-        const { formula, relatedDataElements } = totalRule;
-
-        const totalItems = _(relatedDataElements)
-            .map(relatedDataElement => {
-                const dataValue = dataFormInfo.data.values.getOrEmpty(relatedDataElement, {
-                    orgUnitId: relatedDataElement.orgUnit || dataFormInfo.orgUnitId,
-                    period: period || dataFormInfo.period,
-                    categoryOptionComboId: dataFormInfo.categoryOptionComboId,
-                });
-                const value = getValueAccordingType(dataValue);
-                return { [relatedDataElement.code]: value };
-            })
-            .compact()
-            .value();
-
-        const compiled = _.template(formula, {});
-        const totalValue = compiled(_.merge({}, ...totalItems));
-
-        return applyNumericComparison(totalRule, totalValue);
+    } else if (dataElementTotalRule) {
+        return evaluateTotalRule(dataElementTotalRule, dataFormInfo, period);
     }
+}
+
+export function evaluateTotalRule(
+    totalRule: DataElementTotalRule | SectionTotalRule,
+    dataFormInfo: DataFormInfo,
+    period?: string
+): boolean {
+    const { formula, relatedDataElements } = totalRule;
+
+    const totalItems = _(relatedDataElements)
+        .map(relatedDataElement => {
+            const dataValue = dataFormInfo.data.values.getOrEmpty(relatedDataElement, {
+                orgUnitId: relatedDataElement.orgUnit || dataFormInfo.orgUnitId,
+                period: period || dataFormInfo.period,
+                categoryOptionComboId: dataFormInfo.categoryOptionComboId,
+            });
+            const value = getValueAccordingType(dataValue);
+            return { [relatedDataElement.code]: value };
+        })
+        .compact()
+        .value();
+
+    const compiled = _.template(formula, {});
+    const totalValue = compiled(_.merge({}, ...totalItems));
+
+    return applyNumericComparison(totalRule, totalValue);
 }
 
 export function verifyConditionByDataValueType(dataValue: DataValue, rule: { condition: string }): boolean {
@@ -184,26 +192,29 @@ export function applyNumericComparison(rule: { condition: string }, value: Value
 
 export function useApplyRules(props: UseApplyRulesProps): UseApplyRulesReturn {
     const { dataElement, dataFormInfo, period } = props;
-    const totalRules =
-        dataFormInfo.metadata.dataForm.totalRules?.filter(rule => rule.dataElements.includes(dataElement.id)) ?? [];
-    if (dataElement.rules.length === 0 && totalRules.length === 0) return { isDisabled: false, isVisible: true };
+    const dataElementTotalRules =
+        dataFormInfo.metadata.dataForm.totalRules.dataElementTotalRules?.filter(rule =>
+            rule.dataElements.includes(dataElement.id)
+        ) ?? [];
+    if (dataElement.rules.length === 0 && dataElementTotalRules.length === 0)
+        return { isDisabled: false, isVisible: true };
 
     const disabledValue = checkDisabledRule({ dataElement, dataFormInfo, period });
-    const visibleValue = checkVisibleRule({ dataElement, dataFormInfo, period, totalRules });
+    const visibleValue = checkVisibleRule({ dataElement, dataFormInfo, period, dataElementTotalRules });
 
     return { isDisabled: disabledValue, isVisible: visibleValue };
 }
 
 export function checkVisibleRule(options: UseApplyRulesProps): boolean {
-    const { dataElement, dataFormInfo, period, totalRules } = options;
+    const { dataElement, dataFormInfo, period, dataElementTotalRules } = options;
     const visibleRule = dataElement.rules.find(rule => rule.type === "visible");
-    const visibleDataElementTotalRule = totalRules?.find(rule => rule.type === "visible");
+    const visibleDataElementTotalRule = dataElementTotalRules?.find(rule => rule.type === "visible");
 
     return getValueAndVerifyCondition(visibleRule, dataFormInfo, period, visibleDataElementTotalRule) ?? true;
 }
 
 export function checkDisabledRule(options: UseApplyRulesProps): boolean {
-    const { dataElement, dataFormInfo, period, totalRules } = options;
+    const { dataElement, dataFormInfo, period, dataElementTotalRules: totalRules } = options;
     const disabledRule = dataElement.rules.find(rule => rule.type === "disabled");
     const disabledDataElementTotalRule = totalRules?.find(rule => rule.type === "visible");
 

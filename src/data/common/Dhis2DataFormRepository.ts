@@ -2,7 +2,14 @@ import _ from "lodash";
 
 import { Code, getId, Id } from "../../domain/common/entities/Base";
 import { DataElement } from "../../domain/common/entities/DataElement";
-import { DataElementRuleOptions, Rule, RuleType, TotalRule } from "../../domain/common/entities/DataElementRule";
+import {
+    DataElementRuleOptions,
+    DataElementTotalRule,
+    Rule,
+    RuleType,
+    SectionTotalRule,
+    TotalRules,
+} from "../../domain/common/entities/DataElementRule";
 import { DataForm, defaultTexts, Section, SectionBase } from "../../domain/common/entities/DataForm";
 import { Period } from "../../domain/common/entities/DataValue";
 import { Indicator } from "../../domain/common/entities/Indicator";
@@ -93,6 +100,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                 indicators: this.buildIndicatorsWithConfig(sectionIndicators, config?.indicators),
                 id: section.id,
                 name: section.displayName,
+                code: section.code,
                 toggle: { type: "none" },
                 texts: config?.texts || defaultTexts,
                 tabs: config?.tabs || { active: false },
@@ -166,29 +174,43 @@ export class Dhis2DataFormRepository implements DataFormRepository {
         });
     }
 
-    private getTotalRules(sections: Section[], dataElements: DataElement[]): TotalRule[] {
+    private getTotalRules(sections: Section[], dataElements: DataElement[]): TotalRules {
         const dataElementsByCode: Record<Code, DataElement> = _(dataElements)
             .keyBy(de => de.code)
             .value();
 
+        const dataElementTotalRules = this.getDataElementTotalRules(sections, dataElementsByCode);
+        const sectionRulesFromTotals = this.getSectionTotalRules(sections, dataElementsByCode);
+
+        return {
+            dataElementTotalRules: dataElementTotalRules,
+            sectionTotalRules: sectionRulesFromTotals,
+        };
+    }
+
+    private getDataElementTotalRules(
+        sections: Section[],
+        dataElementsByCode: Record<string, DataElement>
+    ): DataElementTotalRule[] {
         return sections.flatMap(section => {
             const totalsFormulas = _(section.totals?.formulas).values();
 
             return totalsFormulas
                 .map(formulaRules => {
-                    const { rules, formula } = formulaRules;
-                    if (!rules) return undefined;
+                    const { rules, formula, type } = formulaRules;
+                    if (!rules || type !== "dataElements") return undefined;
+                    const dataElementTotalsRules = rules as DataElementRuleOptions;
 
                     const visibleTotalRule = this.getTotalRuleByRuleType(
                         "visible",
-                        rules,
+                        dataElementTotalsRules,
                         section,
                         dataElementsByCode,
                         formula
                     );
                     const disabledTotalRule = this.getTotalRuleByRuleType(
                         "disabled",
-                        rules,
+                        dataElementTotalsRules,
                         section,
                         dataElementsByCode,
                         formula
@@ -201,13 +223,49 @@ export class Dhis2DataFormRepository implements DataFormRepository {
         });
     }
 
+    private getSectionTotalRules(
+        sections: Section[],
+        dataElementsByCode: Record<string, DataElement>
+    ): SectionTotalRule[] {
+        return sections.flatMap(section => {
+            const totalsFormulas = _(section.totals?.formulas)
+                .values()
+                .filter(formula => formula.type === "sections");
+
+            return totalsFormulas
+                .map(formulaRules => {
+                    const { rules, formula, type } = formulaRules;
+
+                    if (!rules || type !== "sections") return undefined;
+                    const sectionTotalsRules = rules as {
+                        condition: string;
+                        sectionCodes: string[];
+                    };
+                    const relatedDataElements = this.getRelatedDataElements(section, dataElementsByCode, formula);
+                    const sectionIds = _(sectionTotalsRules.sectionCodes)
+                        .map(sectionCode => sections.find(section => section.code === sectionCode)?.id)
+                        .compact()
+                        .value();
+
+                    return {
+                        condition: sectionTotalsRules.condition,
+                        formula: formula,
+                        relatedDataElements: relatedDataElements,
+                        sections: sectionIds,
+                    };
+                })
+                .compact()
+                .value();
+        });
+    }
+
     private getTotalRuleByRuleType(
         ruleType: RuleType,
         rules: DataElementRuleOptions,
         section: Section,
         dataElements: Record<Code, DataElement>,
         formula: string
-    ): Maybe<TotalRule> {
+    ): Maybe<DataElementTotalRule> {
         const relatedDataElements = this.getRelatedDataElements(section, dataElements, formula);
         const rule = rules[ruleType];
         if (!rule) return undefined;

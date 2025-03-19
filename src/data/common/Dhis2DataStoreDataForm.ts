@@ -9,7 +9,7 @@ import { Period } from "../../domain/common/entities/DataValue";
 import { DescriptionText, Texts } from "../../domain/common/entities/DataForm";
 import { titleVariant } from "../../domain/common/entities/TitleVariant";
 import { SectionStyle, SectionStyleAttrs } from "../../domain/common/entities/SectionStyle";
-import { DataElementRuleOptions } from "../../domain/common/entities/DataElementRule";
+import { DataElementRuleOptions, SectionRuleOptions } from "../../domain/common/entities/DataElementRule";
 import { ToggleMultiple } from "../../domain/common/entities/ToggleMultiple";
 
 interface DataSetConfig {
@@ -23,6 +23,17 @@ export type SectionConfig =
     | GridWithPeriodsSectionConfig
     | GridWithTotalsSectionConfig
     | GridWithSubnationalSectionConfig;
+
+export type TotalsRule = (
+    | {
+          type: "sections";
+          rules?: SectionRuleOptions;
+      }
+    | {
+          type: "dataElements";
+          rules?: DataElementRuleOptions;
+      }
+) & { formula: string };
 
 interface BaseSectionConfig {
     texts: Texts;
@@ -39,7 +50,7 @@ interface BaseSectionConfig {
     disableComments: boolean;
     totals?: {
         dataElementsCodes: string[];
-        formulas: Maybe<Record<string, { formula: string; rules: Maybe<DataElementRuleOptions> }>>;
+        formulas: Maybe<Record<string, TotalsRule>>;
         formula: string;
         texts?: { name: string };
     };
@@ -103,14 +114,23 @@ const titleVariantType = oneOf([
     exactly("h6"),
 ]);
 
-const dataElementRuleCodec = optional(
-    record(
-        oneOf([exactly("visible"), exactly("disabled")]),
-        Codec.interface({ dataElements: array(string), condition: string })
-    )
+const dataElementRuleCodec = record(
+    oneOf([exactly("visible"), exactly("disabled")]),
+    Codec.interface({ dataElements: array(string), condition: string })
 );
 
-const formulasType = Codec.interface({ formula: string, rules: dataElementRuleCodec });
+const dataElementTotalsRuleCodec = Codec.interface({
+    type: exactly("dataElements"),
+    formula: string,
+    rules: optional(dataElementRuleCodec),
+});
+
+const sectionTotalsRuleCodec = Codec.interface({
+    type: exactly("sections"),
+    formula: string,
+    rules: optional(Codec.interface({ condition: string, sectionCodes: array(string) })),
+});
+const formulasType = oneOf([dataElementTotalsRuleCodec, sectionTotalsRuleCodec]);
 
 const totalsType = Codec.interface({
     dataElementsCodes: array(string),
@@ -160,7 +180,7 @@ const DataStoreConfigCodec = Codec.interface({
     }),
     dataElements: sectionConfig({
         disableComments: optional(boolean),
-        rules: dataElementRuleCodec,
+        rules: optional(dataElementRuleCodec),
         selection: optional(
             Codec.interface({
                 optionSet: optional(selector),
@@ -506,12 +526,14 @@ export class Dhis2DataStoreDataForm {
 
         const getText = (value: string | { code: string } | undefined) =>
             typeof value === "string" ? value : value ? constantsByCode[value.code]?.displayDescription : "";
+
         const sections = _(dataSetConfig?.sections)
             .toPairs()
             .map(([code, sectionConfig]) => {
                 const section = dataSet.sections.find(section => section.code === code);
                 if (!section) return;
                 const viewType = sectionConfig.viewType || dataSetDefaultViewType;
+
                 const base: BaseSectionConfig = {
                     toggle: sectionConfig.toggle || { type: "none" },
                     texts: {

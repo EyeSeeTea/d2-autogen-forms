@@ -1,14 +1,14 @@
 import _ from "lodash";
-import { CalculateTotalType, SubNational } from "../../../data/common/Dhis2DataStoreDataForm";
+import { CalculateTotalType, SubNational, TotalsRule } from "../../../data/common/Dhis2DataStoreDataForm";
 import { Maybe, UnionFromValues } from "../../../utils/ts-utils";
-import { Id } from "./Base";
+import { Code, Id } from "./Base";
 import { DataElement, dataInputPeriodsType } from "./DataElement";
 import { Period } from "./DataValue";
 import { Indicator } from "./Indicator";
 import { SectionStyle } from "./SectionStyle";
 import { titleVariant } from "./TitleVariant";
 import { DataElementToggle } from "./ToggleMultiple";
-import { DataElementRuleOptions, TotalRule } from "./DataElementRule";
+import { DataElementRuleOptions, TotalRules } from "./DataElementRule";
 
 export interface DataForm {
     id: Id;
@@ -21,7 +21,7 @@ export interface DataForm {
         dataElements: Record<Id, { widget: "dropdown" | "radio" | "sourceType" }>;
     };
     indicators: Indicator[];
-    totalRules: TotalRule[];
+    totalRules: TotalRules;
 }
 
 export interface Texts {
@@ -59,6 +59,7 @@ type FormulaRules = { formula: string; rules?: DataElementRuleOptions };
 export interface SectionBase {
     id: Id;
     name: string;
+    code: Code;
     dataElements: DataElement[];
     toggle:
         | { type: "none" }
@@ -74,7 +75,7 @@ export interface SectionBase {
     disableComments: boolean;
     totals?: FormulaRules & {
         dataElementsCodes: string[];
-        formulas: Record<string, FormulaRules> | undefined;
+        formulas: Record<string, TotalsRule> | undefined;
     };
     showRowTotals: boolean;
     toggleMultiple: DataElementToggle[];
