@@ -7,6 +7,7 @@ import {
     DataElementTotalRule,
     Rule,
     RuleType,
+    SectionRuleOptions,
     SectionTotalRule,
     TotalRules,
 } from "../../domain/common/entities/DataElementRule";
@@ -228,19 +229,15 @@ export class Dhis2DataFormRepository implements DataFormRepository {
         dataElementsByCode: Record<string, DataElement>
     ): SectionTotalRule[] {
         return sections.flatMap(section => {
-            const totalsFormulas = _(section.totals?.formulas)
-                .values()
-                .filter(formula => formula.type === "sections");
+            const totalsFormulas = _(section.totals?.formulas).values();
 
             return totalsFormulas
                 .map(formulaRules => {
                     const { rules, formula, type } = formulaRules;
 
                     if (!rules || type !== "sections") return undefined;
-                    const sectionTotalsRules = rules as {
-                        condition: string;
-                        sectionCodes: string[];
-                    };
+
+                    const sectionTotalsRules = rules as SectionRuleOptions;
                     const relatedDataElements = this.getRelatedDataElements(section, dataElementsByCode, formula);
                     const sectionIds = _(sectionTotalsRules.sectionCodes)
                         .map(sectionCode => sections.find(section => section.code === sectionCode)?.id)
