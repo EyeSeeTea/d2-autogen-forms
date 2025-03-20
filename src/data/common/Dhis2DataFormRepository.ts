@@ -198,26 +198,28 @@ export class Dhis2DataFormRepository implements DataFormRepository {
 
             return totalsFormulas
                 .map(formulaRules => {
-                    const { rules, formula, type } = formulaRules;
-                    if (!rules || type !== "dataElements") return undefined;
-                    const dataElementTotalsRules = rules as DataElementRuleOptions;
+                    if (!formulaRules.type) return undefined;
+                    if (!formulaRules.rules) return undefined;
+                    if (formulaRules.type === "dataElements") {
+                        const { rules, formula } = formulaRules;
 
-                    const visibleTotalRule = this.getTotalRuleByRuleType(
-                        "visible",
-                        dataElementTotalsRules,
-                        section,
-                        dataElementsByCode,
-                        formula
-                    );
-                    const disabledTotalRule = this.getTotalRuleByRuleType(
-                        "disabled",
-                        dataElementTotalsRules,
-                        section,
-                        dataElementsByCode,
-                        formula
-                    );
+                        const visibleTotalRule = this.getTotalRuleByRuleType(
+                            "visible",
+                            rules,
+                            section,
+                            dataElementsByCode,
+                            formula
+                        );
+                        const disabledTotalRule = this.getTotalRuleByRuleType(
+                            "disabled",
+                            rules,
+                            section,
+                            dataElementsByCode,
+                            formula
+                        );
 
-                    return visibleTotalRule || disabledTotalRule;
+                        return visibleTotalRule || disabledTotalRule;
+                    }
                 })
                 .compact()
                 .value();
@@ -233,23 +235,25 @@ export class Dhis2DataFormRepository implements DataFormRepository {
 
             return totalsFormulas
                 .map(formulaRules => {
-                    const { rules, formula, type } = formulaRules;
+                    if (!formulaRules.type) return undefined;
+                    if (!formulaRules.rules) return undefined;
+                    if (formulaRules.type === "sections") {
+                        const { rules, formula } = formulaRules;
 
-                    if (!rules || type !== "sections") return undefined;
+                        const sectionTotalsRules = rules as SectionRuleOptions;
+                        const relatedDataElements = this.getRelatedDataElements(section, dataElementsByCode, formula);
+                        const sectionIds = _(sectionTotalsRules.sectionCodes)
+                            .map(sectionCode => sections.find(section => section.code === sectionCode)?.id)
+                            .compact()
+                            .value();
 
-                    const sectionTotalsRules = rules as SectionRuleOptions;
-                    const relatedDataElements = this.getRelatedDataElements(section, dataElementsByCode, formula);
-                    const sectionIds = _(sectionTotalsRules.sectionCodes)
-                        .map(sectionCode => sections.find(section => section.code === sectionCode)?.id)
-                        .compact()
-                        .value();
-
-                    return {
-                        condition: sectionTotalsRules.condition,
-                        formula: formula,
-                        relatedDataElements: relatedDataElements,
-                        sections: sectionIds,
-                    };
+                        return {
+                            condition: sectionTotalsRules.condition,
+                            formula: formula,
+                            relatedDataElements: relatedDataElements,
+                            sections: sectionIds,
+                        };
+                    }
                 })
                 .compact()
                 .value();
