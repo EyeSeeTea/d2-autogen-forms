@@ -1,5 +1,5 @@
-import React from "react";
-import { Tabs, Tab, Box } from "@material-ui/core";
+import React, { useCallback, useEffect, useState } from "react";
+import { Tabs, Tab, Box, makeStyles } from "@material-ui/core";
 import {
     Section,
     SectionWithPeriods,
@@ -21,6 +21,8 @@ import GridWithCatOptionCombos from "./GridWithCatOptionCombos";
 import MatrixGridForm from "./MatrixGridForm";
 import AppBar from "@material-ui/core/AppBar";
 import styled from "styled-components";
+import { IconButton } from "material-ui";
+import { ChevronLeft, ChevronRight } from "@material-ui/icons";
 
 export interface TabPanelProps {
     sections: Section[];
@@ -38,6 +40,15 @@ interface TypeSwitchProps {
     dataFormInfo: DataFormInfo;
     viewType: ViewType;
 }
+
+type TabScrollButtonDirection = "left" | "right";
+
+type ScrollButtonProps = {
+    direction: TabScrollButtonDirection;
+    showLeftFade: boolean;
+    showRightFade: boolean;
+    handleScroll: (direction: TabScrollButtonDirection) => void;
+};
 
 function TypeSwitch(props: TypeSwitchProps) {
     const { section, dataFormInfo, viewType } = props;
@@ -94,13 +105,11 @@ function TypeSwitch(props: TypeSwitchProps) {
     }
 }
 
-function isTabHeader(order: number | undefined) {
+function isTabHeader(order: string | undefined) {
     if (order === undefined) return false;
-    if (order % 1 === 0) return true;
 
-    if (order === Math.floor(order) + 0.1) {
-        return true;
-    }
+    const [_primaryTabIndex, secondaryTabIndex] = order.split(".");
+    return secondaryTabIndex === undefined || secondaryTabIndex === "0" || secondaryTabIndex === "1";
 }
 
 const AutoFormComponent = React.memo(TypeSwitch);
@@ -108,7 +117,8 @@ const AutoFormComponent = React.memo(TypeSwitch);
 const TabPanel: React.FC<TabProps> = React.memo(props => {
     const { section, dataFormInfo, value } = props;
     const { viewType, tabs } = section;
-    const index = tabs.order !== undefined ? Math.floor(tabs.order) : -1;
+    const primaryTabIndex = tabs.order?.split(".")[0];
+    const index = primaryTabIndex ? parseInt(primaryTabIndex) : -1;
 
     return (
         <div role="tabpanel" hidden={value !== index} id={`tabpanel-${index}`} aria-labelledby={`tab-${index}`}>
@@ -117,23 +127,102 @@ const TabPanel: React.FC<TabProps> = React.memo(props => {
     );
 });
 
+const ScrollButton: React.FC<ScrollButtonProps> = React.memo(props => {
+    const { direction, showLeftFade, showRightFade, handleScroll } = props;
+    const classes = useStyles();
+
+    return (
+        <StyledIconButton
+            style={{ position: "absolute", height: " max-content", width: "max-content" }}
+            direction={direction}
+            showLeftFade={showLeftFade}
+            showRightFade={showRightFade}
+            onClick={() => handleScroll(direction)}
+        >
+            {direction === "right" && <ChevronRight className={classes.scrollIcon} />}
+            {direction === "left" && <ChevronLeft className={classes.scrollIcon} />}
+        </StyledIconButton>
+    );
+});
+
 const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
     const { sections, dataFormInfo } = props;
-    const [activeTab, setActiveTab] = React.useState(0);
-    const handleChange = (event: React.ChangeEvent<{}>, value: number) => {
+
+    const [activeTab, setActiveTab] = useState(0);
+    const [showLeftFade, setShowLeftFade] = useState(false);
+    const [showRightFade, setShowRightFade] = useState(true);
+
+    const handleChange = (_event: React.ChangeEvent<{}>, value: number) => {
         setActiveTab(value);
     };
+
+    const tabContainer = document.querySelector(".MuiTabs-scroller.MuiTabs-scrollable");
+    const handleScroll = useCallback(
+        (direction: TabScrollButtonDirection) => {
+            const scrollOffset = direction === "left" ? -500 : direction === "right" ? 500 : undefined;
+
+            return tabContainer?.scrollBy({
+                left: scrollOffset,
+                behavior: "smooth",
+            });
+        },
+        [tabContainer]
+    );
+
+    useEffect(() => {
+        const scrollButtons = document.querySelectorAll(".MuiTabs-scrollButtons");
+        if (!tabContainer) return;
+
+        const updateFadeVisibility = () => {
+            const { scrollLeft, scrollWidth, clientWidth } = tabContainer;
+            const scrollRight = scrollWidth - clientWidth - scrollLeft;
+
+            setShowLeftFade(scrollLeft > 0);
+            setShowRightFade(scrollRight > 10);
+        };
+
+        tabContainer.addEventListener("scroll", updateFadeVisibility);
+        updateFadeVisibility();
+
+        const handleScrollButtonClick = () => {
+            setTimeout(updateFadeVisibility, 100);
+        };
+
+        scrollButtons.forEach(button => {
+            button.addEventListener("click", handleScrollButtonClick);
+        });
+
+        return () => {
+            tabContainer.removeEventListener("scroll", updateFadeVisibility);
+            scrollButtons.forEach(button => {
+                button.removeEventListener("click", handleScrollButtonClick);
+            });
+        };
+    }, [tabContainer]);
 
     return (
         <Box sx={{ width: "100%" }}>
             <StyledAppBar position="sticky" color="default">
-                <Tabs
+                <ScrollButton
+                    direction="left"
+                    showLeftFade={showLeftFade}
+                    showRightFade={showRightFade}
+                    handleScroll={handleScroll}
+                />
+                <ScrollButton
+                    direction="right"
+                    showLeftFade={showLeftFade}
+                    showRightFade={showRightFade}
+                    handleScroll={handleScroll}
+                />
+                <StyledTabs
                     value={activeTab}
                     onChange={handleChange}
                     indicatorColor="primary"
                     textColor="primary"
                     variant="scrollable"
                     scrollButtons="auto"
+                    TabScrollButtonProps={{ style: { opacity: 0 } }}
                 >
                     {sections.flatMap(section => {
                         const order = section.tabs.order;
@@ -150,7 +239,10 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
                             return [];
                         }
                     })}
-                </Tabs>
+                </StyledTabs>
+
+                <FadedOverlay hidden={!showLeftFade} style={{ left: 0, transform: "rotate(180deg)" }} />
+                <FadedOverlay hidden={!showRightFade} style={{ right: 0 }} />
             </StyledAppBar>
             {sections.map(section => {
                 return (
@@ -168,7 +260,40 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
 
 export default React.memo(SectionsTabs);
 
+const useStyles = makeStyles({
+    scrollIcon: {
+        fontSize: "3rem",
+    },
+});
+
 const StyledAppBar = styled(AppBar)`
     top: 48px !important;
     z-index: 100 !important;
+`;
+
+const StyledTabs = styled(Tabs)`
+    position: relative;
+`;
+
+const FadedOverlay = styled.div<{ hidden?: boolean }>`
+    position: absolute;
+    top: 0;
+    width: 25%;
+    height: 100%;
+    background: linear-gradient(to left, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0));
+    pointer-events: none;
+    transition: opacity 0.5s ease-in-out;
+    opacity: ${props => (props.hidden ? 0 : 1)};
+`;
+
+const StyledIconButton = styled(IconButton)<Omit<ScrollButtonProps, "handleScroll">>`
+    opacity: ${props =>
+        (!props.showLeftFade && props.direction === "left") || (!props.showRightFade && props.direction === "right")
+            ? 0.5
+            : undefined};
+    left: ${props => (props.direction === "left" ? "-1rem" : undefined)};
+    right: ${props => (props.direction === "right" ? "1rem" : undefined)};
+    bottom: -0.6rem;
+    z-index: 10;
+    color: inherit;
 `;

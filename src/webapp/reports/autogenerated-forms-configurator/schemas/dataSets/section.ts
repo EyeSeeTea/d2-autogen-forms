@@ -102,7 +102,7 @@ export const sectionSchema = (
                     const: true,
                 },
                 order: {
-                    type: "number",
+                    type: ["string", "number"],
                 },
             },
         }),
