@@ -83,6 +83,7 @@ export type CalculateTotalType = Record<string, CalculateTotalConfig | undefined
 const defaultViewType = "table";
 
 const selector = Codec.interface({ code: string });
+const multiSelector = Codec.interface({ codes: array(string) });
 
 const viewType = oneOf([
     exactly("table"),
@@ -140,11 +141,13 @@ const stylesType = Codec.interface({
     ),
 });
 
+const totalsTextCodec = oneOf([string, selector, array(string), multiSelector]);
+
 const textsCodec = Codec.interface({
     header: optional(oneOf([string, selector])),
     footer: optional(oneOf([string, selector])),
     rowTotals: optional(oneOf([string, selector])),
-    totals: optional(oneOf([string, selector, array(string)])),
+    totals: optional(totalsTextCodec),
     name: optional(oneOf([string, selector])),
 });
 
@@ -303,6 +306,16 @@ type CategoryCombinationConfig = {
     viewType: "name" | "shortName" | "formName" | undefined;
 };
 
+type TotalsText =
+    | string
+    | string[]
+    | {
+          code: string;
+      }
+    | {
+          codes: string[];
+      };
+
 export class Dhis2DataStoreDataForm {
     public dataElementsConfig: Record<Code, DataElementConfig>;
     public categoryCombinationsConfig: Record<Code, CategoryCombinationConfig>;
@@ -433,7 +446,7 @@ export class Dhis2DataStoreDataForm {
                 typeof t.name !== "string" ? t.name : undefined,
             ])
             .compact()
-            .map(selector => selector.code)
+            .flatMap(selector => ("code" in selector ? [selector.code] : selector.codes))
             .concat(descriptionCodes)
             .uniq()
             .value();
@@ -594,9 +607,7 @@ export class Dhis2DataStoreDataForm {
     private getSectionTotals(
         sectionConfig: {
             totals: Maybe<TotalsConfig>;
-            texts: Maybe<{
-                totals: Maybe<string | string[] | { code: string }>;
-            }>;
+            texts: Maybe<{ totals: Maybe<TotalsText> }>;
         },
         constantsByCode: Record<string, Constant>
     ): Record<string, SectionTotals> | undefined {
@@ -606,15 +617,16 @@ export class Dhis2DataStoreDataForm {
         if (_.isPlainObject(totals) && Object.values(totals).every(value => _.isPlainObject(value))) {
             const sectionTotalsMap = totals as Record<string, SectionTotals>;
 
-            return _.mapValues(sectionTotalsMap, sectionTotals => {
-                return {
+            return _.mapKeys(
+                _.mapValues(sectionTotalsMap, sectionTotals => ({
                     ...sectionTotals,
                     texts: {
                         name:
                             this.getTextFromConstants({ code: sectionTotals.texts?.name || "" }, constantsByCode) || "",
                     },
-                };
-            });
+                })),
+                (_, key) => constantsByCode[key]?.displayDescription || key
+            );
         } else {
             const sectionTotals = totals as SectionTotals;
             const totalsText = this.getTotalTextFromConstants(texts.totals, constantsByCode)[0];
@@ -681,17 +693,18 @@ export class Dhis2DataStoreDataForm {
         return typeof value === "string" ? value : value ? constantsByCode[value.code]?.displayDescription : "";
     }
 
-    private getTotalTextFromConstants(
-        value: Maybe<string | string[] | { code: string }>,
-        constantsByCode: Record<string, Constant>
-    ): string[] {
+    private getTotalTextFromConstants(value: Maybe<TotalsText>, constantsByCode: Record<string, Constant>): string[] {
         if (typeof value === "string") {
             return [value];
         } else if (Array.isArray(value)) {
             return value;
         } else if (value) {
-            const constant = constantsByCode[value.code];
-            return constant ? [constant.displayDescription] : [];
+            if ("code" in value) {
+                const constant = constantsByCode[value.code];
+                return constant ? [constant.displayDescription] : [];
+            } else {
+                return value.codes.map(code => constantsByCode[code]?.displayDescription || "");
+            }
         } else {
             return [];
         }
