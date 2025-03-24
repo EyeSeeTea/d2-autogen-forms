@@ -614,33 +614,41 @@ export class Dhis2DataStoreDataForm {
         const { totals, texts } = sectionConfig;
         if (!totals || !texts?.totals) return undefined;
 
-        if (_.isPlainObject(totals) && Object.values(totals).every(value => _.isPlainObject(value))) {
-            const sectionTotalsMap = totals as Record<string, SectionTotals>;
-
-            return _.mapKeys(
-                _.mapValues(sectionTotalsMap, sectionTotals => ({
-                    ...sectionTotals,
-                    texts: {
-                        name:
-                            this.getTextFromConstants({ code: sectionTotals.texts?.name || "" }, constantsByCode) || "",
-                    },
-                })),
-                (_, key) => constantsByCode[key]?.displayDescription || key
-            );
-        } else {
-            const sectionTotals = totals as SectionTotals;
+        if (this.isSectionTotals(totals)) {
             const totalsText = this.getTotalTextFromConstants(texts.totals, constantsByCode)[0];
 
             return {
                 [totalsText || ""]: {
-                    ...sectionTotals,
+                    ...totals,
                     texts: {
-                        name:
-                            this.getTextFromConstants({ code: sectionTotals.texts?.name || "" }, constantsByCode) || "",
+                        name: this.getTextFromConstants({ code: totals.texts?.name || "" }, constantsByCode) || "",
                     },
                 },
             };
+        } else {
+            return _(totals)
+                .map((section, key) => {
+                    const constantValue = this.getTextFromConstants({ code: key }, constantsByCode) ?? key;
+
+                    return [
+                        constantValue,
+                        {
+                            ...section,
+                            texts: {
+                                name:
+                                    this.getTextFromConstants({ code: section.texts?.name || "" }, constantsByCode) ||
+                                    "",
+                            },
+                        },
+                    ] as [string, SectionTotals];
+                })
+                .fromPairs()
+                .value();
         }
+    }
+
+    private isSectionTotals(config: TotalsConfig): config is SectionTotals {
+        return "dataElementsCodes" in config;
     }
 
     private getDataElementsConfig(): Record<Code, DataElementConfig> {
