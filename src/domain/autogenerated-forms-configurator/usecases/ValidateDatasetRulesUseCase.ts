@@ -37,18 +37,14 @@ export class ValidateDatasetRulesUseCase {
                     return undefined;
                 }
 
-                return { ...validationResult, message: this.buildRuleMessage(ruleDetails, validationResult) };
+                return { ...validationResult, message: this.buildRuleMessage(ruleDetails) };
             })
             .compact()
             .value();
     }
 
-    private buildRuleMessage(rule: ValidationRule, result: ValidationResult): string {
-        if (rule.oppositeOperatorName) {
-            return `${rule.message} ${result.rightValue} ${rule.oppositeOperatorName} ${result.leftValue}. Incorrect`;
-        } else {
-            return `${rule.message} ${result.leftValue} ${rule.oppositeOperatorName} ${result.rightValue}. Incorrect`;
-        }
+    private buildRuleMessage(rule: ValidationRule): string {
+        return `${rule.message} `;
     }
 }
 
