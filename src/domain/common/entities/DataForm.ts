@@ -78,7 +78,7 @@ export interface SectionBase {
         formulas: Record<string, TotalsRule> | undefined;
     };
     showRowTotals: boolean;
-    toggleMultiple: DataElementToggle[];
+    toggleMultiple?: DataElementToggle;
     indicators: Indicator[];
 }
 

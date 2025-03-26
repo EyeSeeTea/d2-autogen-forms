@@ -7,6 +7,7 @@ import { DataElementItem } from "./DataElementItem";
 import { evaluateTotalRule, verifyConditionByDataValueType } from "./DataEntryItem";
 import { Html } from "./Html";
 import { Id } from "../../../domain/common/entities/Base";
+import { ToggleDataElement } from "../../../domain/common/entities/ToggleMultiple";
 
 export interface DataTableProps {
     section: DataTableSectionObj;
@@ -45,12 +46,18 @@ const DataTableSection: React.FC<DataTableProps> = React.memo(props => {
     }, [toggle, dataFormInfo]);
 
     const isSectionVisible = React.useMemo(() => {
-        const value = toggleMultiple.every(toggle => {
+        if (!toggleMultiple) return true;
+        const { logicalOperator, toggleDataElements } = toggleMultiple;
+
+        const evaluateToggleCondition = (toggle: ToggleDataElement) => {
             const dataValue = dataFormInfo.data.values.getOrEmpty(toggle.dataElement, dataFormInfo);
             return verifyConditionByDataValueType(dataValue, toggle);
-        });
-        return value;
-    }, [toggleMultiple, dataFormInfo]);
+        };
+
+        return logicalOperator === "OR"
+            ? toggleDataElements.some(toggle => evaluateToggleCondition(toggle))
+            : toggleDataElements.every(toggle => evaluateToggleCondition(toggle));
+    }, [dataFormInfo, toggleMultiple]);
 
     const isSectionVisibleFromTotals = React.useMemo(() => {
         return sectionTotalRules
@@ -61,7 +68,7 @@ const DataTableSection: React.FC<DataTableProps> = React.memo(props => {
     const titleStyle = section.titleVariant ? `${classes.title} ${classes[section.titleVariant]}` : classes.title;
 
     if (toggle.type === "dataElementExternal" && !isSectionOpen) return null;
-    if (toggleMultiple.length > 0 && !isSectionVisible) return null;
+    if (toggleMultiple?.toggleDataElements.length !== 0 && !isSectionVisible) return null;
     if (sectionTotalRules.length !== 0 && !isSectionVisibleFromTotals) return null;
 
     return (
