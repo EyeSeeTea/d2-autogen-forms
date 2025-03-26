@@ -55,6 +55,10 @@ export type ViewType = UnionFromValues<typeof DataFormM.viewTypes>;
 export type DescriptionText = Maybe<Record<string, Maybe<string>>>;
 
 type FormulaRules = { formula: string; rules?: DataElementRuleOptions };
+export type Totals = FormulaRules & {
+    dataElementsCodes: string[];
+    formulas: Record<string, TotalsRule> | undefined;
+};
 
 export interface SectionBase {
     id: Id;
@@ -73,10 +77,7 @@ export interface SectionBase {
     columnsDescriptions: DescriptionText;
     groupDescriptions: DescriptionText;
     disableComments: boolean;
-    totals?: FormulaRules & {
-        dataElementsCodes: string[];
-        formulas: Record<string, TotalsRule> | undefined;
-    };
+    totals?: Record<string, Totals>;
     showRowTotals: boolean;
     toggleMultiple?: DataElementToggle;
     indicators: Indicator[];
