@@ -1,13 +1,13 @@
 {
-    "name": "d2-reports",
-    "description": "DHIS2 Reports",
-    "version": "0.1.1",
+    "name": "d2-autogen-forms",
+    "description": "DHIS2 autogen forms",
+    "version": "1.0.0",
     "license": "GPL-3.0",
     "author": "EyeSeeTea team",
     "homepage": ".",
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/eyeseetea/d2-reports.git"
+        "url": "git+https://github.com/eyeseetea/d2-autogen-forms.git"
     },
     "dependencies": {
         "@dhis2-ui/calendar": "^8.12.2",
