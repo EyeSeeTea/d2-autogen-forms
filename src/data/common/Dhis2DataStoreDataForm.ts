@@ -55,7 +55,7 @@ interface BaseSectionConfig {
     groupDescriptions: DescriptionText;
     disableComments: boolean;
     totals?: Record<string, SectionTotals>;
-    toggleMultiple: Maybe<ToggleMultiple[]>;
+    toggleMultiple: Maybe<ToggleMultiple>;
     indicators?: Record<Code, IndicatorConfig>;
 }
 
@@ -137,6 +137,7 @@ const totalsType = Codec.interface({
     dataElementsCodes: array(string),
     formulas: optional(record(string, formulasType)),
     formula: optional(string),
+    rules: optional(dataElementRuleCodec),
     texts: optional(Codec.interface({ name: oneOf([string, selector]) })),
 });
 
