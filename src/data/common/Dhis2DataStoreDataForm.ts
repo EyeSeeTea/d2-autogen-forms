@@ -25,7 +25,7 @@ export type SectionConfig =
     | GridWithSubnationalSectionConfig;
 
 type SectionTotals = Totals & {
-    texts?: { name: string | { code: string } };
+    texts?: { name?: string; code?: string };
 };
 
 type TotalsConfig = SectionTotals | Record<string, SectionTotals>;
@@ -110,7 +110,7 @@ const totalsType = Codec.interface({
     dataElementsCodes: array(string),
     formulas: optional(record(string, formulasType)),
     formula: optional(string),
-    texts: optional(Codec.interface({ name: oneOf([string, selector]) })),
+    texts: optional(Codec.interface({ name: optional(string), code: optional(string) })),
 });
 
 const stylesType = Codec.interface({
@@ -434,7 +434,7 @@ export class Dhis2DataStoreDataForm {
                           .map(total => total.texts)
                           .value();
             })
-            .map(totals => (typeof totals?.name !== "string" ? totals?.name.code : undefined))
+            .map(totals => totals?.code)
             .compact()
             .value();
 
@@ -630,7 +630,8 @@ export class Dhis2DataStoreDataForm {
         } else {
             return _(totals)
                 .map((sectionTotals, key) => {
-                    const constantValue = this.getTextFromConstants(sectionTotals.texts?.name, constantsByCode) ?? key;
+                    const constantCodeOrValue = sectionTotals.texts?.name || { code: sectionTotals.texts?.code ?? "" };
+                    const constantValue = this.getTextFromConstants(constantCodeOrValue, constantsByCode) ?? key;
 
                     return [
                         constantValue,
