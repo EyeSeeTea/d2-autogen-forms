@@ -164,6 +164,7 @@ export class GridViewModel {
                     cells: cellTotals,
                 };
             })
+            .filter(summaryRow => summaryRow.cells.every(cell => cell.items.length > 0))
             .value();
 
         const indicatorsRelatedToDataElements = _(section.indicators)

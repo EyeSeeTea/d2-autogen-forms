@@ -160,6 +160,7 @@ export class GridWithCatOptionCombosViewModel {
                     cells: cellTotals,
                 };
             })
+            .filter(summaryRow => summaryRow.cells.every(cell => cell.items.length > 0))
             .value();
 
         return {
