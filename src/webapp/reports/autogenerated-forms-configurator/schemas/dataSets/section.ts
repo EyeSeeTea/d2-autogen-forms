@@ -11,11 +11,25 @@ const styleBgColor = {
     },
 };
 
+const sectionRuleSchema = (sectionCodes: string[]) =>
+    defaultObjectProperties({
+        type: "object",
+        properties: {
+            condition: { type: "string" },
+            sectionCodes: { type: "array", items: { type: "string", enum: sectionCodes } },
+        },
+        required: ["condition", "sectionCodes"],
+    });
+
 export const sectionSchema = (
     sections: SectionSchema[],
     dataElements: DataElementSchema[],
     constantCodes: string[]
 ) => {
+    const sectionCodes = _(sections)
+        .map(section => section.code)
+        .compact()
+        .value();
     const dataElementCodes = _(dataElements)
         .map(dataElement => dataElement.dataElementCode)
         .compact()
@@ -123,9 +137,16 @@ export const sectionSchema = (
                     type: "object",
                     additionalProperties: {
                         type: "object",
-                        properties: { formula: { type: "string" }, rules: dataElementRulesSchema(dataElements) },
+                        properties: {
+                            formula: { type: "string" },
+                            rules: { enum: [dataElementRulesSchema(dataElements), sectionRuleSchema(sectionCodes)] },
+                            type: { enum: ["dataElements", "sections"] },
+                        },
                     },
                 },
+                texts: defaultObjectProperties({
+                    name: { type: "string" },
+                }),
             },
         },
     };
