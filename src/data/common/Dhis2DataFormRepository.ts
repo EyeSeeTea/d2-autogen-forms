@@ -207,9 +207,12 @@ export class Dhis2DataFormRepository implements DataFormRepository {
         dataElementsByCode: Record<string, DataElement>
     ): DataElementTotalRule[] {
         return sections.flatMap(section => {
-            const totalsFormulas = _(section.totals?.formulas).values();
+            const totalsFormulas = _(section.totals)
+                .values()
+                .value()
+                .flatMap(totals => _(totals.formulas).values().value());
 
-            return totalsFormulas
+            return _(totalsFormulas)
                 .map(formulaRules => {
                     if (!formulaRules.type) return undefined;
                     if (!formulaRules.rules) return undefined;
@@ -244,9 +247,12 @@ export class Dhis2DataFormRepository implements DataFormRepository {
         dataElementsByCode: Record<string, DataElement>
     ): SectionTotalRule[] {
         return sections.flatMap(section => {
-            const totalsFormulas = _(section.totals?.formulas).values();
+            const totalsFormulas = _(section.totals)
+                .values()
+                .value()
+                .flatMap(totals => _(totals.formulas).values().value());
 
-            return totalsFormulas
+            return _(totalsFormulas)
                 .map(formulaRules => {
                     if (!formulaRules.type) return undefined;
                     if (!formulaRules.rules) return undefined;
@@ -303,7 +309,10 @@ export class Dhis2DataFormRepository implements DataFormRepository {
         const relatedDataElements = _(dataElementCodesInFormula)
             .map(dataElementCode => {
                 const dataElement = dataElements[dataElementCode];
-                const isDataElementCodeIncluded = section.totals?.dataElementsCodes.includes(dataElementCode) ?? false;
+                const isDataElementCodeIncluded =
+                    _.values(section.totals)
+                        .map(sectionTotals => sectionTotals.dataElementsCodes.includes(dataElementCode))
+                        .some(value => value) ?? false;
 
                 if (!dataElement || !isDataElementCodeIncluded) return undefined;
                 return dataElement;
