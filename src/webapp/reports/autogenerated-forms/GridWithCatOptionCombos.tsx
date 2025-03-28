@@ -155,17 +155,17 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                             </DataTableRow>
                         ));
                     })}
-                    {grid.summary.length !== 0 &&
-                        grid.summary.map(summary => (
-                            <DataTableRow key={`${summary.cellName}-totals`}>
+                    <DataTableRow key="totals">
+                        {grid.summary && (
+                            <>
                                 <CustomDataTableCell
                                     colSpan="2"
                                     backgroundColor={props.section.styles.totals.backgroundColor}
                                     key="total-column-name"
                                 >
-                                    <Html content={summary.cellName} />
+                                    <Html content={grid.summary.cellName} />
                                 </CustomDataTableCell>
-                                {summary.cells.map(itemTotal => {
+                                {grid.summary.cells.map(itemTotal => {
                                     return (
                                         <DataTableCellFormula
                                             key={itemTotal.columnName}
@@ -180,12 +180,12 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                                     <DataTableCellSummary
                                         dataFormInfo={dataFormInfo}
                                         styles={props.section.styles}
-                                        dataElements={summary.cells}
+                                        dataElements={grid.summary.cells}
                                     />
                                 )}
-                            </DataTableRow>
-                        ))}
-
+                            </>
+                        )}
+                    </DataTableRow>
                     {section.indicators.map(indicator => {
                         return (
                             <RowIndicatorItem
