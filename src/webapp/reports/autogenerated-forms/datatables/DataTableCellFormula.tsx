@@ -30,7 +30,7 @@ export const DataTableCellFormula: React.FC<DataTableCellFormulaProps> = props =
         .value();
 
     const compiled = _.template(formula);
-    const totalValue = compiled(_.merge({}, ...totalCalculated));
+    const totalValue = !_.isEmpty(totalCalculated) ? compiled(_.merge({}, ...totalCalculated)) : "0";
 
     return (
         <CustomDataTableCell backgroundColor={styles.totals.backgroundColor} key={total.columnName}>

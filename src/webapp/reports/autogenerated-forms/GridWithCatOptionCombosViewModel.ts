@@ -143,24 +143,10 @@ export class GridWithCatOptionCombosViewModel {
                         sectionTotal.dataElementsCodes.includes(dataElement.code)
                     );
 
-                    const columnWithDataElements = _(selectedDataElements)
-                        .map((dataElement): Maybe<TotalItem> => {
-                            if (dataElement.type !== "NUMBER") return undefined;
-                            const categoryOptionCombo = dataElement.categoryCombos.categoryOptionCombos.find(coc => {
-                                const columnName = coc.formName ?? coc.name;
-                                return columnName === column.name;
-                            });
-                            if (!categoryOptionCombo) {
-                                console.warn(
-                                    `Cannot found categoryOptionCombo in column ${column.name} for dataElement ${dataElement.code}`
-                                );
-                                return undefined;
-                            }
-
-                            return { dataElement, categoryOptionCombo };
-                        })
-                        .compact()
-                        .value();
+                    const columnWithDataElements = GridWithCatOptionCombosViewModel.getColumnWithDataElements(
+                        selectedDataElements,
+                        column
+                    );
 
                     return {
                         columnName: column.name,
@@ -188,8 +174,38 @@ export class GridWithCatOptionCombosViewModel {
             summary: section.totals ? summary : [],
         };
     }
+
+    private static getColumnWithDataElements(selectedDataElements: DataElement[], column: Column): TotalItem[] {
+        const hasInvalidDataElement = selectedDataElements.some(dataElement => {
+            if (dataElement.type !== "NUMBER") return true;
+
+            const categoryOptionCombo = getCategoryOptionComboByColumnName(dataElement, column);
+            return categoryOptionCombo === undefined;
+        });
+
+        if (hasInvalidDataElement) return [];
+
+        return _(selectedDataElements)
+            .map((dataElement): TotalItem => {
+                const categoryOptionCombo = getCategoryOptionComboByColumnName(dataElement, column);
+                if (!categoryOptionCombo)
+                    throw new Error(
+                        `Cannot find categoryOptionCombo in column ${column.name} for dataElement ${dataElement.code}`
+                    );
+
+                return { dataElement, categoryOptionCombo };
+            })
+            .value();
+    }
 }
 
 export type Summary = { cells: CellTotal[]; cellName: string };
 export type CellTotal = { formula: string; columnName: string; items: TotalItem[] };
 export type TotalItem = { dataElement: DataElement; categoryOptionCombo: CategoryOptionCombo };
+
+function getCategoryOptionComboByColumnName(dataElement: DataElement, column: Column): Maybe<CategoryOptionCombo> {
+    return dataElement.categoryCombos.categoryOptionCombos.find(coc => {
+        const columnName = coc.formName ?? coc.name;
+        return columnName === column.name;
+    });
+}
