@@ -21,7 +21,7 @@ export interface GridWithPeriodsI {
     toggleMultiple: Section["toggleMultiple"];
     texts: Texts;
     tabs: PeriodTab[];
-    summary: Maybe<Summary>;
+    summary: Summary[];
     indicators: Indicator[];
 }
 
@@ -145,33 +145,40 @@ export class GridWithPeriodsViewModel {
             })
             .value();
 
-        const totals = _(section.periods)
-            .map(column => {
-                const allDataElements = section.dataElements;
-                const selectedDataElements = allDataElements.filter(dataElement =>
-                    section.totals?.dataElementsCodes.includes(dataElement.code)
-                );
+        const summary = _(section.totals)
+            .map((sectionTotal, key) => {
+                const cellTotals = section.periods.map(column => {
+                    const allDataElements = section.dataElements;
+                    const selectedDataElements = allDataElements.filter(dataElement =>
+                        sectionTotal.dataElementsCodes.includes(dataElement.code)
+                    );
 
-                const columnWithDataElements = _(selectedDataElements)
-                    .map((dataElement): Maybe<TotalItem> => {
-                        if (dataElement.type !== "NUMBER") return undefined;
-                        const categoryOptionCombo = dataElement.categoryOptionCombos[0];
-                        if (!categoryOptionCombo) {
-                            console.warn(
-                                `Cannot found categoryOptionCombo in column ${column} for dataElement ${dataElement.code}`
-                            );
-                            return undefined;
-                        }
+                    const columnWithDataElements = _(selectedDataElements)
+                        .map((dataElement): Maybe<TotalItem> => {
+                            if (dataElement.type !== "NUMBER") return undefined;
+                            const categoryOptionCombo = dataElement.categoryOptionCombos[0];
+                            if (!categoryOptionCombo) {
+                                console.warn(
+                                    `Cannot found categoryOptionCombo in column ${column} for dataElement ${dataElement.code}`
+                                );
+                                return undefined;
+                            }
 
-                        return { dataElement, categoryOptionCombo };
-                    })
-                    .compact()
-                    .value();
+                            return { dataElement, categoryOptionCombo };
+                        })
+                        .compact()
+                        .value();
+
+                    return {
+                        columnName: column,
+                        formula: getFormulaByColumnName(section, "") || sectionTotal.formula || "",
+                        items: columnWithDataElements,
+                    };
+                });
 
                 return {
-                    columnName: column,
-                    formula: getFormulaByColumnName(section, "") || section.totals?.formula || "",
-                    items: columnWithDataElements,
+                    cellName: key,
+                    cells: cellTotals,
                 };
             })
             .value();
@@ -198,12 +205,7 @@ export class GridWithPeriodsViewModel {
             texts: section.texts,
             tabs: this.buildTabs(section.dataElements),
             toggleMultiple: section.toggleMultiple,
-            summary: section.totals
-                ? {
-                      cellName: section.texts?.totals || "",
-                      cells: totals,
-                  }
-                : undefined,
+            summary: section.totals ? summary : [],
             indicators:
                 indicatorsRelatedToDataElements.length > 0
                     ? section.indicators.filter(indicator => !indicatorsRelatedToDataElements.includes(indicator.id))

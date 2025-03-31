@@ -1,22 +1,31 @@
 import _ from "lodash";
-import { Maybe } from "../../../utils/ts-utils";
-
 import { Code } from "./Base";
 import { DataElement } from "./DataElement";
 
-export type ToggleMultiple = { dataElement: Code; condition: string };
-export type DataElementToggle = { dataElement: DataElement; condition: string };
+type ToggleLogicalOperator = "AND" | "OR";
+export type ToggleMultiple = {
+    logicalOperator: ToggleLogicalOperator;
+    conditions: { dataElement: Code; condition: string }[];
+};
+export type ToggleDataElement = {
+    dataElement: DataElement;
+    condition: string;
+};
+export type DataElementToggle = {
+    logicalOperator: ToggleLogicalOperator;
+    toggleDataElements: ToggleDataElement[];
+};
 
 export function buildToggleMultiple(
-    toggleMultiple: ToggleMultiple[],
+    toggleMultiple: ToggleMultiple,
     dataElements: Record<string, DataElement>
-): DataElementToggle[] {
+): DataElementToggle {
     const allDataElements = _(dataElements)
         .map(value => value)
         .value();
 
-    const toggleDataElements = _(toggleMultiple)
-        .map((toggle): Maybe<DataElementToggle> => {
+    const toggleDataElements = _(toggleMultiple.conditions)
+        .map(toggle => {
             const dataElement = allDataElements.find(dataElement => dataElement.code === toggle.dataElement);
             if (!dataElement) {
                 console.warn(`Cannot found ${toggle.dataElement} in toggleMultiple config.`);
@@ -30,5 +39,5 @@ export function buildToggleMultiple(
         .compact()
         .value();
 
-    return toggleDataElements;
+    return { toggleDataElements: toggleDataElements, logicalOperator: toggleMultiple.logicalOperator };
 }

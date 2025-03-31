@@ -117,27 +117,28 @@ const GridForm: React.FC<GridFormProps> = props => {
                             )}
                         </DataTableRow>
                     ))}
-                    {grid.summary && (
-                        <DataTableRow key="total-custom-row">
-                            <CustomDataTableCell
-                                backgroundColor={props.section.styles.totals.backgroundColor}
-                                key="total-column-name"
-                            >
-                                {grid.summary.cellName}
-                            </CustomDataTableCell>
-                            {grid.summary.cells.map(itemTotal => {
-                                return (
-                                    <DataTableCellFormula
-                                        key={itemTotal.columnName}
-                                        dataFormInfo={dataFormInfo}
-                                        styles={props.section.styles}
-                                        total={itemTotal}
-                                        formula={itemTotal.formula}
-                                    />
-                                );
-                            })}
-                        </DataTableRow>
-                    )}
+                    {grid.summary.length !== 0 &&
+                        grid.summary.map(summary => (
+                            <DataTableRow key={`total-custom-row-${summary.cellName}`}>
+                                <CustomDataTableCell
+                                    backgroundColor={props.section.styles.totals.backgroundColor}
+                                    key={`total-column-${summary.cellName}`}
+                                >
+                                    {summary.cellName}
+                                </CustomDataTableCell>
+                                {summary.cells.map(itemTotal => {
+                                    return (
+                                        <DataTableCellFormula
+                                            key={itemTotal.columnName}
+                                            dataFormInfo={dataFormInfo}
+                                            styles={props.section.styles}
+                                            total={itemTotal}
+                                            formula={itemTotal.formula}
+                                        />
+                                    );
+                                })}
+                            </DataTableRow>
+                        ))}
 
                     {section.indicators.map(indicator => {
                         return (
