@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { Section, SectionGrid, Texts } from "../../../domain/common/entities/DataForm";
-import { DataElement } from "../../../domain/common/entities/DataElement";
+import { DataElement, DataElementNumber } from "../../../domain/common/entities/DataElement";
 import { titleVariant } from "../../../domain/common/entities/TitleVariant";
 import { Maybe } from "../../../utils/ts-utils";
 import { getFormulaByColumnName, Summary, TotalItem } from "./GridWithCatOptionCombosViewModel";
@@ -147,21 +147,10 @@ export class GridViewModel {
                         sectionTotal.dataElementsCodes.includes(dataElement.code)
                     );
 
-                    const columnWithDataElements = _(selectedDataElements)
-                        .map((dataElement): Maybe<TotalItem> => {
-                            if (dataElement.type !== "NUMBER") return undefined;
-                            const categoryOptionCombo = dataElement.categoryOptionCombos[0];
-                            if (!categoryOptionCombo) {
-                                console.warn(
-                                    `Cannot found categoryOptionCombo in column ${column.name} for dataElement ${dataElement.code}`
-                                );
-                                return undefined;
-                            }
-
-                            return { dataElement, categoryOptionCombo };
-                        })
-                        .compact()
-                        .value();
+                    const columnWithDataElements = GridViewModel.getColumnWithDataElements(
+                        selectedDataElements,
+                        column
+                    );
 
                     return {
                         columnName: column.name,
@@ -175,6 +164,7 @@ export class GridViewModel {
                     cells: cellTotals,
                 };
             })
+            .filter(summaryRow => summaryRow.cells.every(cell => cell.items.length > 0))
             .value();
 
         const indicatorsRelatedToDataElements = _(section.indicators)
@@ -202,6 +192,31 @@ export class GridViewModel {
                 return { ...dataElement, indicator };
             }),
         };
+    }
+
+    private static getColumnWithDataElements(selectedDataElements: DataElement[], column: Column): TotalItem[] {
+        const hasInvalidDataElement = selectedDataElements.some(dataElement => {
+            if (dataElement.type !== "NUMBER") return true;
+
+            const categoryOptionCombo = getCategoryOptionComboByColumnName(dataElement);
+            return categoryOptionCombo === undefined;
+        });
+
+        if (hasInvalidDataElement) return [];
+
+        return _(selectedDataElements)
+            .map((dataElement): Maybe<TotalItem> => {
+                if (dataElement.type !== "NUMBER") return undefined;
+                const categoryOptionCombo = getCategoryOptionComboByColumnName(dataElement);
+                if (!categoryOptionCombo)
+                    throw new Error(
+                        `Cannot found categoryOptionCombo in column ${column.name} for dataElement ${dataElement.code}`
+                    );
+
+                return { dataElement, categoryOptionCombo };
+            })
+            .compact()
+            .value();
     }
 }
 
@@ -247,4 +262,8 @@ function getSubsectionName(dataElement: DataElement): string {
 
 export function isSourceTypeColumn(widget: Maybe<"dropdown" | "radio" | "sourceType">) {
     return widget === "sourceType";
+}
+
+export function getCategoryOptionComboByColumnName(dataElement: DataElementNumber) {
+    return dataElement.categoryOptionCombos[0];
 }
