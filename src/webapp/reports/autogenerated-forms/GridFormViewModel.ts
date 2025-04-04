@@ -149,7 +149,7 @@ export class GridViewModel {
 
                     const columnWithDataElements = GridViewModel.getColumnWithDataElements(
                         selectedDataElements,
-                        column
+                        column.name
                     );
 
                     return {
@@ -194,7 +194,7 @@ export class GridViewModel {
         };
     }
 
-    private static getColumnWithDataElements(selectedDataElements: DataElement[], column: Column): TotalItem[] {
+    static getColumnWithDataElements(selectedDataElements: DataElement[], columnName: string): TotalItem[] {
         const hasInvalidDataElement = selectedDataElements.some(dataElement => {
             if (dataElement.type !== "NUMBER") return true;
 
@@ -210,7 +210,7 @@ export class GridViewModel {
                 const categoryOptionCombo = getCategoryOptionComboByColumnName(dataElement);
                 if (!categoryOptionCombo)
                     throw new Error(
-                        `Cannot found categoryOptionCombo in column ${column.name} for dataElement ${dataElement.code}`
+                        `Cannot found categoryOptionCombo in column ${columnName} for dataElement ${dataElement.code}`
                     );
 
                 return { dataElement, categoryOptionCombo };
