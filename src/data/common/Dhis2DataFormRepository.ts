@@ -2,7 +2,15 @@ import _ from "lodash";
 
 import { Code, getId, Id } from "../../domain/common/entities/Base";
 import { DataElement } from "../../domain/common/entities/DataElement";
-import { Rule, RuleType } from "../../domain/common/entities/DataElementRule";
+import {
+    DataElementRuleOptions,
+    DataElementTotalRule,
+    Rule,
+    RuleType,
+    SectionRuleOptions,
+    SectionTotalRule,
+    TotalRules,
+} from "../../domain/common/entities/DataElementRule";
 import { DataForm, defaultTexts, Section, SectionBase } from "../../domain/common/entities/DataForm";
 import { Period } from "../../domain/common/entities/DataValue";
 import { Indicator } from "../../domain/common/entities/Indicator";
@@ -32,6 +40,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
         const dataElements = _.flatMap(sections, section => section.dataElements);
         const dataElementsOptions = this.getDataElementsOptions(dataElements, config);
         const dataSetConfig = config.getDataSetConfig(dataSet, options.period);
+        const totalRules = this.getTotalRules(sections, dataElements);
 
         return {
             indicators: _(sections)
@@ -44,6 +53,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
             sections: sections,
             texts: dataSetConfig.texts,
             options: { dataElements: dataElementsOptions },
+            totalRules: totalRules,
         };
     }
 
@@ -94,6 +104,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                     indicators: this.buildIndicatorsWithConfig(sectionIndicators, config?.indicators),
                     id: section.id,
                     name: section.displayName,
+                    code: section.code,
                     toggle: { type: "none" },
                     texts: config?.texts || defaultTexts,
                     tabs:
@@ -175,6 +186,142 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                 section => (section.tabs.order ? parseInt(section.tabs.order?.split(".")[1] || "0") : 0),
             ])
             .value();
+    }
+
+    private getTotalRules(sections: Section[], dataElements: DataElement[]): TotalRules {
+        const dataElementsByCode: Record<Code, DataElement> = _(dataElements)
+            .keyBy(de => de.code)
+            .value();
+
+        const dataElementTotalRules = this.getDataElementTotalRules(sections, dataElementsByCode);
+        const sectionRulesFromTotals = this.getSectionTotalRules(sections, dataElementsByCode);
+
+        return {
+            dataElementTotalRules: dataElementTotalRules,
+            sectionTotalRules: sectionRulesFromTotals,
+        };
+    }
+
+    private getDataElementTotalRules(
+        sections: Section[],
+        dataElementsByCode: Record<string, DataElement>
+    ): DataElementTotalRule[] {
+        return sections.flatMap(section => {
+            const totalsFormulas = _(section.totals)
+                .values()
+                .value()
+                .flatMap(totals => _(totals.formulas).values().value());
+
+            return _(totalsFormulas)
+                .map(formulaRules => {
+                    if (!formulaRules.type) return undefined;
+                    if (!formulaRules.rules) return undefined;
+                    if (formulaRules.type === "dataElements") {
+                        const { rules, formula } = formulaRules;
+
+                        const visibleTotalRule = this.getTotalRuleByRuleType(
+                            "visible",
+                            rules,
+                            section,
+                            dataElementsByCode,
+                            formula
+                        );
+                        const disabledTotalRule = this.getTotalRuleByRuleType(
+                            "disabled",
+                            rules,
+                            section,
+                            dataElementsByCode,
+                            formula
+                        );
+
+                        return visibleTotalRule || disabledTotalRule;
+                    }
+                })
+                .compact()
+                .value();
+        });
+    }
+
+    private getSectionTotalRules(
+        sections: Section[],
+        dataElementsByCode: Record<string, DataElement>
+    ): SectionTotalRule[] {
+        return sections.flatMap(section => {
+            const totalsFormulas = _(section.totals)
+                .values()
+                .value()
+                .flatMap(totals => _(totals.formulas).values().value());
+
+            return _(totalsFormulas)
+                .map(formulaRules => {
+                    if (!formulaRules.type) return undefined;
+                    if (!formulaRules.rules) return undefined;
+                    if (formulaRules.type === "sections") {
+                        const { rules, formula } = formulaRules;
+
+                        const sectionTotalsRules = rules as SectionRuleOptions;
+                        const relatedDataElements = this.getRelatedDataElements(section, dataElementsByCode, formula);
+                        const sectionIds = _(sectionTotalsRules.sectionCodes)
+                            .map(sectionCode => sections.find(section => section.code === sectionCode)?.id)
+                            .compact()
+                            .value();
+
+                        return {
+                            condition: sectionTotalsRules.condition,
+                            formula: formula,
+                            relatedDataElements: relatedDataElements,
+                            sections: sectionIds,
+                        };
+                    }
+                })
+                .compact()
+                .value();
+        });
+    }
+
+    private getTotalRuleByRuleType(
+        ruleType: RuleType,
+        rules: DataElementRuleOptions,
+        section: Section,
+        dataElements: Record<Code, DataElement>,
+        formula: string
+    ): Maybe<DataElementTotalRule> {
+        const relatedDataElements = this.getRelatedDataElements(section, dataElements, formula);
+        const rule = rules[ruleType];
+        if (!rule) return undefined;
+
+        return {
+            type: ruleType,
+            dataElements: rule.dataElements.map(dataElementCode => dataElements[dataElementCode]?.id ?? ""),
+            relatedDataElements: relatedDataElements,
+            condition: rule.condition,
+            formula: formula,
+        };
+    }
+
+    private getRelatedDataElements(
+        section: Section,
+        dataElements: Record<Code, DataElement>,
+        formula: string
+    ): DataElement[] {
+        const dataElementCodesInFormula = formula.match(/\b[A-Za-z_][A-Za-z0-9_]*\b/g) || [];
+
+        const relatedDataElements = _(dataElementCodesInFormula)
+            .map(dataElementCode => {
+                const dataElement = dataElements[dataElementCode];
+                const isDataElementCodeIncluded =
+                    _.values(section.totals)
+                        .map(sectionTotals => sectionTotals.dataElementsCodes.includes(dataElementCode))
+                        .some(value => value) ?? false;
+
+                if (!dataElement || !isDataElementCodeIncluded) return undefined;
+                return dataElement;
+            })
+            .compact()
+            .uniqBy(de => de.id)
+            .value();
+
+        return relatedDataElements;
     }
 
     private buildIndicatorsWithConfig(

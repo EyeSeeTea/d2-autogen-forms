@@ -1,6 +1,35 @@
 import _ from "lodash";
 import { defaultObjectProperties, textSchema } from "..";
 
+export const dataElementRulesSchema = (
+    dataElements: {
+        dataElementCode: string;
+        optionSetCode?: string | undefined;
+    }[]
+) =>
+    defaultObjectProperties({
+        properties: {
+            visible: defaultObjectProperties({
+                properties: {
+                    condition: { type: "string" },
+                    dataElements: {
+                        items: {
+                            type: "string",
+                            enum: dataElements.map(dataElement => dataElement.dataElementCode),
+                        },
+                        type: "array",
+                    },
+                },
+            }),
+            disabled: defaultObjectProperties({
+                properties: {
+                    condition: { type: "string" },
+                    dataElements: { type: "array" },
+                },
+            }),
+        },
+    });
+
 export const dataElementSchema = (
     dataElements: {
         dataElementCode: string;
@@ -21,28 +50,7 @@ export const dataElementSchema = (
                             name: textSchema(constantCodes),
                         },
                     }),
-                    rules: defaultObjectProperties({
-                        properties: {
-                            visible: defaultObjectProperties({
-                                properties: {
-                                    condition: { type: "string" },
-                                    dataElements: {
-                                        items: {
-                                            type: "string",
-                                            enum: dataElements.map(dataElement => dataElement.dataElementCode),
-                                        },
-                                        type: "array",
-                                    },
-                                },
-                            }),
-                            disabled: defaultObjectProperties({
-                                properties: {
-                                    condition: { type: "string" },
-                                    dataElements: { type: "array" },
-                                },
-                            }),
-                        },
-                    }),
+                    rules: dataElementRulesSchema,
                     selection: defaultObjectProperties({
                         properties: {
                             optionSet: defaultObjectProperties({
