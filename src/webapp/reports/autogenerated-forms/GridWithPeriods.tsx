@@ -297,30 +297,29 @@ const PeriodTable: React.FC<PeriodTableProps> = props => {
                             });
                     }
                 })}
-                {grid.summary.length !== 0 &&
-                    grid.summary.map(summary => (
-                        <DataTableRow key="total-custom-row">
-                            <CustomDataTableCell
-                                backgroundColor={section.styles.totals.backgroundColor}
-                                key="total-column-name-periods"
-                                colSpan={hasRowsWithSubGroups ? "3" : "2"}
-                            >
-                                <Html content={summary.cellName} />
-                            </CustomDataTableCell>
-                            {summary.cells.map(itemTotal => {
-                                return (
-                                    <DataTableCellFormula
-                                        key={itemTotal.columnName}
-                                        dataFormInfo={dataFormInfo}
-                                        styles={section.styles}
-                                        total={itemTotal}
-                                        formula={itemTotal.formula}
-                                        period={itemTotal.columnName}
-                                    />
-                                );
-                            })}
-                        </DataTableRow>
-                    ))}
+                {grid.summary.map(summary => (
+                    <DataTableRow key="total-custom-row">
+                        <CustomDataTableCell
+                            backgroundColor={section.styles.totals.backgroundColor}
+                            key="total-column-name-periods"
+                            colSpan={hasRowsWithSubGroups ? "3" : "2"}
+                        >
+                            <Html content={summary.cellName} />
+                        </CustomDataTableCell>
+                        {summary.cells.map(itemTotal => {
+                            return (
+                                <DataTableCellFormula
+                                    key={itemTotal.columnName}
+                                    dataFormInfo={dataFormInfo}
+                                    styles={section.styles}
+                                    total={itemTotal}
+                                    formula={itemTotal.formula}
+                                    period={itemTotal.columnName}
+                                />
+                            );
+                        })}
+                    </DataTableRow>
+                ))}
 
                 {grid.indicators.map(indicator => {
                     return (
