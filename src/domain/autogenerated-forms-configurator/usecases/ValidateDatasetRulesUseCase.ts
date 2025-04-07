@@ -44,7 +44,7 @@ export class ValidateDatasetRulesUseCase {
     }
 
     private buildRuleMessage(rule: ValidationRule): string {
-        return `${rule.message} `;
+        return rule.message;
     }
 }
 
