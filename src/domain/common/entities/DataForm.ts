@@ -79,7 +79,7 @@ export interface SectionBase {
     disableComments: boolean;
     totals?: Record<string, Totals>;
     showRowTotals: boolean;
-    toggleMultiple: DataElementToggle[];
+    toggleMultiple?: DataElementToggle;
     indicators: Indicator[];
 }
 

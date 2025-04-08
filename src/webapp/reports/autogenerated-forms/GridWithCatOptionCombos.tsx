@@ -155,36 +155,35 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                             </DataTableRow>
                         ));
                     })}
-                    {grid.summary.length !== 0 &&
-                        grid.summary.map(summary => (
-                            <DataTableRow key={`${summary.cellName}-totals`}>
-                                <CustomDataTableCell
-                                    colSpan="2"
-                                    backgroundColor={props.section.styles.totals.backgroundColor}
-                                    key="total-column-name"
-                                >
-                                    <Html content={summary.cellName} />
-                                </CustomDataTableCell>
-                                {summary.cells.map(itemTotal => {
-                                    return (
-                                        <DataTableCellFormula
-                                            key={itemTotal.columnName}
-                                            dataFormInfo={dataFormInfo}
-                                            styles={props.section.styles}
-                                            total={itemTotal}
-                                            formula={itemTotal.formula}
-                                        />
-                                    );
-                                })}
-                                {showRowTotals && (
-                                    <DataTableCellSummary
+                    {grid.summary.map(summary => (
+                        <DataTableRow key={`${summary.cellName}-totals`}>
+                            <CustomDataTableCell
+                                colSpan="2"
+                                backgroundColor={props.section.styles.totals.backgroundColor}
+                                key="total-column-name"
+                            >
+                                <Html content={summary.cellName} />
+                            </CustomDataTableCell>
+                            {summary.cells.map(itemTotal => {
+                                return (
+                                    <DataTableCellFormula
+                                        key={itemTotal.columnName}
                                         dataFormInfo={dataFormInfo}
                                         styles={props.section.styles}
-                                        dataElements={summary.cells}
+                                        total={itemTotal}
+                                        formula={itemTotal.formula}
                                     />
-                                )}
-                            </DataTableRow>
-                        ))}
+                                );
+                            })}
+                            {showRowTotals && (
+                                <DataTableCellSummary
+                                    dataFormInfo={dataFormInfo}
+                                    styles={props.section.styles}
+                                    dataElements={summary.cells}
+                                />
+                            )}
+                        </DataTableRow>
+                    ))}
 
                     {section.indicators.map(indicator => {
                         return (

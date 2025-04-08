@@ -39,6 +39,25 @@ export const sectionSchema = (
         .uniq()
         .value();
 
+    const toggleMultipleSchema = {
+        type: "object",
+        properties: {
+            conditions: {
+                type: "array",
+                items: defaultObjectProperties({
+                    type: "object",
+                    properties: {
+                        dataElement: { enum: dataElementCodes },
+                        condition: { type: "string" },
+                    },
+                }),
+            },
+            logicalOperator: {
+                enum: ["AND", "OR"],
+            },
+        },
+    };
+
     const sectionProperties = {
         indicators: {
             type: "object",
@@ -97,16 +116,7 @@ export const sectionSchema = (
                 },
             },
         }),
-        toggleMultiple: {
-            type: "array",
-            items: defaultObjectProperties({
-                type: "object",
-                properties: {
-                    dataElement: { enum: dataElementCodes },
-                    condition: { type: "string" },
-                },
-            }),
-        },
+        toggleMultiple: toggleMultipleSchema,
         titleVariant: {
             enum: ["h1", "h2", "h3", "h4", "h5", "h6"],
         },

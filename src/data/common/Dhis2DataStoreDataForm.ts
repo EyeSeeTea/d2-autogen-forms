@@ -55,7 +55,7 @@ interface BaseSectionConfig {
     groupDescriptions: DescriptionText;
     disableComments: boolean;
     totals?: Record<string, SectionTotals>;
-    toggleMultiple: Maybe<ToggleMultiple[]>;
+    toggleMultiple: Maybe<ToggleMultiple>;
     indicators?: Record<Code, IndicatorConfig>;
 }
 
@@ -246,7 +246,17 @@ const DataStoreConfigCodec = Codec.interface({
                     )
                 ),
                 totals: optional(oneOf([totalsType, record(string, totalsType)])),
-                toggleMultiple: optional(array(Codec.interface({ dataElement: string, condition: string }))),
+                toggleMultiple: optional(
+                    Codec.interface({
+                        logicalOperator: oneOf([exactly("AND"), exactly("OR")]),
+                        conditions: array(
+                            Codec.interface({
+                                dataElement: string,
+                                condition: string,
+                            })
+                        ),
+                    })
+                ),
                 indicators: optional(
                     sectionConfig({
                         position: optional(
