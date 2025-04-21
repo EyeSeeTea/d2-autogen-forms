@@ -7,8 +7,8 @@ import { D2Api, SelectedPick, D2DataSetSchema } from "../types/d2-api";
 
 const FILE_TO_PUBLISH = "dist/custom-data-form.html";
 
-const datasetFields = { id: true, name: true, formType: true, dataEntryForm: { id: true, name: true } } as const;
-type Dataset = SelectedPick<D2DataSetSchema, typeof datasetFields>;
+const dataSetFields = { id: true, name: true, formType: true, dataEntryForm: { id: true, name: true } } as const;
+type Dataset = SelectedPick<D2DataSetSchema, typeof dataSetFields>;
 
 type PublishOptions = {
     url: string;
@@ -53,19 +53,14 @@ type PublishSingleOptions = {
     query: string;
 };
 
-export async function publishSingleDataSet({
-    api,
-    dataSetId,
-    contentToUpload,
-    force,
-    query,
-}: PublishSingleOptions): Promise<void> {
+export async function publishSingleDataSet(options: PublishSingleOptions): Promise<void> {
+    const { api, dataSetId, contentToUpload, force, query } = options;
     const datasets = await getDatasets({ api, id: dataSetId });
-    const dataset = datasets[0];
-    if (!dataset) {
+    const dataSet = datasets[0];
+    if (!dataSet) {
         throw new Error(`DataSet with id ${dataSetId} not found.`);
     }
-    const hasCustomForm = dataset.formType === "CUSTOM" && !!dataset.dataEntryForm;
+    const hasCustomForm = dataSet.formType === "CUSTOM" && !!dataSet.dataEntryForm;
     if (hasCustomForm) {
         const datasetsWithAutogen = await getDatasets({
             api,
@@ -79,7 +74,7 @@ export async function publishSingleDataSet({
             );
             return;
         }
-        await updateDataEntryForm(api, dataset, contentToUpload);
+        await updateDataEntryForm(api, dataSet, contentToUpload);
     } else {
         if (!force) {
             console.debug(
@@ -87,7 +82,7 @@ export async function publishSingleDataSet({
             );
             return;
         }
-        await updateDataEntryForm(api, dataset, contentToUpload);
+        await updateDataEntryForm(api, dataSet, contentToUpload);
     }
     return;
 }
@@ -99,22 +94,18 @@ type PublishMultipleOptions = {
     query: string;
 };
 
-export async function publishToMultipleDataSets({
-    api,
-    confirm,
-    contentToUpload,
-    query,
-}: PublishMultipleOptions): Promise<void> {
-    const datasets = await getDatasets({
+export async function publishToMultipleDataSets(options: PublishMultipleOptions): Promise<void> {
+    const { api, confirm, contentToUpload, query } = options;
+    const dataSets = await getDatasets({
         api,
         query,
     });
-    if (datasets.length === 0) {
+    if (dataSets.length === 0) {
         console.debug("No dataEntryForms that use d2-autogen-forms have been detected. Exiting...");
         return;
     }
     const message = `The following dataSets that use d2-autogen-forms have been detected:
-${datasets.map(o => `- #${o.id} ${o.name}`).join("\n")}
+${dataSets.map(o => `- #${o.id} ${o.name}`).join("\n")}
     `;
     console.debug(message);
 
@@ -128,10 +119,10 @@ ${datasets.map(o => `- #${o.id} ${o.name}`).join("\n")}
         }
     }
     console.debug("Publishing to all dataSets that use d2-autogen-forms...");
-    for (const dataSet of datasets) {
+    for (const dataSet of dataSets) {
         await updateDataEntryForm(api, dataSet, contentToUpload);
     }
-    console.debug(`✓ Published d2-autogen-forms to ${datasets.length} datasets`);
+    console.debug(`✓ Published d2-autogen-forms to ${dataSets.length} datasets`);
 }
 
 function readFormToUpload(): Promise<string> {
@@ -152,7 +143,7 @@ async function getDatasets(options: GetDatasetOptions): Promise<Dataset[]> {
     const { api, id, query } = options;
     const res = await api.models.dataSets
         .get({
-            fields: datasetFields,
+            fields: dataSetFields,
             paging: false,
             filter: {
                 ...(id ? { id: { eq: id } } : {}),
@@ -169,11 +160,11 @@ async function getDatasets(options: GetDatasetOptions): Promise<Dataset[]> {
     return res.objects;
 }
 
-async function updateDataEntryForm(api: D2Api, dataset: Dataset, contentToUpload: string) {
-    const url = `/dataSets/${dataset.id}/form`;
-    console.debug(`Publishing to dataSet #${dataset.id} ${dataset.name}...`);
+async function updateDataEntryForm(api: D2Api, dataSet: Dataset, contentToUpload: string) {
+    const url = `/dataSets/${dataSet.id}/form`;
+    console.debug(`Publishing to dataSet #${dataSet.id} ${dataSet.name}...`);
     try {
-        // Posting to /datasets/{datasetId}/form like dhis-web-maintenance does
+        // Posting to /dataSets/{datasetId}/form like dhis-web-maintenance does
         // Using a PUT to /dataEntryForms/{dataEntryFormId} would be the best but couldn't get it working because of 409 errors
         await api
             .post(
@@ -189,7 +180,7 @@ async function updateDataEntryForm(api: D2Api, dataset: Dataset, contentToUpload
         console.error("Error publishing dataEntryForm:", error);
         throw new Error("Error publishing dataEntryForm");
     }
-    console.debug(`✓ Published custom form with d2-autogen-forms for dataset #${dataset.id} ${dataset.name} `);
+    console.debug(`✓ Published custom form with d2-autogen-forms for dataset #${dataSet.id} ${dataSet.name} `);
 }
 
 async function askYesNo(question: string, defaultYes = true) {
