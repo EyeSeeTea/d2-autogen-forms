@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { build } from "./common";
+import { build, defaultOptions } from "./common";
 import { inlineSource } from "inline-source";
 import { ArgumentParser } from "argparse";
 
@@ -38,7 +38,7 @@ export async function convertReactHtmlToInline() {
     const html3 = await inlineSource(sourceHtmlPath, { compress: true, rootpath: path.resolve("build") });
 
     fs.mkdirSync("dist", { recursive: true });
-    const dest = "dist/custom-data-form.html";
+    const dest = defaultOptions.autogenFormOutput;
     log(`Write: ${dest}`);
     fs.writeFileSync(dest, html3);
 }
