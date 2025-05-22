@@ -459,13 +459,18 @@ export class Dhis2DataStoreDataForm {
             .flatMap(dataSet => _.values(dataSet.sections))
             .flatMap(section => {
                 if (!section.totals) return undefined;
+
+                const formulaCodes = _(section.totals.formulas)
+                    .map((_, key) => key)
+                    .compact()
+                    .value();
+
                 return this.isSectionTotals(section.totals)
-                    ? [section.totals.texts]
+                    ? [section.totals.texts?.code, ...formulaCodes]
                     : _(section.totals)
-                          .map(total => total.texts)
+                          .map(total => total.texts?.code)
                           .value();
             })
-            .map(totals => totals?.code)
             .compact()
             .value();
 
@@ -657,6 +662,11 @@ export class Dhis2DataStoreDataForm {
                     texts: {
                         name: this.getTextFromConstants(sectionTotalsText, constantsByCode) || "",
                     },
+                    formulas: _(totals.formulas)
+                        .mapKeys((_, key) =>
+                            constantsByCode[key] ? this.getTextFromConstants({ code: key }, constantsByCode) : key
+                        )
+                        .value(),
                 },
             };
         } else {
