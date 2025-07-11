@@ -136,7 +136,10 @@ const PeriodTable: React.FC<PeriodTableProps> = props => {
                                             backgroundColor={props.section.styles.rows.backgroundColor}
                                             colSpan={hasRowsWithSubGroups ? "3" : "2"}
                                         >
-                                            <span>{row.dataElement.name}</span>
+                                            <DataTableCellRowName
+                                                html={row.dataElement.htmlText}
+                                                name={row.dataElement.name}
+                                            />
                                         </CustomDataTableCell>
 
                                         <DataTableDataElementCell
