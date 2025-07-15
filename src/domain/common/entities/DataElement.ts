@@ -21,6 +21,7 @@ interface DataElementBase {
         id: Id;
         name: string;
         shortName: string | undefined;
+        formName?: string;
     }[];
     cocId?: string;
     orgUnit?: Id;
