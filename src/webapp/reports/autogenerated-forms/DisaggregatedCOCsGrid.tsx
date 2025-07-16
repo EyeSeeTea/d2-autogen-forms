@@ -13,6 +13,8 @@ import {
 import { DataElementItem } from "./DataElementItem";
 import { CustomDataTableCell, CustomDataTableColumnHeader } from "./datatables/CustomDataTables";
 import { DisaggregatedCOCsGridViewModel } from "./DisaggregatedCOCsGridViewModel";
+import { DataTableCellRowTotal } from "./datatables/DataTableCellRowTotal";
+import { Html } from "./Html";
 
 type DisaggregatedCOCsGridProps = {
     dataFormInfo: DataFormInfo;
@@ -27,8 +29,9 @@ const DisaggregatedCOCsGrid: React.FC<DisaggregatedCOCsGridProps> = props => {
         [section, dataFormInfo]
     );
 
-    const colSpan = (index: number) => {
-        return index === 0 ? grid.columns.length + 1 : grid.columns.length;
+    const showRowTotals = props.section.showRowTotals;
+    const colSpan = (index?: number) => {
+        return index === 0 ? grid.columns.length + 2 : grid.columns.length + 1;
     };
 
     return (
@@ -49,7 +52,7 @@ const DisaggregatedCOCsGrid: React.FC<DisaggregatedCOCsGridProps> = props => {
                     <DataTableRow>
                         <CustomDataTableColumnHeader
                             backgroundColor={props.section.styles.columns.backgroundColor}
-                            width="400px"
+                            width="250px"
                             colSpan="1"
                         ></CustomDataTableColumnHeader>
                         {grid.columns.map(column => (
@@ -66,6 +69,16 @@ const DisaggregatedCOCsGrid: React.FC<DisaggregatedCOCsGridProps> = props => {
                                 </div>
                             </CustomDataTableColumnHeader>
                         ))}
+                        {showRowTotals && (
+                            <CustomDataTableColumnHeader
+                                backgroundColor={props.section.styles.columns.backgroundColor}
+                                key="column-row-totals"
+                            >
+                                <div className={classes.header}>
+                                    <div dangerouslySetInnerHTML={{ __html: grid.texts.rowTotals || "" }}></div>
+                                </div>
+                            </CustomDataTableColumnHeader>
+                        )}
                     </DataTableRow>
                 </TableHead>
 
@@ -76,25 +89,56 @@ const DisaggregatedCOCsGrid: React.FC<DisaggregatedCOCsGridProps> = props => {
                                 <span>{row.name}</span>
                             </CustomDataTableCell>
 
-                            {row.items.map(({ columnName, dataElement }) =>
-                                dataElement ? (
-                                    <CustomDataTableCell
-                                        backgroundColor={props.section.styles.rows.backgroundColor}
-                                        key={`${dataElement.id}-${dataElement.cocId}`}
-                                    >
-                                        <DataElementItem
-                                            dataElement={dataElement}
-                                            dataFormInfo={dataFormInfo}
-                                            noComment={dataElement.disabledComments}
-                                        />
-                                    </CustomDataTableCell>
-                                ) : (
-                                    <CustomDataTableCell
-                                        key={columnName}
-                                        backgroundColor={props.section.styles.rows.backgroundColor}
+                            {row.items.map(({ dataElement, rowItems }) => {
+                                return (
+                                    <>
+                                        {rowItems.map(rowItem => {
+                                            return (
+                                                <CustomDataTableCell
+                                                    backgroundColor={props.section.styles.rows.backgroundColor}
+                                                    key={`${rowItem.id}-${rowItem.cocId}`}
+                                                >
+                                                    <DataElementItem
+                                                        dataElement={rowItem}
+                                                        dataFormInfo={dataFormInfo}
+                                                        noComment={rowItem.disabledComments}
+                                                    />
+                                                </CustomDataTableCell>
+                                            );
+                                        })}
+
+                                        {showRowTotals && (
+                                            <DataTableCellRowTotal
+                                                dataFormInfo={dataFormInfo}
+                                                styles={props.section.styles}
+                                                dataElement={dataElement}
+                                            />
+                                        )}
+                                    </>
+                                );
+                            })}
+                        </DataTableRow>
+                    ))}
+
+                    {grid.summary.map(summary => (
+                        <DataTableRow key={`${summary.cellName}-totals`}>
+                            <CustomDataTableCell
+                                backgroundColor={props.section.styles.totals.backgroundColor}
+                                key="total-column-name"
+                            >
+                                <Html content={summary.cellName} />
+                            </CustomDataTableCell>
+                            {summary.cells.map(cell => {
+                                return (
+                                    <DataTableCellRowTotal
+                                        key={cell.id}
+                                        colSpan={colSpan()}
+                                        dataFormInfo={dataFormInfo}
+                                        styles={props.section.styles}
+                                        dataElement={cell}
                                     />
-                                )
-                            )}
+                                );
+                            })}
                         </DataTableRow>
                     ))}
                 </TableBody>
