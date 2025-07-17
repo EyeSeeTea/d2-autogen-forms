@@ -21,6 +21,27 @@ type DisaggregatedCOCsGridProps = {
     section: SectionSimple;
 };
 
+/*
+    This view type converts data forms with disaggregated data elements into a grid format with one category represented in the columns and the other in the rows.
+    An example using the section ITNs:
+
+    Data element                                        Categories                                      Category option combos
+    ITNs - By age group and gender                      Age group => [0-12, 12-18, 18-24, 25-49, 50+]   "0-12, Male", "0-12, Female", "12-18, Male", "12-18, Female", "18-24, Male", "18-24, Female", "25-49, Male", "25-49, Female", "50+, Male", "50+, Female"
+                                                        Gender => [Male, Female]
+    ITNs - By age group and gender (Policy Extra)       Age group => [0-12, 12-18, 18-24, 25-49, 50+]   "0-12, Male", "0-12, Female", "12-18, Male", "12-18, Female", "18-24, Male", "18-24, Female", "25-49, Male", "25-49, Female", "50+, Male", "50+, Female"
+                                                        Gender => [Male, Female]
+
+    The grouping is done by separating the category option combination names with a (", ").
+    This will create this table:
+
+            |   ITNs - By age group and gender                        |  ITNs - By age group and gender (Policy Extra)                         
+    ---------------------------------------------------------------------------------------------------------------------------
+            |   0-12    |   12-18   |   18-24   |   25-49   |   50+   |   0-12   |   12-18   |   18-24   |   25-49   |   50+   |  
+    ---------------------------------------------------------------------------------------------------------------------------|    
+    Female  |           |           |           |           |         |          |           |           |           |         |
+    Male    |           |           |           |           |         |          |           |           |           |         |
+*/
+
 const DisaggregatedCOCsGrid: React.FC<DisaggregatedCOCsGridProps> = props => {
     const { dataFormInfo, section } = props;
     const classes = useStyles();
