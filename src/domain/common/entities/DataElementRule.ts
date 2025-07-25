@@ -3,14 +3,29 @@ import { DataElement } from "./DataElement";
 
 export type RuleType = "visible" | "disabled";
 
-export type DataElementRuleOptions = Record<RuleType, { dataElements: Code[]; condition: string }>;
+export type SingleConditionRule = {
+    type?: "single";
+    dataElements: Code[];
+    condition: string;
+};
+
+type MultipleConditionRule = {
+    type: "option";
+    conditions: SingleConditionRule[];
+};
+
+export type ConditionRule = SingleConditionRule | MultipleConditionRule;
+
+export type SingleDERuleOptions = Record<RuleType, ConditionRule>;
+
+export type DataElementRuleOptions = Record<RuleType, ConditionRule>;
 
 export type SectionRuleOptions = { condition: string; sectionCodes: Code[] };
 
 export type Rule = { relatedDataElement: DataElement; type: RuleType; condition: string };
 
 type BaseTotalRule = {
-    condition: string;
+    conditions: string[];
     formula: string;
     relatedDataElements: DataElement[];
 };
