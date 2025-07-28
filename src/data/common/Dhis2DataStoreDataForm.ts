@@ -464,31 +464,22 @@ export class Dhis2DataStoreDataForm {
             .compact()
             .value();
 
-        const totalsCodes = _(storeConfig.dataSets)
+        const totalsCodes: string[] = _(storeConfig.dataSets)
             .values()
-            .flatMap(dataSet => _.values(dataSet.sections))
-            .flatMap(section => {
-                const totals = section.totals;
-                if (!totals) return undefined;
+            .flatMap(dataSet =>
+                _.values(dataSet.sections).flatMap((section: { totals: Maybe<TotalsConfig> }) => {
+                    const totals = section.totals;
+                    if (!totals) return undefined;
 
-                const formulaCodes = _(totals.formulas)
-                    .map((_, key) => key)
-                    .compact()
-                    .value();
+                    const formulaCodes = totals.formulas ? Object.keys(totals.formulas) : [];
 
-                switch (true) {
-                    case this.isSectionTotals(totals): {
-                        const sectionTotals = totals as SectionTotals;
-                        return [sectionTotals.texts?.code, ...formulaCodes];
-                    }
-                    default: {
-                        const totalsRecord = totals as Record<string, SectionTotals>;
-                        return _(totalsRecord)
-                            .map(total => total.texts?.code)
-                            .value();
-                    }
-                }
-            })
+                    return this.isSectionTotals(totals)
+                        ? [totals.texts?.code, ...formulaCodes]
+                        : _(totals)
+                              .map(total => total.texts?.code)
+                              .value();
+                })
+            )
             .compact()
             .value();
 
