@@ -162,13 +162,23 @@ const DisaggregatedCOCsGrid: React.FC<DisaggregatedCOCsGridProps> = props => {
                                 <Html content={summary.cellName} />
                             </CustomDataTableCell>
                             {summary.cells.map(cell => (
-                                <DataTableCellRowTotal
-                                    key={cell.id}
-                                    colSpan={getColSpan()}
-                                    dataFormInfo={dataFormInfo}
-                                    styles={section.styles}
-                                    dataElement={cell}
-                                />
+                                <>
+                                    <DataTableCellRowTotal
+                                        key={cell.id}
+                                        colSpan={cell.columnItems.length}
+                                        dataFormInfo={dataFormInfo}
+                                        styles={section.styles}
+                                        dataElement={cell}
+                                    />
+                                    {showRowTotals && (
+                                        <CustomDataTableCell
+                                            backgroundColor={section.styles.totals.backgroundColor}
+                                            key={`total-${cell.id}`}
+                                        >
+                                            <span>{""}</span>
+                                        </CustomDataTableCell>
+                                    )}
+                                </>
                             ))}
                         </DataTableRow>
                     ))}

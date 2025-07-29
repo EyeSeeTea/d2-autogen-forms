@@ -10,7 +10,7 @@ export class DisaggregatedCOCsGridViewModel {
     static get(section: Section, dataFormInfo: DataFormInfo): Grid {
         const columns = DisaggregatedCOCsGridViewModel.getGridColumns(section, dataFormInfo);
         const rows = DisaggregatedCOCsGridViewModel.getGridRows(section, columns);
-        const summary = DisaggregatedCOCsGridViewModel.getSummary(section, dataFormInfo);
+        const summary = DisaggregatedCOCsGridViewModel.getSummary(section, dataFormInfo, columns);
 
         return {
             id: section.id,
@@ -105,7 +105,7 @@ export class DisaggregatedCOCsGridViewModel {
         return sortItems(rows);
     }
 
-    private static getSummary(section: Section, dataFormInfo: DataFormInfo): Summary[] {
+    private static getSummary(section: Section, dataFormInfo: DataFormInfo, columns: Column[]): Summary[] {
         const allDataElements = dataFormInfo.metadata.dataForm.dataElements;
 
         const summary = _(section.totals)
@@ -114,9 +114,19 @@ export class DisaggregatedCOCsGridViewModel {
                     sectionTotal.dataElementsCodes.includes(dataElement.code)
                 );
 
+                const cells = selectedDataElements.map(dataElement => {
+                    const columnDE = columns.find(column => column.dataElement.id === dataElement.id);
+                    const columnItems = columnDE ? columnDE.columnItems : [];
+
+                    return {
+                        ...dataElement,
+                        columnItems: columnItems,
+                    };
+                });
+
                 return {
                     cellName: key,
-                    cells: selectedDataElements,
+                    cells: cells,
                 };
             })
             .value();
@@ -154,7 +164,7 @@ type Row = {
 
 type Summary = {
     cellName: string;
-    cells: DataElement[];
+    cells: Array<DataElement & { columnItems: ColumnItem[] }>;
 };
 
 const separator = ", ";
