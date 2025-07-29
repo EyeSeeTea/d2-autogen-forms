@@ -26,38 +26,55 @@ export class DisaggregatedCOCsGridViewModel {
     }
 
     private static getGridColumns(section: Section, dataFormInfo: DataFormInfo): Column[] {
-        const columns = _(section.dataElements)
-            .flatMap(dataElement => dataElement.categoryOptionCombos)
-            .groupBy(coc => coc.name.split(separator)[0])
-            .map((_categoryOptionCombos, columnName) => ({
-                name: columnName,
-                description: getDescription(section.columnsDescriptions, dataFormInfo, columnName),
-            }))
-            .value();
+        const columns = section.dataElements.map(dataElement => {
+            const columnItems = _(dataElement.categoryOptionCombos)
+                .map(coc => {
+                    const columnName = getColumnNameFromCoc(coc) || "";
 
-        return sortItems(columns);
+                    return {
+                        name: columnName || "",
+                        description: getDescription(section.columnsDescriptions, dataFormInfo, columnName),
+                    };
+                })
+                .uniqBy("name")
+                .value();
+
+            return { columnItems: sortItems(columnItems), dataElement: dataElement };
+        });
+
+        return columns;
     }
 
     private static getGridRows(section: Section, columns: Column[]): Row[] {
         const rows = _(section.dataElements)
             .flatMap(dataElement => dataElement.categoryOptionCombos)
             .groupBy(coc => getRowNameFromCoc(coc))
-            .map((categoryOptionCombos, rowName) => {
+            .map((_, rowName) => {
                 const items = section.dataElements
                     .filter(dataElement =>
                         dataElement.categoryOptionCombos.some(coc => getRowNameFromCoc(coc) === rowName)
                     )
                     .map(dataElement => {
-                        const rowItems = categoryOptionCombos.map(coc => ({
-                            ...dataElement,
-                            cocId: coc.id,
-                            categoryOptionCombos: [coc],
-                            categoryCombos: {
-                                ...dataElement.categoryCombos,
-                                categoryOptionCombos: [{ ...coc, formName: coc.formName || undefined }],
-                            },
-                            columnName: columns.find(column => column.name === getColumnNameFromCoc(coc))?.name || "",
-                        }));
+                        const rowItems = dataElement.categoryOptionCombos
+                            .filter(item => getRowNameFromCoc(item) === rowName)
+                            .map(coc => {
+                                const columnName =
+                                    columns
+                                        .find(column => column.dataElement.id === dataElement.id)
+                                        ?.columnItems.find(columnItem => columnItem.name === getColumnNameFromCoc(coc))
+                                        ?.name || "";
+
+                                return {
+                                    ...dataElement,
+                                    cocId: coc.id,
+                                    categoryOptionCombos: [coc],
+                                    categoryCombos: {
+                                        ...dataElement.categoryCombos,
+                                        categoryOptionCombos: [{ ...coc, formName: coc.formName || undefined }],
+                                    },
+                                    columnName: columnName,
+                                };
+                            });
 
                         const disaggregatedDataElement = {
                             ...dataElement,
@@ -120,9 +137,14 @@ type Grid = {
     indicators: Indicator[];
 };
 
-type Column = {
+export type ColumnItem = {
     name: string;
     description?: string;
+};
+
+type Column = {
+    dataElement: DataElement;
+    columnItems: ColumnItem[];
 };
 
 type Row = {
