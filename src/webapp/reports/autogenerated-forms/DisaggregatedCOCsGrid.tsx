@@ -12,9 +12,10 @@ import {
 } from "@dhis2/ui";
 import { DataElementItem } from "./DataElementItem";
 import { CustomDataTableCell, CustomDataTableColumnHeader } from "./datatables/CustomDataTables";
-import { ColumnItem, DisaggregatedCOCsGridViewModel } from "./DisaggregatedCOCsGridViewModel";
+import { ColumnItem, DisaggregatedCOCsGridViewModel, Grid } from "./DisaggregatedCOCsGridViewModel";
 import { DataTableCellRowTotal } from "./datatables/DataTableCellRowTotal";
 import { Html } from "./Html";
+import { checkVisibleRule } from "./DataEntryItem";
 
 type DisaggregatedCOCsGridProps = {
     dataFormInfo: DataFormInfo;
@@ -51,11 +52,7 @@ const DisaggregatedCOCsGrid: React.FC<DisaggregatedCOCsGridProps> = props => {
     );
 
     const showRowTotals = section.showRowTotals;
-    const getColSpan = useCallback(
-        (columnItems?: ColumnItem[]) =>
-            columnItems ? columnItems.length + 1 : grid.columns.flatMap(column => column.columnItems).length,
-        [grid.columns]
-    );
+    const { getColSpan, isDataElementVisible } = useGridLayout(grid, dataFormInfo);
 
     return (
         <DataTableSection section={grid} dataFormInfo={dataFormInfo} sectionStyles={section.styles}>
@@ -70,13 +67,16 @@ const DisaggregatedCOCsGrid: React.FC<DisaggregatedCOCsGridProps> = props => {
                                         colSpan={1}
                                     ></CustomDataTableColumnHeader>
                                 )}
-                                <CustomDataTableColumnHeader
-                                    backgroundColor={section.styles.columns.backgroundColor}
-                                    key={`column-${dataElement.id}`}
-                                    colSpan={getColSpan(columnItems)}
-                                >
-                                    <span className={classes.header}>{dataElement.name}</span>
-                                </CustomDataTableColumnHeader>
+
+                                {isDataElementVisible(dataElement) && (
+                                    <CustomDataTableColumnHeader
+                                        backgroundColor={section.styles.columns.backgroundColor}
+                                        key={`column-${dataElement.id}`}
+                                        colSpan={getColSpan(columnItems)}
+                                    >
+                                        <span className={classes.header}>{dataElement.name}</span>
+                                    </CustomDataTableColumnHeader>
+                                )}
                             </>
                         ))}
                     </DataTableRow>
@@ -90,29 +90,37 @@ const DisaggregatedCOCsGrid: React.FC<DisaggregatedCOCsGridProps> = props => {
                                         colSpan={1}
                                     ></CustomDataTableColumnHeader>
                                 )}
-                                {columnItems.map(columnItem => (
-                                    <CustomDataTableColumnHeader
-                                        backgroundColor={section.styles.columns.backgroundColor}
-                                        key={`${columnItem.name}-${dataElement.id}`}
-                                    >
-                                        <div className={classes.header}>
-                                            <span>{columnItem.name}</span>
-                                            <span
-                                                className={classes.description}
-                                                dangerouslySetInnerHTML={{ __html: columnItem.description || "" }}
-                                            ></span>
-                                        </div>
-                                    </CustomDataTableColumnHeader>
-                                ))}
-                                {showRowTotals && (
-                                    <CustomDataTableColumnHeader
-                                        backgroundColor={section.styles.columns.backgroundColor}
-                                        key={`column-row-totals-${dataElement.id}`}
-                                    >
-                                        <div className={classes.header}>
-                                            <div dangerouslySetInnerHTML={{ __html: grid.texts.rowTotals || "" }}></div>
-                                        </div>
-                                    </CustomDataTableColumnHeader>
+                                {isDataElementVisible(dataElement) && (
+                                    <>
+                                        {columnItems.map(columnItem => (
+                                            <CustomDataTableColumnHeader
+                                                backgroundColor={section.styles.columns.backgroundColor}
+                                                key={`${columnItem.name}-${dataElement.id}`}
+                                            >
+                                                <div className={classes.header}>
+                                                    <span>{columnItem.name}</span>
+                                                    <span
+                                                        className={classes.description}
+                                                        dangerouslySetInnerHTML={{
+                                                            __html: columnItem.description || "",
+                                                        }}
+                                                    ></span>
+                                                </div>
+                                            </CustomDataTableColumnHeader>
+                                        ))}
+                                        {showRowTotals && (
+                                            <CustomDataTableColumnHeader
+                                                backgroundColor={section.styles.columns.backgroundColor}
+                                                key={`column-row-totals-${dataElement.id}`}
+                                            >
+                                                <div className={classes.header}>
+                                                    <div
+                                                        dangerouslySetInnerHTML={{ __html: grid.texts.rowTotals || "" }}
+                                                    ></div>
+                                                </div>
+                                            </CustomDataTableColumnHeader>
+                                        )}
+                                    </>
                                 )}
                             </>
                         ))}
@@ -126,30 +134,33 @@ const DisaggregatedCOCsGrid: React.FC<DisaggregatedCOCsGridProps> = props => {
                                 <span>{row.name}</span>
                             </CustomDataTableCell>
 
-                            {row.items.map(({ dataElement, rowItems }) => (
-                                <>
-                                    {rowItems.map(rowItem => (
-                                        <CustomDataTableCell
-                                            backgroundColor={section.styles.rows.backgroundColor}
-                                            key={`${rowItem.id}-${rowItem.cocId}`}
-                                        >
-                                            <DataElementItem
-                                                dataElement={rowItem}
-                                                dataFormInfo={dataFormInfo}
-                                                noComment={rowItem.disabledComments}
-                                            />
-                                        </CustomDataTableCell>
-                                    ))}
+                            {row.items.map(
+                                ({ dataElement, rowItems }) =>
+                                    isDataElementVisible(dataElement) && (
+                                        <>
+                                            {rowItems.map(rowItem => (
+                                                <CustomDataTableCell
+                                                    backgroundColor={section.styles.rows.backgroundColor}
+                                                    key={`${rowItem.id}-${rowItem.cocId}`}
+                                                >
+                                                    <DataElementItem
+                                                        dataElement={rowItem}
+                                                        dataFormInfo={dataFormInfo}
+                                                        noComment={rowItem.disabledComments}
+                                                    />
+                                                </CustomDataTableCell>
+                                            ))}
 
-                                    {showRowTotals && (
-                                        <DataTableCellRowTotal
-                                            dataFormInfo={dataFormInfo}
-                                            styles={section.styles}
-                                            dataElement={dataElement}
-                                        />
-                                    )}
-                                </>
-                            ))}
+                                            {showRowTotals && (
+                                                <DataTableCellRowTotal
+                                                    dataFormInfo={dataFormInfo}
+                                                    styles={section.styles}
+                                                    dataElement={dataElement}
+                                                />
+                                            )}
+                                        </>
+                                    )
+                            )}
                         </DataTableRow>
                     ))}
 
@@ -161,25 +172,28 @@ const DisaggregatedCOCsGrid: React.FC<DisaggregatedCOCsGridProps> = props => {
                             >
                                 <Html content={summary.cellName} />
                             </CustomDataTableCell>
-                            {summary.cells.map(cell => (
-                                <>
-                                    <DataTableCellRowTotal
-                                        key={cell.id}
-                                        colSpan={cell.columnItems.length}
-                                        dataFormInfo={dataFormInfo}
-                                        styles={section.styles}
-                                        dataElement={cell}
-                                    />
-                                    {showRowTotals && (
-                                        <CustomDataTableCell
-                                            backgroundColor={section.styles.totals.backgroundColor}
-                                            key={`total-${cell.id}`}
-                                        >
-                                            <span>{""}</span>
-                                        </CustomDataTableCell>
-                                    )}
-                                </>
-                            ))}
+                            {summary.cells.map(
+                                cell =>
+                                    isDataElementVisible(cell) && (
+                                        <>
+                                            <DataTableCellRowTotal
+                                                key={cell.id}
+                                                colSpan={cell.columnItems.length}
+                                                dataFormInfo={dataFormInfo}
+                                                styles={section.styles}
+                                                dataElement={cell}
+                                            />
+                                            {showRowTotals && (
+                                                <CustomDataTableCell
+                                                    backgroundColor={section.styles.totals.backgroundColor}
+                                                    key={`total-${cell.id}`}
+                                                >
+                                                    <span>{""}</span>
+                                                </CustomDataTableCell>
+                                            )}
+                                        </>
+                                    )
+                            )}
                         </DataTableRow>
                     ))}
                 </TableBody>
@@ -203,3 +217,28 @@ const useStyles = makeStyles({
 });
 
 export default React.memo(DisaggregatedCOCsGrid);
+
+type GridLayoutState = {
+    getColSpan: (columnItems?: ColumnItem[]) => number;
+    isDataElementVisible: (dataElement: any) => boolean;
+};
+
+function useGridLayout(grid: Grid, dataFormInfo: DataFormInfo): GridLayoutState {
+    const getColSpan = useCallback(
+        (columnItems?: ColumnItem[]) =>
+            columnItems ? columnItems.length + 1 : grid.columns.flatMap(column => column.columnItems).length,
+        [grid.columns]
+    );
+
+    const isDataElementVisible = useCallback(
+        dataElement =>
+            checkVisibleRule({
+                dataElement,
+                dataFormInfo,
+                period: dataFormInfo.period,
+            }),
+        [dataFormInfo]
+    );
+
+    return { getColSpan: getColSpan, isDataElementVisible: isDataElementVisible };
+}
