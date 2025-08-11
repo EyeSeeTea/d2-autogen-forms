@@ -299,11 +299,23 @@ export class Dhis2DataFormRepository implements DataFormRepository {
         };
     }
 
-    private getTotalDataElements(rule: ConditionRule, dataElements: Record<string, DataElement>) {
+    private getTotalDataElements(rule: ConditionRule, dataElements: Record<string, DataElement>): Id[] {
         const extractedDataElements =
             rule.type === "option" ? rule.conditions.flatMap(condition => condition.dataElements) : rule.dataElements;
 
-        return extractedDataElements.map(dataElementCode => dataElements[dataElementCode]?.id ?? "");
+        return _(extractedDataElements)
+            .map(dataElementCode => {
+                const dataElement = dataElements[dataElementCode];
+                if (!dataElement) {
+                    console.warn(`Data element not found for code: ${dataElementCode}`);
+                    return;
+                }
+
+                return dataElement.id;
+            })
+            .compact()
+            .uniq()
+            .value();
     }
 
     private getRelatedDataElements(
