@@ -181,6 +181,9 @@ const DataStoreConfigCodec = Codec.interface({
     categoryCombinations: sectionConfig({
         viewType: optional(oneOf([exactly("name"), exactly("shortName"), exactly("formName")])),
     }),
+    categoryOptions: sectionConfig({
+        visible: optional(boolean),
+    }),
     dataElements: sectionConfig({
         disableComments: optional(boolean),
         rules: optional(dataElementRuleCodec),
@@ -323,6 +326,7 @@ const defaultDataStoreConfig: DataFormStoreConfig["custom"] = {
     dataElements: {},
     dataSets: {},
     categoryCombinations: {},
+    categoryOptions: {},
 };
 
 interface DataSet {
@@ -335,14 +339,20 @@ type CategoryCombinationConfig = {
     viewType: "name" | "shortName" | "formName" | undefined;
 };
 
+type CategoryOptionConfig = {
+    visible: Maybe<boolean>;
+};
+
 export class Dhis2DataStoreDataForm {
     public dataElementsConfig: Record<Code, DataElementConfig>;
     public categoryCombinationsConfig: Record<Code, CategoryCombinationConfig>;
+    public categoryOptionsConfig: Record<Code, CategoryOptionConfig>;
     public subNationals: SubNational[];
 
     constructor(private config: DataFormStoreConfig) {
         this.dataElementsConfig = this.getDataElementsConfig();
         this.categoryCombinationsConfig = config.custom.categoryCombinations;
+        this.categoryOptionsConfig = config.custom.categoryOptions;
         this.subNationals = config.subNationals;
     }
 
@@ -378,6 +388,7 @@ export class Dhis2DataStoreDataForm {
                     dataElements: storeConfigFromDataStore.dataElements || {},
                     dataSets: storeConfigFromDataStore.dataSets || {},
                     categoryCombinations: storeConfigFromDataStore.categoryCombinations || {},
+                    categoryOptions: storeConfigFromDataStore.categoryOptions || {},
                 };
 
                 return {
