@@ -165,8 +165,8 @@ export function verifyConditionByDataValueType(dataValue: DataValue, rule: { con
 
 export function applyNumericComparison(rule: { condition: string }, value: Value) {
     const [operator, comparisonValue = ""] = rule.condition.split(" ");
-    const numericalValue = parseInt(value as string);
-    const numericalComparisonValue = parseInt(comparisonValue);
+    const numericalValue = Number(value as string);
+    const numericalComparisonValue = Number(comparisonValue);
 
     switch (operator) {
         case ">":
@@ -184,7 +184,12 @@ export function applyNumericComparison(rule: { condition: string }, value: Value
         case "!==":
             return numericalValue !== numericalComparisonValue;
         default:
-            throw new Error(`Unsupported operator: ${operator}`);
+            console.warn(
+                `Unsupported operator: ${operator}. Using fallback comparison [condition === String(value)]: ${
+                    rule.condition
+                } === ${String(value)}`
+            );
+            return rule.condition === String(value);
     }
 }
 

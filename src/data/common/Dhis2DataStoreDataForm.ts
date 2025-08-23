@@ -22,7 +22,8 @@ export type SectionConfig =
     | GridSectionConfig
     | GridWithPeriodsSectionConfig
     | GridWithTotalsSectionConfig
-    | GridWithSubnationalSectionConfig;
+    | GridWithSubnationalSectionConfig
+    | GridIndicatorsCalculated;
 
 export type TotalsRule = (
     | {
@@ -78,6 +79,21 @@ interface GridWithTotalsSectionConfig extends BaseSectionConfig {
     calculateTotals: CalculateTotalType;
 }
 
+interface GridIndicatorsCalculated extends BaseSectionConfig {
+    viewType: "grid-indicators-calculated";
+    periods: string[];
+    rows: GridIndicatorsCalculatedRow[];
+}
+
+export type GridIndicatorsCalculatedRow = {
+    code: Code;
+    denominator: Maybe<{ text: { code: Code }; dataElementCode: Code }>;
+    value: Maybe<{
+        dataElementCodes: Code[];
+        formula: { value: string };
+    }>;
+};
+
 interface GridWithSubnationalSectionConfig extends BaseSectionConfig {
     viewType: "grid-with-subnational-ous";
     calculateTotals: CalculateTotalType;
@@ -104,6 +120,7 @@ const viewType = oneOf([
     exactly("matrix-grid"),
     exactly("grid-with-periods"),
     exactly("grid-with-subnational-ous"),
+    exactly("grid-indicators-calculated"),
 ]);
 
 const titleVariantType = oneOf([
@@ -266,6 +283,30 @@ const DataStoreConfigCodec = Codec.interface({
                             })
                         ),
                     })
+                ),
+                // create codec.interface for type GridIndicatorsCalculatedRow[]
+                rows: optional(
+                    array(
+                        Codec.interface({
+                            code: string,
+                            denominator: optional(
+                                Codec.interface({
+                                    text: Codec.interface({
+                                        code: string,
+                                    }),
+                                    dataElementCode: string,
+                                })
+                            ),
+                            value: optional(
+                                Codec.interface({
+                                    dataElementCodes: array(string),
+                                    formula: Codec.interface({
+                                        value: string,
+                                    }),
+                                })
+                            ),
+                        })
+                    )
                 ),
             })
         ),
@@ -619,6 +660,15 @@ export class Dhis2DataStoreDataForm {
                             subNationalDataset: sectionConfig.subNationalDataset || "",
                         };
                         return [section.id, config] as [typeof section.id, typeof config];
+                    }
+                    case "grid-indicators-calculated": {
+                        const config = {
+                            ...baseConfig,
+                            periods: getPeriods(period, sectionConfig.periods),
+                            rows: sectionConfig.rows ?? [],
+                            viewType,
+                        };
+                        return [section.id, config];
                     }
                     default: {
                         const config = { ...baseConfig, viewType };

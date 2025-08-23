@@ -1,5 +1,10 @@
 import _ from "lodash";
-import { CalculateTotalType, SubNational, TotalsRule } from "../../../data/common/Dhis2DataStoreDataForm";
+import {
+    CalculateTotalType,
+    GridIndicatorsCalculatedRow,
+    SubNational,
+    TotalsRule,
+} from "../../../data/common/Dhis2DataStoreDataForm";
 import { Maybe, UnionFromValues } from "../../../utils/ts-utils";
 import { Code, Id } from "./Base";
 import { DataElement, dataInputPeriodsType } from "./DataElement";
@@ -49,6 +54,7 @@ const viewTypes = [
     "grid-with-cat-option-combos",
     "matrix-grid",
     "grid-with-subnational-ous",
+    "grid-indicators-calculated",
 ] as const;
 export type ViewType = UnionFromValues<typeof DataFormM.viewTypes>;
 
@@ -108,7 +114,19 @@ export interface SectionWithSubnationals extends SectionBase {
     subNationals: SubNational[];
 }
 
-export type Section = SectionSimple | SectionGrid | SectionWithPeriods | SectionWithTotals | SectionWithSubnationals;
+export interface SectionWithIndicatorsCalculated extends SectionBase {
+    viewType: "grid-indicators-calculated";
+    periods: string[];
+    rows: GridIndicatorsCalculatedRow[];
+}
+
+export type Section =
+    | SectionSimple
+    | SectionGrid
+    | SectionWithPeriods
+    | SectionWithTotals
+    | SectionWithSubnationals
+    | SectionWithIndicatorsCalculated;
 
 export class DataFormM {
     static viewTypes = viewTypes;
@@ -118,6 +136,8 @@ export class DataFormM {
             .flatMap(section => {
                 switch (section.viewType) {
                     case "grid-with-periods":
+                        return section.periods;
+                    case "grid-indicators-calculated":
                         return section.periods;
                     default:
                         return [];
