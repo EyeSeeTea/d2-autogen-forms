@@ -291,9 +291,6 @@ const DataStoreConfigCodec = Codec.interface({
                             code: string,
                             denominator: optional(
                                 Codec.interface({
-                                    text: Codec.interface({
-                                        code: string,
-                                    }),
                                     dataElementCode: string,
                                 })
                             ),
