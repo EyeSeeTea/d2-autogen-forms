@@ -47,7 +47,7 @@ const viewTypes = [
     "grid-with-totals",
     "grid-with-combos",
     "grid-with-cat-option-combos",
-    "disaggregated-cocs-grid",
+    "grid-disaggregated-cocs",
     "matrix-grid",
     "grid-with-subnational-ous",
 ] as const;
@@ -85,7 +85,7 @@ export interface SectionBase {
 }
 
 export interface SectionSimple extends SectionBase {
-    viewType: "grid-with-combos" | "grid-with-cat-option-combos" | "matrix-grid" | "disaggregated-cocs-grid";
+    viewType: "grid-with-combos" | "grid-with-cat-option-combos" | "matrix-grid" | "grid-disaggregated-cocs";
 }
 
 export interface SectionWithPeriods extends SectionBase {

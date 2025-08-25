@@ -9,7 +9,7 @@ export const viewTypes = [
     "grid-with-totals",
     "grid-with-combos",
     "grid-with-cat-option-combos",
-    "disaggregated-cocs-grid",
+    "grid-disaggregated-cocs",
     "matrix-grid",
     "grid-with-periods",
     "grid-with-subnational-ous",
