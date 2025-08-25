@@ -93,7 +93,8 @@ function getCocOrdered(categoryCombo: D2DataElement["categoryCombo"], config: Dh
     const allCategoryOptions = categoryCombo.categories.flatMap(c =>
         _(c.categoryOptions)
             .flatMap(co => {
-                if (config.categoryOptionsConfig[co.code]?.visible === false) return undefined;
+                if (isCategoryOptionHidden(co.code, config)) return undefined;
+
                 return {
                     name: co.name,
                     displayName: co.displayName,
@@ -109,7 +110,7 @@ function getCocOrdered(categoryCombo: D2DataElement["categoryCombo"], config: Dh
     const categoryOptionsNamesArray = categoryCombo.categories.map(c => {
         return _(c.categoryOptions)
             .flatMap(co => {
-                if (config.categoryOptionsConfig[co.code]?.visible === false) return undefined;
+                if (isCategoryOptionHidden(co.code, config)) return undefined;
                 return co.name;
             })
             .compact()
@@ -147,6 +148,10 @@ function getCocOrdered(categoryCombo: D2DataElement["categoryCombo"], config: Dh
 
     const keyName = config.categoryCombinationsConfig[categoryCombo.code]?.viewType || "formName";
     return result.map(x => ({ ...x, name: x[keyName] || x.name || "" }));
+}
+
+function isCategoryOptionHidden(code: string, config: Dhis2DataStoreDataForm) {
+    return config.categoryOptionsConfig[code]?.visible === false;
 }
 
 function getVisibleCategoryOptionCombos(
