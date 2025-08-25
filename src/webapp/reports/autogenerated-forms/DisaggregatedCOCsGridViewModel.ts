@@ -32,11 +32,11 @@ export class DisaggregatedCOCsGridViewModel {
                     const columnName = getColumnNameFromCoc(coc) || "";
 
                     return {
-                        name: columnName || "",
+                        name: columnName,
                         description: getDescription(section.columnsDescriptions, dataFormInfo, columnName),
                     };
                 })
-                .uniqBy("name")
+                .uniqBy(column => column.name)
                 .value();
 
             return { columnItems: sortItems(columnItems), dataElement: dataElement };
@@ -50,6 +50,11 @@ export class DisaggregatedCOCsGridViewModel {
             .flatMap(dataElement => dataElement.categoryOptionCombos)
             .groupBy(coc => getRowNameFromCoc(coc))
             .map((_, rowName) => {
+                if (!rowName) {
+                    console.warn("Skipping row with empty row name");
+                    return undefined;
+                }
+
                 const items = section.dataElements
                     .filter(dataElement =>
                         dataElement.categoryOptionCombos.some(coc => getRowNameFromCoc(coc) === rowName)
@@ -70,7 +75,7 @@ export class DisaggregatedCOCsGridViewModel {
                                     categoryOptionCombos: [coc],
                                     categoryCombos: {
                                         ...dataElement.categoryCombos,
-                                        categoryOptionCombos: [{ ...coc, formName: coc.formName || undefined }],
+                                        categoryOptionCombos: [{ ...coc, formName: coc.formName }],
                                     },
                                     columnName: columnName,
                                 };
@@ -100,6 +105,7 @@ export class DisaggregatedCOCsGridViewModel {
                     items: items,
                 };
             })
+            .compact()
             .value();
 
         return sortItems(rows);
