@@ -9,11 +9,7 @@ import { Period } from "../../domain/common/entities/DataValue";
 import { DescriptionText, Texts, Totals } from "../../domain/common/entities/DataForm";
 import { titleVariant } from "../../domain/common/entities/TitleVariant";
 import { SectionStyle, SectionStyleAttrs } from "../../domain/common/entities/SectionStyle";
-import {
-    DataElementRuleOptions,
-    SectionRuleOptions,
-    SingleDERuleOptions,
-} from "../../domain/common/entities/DataElementRule";
+import { DataElementRuleOptions, SectionRuleOptions } from "../../domain/common/entities/DataElementRule";
 import { ToggleMultiple } from "../../domain/common/entities/ToggleMultiple";
 
 interface DataSetConfig {
@@ -35,7 +31,7 @@ export type TotalsRule = (
       }
     | {
           type: "dataElements";
-          rules?: SingleDERuleOptions;
+          rules?: DataElementRuleOptions;
       }
 ) & { formula: string };
 

@@ -16,8 +16,6 @@ type MultipleConditionRule = {
 
 export type ConditionRule = SingleConditionRule | MultipleConditionRule;
 
-export type SingleDERuleOptions = Record<RuleType, ConditionRule>;
-
 export type DataElementRuleOptions = Record<RuleType, ConditionRule>;
 
 export type SectionRuleOptions = { condition: string; sectionCodes: Code[] };
