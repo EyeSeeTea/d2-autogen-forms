@@ -109,17 +109,15 @@ export function getValueAndVerifyCondition(
     dataElementTotalRule: Maybe<DataElementTotalRule>
 ): Maybe<boolean> {
     if (rules.length !== 0) {
-        return rules
-            .map(rule => {
-                const dataValue = dataFormInfo.data.values.getOrEmpty(rule.relatedDataElement, {
-                    orgUnitId: rule.relatedDataElement.orgUnit || dataFormInfo.orgUnitId,
-                    period: period || dataFormInfo.period,
-                    categoryOptionComboId: dataFormInfo.categoryOptionComboId,
-                });
+        return rules.some(rule => {
+            const dataValue = dataFormInfo.data.values.getOrEmpty(rule.relatedDataElement, {
+                orgUnitId: rule.relatedDataElement.orgUnit || dataFormInfo.orgUnitId,
+                period: period || dataFormInfo.period,
+                categoryOptionComboId: dataFormInfo.categoryOptionComboId,
+            });
 
-                return verifyConditionByDataValueType(dataValue, rule);
-            })
-            .some(Boolean);
+            return verifyConditionByDataValueType(dataValue, rule);
+        });
     } else if (dataElementTotalRule) {
         return evaluateTotalRule(dataElementTotalRule, dataFormInfo, period);
     }
