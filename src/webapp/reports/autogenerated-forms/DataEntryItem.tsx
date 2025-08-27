@@ -173,7 +173,12 @@ export function verifyConditionByDataValueType(dataValue: DataValue, rule: { con
 }
 
 export function applyNumericComparison(rule: { condition: string }, value: Value): boolean {
-    const [operator, comparisonValue = ""] = rule.condition.split(" ");
+    const [operator, comparisonValue] = rule.condition.split(" ");
+
+    if (!comparisonValue) {
+        return rule.condition === String(value);
+    }
+
     const numericalValue = parseInt(value as string);
     const numericalComparisonValue = parseInt(comparisonValue);
 
