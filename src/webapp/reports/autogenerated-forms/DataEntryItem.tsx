@@ -175,7 +175,7 @@ export function verifyConditionByDataValueType(dataValue: DataValue, rule: { con
 export function applyNumericComparison(rule: { condition: string }, value: Value): boolean {
     const [operator, comparisonValue] = rule.condition.split(" ");
 
-    if (!comparisonValue) {
+    if (!comparisonValue || !operator) {
         return rule.condition === String(value);
     }
 
