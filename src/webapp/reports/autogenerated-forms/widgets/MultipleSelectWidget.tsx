@@ -4,10 +4,14 @@ import React from "react";
 import { MultiSelect, MultiSelectOption } from "@dhis2/ui";
 import { Option } from "../../../../domain/common/entities/DataElement";
 import { WidgetFeedback } from "../WidgetFeedback";
-import { DataValueNumberMultiple, DataValueTextMultiple } from "../../../../domain/common/entities/DataValue";
+import {
+    DataValueMultiText,
+    DataValueNumberMultiple,
+    DataValueTextMultiple,
+} from "../../../../domain/common/entities/DataValue";
 import { WidgetProps } from "./WidgetBase";
 
-type DataValueMultiple = DataValueNumberMultiple | DataValueTextMultiple;
+type DataValueMultiple = DataValueNumberMultiple | DataValueTextMultiple | DataValueMultiText;
 
 export interface MultipleSelectWidgetProps extends WidgetProps {
     dataValue: DataValueMultiple;

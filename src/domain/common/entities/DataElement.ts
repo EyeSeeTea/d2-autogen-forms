@@ -8,7 +8,8 @@ export type DataElement =
     | DataElementText
     | DataElementPercentage
     | DataElementFile
-    | DataElementDate;
+    | DataElementDate
+    | DataElementMultiText;
 
 interface DataElementBase {
     id: Id;
@@ -47,6 +48,10 @@ export interface DataElementPercentage extends DataElementBase {
 
 export interface DataElementText extends DataElementBase {
     type: "TEXT";
+}
+
+export interface DataElementMultiText extends DataElementBase {
+    type: "MULTI_TEXT";
 }
 
 export interface DataElementFile extends DataElementBase {

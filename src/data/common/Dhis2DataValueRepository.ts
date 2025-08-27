@@ -7,6 +7,7 @@ import {
     DataValueTextMultiple,
     DateObj,
     FileResource,
+    MULTI_TEXT_SEPARATOR,
     Period,
 } from "../../domain/common/entities/DataValue";
 import { DataValueRepository, DataElementRefType } from "../../domain/common/repositories/DataValueRepository";
@@ -55,8 +56,10 @@ export class Dhis2DataValueRepository implements DataValueRepository {
                     categoryOptionComboId: dv.categoryOptionCombo,
                 };
 
-                const isMultiple = dataElement.options?.isMultiple;
                 const { type } = dataElement;
+
+                const isMultiTextType = dataElement.type === "MULTI_TEXT";
+                const isMultiple = dataElement.options?.isMultiple || isMultiTextType;
 
                 switch (type) {
                     case "TEXT":
@@ -69,6 +72,14 @@ export class Dhis2DataValueRepository implements DataValueRepository {
                                   value: dv.value,
                                   ...selector,
                               };
+                    case "MULTI_TEXT":
+                        return {
+                            type: "MULTI_TEXT",
+                            isMultiple: true,
+                            dataElement,
+                            values: getValues(dv.value, MULTI_TEXT_SEPARATOR),
+                            ...selector,
+                        };
                     case "NUMBER":
                         return isMultiple
                             ? {
@@ -295,6 +306,8 @@ export class Dhis2DataValueRepository implements DataValueRepository {
             case "NUMBER":
             case "TEXT":
                 return (dataValue.isMultiple ? dataValue.values.join("; ") : dataValue.value) || "";
+            case "MULTI_TEXT":
+                return dataValue.values.join(MULTI_TEXT_SEPARATOR);
             case "FILE":
                 return dataValue.file?.id || "";
             case "PERCENTAGE":
@@ -311,9 +324,9 @@ function pad2(n: number): string {
     return n.toString().padStart(2, "0");
 }
 
-function getValues(s: string): string[] {
+function getValues(s: string, splitSeparator = ";"): string[] {
     return _(s)
-        .split(";")
+        .split(splitSeparator)
         .map(s => s.trim())
         .compact()
         .value();

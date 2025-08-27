@@ -1,5 +1,5 @@
 import React from "react";
-import { DataValue, DateObj } from "../../../domain/common/entities/DataValue";
+import { DataValue, DateObj, MULTI_TEXT_SEPARATOR } from "../../../domain/common/entities/DataValue";
 import { assertUnreachable, Maybe } from "../../../utils/ts-utils";
 import BooleanDropdownWidget from "./widgets/BooleanDropdownWidget";
 import NumberWidget from "./widgets/NumberWidget";
@@ -71,6 +71,8 @@ export function getValueAccordingType(dataValue: DataValue): Value {
             return dataValue.isMultiple ? dataValue.values.join(",") : dataValue.value;
         case "PERCENTAGE":
             return dataValue.value;
+        case "MULTI_TEXT":
+            return dataValue.values.join(MULTI_TEXT_SEPARATOR);
         default:
             assertUnreachable(dataValue);
     }
@@ -260,6 +262,16 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                         disabled={disabled}
                     />
                 );
+            case "MULTI_TEXT":
+                return (
+                    <MultipleSelectWidget
+                        dataValue={dataValue}
+                        options={options.items}
+                        onValueChange={notifyChange}
+                        state={state}
+                        disabled={disabled}
+                    />
+                );
             case "TEXT":
                 if (config?.widget === "sourceType" && dataValue.isMultiple) {
                     return (
@@ -370,6 +382,8 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                         disabled={isDisabled || disabled}
                     />
                 );
+            case "MULTI_TEXT":
+                return null;
 
             default:
                 return assertUnreachable(type);

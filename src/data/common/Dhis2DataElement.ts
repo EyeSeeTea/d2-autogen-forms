@@ -75,6 +75,12 @@ type D2DataElement = MetadataPick<{
     dataElements: { fields: typeof dataElementFields };
 }>["dataElements"][number];
 
+type D2DataElementTypes = D2DataElement["valueType"] | "MULTI_TEXT";
+
+type D2DataElementNewType = Omit<D2DataElement, "valueType"> & {
+    valueType: D2DataElementTypes;
+};
+
 function makeCocOrderArray(namesArray: string[][]): string[] {
     return namesArray.reduce((prev, current) => {
         return prev
@@ -140,7 +146,7 @@ function getCocOrdered(categoryCombo: D2DataElement["categoryCombo"], config: Dh
     return result.map(x => ({ ...x, name: x[keyName] || x.name || "" }));
 }
 
-function getDataElement(dataElement: D2DataElement, config: Dhis2DataStoreDataForm): DataElement | null {
+function getDataElement(dataElement: D2DataElementNewType, config: Dhis2DataStoreDataForm): DataElement | null {
     const { valueType } = dataElement;
     const deConfig = config.dataElementsConfig[dataElement.code];
     const optionSetFromDataElement = dataElement.optionSet
@@ -179,6 +185,8 @@ function getDataElement(dataElement: D2DataElement, config: Dhis2DataStoreDataFo
         case "TEXT":
         case "LONG_TEXT":
             return { type: "TEXT", related: undefined, ...base };
+        case "MULTI_TEXT":
+            return { type: "MULTI_TEXT", related: undefined, ...base };
         case "INTEGER":
         case "INTEGER_NEGATIVE":
         case "INTEGER_POSITIVE":
