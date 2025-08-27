@@ -181,6 +181,12 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                             viewType: config.viewType,
                             periods: config.periods,
                             rows: config.rows,
+                            virtualColumns: config.virtualColumns.map(vc => {
+                                const constant = configDataForm.constants.find(
+                                    c => c.code === vc.texts?.columnNameCode
+                                );
+                                return { ...vc, columnName: constant?.displayDescription ?? "" };
+                            }),
                             ...base2,
                         };
                     default:

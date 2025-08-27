@@ -83,6 +83,7 @@ interface GridIndicatorsCalculated extends BaseSectionConfig {
     viewType: "grid-indicators-calculated";
     periods: string[];
     rows: GridIndicatorsCalculatedRow[];
+    virtualColumns: (VirtualColumnDataElement | VirtualColumnCalculated)[];
 }
 
 export type GridIndicatorsCalculatedRow = {
@@ -106,6 +107,27 @@ export type CalculateTotalConfig = {
 };
 
 export type CalculateTotalType = Record<string, CalculateTotalConfig | undefined> | undefined;
+
+type D2BaseVirtualColumn = {
+    dataElementCode: string;
+    position: number;
+    texts?: {
+        columnNameCode: string;
+    };
+};
+
+type VirtualColumnDataElement = D2BaseVirtualColumn & {
+    type: "dataElement";
+    dataElementRefValue: string;
+};
+
+type VirtualColumnCalculated = D2BaseVirtualColumn & {
+    type: "calculated";
+    formula: {
+        dataElementCodes: string[];
+        value: string;
+    };
+};
 
 const defaultViewType = "table";
 
@@ -284,7 +306,40 @@ const DataStoreConfigCodec = Codec.interface({
                         ),
                     })
                 ),
-                // create codec.interface for type GridIndicatorsCalculatedRow[]
+                // create codec.interface for type VirtualColumnDataElement | VirtualColumnCalculated[]
+                virtualColumns: optional(
+                    array(
+                        oneOf([
+                            Codec.interface({
+                                type: exactly("dataElement"),
+                                dataElementCode: string,
+                                dataElementRefValue: string,
+                                position: number,
+                                texts: optional(
+                                    Codec.interface({
+                                        columnNameCode: string,
+                                    })
+                                ),
+                            }),
+                            Codec.interface({
+                                type: exactly("calculated"),
+                                dataElementCode: string,
+                                position: number,
+                                texts: optional(
+                                    Codec.interface({
+                                        columnNameCode: string,
+                                    })
+                                ),
+                                formula: optional(
+                                    Codec.interface({
+                                        value: string,
+                                        dataElementCodes: array(string),
+                                    })
+                                ),
+                            }),
+                        ])
+                    )
+                ),
                 rows: optional(
                     array(
                         Codec.interface({
@@ -376,11 +431,13 @@ export class Dhis2DataStoreDataForm {
     public dataElementsConfig: Record<Code, DataElementConfig>;
     public categoryCombinationsConfig: Record<Code, CategoryCombinationConfig>;
     public subNationals: SubNational[];
+    public constants: Constant[];
 
     constructor(private config: DataFormStoreConfig) {
         this.dataElementsConfig = this.getDataElementsConfig();
         this.categoryCombinationsConfig = config.custom.categoryCombinations;
         this.subNationals = config.subNationals;
+        this.constants = config.constants;
     }
 
     static async build(api: D2Api, dataSetCode?: string): Promise<Dhis2DataStoreDataForm> {
@@ -512,6 +569,17 @@ export class Dhis2DataStoreDataForm {
             .compact()
             .value();
 
+        const virtualColumnsCodes = _(storeConfig.dataSets)
+            .values()
+            .flatMap(dataSet => _.values(dataSet.sections))
+            .flatMap(section => {
+                if (!section.virtualColumns) return [];
+
+                return section.virtualColumns.map(vc => vc.texts?.columnNameCode);
+            })
+            .compact()
+            .value();
+
         const codes = _([...dataSetTexts, ...dataElementTexts, ...sectionTexts])
             .flatMap(t => [
                 typeof t.header !== "string" ? t.header : undefined,
@@ -526,13 +594,15 @@ export class Dhis2DataStoreDataForm {
             .uniq()
             .value();
 
-        if (_.isEmpty(codes)) return [];
+        const totalConstants = codes.length + virtualColumnsCodes.length;
+
+        if (totalConstants === 0) return [];
 
         const res = await api.metadata
             .get({
                 constants: {
                     fields: { id: true, code: true, displayDescription: true },
-                    filter: { code: { in: codes } },
+                    filter: { code: { in: [...codes, ...virtualColumnsCodes] } },
                 },
             })
             .getData();
@@ -663,6 +733,7 @@ export class Dhis2DataStoreDataForm {
                             ...baseConfig,
                             periods: getPeriods(period, sectionConfig.periods),
                             rows: sectionConfig.rows ?? [],
+                            virtualColumns: sectionConfig.virtualColumns ?? [],
                             viewType,
                         };
                         return [section.id, config];

@@ -47,17 +47,56 @@ export const InputFormula: React.FC<InputFormulaProps> = props => {
                 }
                 default:
                     // TODO: cover other data types
-                    // @ts-ignore
-                    return [dataElementCode, dataValue.value ?? EMPTY_VALUE];
+                    return [dataElementCode, EMPTY_VALUE];
             }
         })
         .fromPairs()
         .value();
 
-    const compiled = _.template(formula);
+    const compiled = _.template(formula, {
+        imports: defaultHelpers,
+    });
     const totalValue = compiled(_.merge({}, objWithValues));
 
     const isNaN = window.isNaN(Number(totalValue));
 
     return <CustomInput value={!isNaN ? totalValue : ""} disabled readOnly />;
 };
+
+type Flag = string | number | null | undefined;
+
+const checkCondition = (v: Flag): boolean => (v === "" ? true : Number(v) !== 0 && !Number.isNaN(Number(v)));
+
+function calculateMNCA(
+    numerator: number,
+    denominator: number,
+    isCorrect: number,
+    newValue: number,
+    type: "percent" | "number"
+): number {
+    const denominatorValue = checkCondition(isCorrect) ? denominator : newValue;
+    return calculateNumDem(numerator, denominatorValue, type);
+}
+
+function calculateNumDem(numerator: number, denominator: number, type: "percent" | "number"): number {
+    if (numerator === 0) return 0;
+
+    const times = getTimes(type);
+    const result = (numerator / denominator) * times;
+
+    return Math.round(result * 10) / 10;
+}
+
+const getTimes = (type: "percent" | "number") => {
+    switch (type) {
+        case "percent":
+            return 100;
+        case "number":
+            return 1;
+        default:
+            console.warn(`calculateMNCA: type ${type} not recognized, returning 1 as times multiplier.`);
+            return 1;
+    }
+};
+
+const defaultHelpers = Object.freeze({ fetch: undefined, calculateNumDem, checkCondition, calculateMNCA });

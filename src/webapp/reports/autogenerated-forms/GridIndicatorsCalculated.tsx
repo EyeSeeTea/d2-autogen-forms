@@ -73,19 +73,19 @@ const GridIndicatorsCalculated: React.FC<GridIndicatorsCalculatedProps> = props 
                                                 key={`${cell.columnName}_${period}`}
                                                 backgroundColor={props.section.styles.rows.backgroundColor}
                                             >
-                                                {cell.dataElement ? (
-                                                    <DataElementItem
-                                                        manualyDisabled={cell.disabled}
-                                                        dataElement={cell.dataElement}
-                                                        dataFormInfo={dataFormInfo}
-                                                        period={period}
-                                                    />
-                                                ) : cell.formula ? (
+                                                {cell.formula ? (
                                                     <InputFormula
                                                         dataFormInfo={dataFormInfo}
                                                         formula={cell.formula.formula}
                                                         period={period}
                                                         dataElementCodes={cell.formula.dataElementCodes}
+                                                    />
+                                                ) : cell.dataElement ? (
+                                                    <DataElementItem
+                                                        manualyDisabled={cell.disabled}
+                                                        dataElement={cell.dataElement}
+                                                        dataFormInfo={dataFormInfo}
+                                                        period={period}
                                                     />
                                                 ) : (
                                                     <CustomInput
