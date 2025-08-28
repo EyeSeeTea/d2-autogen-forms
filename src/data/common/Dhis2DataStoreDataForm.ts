@@ -83,8 +83,14 @@ interface GridIndicatorsCalculated extends BaseSectionConfig {
     viewType: "grid-indicators-calculated";
     periods: string[];
     rows: GridIndicatorsCalculatedRow[];
+    virtualRows: VirtualRow[];
     virtualColumns: (VirtualColumnDataElement | VirtualColumnCalculated)[];
 }
+
+type VirtualRow = {
+    rowConstantCode: string;
+    dataElementCode: string;
+};
 
 export type GridIndicatorsCalculatedRow = {
     code: Code;
@@ -306,7 +312,6 @@ const DataStoreConfigCodec = Codec.interface({
                         ),
                     })
                 ),
-                // create codec.interface for type VirtualColumnDataElement | VirtualColumnCalculated[]
                 virtualColumns: optional(
                     array(
                         oneOf([
@@ -338,6 +343,14 @@ const DataStoreConfigCodec = Codec.interface({
                                 ),
                             }),
                         ])
+                    )
+                ),
+                virtualRows: optional(
+                    array(
+                        Codec.interface({
+                            rowConstantCode: string,
+                            dataElementCode: string,
+                        })
                     )
                 ),
                 rows: optional(
@@ -580,6 +593,19 @@ export class Dhis2DataStoreDataForm {
             .compact()
             .value();
 
+        const virtualRowsCodes = _(storeConfig.dataSets)
+            .values()
+            .flatMap(dataSet => _.values(dataSet.sections))
+            .flatMap(section => {
+                if (!section.virtualRows) return [];
+
+                return section.virtualRows.map(vc => vc.rowConstantCode);
+            })
+            .compact()
+            .value();
+
+        const virtualCodes = virtualColumnsCodes.concat(virtualRowsCodes);
+
         const codes = _([...dataSetTexts, ...dataElementTexts, ...sectionTexts])
             .flatMap(t => [
                 typeof t.header !== "string" ? t.header : undefined,
@@ -594,7 +620,7 @@ export class Dhis2DataStoreDataForm {
             .uniq()
             .value();
 
-        const totalConstants = codes.length + virtualColumnsCodes.length;
+        const totalConstants = codes.length + virtualCodes.length;
 
         if (totalConstants === 0) return [];
 
@@ -602,7 +628,7 @@ export class Dhis2DataStoreDataForm {
             .get({
                 constants: {
                     fields: { id: true, code: true, displayDescription: true },
-                    filter: { code: { in: [...codes, ...virtualColumnsCodes] } },
+                    filter: { code: { in: [...codes, ...virtualCodes] } },
                 },
             })
             .getData();
@@ -734,6 +760,7 @@ export class Dhis2DataStoreDataForm {
                             periods: getPeriods(period, sectionConfig.periods),
                             rows: sectionConfig.rows ?? [],
                             virtualColumns: sectionConfig.virtualColumns ?? [],
+                            virtualRows: sectionConfig.virtualRows ?? [],
                             viewType,
                         };
                         return [section.id, config];

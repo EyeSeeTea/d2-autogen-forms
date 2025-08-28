@@ -187,6 +187,10 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                                 );
                                 return { ...vc, columnName: constant?.displayDescription ?? "" };
                             }),
+                            virtualRows: config.virtualRows.map(vc => {
+                                const constant = configDataForm.constants.find(c => c.code === vc.rowConstantCode);
+                                return { ...vc, rowName: constant?.displayDescription ?? "" };
+                            }),
                             ...base2,
                         };
                     default:

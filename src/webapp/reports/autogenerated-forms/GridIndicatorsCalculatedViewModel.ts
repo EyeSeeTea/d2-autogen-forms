@@ -53,6 +53,27 @@ type Item = {
 };
 
 export class GridIndicatorsCalculatedViewModel {
+    private static getVirtualSubSections(
+        section: SectionWithIndicatorsCalculated,
+        dataFormInfo: DataFormInfo
+    ): SubSection[] {
+        return _(section.virtualRows)
+            .map(row => {
+                const dataElement = dataFormInfo.metadata.dataForm.dataElements.find(
+                    de => de.code === row.dataElementCode
+                );
+                if (!dataElement) return undefined;
+
+                return {
+                    rowName: row.rowName ?? "",
+                    columnName: dataElement.name.split(separator)[1] ?? "",
+                    dataElement: dataElement,
+                };
+            })
+            .compact()
+            .value();
+    }
+
     static get(section: SectionWithIndicatorsCalculated, dataFormInfo: DataFormInfo): GridCalculatedModel {
         const subSections = _(section.dataElements)
             .map((dataElement): Maybe<SubSection> => {
@@ -68,7 +89,9 @@ export class GridIndicatorsCalculatedViewModel {
             .compact()
             .value();
 
-        const subSectionsByRowName = _(subSections)
+        const virtualSubSections = this.getVirtualSubSections(section, dataFormInfo);
+
+        const subSectionsByRowName = _([...virtualSubSections, ...subSections])
             .groupBy(subSection => subSection.rowName)
             .value();
 
@@ -128,9 +151,10 @@ export class GridIndicatorsCalculatedViewModel {
                     }
                 } else {
                     const subSection = items?.find(x => x.columnName === columnName);
+                    const isInVirtual = section.virtualRows.some(vr => vr.dataElementCode === dataElementCode);
 
                     return {
-                        disabled: subSection?.dataElement === undefined,
+                        disabled: subSection?.dataElement === undefined || isInVirtual,
                         columnName: columnName ?? "",
                         dataElement: subSection?.dataElement,
                         defaultValue: undefined,

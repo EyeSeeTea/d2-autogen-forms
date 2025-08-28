@@ -119,6 +119,7 @@ export interface SectionWithIndicatorsCalculated extends SectionBase {
     periods: string[];
     rows: GridIndicatorsCalculatedRow[];
     virtualColumns: (VirtualColumnCalculated | VirtualColumnDataElement)[];
+    virtualRows: { rowConstantCode: string; dataElementCode: string; rowName: string }[];
 }
 
 export type BaseVirtualColumn = {
