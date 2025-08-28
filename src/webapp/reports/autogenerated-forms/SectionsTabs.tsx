@@ -85,7 +85,7 @@ function TypeSwitch(props: TypeSwitchProps) {
                     section={section as SectionSimple}
                 />
             );
-        case "disaggregated-cocs-grid":
+        case "grid-disaggregated-cocs":
             return (
                 <DisaggregatedCOCsGrid
                     key={`${section.id}+tab`}

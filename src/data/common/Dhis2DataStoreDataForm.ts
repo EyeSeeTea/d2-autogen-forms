@@ -72,7 +72,7 @@ interface BaseSectionConfig {
 }
 
 interface BasicSectionConfig extends BaseSectionConfig {
-    viewType: "grid-with-combos" | "grid-with-cat-option-combos" | "matrix-grid" | "disaggregated-cocs-grid";
+    viewType: "grid-with-combos" | "grid-with-cat-option-combos" | "matrix-grid" | "grid-disaggregated-cocs";
 }
 
 interface GridSectionConfig extends BaseSectionConfig {
@@ -113,7 +113,7 @@ const viewType = oneOf([
     exactly("grid-with-totals"),
     exactly("grid-with-combos"),
     exactly("grid-with-cat-option-combos"),
-    exactly("disaggregated-cocs-grid"),
+    exactly("grid-disaggregated-cocs"),
     exactly("matrix-grid"),
     exactly("grid-with-periods"),
     exactly("grid-with-subnational-ous"),
