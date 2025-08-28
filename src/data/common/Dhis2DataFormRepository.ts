@@ -552,7 +552,7 @@ function getSectionBaseWithToggle(
             if (toggleDataElement) {
                 return {
                     ...base,
-                    toggle: { type: "dataElement", dataElement: toggleDataElement },
+                    toggle: { type: "dataElement", dataElement: toggleDataElement, disabled: toggle.disabled },
                     dataElements: _.without(base.dataElements, toggleDataElement),
                 };
             } else {
@@ -573,6 +573,7 @@ function getSectionBaseWithToggle(
                         type: "dataElementExternal",
                         dataElement: toggleDataElement,
                         condition: toggle.condition || "",
+                        disabled: toggle.disabled,
                     },
                 };
             } else {
