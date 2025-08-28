@@ -81,6 +81,7 @@ export interface SectionBase {
     showRowTotals: boolean;
     toggleMultiple?: DataElementToggle;
     indicators: Indicator[];
+    fixedHeaders: boolean;
 }
 
 export interface SectionSimple extends SectionBase {
@@ -94,6 +95,7 @@ export interface SectionWithPeriods extends SectionBase {
 
 export interface SectionGrid extends SectionBase {
     viewType: "table" | "grid";
+    fixedHeaders: boolean;
     calculateTotals: CalculateTotalType;
 }
 

@@ -179,6 +179,7 @@ function getDataElement(dataElement: D2DataElementNewType, config: Dhis2DataStor
             : undefined,
         rules: [],
         htmlText: undefined,
+        disabled: deConfig?.disabled || false,
     };
 
     switch (valueType) {

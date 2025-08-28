@@ -57,6 +57,7 @@ interface BaseSectionConfig {
     totals?: Record<string, SectionTotals>;
     toggleMultiple: Maybe<ToggleMultiple>;
     indicators?: Record<Code, IndicatorConfig>;
+    fixedHeaders: boolean;
 }
 
 interface BasicSectionConfig extends BaseSectionConfig {
@@ -181,6 +182,7 @@ const DataStoreConfigCodec = Codec.interface({
         viewType: optional(oneOf([exactly("name"), exactly("shortName"), exactly("formName")])),
     }),
     dataElements: sectionConfig({
+        disabled: optional(boolean),
         disableComments: optional(boolean),
         rules: optional(dataElementRuleCodec),
         selection: optional(
@@ -205,6 +207,7 @@ const DataStoreConfigCodec = Codec.interface({
         texts: optional(textsCodec),
         sections: optional(
             sectionConfig({
+                fixedHeaders: optional(boolean),
                 disableComments: optional(boolean),
                 subNationalDataset: optional(string),
                 sortRowsBy: optional(string),
@@ -274,6 +277,7 @@ const DataStoreConfigCodec = Codec.interface({
 
 export interface DataElementConfig {
     rules?: DataElementRuleOptions;
+    disabled?: boolean;
     disableComments?: boolean;
     texts?: Texts;
     selection?: {
@@ -588,6 +592,7 @@ export class Dhis2DataStoreDataForm {
                     totals: this.getSectionTotals(sectionConfig, constantsByCode),
                     toggleMultiple: sectionConfig.toggleMultiple,
                     indicators: sectionConfig.indicators,
+                    fixedHeaders: sectionConfig.fixedHeaders || false,
                 };
 
                 const baseConfig = { ...base, viewType };

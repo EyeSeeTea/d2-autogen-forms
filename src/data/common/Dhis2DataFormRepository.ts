@@ -151,9 +151,10 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                     toggleMultiple: config?.toggleMultiple
                         ? buildToggleMultiple(config.toggleMultiple, dataElements)
                         : undefined,
+                    fixedHeaders: config?.fixedHeaders || false,
                 };
 
-                if (!config) return { viewType: "table", calculateTotals: undefined, ...base };
+                if (!config) return { viewType: "table", calculateTotals: undefined, ...base, fixedHeaders: false };
 
                 const base2 = getSectionBaseWithToggle(config, base, dataElements);
 
