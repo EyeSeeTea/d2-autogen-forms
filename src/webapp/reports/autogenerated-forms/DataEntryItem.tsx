@@ -286,7 +286,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                             options={options.items}
                             onValueChange={notifyChange}
                             state={state}
-                            disabled={disabled}
+                            disabled={isDisabled || disabled}
                         />
                     ) : (
                         <SingleComponent
