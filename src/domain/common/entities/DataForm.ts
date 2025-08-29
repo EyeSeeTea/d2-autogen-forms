@@ -97,11 +97,13 @@ export interface SectionGrid extends SectionBase {
     viewType: "table" | "grid";
     fixedHeaders: boolean;
     calculateTotals: CalculateTotalType;
+    columnsOrder: Maybe<ColumnOrder>;
 }
 
 export interface SectionWithTotals extends SectionBase {
     viewType: "grid-with-totals";
     calculateTotals: CalculateTotalType;
+    columnsOrder: Maybe<ColumnOrder>;
 }
 
 export interface SectionWithSubnationals extends SectionBase {
@@ -111,6 +113,8 @@ export interface SectionWithSubnationals extends SectionBase {
 }
 
 export type Section = SectionSimple | SectionGrid | SectionWithPeriods | SectionWithTotals | SectionWithSubnationals;
+
+export type ColumnOrder = Record<Code, number>;
 
 export class DataFormM {
     static viewTypes = viewTypes;

@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { Section, SectionGrid, Texts } from "../../../domain/common/entities/DataForm";
+import { ColumnOrder, Section, SectionGrid, Texts } from "../../../domain/common/entities/DataForm";
 import { DataElement, DataElementNumber } from "../../../domain/common/entities/DataElement";
 import { titleVariant } from "../../../domain/common/entities/TitleVariant";
 import { Maybe } from "../../../utils/ts-utils";
@@ -51,32 +51,13 @@ interface Row {
 
 const separator = " - ";
 
-const columnPriorityByDataElementCode = {
-    "52_Integrated_Skin_Strategy_NDSR": 0,
-};
-
 type ColumnScoreInput = {
     columnName: string;
-    allDataElements: ReadonlyArray<DataElement>;
-    priorityByCode: Readonly<Record<string, number>>;
+    allDataElements: DataElement[];
+    priorityByCode: ColumnOrder;
 };
 
 export class GridViewModel {
-    private static scoreColumnByLowestDEPriority({
-        columnName,
-        allDataElements,
-        priorityByCode,
-    }: ColumnScoreInput): number {
-        const candidates = allDataElements.filter(de => {
-            const last = _.last(_.split(de.name, " - "));
-            return last === columnName;
-        });
-
-        const scores = candidates.map(de => priorityByCode[de.code]).filter((v): v is number => typeof v === "number");
-
-        return scores.length > 0 ? (_.min(scores) as number) : Number.MAX_SAFE_INTEGER;
-    }
-
     static get(section: SectionGrid, dataFormInfo: DataFormInfo): Grid {
         const dataElementsConfig = dataFormInfo.metadata.dataForm.options.dataElements;
         const dataElements = getDataElementsWithIndexProccessing(section);
@@ -105,15 +86,17 @@ export class GridViewModel {
             })
             .value();
 
-        const priorityByCode = columnPriorityByDataElementCode;
-
-        const columns = _.sortBy(baseColumns, c =>
-            this.scoreColumnByLowestDEPriority({
-                columnName: c.name,
-                allDataElements: dataElements,
-                priorityByCode,
-            })
-        );
+        const columns = section.columnsOrder
+            ? _(baseColumns)
+                  .sortBy(column => {
+                      return this.scoreColumnByLowestDEPriority({
+                          columnName: column.name,
+                          allDataElements: dataElements,
+                          priorityByCode: section.columnsOrder ?? {},
+                      });
+                  })
+                  .value()
+            : baseColumns;
 
         const dataElementsByTotal = _(section.calculateTotals)
             .groupBy(item => item?.totalDeCode)
@@ -252,6 +235,21 @@ export class GridViewModel {
             })
             .compact()
             .value();
+    }
+
+    private static scoreColumnByLowestDEPriority({
+        columnName,
+        allDataElements,
+        priorityByCode,
+    }: ColumnScoreInput): number {
+        const candidates = allDataElements.filter(de => {
+            const last = _.last(_.split(de.name, " - "));
+            return last === columnName;
+        });
+
+        const scores = candidates.map(de => priorityByCode[de.code]).filter((v): v is number => typeof v === "number");
+
+        return scores.length > 0 ? (_.min(scores) as number) : Number.MAX_SAFE_INTEGER;
     }
 }
 

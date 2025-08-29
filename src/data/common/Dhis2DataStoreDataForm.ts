@@ -6,7 +6,7 @@ import { Maybe, NonPartial } from "../../utils/ts-utils";
 import { Code, getCode, Id, NamedRef } from "../../domain/common/entities/Base";
 import { Option } from "../../domain/common/entities/DataElement";
 import { Period } from "../../domain/common/entities/DataValue";
-import { DescriptionText, Texts, Totals } from "../../domain/common/entities/DataForm";
+import { ColumnOrder, DescriptionText, Texts, Totals } from "../../domain/common/entities/DataForm";
 import { titleVariant } from "../../domain/common/entities/TitleVariant";
 import { SectionStyle, SectionStyleAttrs } from "../../domain/common/entities/SectionStyle";
 import { DataElementRuleOptions, SectionRuleOptions } from "../../domain/common/entities/DataElementRule";
@@ -67,6 +67,7 @@ interface BasicSectionConfig extends BaseSectionConfig {
 interface GridSectionConfig extends BaseSectionConfig {
     viewType: "table" | "grid";
     calculateTotals: CalculateTotalType;
+    columnsOrder: Maybe<ColumnOrder>;
 }
 
 interface GridWithPeriodsSectionConfig extends BaseSectionConfig {
@@ -77,6 +78,7 @@ interface GridWithPeriodsSectionConfig extends BaseSectionConfig {
 interface GridWithTotalsSectionConfig extends BaseSectionConfig {
     viewType: "grid-with-totals";
     calculateTotals: CalculateTotalType;
+    columnsOrder: Maybe<ColumnOrder>;
 }
 
 interface GridWithSubnationalSectionConfig extends BaseSectionConfig {
@@ -207,6 +209,7 @@ const DataStoreConfigCodec = Codec.interface({
         texts: optional(textsCodec),
         sections: optional(
             sectionConfig({
+                columnsOrder: optional(record(string, number)),
                 fixedHeaders: optional(boolean),
                 disableComments: optional(boolean),
                 subNationalDataset: optional(string),
@@ -613,6 +616,7 @@ export class Dhis2DataStoreDataForm {
                             ...baseConfig,
                             viewType,
                             calculateTotals: sectionConfig.calculateTotals,
+                            columnsOrder: sectionConfig.columnsOrder,
                         };
                         return [section.id, config] as [typeof section.id, typeof config];
                     }
