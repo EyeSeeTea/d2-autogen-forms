@@ -66,7 +66,7 @@ export class GridIndicatorsCalculatedViewModel {
 
                 return {
                     rowName: row.rowName ?? "",
-                    columnName: dataElement.name.split(separator)[1] ?? "",
+                    columnName: dataElement.name.split(separator)[0] ?? "",
                     dataElement: dataElement,
                 };
             })

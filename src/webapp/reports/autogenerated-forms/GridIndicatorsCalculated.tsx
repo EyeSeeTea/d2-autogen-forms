@@ -34,11 +34,11 @@ const GridIndicatorsCalculated: React.FC<GridIndicatorsCalculatedProps> = props 
     return (
         <DataTableSection section={grid} sectionStyles={props.section.styles} dataFormInfo={dataFormInfo}>
             {grid.tables.map(table => (
-                <DataTable key={table.rowName} className={classes.table}>
+                <DataTable key={table.rowName} className={classes.table} layout="fixed">
                     <TableHead>
                         <DataTableRow>
                             <CustomDataTableColumnHeader
-                                width="400px"
+                                width="200px"
                                 backgroundColor={props.section.styles.columns.backgroundColor}
                             ></CustomDataTableColumnHeader>
                             <CustomDataTableColumnHeader width="50px">{i18n.t("Period")}</CustomDataTableColumnHeader>
