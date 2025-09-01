@@ -63,10 +63,11 @@ export class GridIndicatorsCalculatedViewModel {
                     de => de.code === row.dataElementCode
                 );
                 if (!dataElement) return undefined;
+                const parsedSection = this.parseSections(row.rowName);
 
                 return {
-                    rowName: row.rowName ?? "",
-                    columnName: dataElement.name.split(separator)[0] ?? "",
+                    rowName: parsedSection?.rowName ?? "",
+                    columnName: parsedSection?.columnName ?? "",
                     dataElement: dataElement,
                 };
             })

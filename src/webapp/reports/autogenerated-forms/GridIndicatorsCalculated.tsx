@@ -41,10 +41,18 @@ const GridIndicatorsCalculated: React.FC<GridIndicatorsCalculatedProps> = props 
                                 width="200px"
                                 backgroundColor={props.section.styles.columns.backgroundColor}
                             ></CustomDataTableColumnHeader>
-                            <CustomDataTableColumnHeader width="50px">{i18n.t("Period")}</CustomDataTableColumnHeader>
+                            <CustomDataTableColumnHeader
+                                backgroundColor={props.section.styles.columns.backgroundColor}
+                                width="50px"
+                            >
+                                {i18n.t("Period")}
+                            </CustomDataTableColumnHeader>
                             {table.columns.map(column => {
                                 return (
-                                    <CustomDataTableColumnHeader key={column}>
+                                    <CustomDataTableColumnHeader
+                                        backgroundColor={props.section.styles.columns.backgroundColor}
+                                        key={column}
+                                    >
                                         {i18n.t(column)}
                                     </CustomDataTableColumnHeader>
                                 );
