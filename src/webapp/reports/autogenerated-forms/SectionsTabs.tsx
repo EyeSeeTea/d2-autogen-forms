@@ -8,6 +8,7 @@ import {
     SectionWithSubnationals,
     SectionSimple,
     SectionGrid,
+    SectionWithIndicatorsCalculated,
 } from "../../../domain/common/entities/DataForm";
 import TableForm from "./TableForm";
 import GridForm from "./GridForm";
@@ -24,6 +25,7 @@ import styled from "styled-components";
 import { IconButton } from "material-ui";
 import { ChevronLeft, ChevronRight } from "@material-ui/icons";
 import DisaggregatedCOCsGrid from "./DisaggregatedCOCsGrid";
+import GridIndicatorsCalculated from "./GridIndicatorsCalculated";
 
 export interface TabPanelProps {
     sections: Section[];
@@ -108,6 +110,14 @@ function TypeSwitch(props: TypeSwitchProps) {
                     key={`${section.id}+tab`}
                     dataFormInfo={dataFormInfo}
                     section={section as SectionWithSubnationals}
+                />
+            );
+        case "grid-indicators-calculated":
+            return (
+                <GridIndicatorsCalculated
+                    key={`${section.id}+tab`}
+                    dataFormInfo={dataFormInfo}
+                    section={section as SectionWithIndicatorsCalculated}
                 />
             );
         default:
