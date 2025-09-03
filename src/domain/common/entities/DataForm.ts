@@ -96,6 +96,8 @@ export interface SectionWithPeriods extends SectionBase {
 export interface SectionGrid extends SectionBase {
     viewType: "table" | "grid";
     fixedHeaders: boolean;
+    fixedRowNames: boolean;
+    enableGroups: boolean;
     calculateTotals: CalculateTotalType;
     columnsOrder: Maybe<ColumnOrder>;
 }

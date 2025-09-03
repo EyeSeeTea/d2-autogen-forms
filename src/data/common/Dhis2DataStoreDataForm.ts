@@ -68,6 +68,8 @@ interface GridSectionConfig extends BaseSectionConfig {
     viewType: "table" | "grid";
     calculateTotals: CalculateTotalType;
     columnsOrder: Maybe<ColumnOrder>;
+    fixedRowNames: boolean;
+    enableGroups: boolean;
 }
 
 interface GridWithPeriodsSectionConfig extends BaseSectionConfig {
@@ -79,6 +81,8 @@ interface GridWithTotalsSectionConfig extends BaseSectionConfig {
     viewType: "grid-with-totals";
     calculateTotals: CalculateTotalType;
     columnsOrder: Maybe<ColumnOrder>;
+    fixedRowNames: boolean;
+    enableGroups: boolean;
 }
 
 interface GridWithSubnationalSectionConfig extends BaseSectionConfig {
@@ -211,6 +215,8 @@ const DataStoreConfigCodec = Codec.interface({
             sectionConfig({
                 columnsOrder: optional(record(string, number)),
                 fixedHeaders: optional(boolean),
+                fixedRowNames: optional(boolean),
+                enableGroups: optional(boolean),
                 disableComments: optional(boolean),
                 subNationalDataset: optional(string),
                 sortRowsBy: optional(string),
@@ -617,6 +623,8 @@ export class Dhis2DataStoreDataForm {
                             viewType,
                             calculateTotals: sectionConfig.calculateTotals,
                             columnsOrder: sectionConfig.columnsOrder,
+                            fixedRowNames: sectionConfig.fixedRowNames || false,
+                            enableGroups: sectionConfig.enableGroups || false,
                         };
                         return [section.id, config] as [typeof section.id, typeof config];
                     }

@@ -161,6 +161,8 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                         ...base,
                         fixedHeaders: false,
                         columnsOrder: undefined,
+                        enableGroups: false,
+                        fixedRowNames: false,
                     };
 
                 const base2 = getSectionBaseWithToggle(config, base, dataElements);
@@ -175,6 +177,8 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                             viewType: config.viewType,
                             calculateTotals: config.calculateTotals,
                             columnsOrder: config.columnsOrder,
+                            fixedRowNames: config.fixedRowNames || false,
+                            enableGroups: config.enableGroups || false,
                             ...base2,
                         };
                     case "grid-with-subnational-ous":

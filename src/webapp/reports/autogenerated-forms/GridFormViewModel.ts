@@ -21,6 +21,10 @@ export interface Grid {
     titleVariant: titleVariant;
     summary: Summary[];
     indicators: Indicator[];
+    rowGroups: RowGroup[];
+    hasGroups: boolean;
+    groupInfo: Record<string, GroupInfo>;
+    subGroupInfo: Record<string, GroupInfo>;
 }
 
 interface SubSectionGrid {
@@ -34,11 +38,13 @@ interface Column {
     isSourceType: boolean;
 }
 
-interface Row {
+export interface Row {
     indicator: Maybe<Indicator>;
     includePadding: number;
     name: string;
     htmlText: string;
+    group: Maybe<string>;
+    subGroup: Maybe<string>;
     items: Array<{
         column: Column;
         columnTotal: Maybe<DataElement>;
@@ -57,10 +63,25 @@ type ColumnScoreInput = {
     priorityByCode: ColumnOrder;
 };
 
+type RowNameParts = {
+    group: Maybe<string>;
+    subGroup: Maybe<string>;
+    rowName: string;
+    columnName: string;
+};
+
+type RowGroup = {
+    group: Maybe<string>;
+    subGroup: Maybe<string>;
+    rows: Row[];
+};
+
 export class GridViewModel {
     static get(section: SectionGrid, dataFormInfo: DataFormInfo): Grid {
         const dataElementsConfig = dataFormInfo.metadata.dataForm.options.dataElements;
         const dataElements = getDataElementsWithIndexProccessing(section);
+
+        const groupsByRow = section.enableGroups ? GridViewModel.groupsByRowName(dataElements) : undefined;
 
         const subsections = _(dataElements)
             .groupBy(dataElement => getSubsectionName(dataElement))
@@ -142,12 +163,18 @@ export class GridViewModel {
 
             const firstItemWithHtmlText = _(itemsWithHtmlText).first() || "";
 
+            const lastPartSubSection = groupsByRow ? _(subsection.name).split(separator).last() ?? "" : undefined;
+            const groupMeta = lastPartSubSection && groupsByRow ? groupsByRow[lastPartSubSection] : undefined;
+            const rowName = groupsByRow ? lastPartSubSection ?? "" : subsection.name;
+
             return {
                 includePadding: 0,
                 indicator: indicator,
-                name: subsection.name,
+                name: rowName,
                 htmlText: firstItemWithHtmlText,
                 items: items,
+                group: groupMeta ? groupMeta.group : undefined,
+                subGroup: groupMeta ? groupMeta.subGroup : undefined,
             };
         });
 
@@ -190,6 +217,11 @@ export class GridViewModel {
             .compact()
             .value();
 
+        const rowGroups = GridViewModel.buildRowGroups(rows);
+
+        const groupInfo = this.buildGroupInfo(rows, "group");
+        const subGroupInfo = this.buildGroupInfo(rows, "subGroup");
+
         return {
             id: section.id,
             indicators:
@@ -209,7 +241,40 @@ export class GridViewModel {
                 const indicator = getIndicatorRelatedToDataElement(section.indicators, dataElement.code);
                 return { ...dataElement, indicator };
             }),
+            rowGroups,
+            hasGroups: section.enableGroups && rowGroups.length > 0,
+            groupInfo: groupInfo,
+            subGroupInfo: subGroupInfo,
         };
+    }
+
+    private static buildRowGroups(rows: Row[]): RowGroup[] {
+        const groupSeparator = "||";
+
+        const rowsWithGroup = rows.filter(row => row.group && row.subGroup);
+        if (rowsWithGroup.length === 0) return [];
+
+        return _(rowsWithGroup)
+            .groupBy(row => `${row.group}${groupSeparator}${row.subGroup}`)
+            .toPairs()
+            .map(([key, groupedRows]): Maybe<RowGroup> => {
+                const [group, subGroup] = key.split(groupSeparator);
+                if (!group || !subGroup) return undefined;
+                return { group: group, subGroup: subGroup, rows: groupedRows };
+            })
+            .compact()
+            .value();
+    }
+
+    private static groupsByRowName(
+        dataElements: DataElement[]
+    ): Record<string, { group: Maybe<string>; subGroup: Maybe<string> }> {
+        return _(dataElements)
+            .map(dataElement => this.parseNameParts(dataElement.name))
+            .filter(group => Boolean(group.rowName))
+            .keyBy(group => group.rowName)
+            .mapValues(item => ({ group: item.group, subGroup: item.subGroup }))
+            .value();
     }
 
     static getColumnWithDataElements(selectedDataElements: DataElement[], columnName: string): TotalItem[] {
@@ -243,15 +308,69 @@ export class GridViewModel {
         priorityByCode,
     }: ColumnScoreInput): number {
         const candidates = allDataElements.filter(de => {
-            const last = _.last(_.split(de.name, " - "));
+            const last = _.last(_.split(de.name, separator));
             return last === columnName;
         });
 
-        const scores = candidates.map(de => priorityByCode[de.code]).filter((v): v is number => typeof v === "number");
+        const scores = candidates.map(de => priorityByCode[de.code]);
 
         return scores.length > 0 ? (_.min(scores) as number) : Number.MAX_SAFE_INTEGER;
     }
+
+    private static parseNameParts(fullName: string): RowNameParts {
+        const parts = _(fullName)
+            .split(separator)
+            .map(s => s.trim())
+            .value();
+
+        // Supported Pattern
+        //  - [Row, Column]
+        //  - [Group, SubGroup, Row, Column]
+        if (parts.length === 4) {
+            const [group, subGroup, rowName, columnName] = parts;
+            return { group, subGroup: subGroup, rowName: rowName ?? "", columnName: columnName ?? "" };
+        }
+
+        if (parts.length === 2) {
+            const [rowName, columnName] = parts;
+            return { rowName: rowName ?? "", columnName: columnName ?? "", group: undefined, subGroup: undefined };
+        }
+
+        // Fallback to original pattern [Row - Column]
+        const rowName = parts.join(separator).trim();
+        return { rowName, columnName: "", group: undefined, subGroup: undefined };
+    }
+
+    private static buildGroupInfo(rows: Row[], propertyName: "group" | "subGroup"): Record<Row["name"], GroupInfo> {
+        const grouped = _(rows)
+            .groupBy(row => row[propertyName])
+            .value();
+
+        const spanByProperty = _(rows)
+            .groupBy(row => row[propertyName])
+            .map((item, key) => {
+                return [key, item.length];
+            })
+            .fromPairs()
+            .value();
+
+        return _(grouped)
+            .mapValues((items): GroupInfo => {
+                const first = items[0];
+                const groupName = first[propertyName] ?? "";
+                return {
+                    rowSpan: spanByProperty[groupName] ?? 0,
+                    rowName: first.name,
+                };
+            })
+            .value();
+    }
 }
+
+type GroupInfo = {
+    rowSpan: number;
+    rowName: string;
+};
 
 /** Move the data element index to the row name, so indexed data elements are automatically grouped 
 

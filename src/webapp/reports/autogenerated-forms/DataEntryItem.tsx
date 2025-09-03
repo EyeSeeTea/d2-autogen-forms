@@ -259,7 +259,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                         options={options.items}
                         onValueChange={notifyChange}
                         state={state}
-                        disabled={disabled}
+                        disabled={isDisabled || disabled}
                     />
                 );
             case "MULTI_TEXT":
@@ -269,7 +269,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                         options={options.items}
                         onValueChange={notifyChange}
                         state={state}
-                        disabled={disabled}
+                        disabled={isDisabled || disabled}
                     />
                 );
             case "TEXT":
@@ -281,7 +281,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                             options={options.items}
                             onValueChange={notifyChange}
                             state={state}
-                            disabled={disabled}
+                            disabled={isDisabled || disabled}
                             sourceTypeDEs={[]}
                             rows={rows}
                         />
@@ -293,7 +293,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                             options={options.items}
                             onValueChange={notifyChange}
                             state={state}
-                            disabled={disabled}
+                            disabled={isDisabled || disabled}
                         />
                     ) : (
                         <SingleComponent
@@ -301,7 +301,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                             options={options.items}
                             onValueChange={notifyChange}
                             state={state}
-                            disabled={disabled}
+                            disabled={isDisabled || disabled}
                         />
                     );
                 }
@@ -312,7 +312,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                         options={options.items}
                         onValueChange={notifyChange}
                         state={state}
-                        disabled={disabled}
+                        disabled={isDisabled || disabled}
                     />
                 ) : (
                     <SingleComponent
@@ -320,7 +320,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                         options={options.items}
                         onValueChange={notifyChange}
                         state={state}
-                        disabled={disabled}
+                        disabled={isDisabled || disabled}
                     />
                 );
             default:
