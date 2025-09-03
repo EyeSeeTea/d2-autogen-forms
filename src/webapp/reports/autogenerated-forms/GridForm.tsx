@@ -118,7 +118,6 @@ const GridForm: React.FC<GridFormProps> = props => {
                                 <CustomDataTableCell
                                     position={fixRows ? "sticky" : undefined}
                                     left={fixRows ? "162px" : undefined}
-                                    zIndex={fixRows ? 1 : undefined}
                                     backgroundColor={props.section.styles.rows.backgroundColor}
                                 >
                                     <DataTableCellRowName
@@ -210,7 +209,6 @@ const GridGroups: React.FC<{ grid: Grid; row: Row; backgroundColor: Maybe<string
             backgroundColor={backgroundColor}
             position={fixed ? "sticky" : undefined}
             left={fixed ? "0" : undefined}
-            zIndex={fixed ? 3 : undefined}
         >
             <DataTableCellRowName name={row.group} />
         </CustomDataTableCell>
@@ -233,7 +231,6 @@ const GridSubGroups: React.FC<{ grid: Grid; row: Row; backgroundColor: Maybe<str
             left={fixed ? "41px" : undefined}
             rowSpan={groupInfo.rowSpan.toString()}
             backgroundColor={backgroundColor}
-            zIndex={fixed ? 2 : undefined}
         >
             <DataTableCellRowName name={row.subGroup} />
         </CustomDataTableCell>
