@@ -56,8 +56,6 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
 
     const showRowTotals = props.section.showRowTotals;
 
-    const allColumnDataElements = grid.columns.flatMap(column => column.dataElements);
-
     return (
         <DataTableSection section={grid} dataFormInfo={dataFormInfo} sectionStyles={props.section.styles}>
             <DataTable className={classes.table} layout="fixed" width="initial">
