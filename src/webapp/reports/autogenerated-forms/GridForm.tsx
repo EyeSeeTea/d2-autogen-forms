@@ -54,8 +54,8 @@ const GridForm: React.FC<GridFormProps> = props => {
     return (
         <DataTableSection section={grid} sectionStyles={props.section.styles} dataFormInfo={dataFormInfo}>
             {section.enableTopScroll && (
-                <div style={{ overflowX: "scroll", overflowY: "hidden", height: "20px" }} ref={wrapper1Ref}>
-                    <div style={{ height: "20px", width: `${wrapper2Width}px` }}></div>
+                <div style={{ overflowX: "scroll", overflowY: "hidden", height: "11px" }} ref={wrapper1Ref}>
+                    <div style={{ height: "11px", width: `${wrapper2Width}px` }}></div>
                 </div>
             )}
 
@@ -67,9 +67,13 @@ const GridForm: React.FC<GridFormProps> = props => {
                                 <>
                                     <CustomDataTableColumnHeader
                                         backgroundColor={props.section.styles.columns.backgroundColor}
+                                        position={fixColumns ? "sticky" : undefined}
+                                        left={fixColumns ? "0" : undefined}
                                     ></CustomDataTableColumnHeader>
                                     <CustomDataTableColumnHeader
                                         backgroundColor={props.section.styles.columns.backgroundColor}
+                                        position={fixColumns ? "sticky" : undefined}
+                                        left={fixColumns ? "40px" : undefined}
                                     ></CustomDataTableColumnHeader>
                                 </>
                             )}
@@ -85,6 +89,8 @@ const GridForm: React.FC<GridFormProps> = props => {
                                     <CustomDataTableColumnHeader
                                         backgroundColor={props.section.styles.columns.backgroundColor}
                                         width="800px"
+                                        position={fixColumns ? "sticky" : undefined}
+                                        left={fixColumns ? "162px" : undefined}
                                     ></CustomDataTableColumnHeader>
                                 )
                             )}
@@ -128,6 +134,7 @@ const GridForm: React.FC<GridFormProps> = props => {
                                     position={fixRows ? "sticky" : undefined}
                                     left={fixRows ? "162px" : undefined}
                                     backgroundColor={props.section.styles.rows.backgroundColor}
+                                    zIndex={fixRows ? 2 : undefined}
                                 >
                                     <DataTableCellRowName
                                         html={row.htmlText}
@@ -218,6 +225,7 @@ const GridGroups: React.FC<{ grid: Grid; row: Row; backgroundColor: Maybe<string
             backgroundColor={backgroundColor}
             position={fixed ? "sticky" : undefined}
             left={fixed ? "0" : undefined}
+            zIndex={fixed ? 2 : undefined}
         >
             <DataTableCellRowName name={row.group} />
         </CustomDataTableCell>
@@ -240,6 +248,7 @@ const GridSubGroups: React.FC<{ grid: Grid; row: Row; backgroundColor: Maybe<str
             left={fixed ? "41px" : undefined}
             rowSpan={groupInfo.rowSpan.toString()}
             backgroundColor={backgroundColor}
+            zIndex={fixed ? 2 : undefined}
         >
             <DataTableCellRowName name={row.subGroup} />
         </CustomDataTableCell>
@@ -259,7 +268,7 @@ const useStyles = makeStyles({
     description: { fontWeight: "normal", fontSize: "0.8em" },
     table: { borderWidth: "3px !important" },
     columnWidth: { minWidth: "14.25em !important" },
-    tableHeader: { position: "sticky", top: 0, zIndex: 2 },
+    tableHeader: { position: "sticky", top: 0, left: 0, zIndex: 3 },
 });
 
 export default React.memo(GridForm);
