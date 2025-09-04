@@ -163,6 +163,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                         columnsOrder: undefined,
                         enableGroups: false,
                         fixedRowNames: false,
+                        enableTopScroll: false,
                     };
 
                 const base2 = getSectionBaseWithToggle(config, base, dataElements);
@@ -179,6 +180,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                             columnsOrder: config.columnsOrder,
                             fixedRowNames: config.fixedRowNames || false,
                             enableGroups: config.enableGroups || false,
+                            enableTopScroll: config.enableTopScroll || false,
                             ...base2,
                         };
                     case "grid-with-subnational-ous":

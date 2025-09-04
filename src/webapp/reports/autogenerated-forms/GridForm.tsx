@@ -18,6 +18,7 @@ import { DataTableCellRowName } from "./datatables/DataTableCellRowName";
 import _ from "lodash";
 import { RowIndicatorItem } from "../../components/IndicatorItem/IndicatorItem";
 import { Maybe } from "../../../utils/ts-utils";
+import { useSyncedScroll } from "./hooks/Scroll";
 
 /*
  * Convert data forms into table, using "-" as a separator. An example for section ITNs:
@@ -44,13 +45,21 @@ const GridForm: React.FC<GridFormProps> = props => {
     const grid = React.useMemo(() => GridViewModel.get(section, dataFormInfo), [section, dataFormInfo]);
     const classes = useStyles();
 
+    const { wrapper1Ref, wrapper2Ref, wrapper2Width } = useSyncedScroll({ enable: section.enableTopScroll });
+
     const fixColumns = section.fixedHeaders;
     const fixRows = section.fixedRowNames;
     const mainContentStyles = fixColumns ? fixHeaderClasses.fixedHeaders : {};
 
     return (
         <DataTableSection section={grid} sectionStyles={props.section.styles} dataFormInfo={dataFormInfo}>
-            <div style={mainContentStyles}>
+            {section.enableTopScroll && (
+                <div style={{ overflowX: "scroll", overflowY: "hidden", height: "20px" }} ref={wrapper1Ref}>
+                    <div style={{ height: "20px", width: `${wrapper2Width}px` }}></div>
+                </div>
+            )}
+
+            <div ref={wrapper2Ref} style={mainContentStyles}>
                 <DataTable className={classes.table}>
                     <TableHead className={fixColumns ? classes.tableHeader : ""}>
                         <DataTableRow>

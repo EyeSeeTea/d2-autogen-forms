@@ -70,6 +70,7 @@ interface GridSectionConfig extends BaseSectionConfig {
     columnsOrder: Maybe<ColumnOrder>;
     fixedRowNames: boolean;
     enableGroups: boolean;
+    enableTopScroll: boolean;
 }
 
 interface GridWithPeriodsSectionConfig extends BaseSectionConfig {
@@ -83,6 +84,7 @@ interface GridWithTotalsSectionConfig extends BaseSectionConfig {
     columnsOrder: Maybe<ColumnOrder>;
     fixedRowNames: boolean;
     enableGroups: boolean;
+    enableTopScroll: boolean;
 }
 
 interface GridWithSubnationalSectionConfig extends BaseSectionConfig {
@@ -217,6 +219,7 @@ const DataStoreConfigCodec = Codec.interface({
                 fixedHeaders: optional(boolean),
                 fixedRowNames: optional(boolean),
                 enableGroups: optional(boolean),
+                enableTopScroll: optional(boolean),
                 disableComments: optional(boolean),
                 subNationalDataset: optional(string),
                 sortRowsBy: optional(string),
@@ -625,6 +628,7 @@ export class Dhis2DataStoreDataForm {
                             columnsOrder: sectionConfig.columnsOrder,
                             fixedRowNames: sectionConfig.fixedRowNames || false,
                             enableGroups: sectionConfig.enableGroups || false,
+                            enableTopScroll: sectionConfig.enableTopScroll || false,
                         };
                         return [section.id, config] as [typeof section.id, typeof config];
                     }

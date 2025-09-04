@@ -98,6 +98,7 @@ export interface SectionGrid extends SectionBase {
     fixedHeaders: boolean;
     fixedRowNames: boolean;
     enableGroups: boolean;
+    enableTopScroll: boolean;
     calculateTotals: CalculateTotalType;
     columnsOrder: Maybe<ColumnOrder>;
 }
@@ -106,6 +107,7 @@ export interface SectionWithTotals extends SectionBase {
     viewType: "grid-with-totals";
     calculateTotals: CalculateTotalType;
     columnsOrder: Maybe<ColumnOrder>;
+    enableTopScroll: boolean;
 }
 
 export interface SectionWithSubnationals extends SectionBase {
