@@ -38,14 +38,22 @@ export const IndicatorFormulaCell: React.FC<IndicatorFormulaCellProps> = React.m
     const formulaWithValues = _(matcher)
         .map(match => {
             const operand = match.replace(/[#{}]/g, "");
-            const dataElementId = operand.substring(0, operand.indexOf(INDICATOR_SEPARATOR));
-            const cocId = operand.substring(operand.indexOf(INDICATOR_SEPARATOR) + 1, operand.length);
+            const notCombinationFound = !operand.includes(INDICATOR_SEPARATOR);
+
+            const dataElementId = notCombinationFound
+                ? operand
+                : operand.substring(0, operand.indexOf(INDICATOR_SEPARATOR));
+
+            const cocId = notCombinationFound
+                ? undefined
+                : operand.substring(operand.indexOf(INDICATOR_SEPARATOR) + 1, operand.length);
+
             const dataElement = dataFormInfo.metadata.dataForm.dataElements.find(
                 dataElement => dataElement.id === dataElementId
             );
             if (!dataElement) return undefined;
             const dataValue = dataFormInfo.data.values.get(dataElement, {
-                categoryOptionComboId: cocId,
+                categoryOptionComboId: cocId ?? dataElement.cocId ?? dataFormInfo.categoryOptionComboId,
                 orgUnitId: dataFormInfo.orgUnitId,
                 period: period,
             }) as DataValueNumberSingle;
