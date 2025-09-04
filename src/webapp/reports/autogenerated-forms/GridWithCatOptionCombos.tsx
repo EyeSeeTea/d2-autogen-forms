@@ -195,7 +195,6 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                                 colSpan="2"
                                 dataFormInfo={dataFormInfo}
                                 periods={[dataFormInfo.period]}
-                                dataElements={allColumnDataElements}
                             />
                         );
                     })}
