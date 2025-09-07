@@ -2,7 +2,7 @@ import { array, Codec, exactly, oneOf, record, string, GetType } from "purify-ts
 import { Code } from "../../domain/common/entities/Base";
 
 export const rulesFormulaCodec = record(
-    oneOf([exactly("visible")]),
+    oneOf([exactly("visible"), exactly("disabled")]),
     Codec.interface({
         formula: Codec.interface({ value: string, condition: string }),
         dataElements: array(Codec.interface({ code: string })),

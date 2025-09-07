@@ -25,6 +25,7 @@ import styled from "styled-components";
 import { IconButton } from "material-ui";
 import { ChevronLeft, ChevronRight } from "@material-ui/icons";
 import GridIndicatorsCalculated from "./GridIndicatorsCalculated";
+import { calculateFormula } from "./datatables/InputFormula";
 
 export interface TabPanelProps {
     sections: Section[];
@@ -236,7 +237,25 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
                 >
                     {sections.flatMap(section => {
                         const order = section.tabs.order;
+
                         if (isTabHeader(order)) {
+                            const visibleRule = section.tabs.rules?.visible;
+                            const dataElementCodes = visibleRule?.dataElements.map(de => de.code) || [];
+                            const value =
+                                visibleRule && dataElementCodes.length > 0
+                                    ? calculateFormula({
+                                          dataElementCodes: dataElementCodes,
+                                          dataFormInfo: dataFormInfo,
+                                          formula: visibleRule.formula.value,
+                                      })
+                                    : undefined;
+
+                            const isConditionMet = value === visibleRule?.formula.condition;
+
+                            if (visibleRule && !isConditionMet) {
+                                return null;
+                            }
+
                             return (
                                 <Tab
                                     key={section.id + "Tab"}

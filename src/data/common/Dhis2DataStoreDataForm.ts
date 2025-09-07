@@ -49,7 +49,7 @@ interface BaseSectionConfig {
         | { type: "none" }
         | { type: "dataElement"; code: Code }
         | { type: "dataElementExternal"; code: Code; condition: string | undefined };
-    tabs: { active: true; order: string | number } | { active: false };
+    tabs: { active: true; order: string | number; rules?: FromRulesFormulaCodec } | { active: false };
     sortRowsBy: string;
     titleVariant: titleVariant;
     styles: SectionStyleAttrs;
@@ -296,6 +296,7 @@ const DataStoreConfigCodec = Codec.interface({
                     Codec.interface({
                         active: exactly(true),
                         order: oneOf([string, number]),
+                        rules: optional(rulesFormulaCodec),
                     })
                 ),
                 periods: optional(

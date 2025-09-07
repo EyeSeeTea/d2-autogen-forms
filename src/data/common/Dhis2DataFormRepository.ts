@@ -109,7 +109,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                     texts: config?.texts || defaultTexts,
                     tabs:
                         config?.tabs && config.tabs.active
-                            ? { active: true, order: config.tabs.order.toString() }
+                            ? { active: true, order: config.tabs.order.toString(), rules: config.tabs.rules }
                             : { active: false },
                     sortRowsBy: config?.sortRowsBy || "",
                     disableComments: config?.disableComments ?? false,
