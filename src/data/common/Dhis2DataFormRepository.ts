@@ -164,6 +164,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                         enableGroups: false,
                         fixedRowNames: false,
                         enableTopScroll: false,
+                        columnsConfig: undefined,
                     };
 
                 const base2 = getSectionBaseWithToggle(config, base, dataElements);
@@ -174,6 +175,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                     case "table":
                     case "grid":
                     case "grid-with-totals":
+                        // const columns = this.getSectionColumnsRules(config);
                         return {
                             viewType: config.viewType,
                             calculateTotals: config.calculateTotals,
@@ -181,6 +183,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                             fixedRowNames: config.fixedRowNames || false,
                             enableGroups: config.enableGroups || false,
                             enableTopScroll: config.enableTopScroll || false,
+                            columnsConfig: config.columnsConfig,
                             ...base2,
                         };
                     case "grid-with-subnational-ous":

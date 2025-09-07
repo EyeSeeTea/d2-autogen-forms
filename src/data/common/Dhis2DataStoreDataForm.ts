@@ -11,6 +11,7 @@ import { titleVariant } from "../../domain/common/entities/TitleVariant";
 import { SectionStyle, SectionStyleAttrs } from "../../domain/common/entities/SectionStyle";
 import { DataElementRuleOptions, SectionRuleOptions } from "../../domain/common/entities/DataElementRule";
 import { ToggleMultiple } from "../../domain/common/entities/ToggleMultiple";
+import { FromRulesFormulaCodec, rulesFormulaCodec } from "./RulesFormula";
 
 interface DataSetConfig {
     texts: Texts;
@@ -72,6 +73,12 @@ interface GridSectionConfig extends BaseSectionConfig {
     fixedRowNames: boolean;
     enableGroups: boolean;
     enableTopScroll: boolean;
+    columnsConfig?: Record<
+        string,
+        {
+            rules?: FromRulesFormulaCodec;
+        }
+    >;
 }
 
 interface GridWithPeriodsSectionConfig extends BaseSectionConfig {
@@ -86,6 +93,7 @@ interface GridWithTotalsSectionConfig extends BaseSectionConfig {
     fixedRowNames: boolean;
     enableGroups: boolean;
     enableTopScroll: boolean;
+    columnsConfig?: GridColumnsConfig;
 }
 
 interface GridIndicatorsCalculated extends BaseSectionConfig {
@@ -109,6 +117,8 @@ export type GridIndicatorsCalculatedRow = {
         formula: { value: string };
     }>;
 };
+
+type GridColumnsConfig = Record<string, { rules?: FromRulesFormulaCodec }>;
 
 interface GridWithSubnationalSectionConfig extends BaseSectionConfig {
     viewType: "grid-with-subnational-ous";
@@ -260,6 +270,7 @@ const DataStoreConfigCodec = Codec.interface({
         texts: optional(textsCodec),
         sections: optional(
             sectionConfig({
+                columnsConfig: optional(record(string, Codec.interface({ rules: optional(rulesFormulaCodec) }))),
                 columnsOrder: optional(record(string, number)),
                 fixedHeaders: optional(boolean),
                 fixedRowNames: optional(boolean),
@@ -763,6 +774,7 @@ export class Dhis2DataStoreDataForm {
                             fixedRowNames: sectionConfig.fixedRowNames || false,
                             enableGroups: sectionConfig.enableGroups || false,
                             enableTopScroll: sectionConfig.enableTopScroll || false,
+                            columnsConfig: sectionConfig.columnsConfig,
                         };
                         return [section.id, config] as [typeof section.id, typeof config];
                     }
@@ -772,6 +784,7 @@ export class Dhis2DataStoreDataForm {
                             viewType,
                             calculateTotals: sectionConfig.calculateTotals,
                             subNationalDataset: sectionConfig.subNationalDataset || "",
+                            columns: undefined,
                         };
                         return [section.id, config] as [typeof section.id, typeof config];
                     }

@@ -95,78 +95,87 @@ const GridForm: React.FC<GridFormProps> = props => {
                                 )
                             )}
 
-                            {grid.columns.map(column => (
-                                <CustomDataTableColumnHeader
-                                    backgroundColor={props.section.styles.columns.backgroundColor}
-                                    className={classes.columnWidth}
-                                    key={`column-${column.name}`}
-                                >
-                                    <div className={classes.header}>
-                                        <span>{column.name}</span>
-                                        <span
-                                            className={classes.description}
-                                            dangerouslySetInnerHTML={{ __html: column.description || "" }}
-                                        ></span>
-                                    </div>
-                                </CustomDataTableColumnHeader>
-                            ))}
+                            {grid.columns.map(column => {
+                                if (!column.isVisible) {
+                                    return null;
+                                }
+                                return (
+                                    <CustomDataTableColumnHeader
+                                        backgroundColor={props.section.styles.columns.backgroundColor}
+                                        className={classes.columnWidth}
+                                        key={`column-${column.name}`}
+                                    >
+                                        <div className={classes.header}>
+                                            <span>{column.name}</span>
+                                            <span
+                                                className={classes.description}
+                                                dangerouslySetInnerHTML={{ __html: column.description || "" }}
+                                            ></span>
+                                        </div>
+                                    </CustomDataTableColumnHeader>
+                                );
+                            })}
                         </DataTableRow>
                     </TableHead>
 
                     <TableBody>
-                        {grid.rows.map((row, idx) => (
-                            <DataTableRow key={row.name}>
-                                <GridGroups
-                                    grid={grid}
-                                    row={row}
-                                    backgroundColor={props.section.styles.rows.backgroundColor}
-                                    fixed={fixRows}
-                                />
-
-                                <GridSubGroups
-                                    grid={grid}
-                                    row={row}
-                                    backgroundColor={props.section.styles.rows.backgroundColor}
-                                    fixed={fixRows}
-                                />
-
-                                <CustomDataTableCell
-                                    position={fixRows ? "sticky" : undefined}
-                                    left={fixRows ? "162px" : undefined}
-                                    backgroundColor={props.section.styles.rows.backgroundColor}
-                                    zIndex={fixRows ? 2 : undefined}
-                                >
-                                    <DataTableCellRowName
-                                        html={row.htmlText}
-                                        name={grid.useIndexes ? (idx + 1).toString() : row.name}
+                        {grid.rows.map((row, idx) => {
+                            return (
+                                <DataTableRow key={`row.name-${row.name}`}>
+                                    <GridGroups
+                                        grid={grid}
+                                        row={row}
+                                        backgroundColor={props.section.styles.rows.backgroundColor}
+                                        fixed={fixRows}
                                     />
-                                </CustomDataTableCell>
 
-                                {row.items.map((item, idx) =>
-                                    item.dataElement ? (
-                                        <CustomDataTableCell
-                                            backgroundColor={props.section.styles.rows.backgroundColor}
-                                            key={item.dataElement.id}
-                                        >
-                                            <DataElementItem
-                                                columnTotal={item.columnTotal}
-                                                columnDataElements={item.columnDataElements}
-                                                manualyDisabled={item.disabled}
-                                                noComment={item.disableComments}
-                                                dataElement={item.dataElement}
-                                                dataFormInfo={dataFormInfo}
-                                                rows={grid.rows}
-                                            />
-                                        </CustomDataTableCell>
-                                    ) : (
-                                        <CustomDataTableCell
-                                            backgroundColor={props.section.styles.rows.backgroundColor}
-                                            key={`cell-${idx}`}
-                                        ></CustomDataTableCell>
-                                    )
-                                )}
-                            </DataTableRow>
-                        ))}
+                                    <GridSubGroups
+                                        grid={grid}
+                                        row={row}
+                                        backgroundColor={props.section.styles.rows.backgroundColor}
+                                        fixed={fixRows}
+                                    />
+
+                                    <CustomDataTableCell
+                                        position={fixRows ? "sticky" : undefined}
+                                        left={fixRows ? "162px" : undefined}
+                                        backgroundColor={props.section.styles.rows.backgroundColor}
+                                        zIndex={fixRows ? 2 : undefined}
+                                    >
+                                        <DataTableCellRowName
+                                            html={row.htmlText}
+                                            name={grid.useIndexes ? (idx + 1).toString() : row.name}
+                                        />
+                                    </CustomDataTableCell>
+
+                                    {row.items.map((item, idx) => {
+                                        if (!item.isVisible) return null;
+
+                                        return item.dataElement ? (
+                                            <CustomDataTableCell
+                                                backgroundColor={props.section.styles.rows.backgroundColor}
+                                                key={item.dataElement.id}
+                                            >
+                                                <DataElementItem
+                                                    columnTotal={item.columnTotal}
+                                                    columnDataElements={item.columnDataElements}
+                                                    manualyDisabled={item.disabled}
+                                                    noComment={item.disableComments}
+                                                    dataElement={item.dataElement}
+                                                    dataFormInfo={dataFormInfo}
+                                                    rows={grid.rows}
+                                                />
+                                            </CustomDataTableCell>
+                                        ) : (
+                                            <CustomDataTableCell
+                                                backgroundColor={props.section.styles.rows.backgroundColor}
+                                                key={`cell-${idx}`}
+                                            ></CustomDataTableCell>
+                                        );
+                                    })}
+                                </DataTableRow>
+                            );
+                        })}
                         {grid.summary.map(summary => (
                             <DataTableRow key={`total-custom-row-${summary.cellName}`}>
                                 <CustomDataTableCell

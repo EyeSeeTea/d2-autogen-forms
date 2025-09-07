@@ -15,7 +15,16 @@ export type InputFormulaProps = {
 const EMPTY_VALUE = "";
 
 export const InputFormula: React.FC<InputFormulaProps> = props => {
-    const { dataFormInfo, formula, dataElementCodes, period } = props;
+    const formulaValue = calculateFormula(props);
+
+    const isNaN = window.isNaN(Number(formulaValue));
+    const value = !isNaN ? formulaValue : "";
+
+    return <CustomInput value={value} disabled readOnly />;
+};
+
+export function calculateFormula(options: InputFormulaProps): string {
+    const { dataFormInfo, formula, dataElementCodes, period } = options;
 
     const objWithValues = _(dataElementCodes)
         .map(dataElementCode => {
@@ -56,12 +65,9 @@ export const InputFormula: React.FC<InputFormulaProps> = props => {
     const compiled = _.template(formula, {
         imports: defaultHelpers,
     });
-    const totalValue = compiled(_.merge({}, objWithValues));
-
-    const isNaN = window.isNaN(Number(totalValue));
-
-    return <CustomInput value={!isNaN ? totalValue : ""} disabled readOnly />;
-};
+    const value = compiled(_.merge({}, objWithValues));
+    return value;
+}
 
 type Flag = string | number | null | undefined;
 

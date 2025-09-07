@@ -14,6 +14,7 @@ import { SectionStyle } from "./SectionStyle";
 import { titleVariant } from "./TitleVariant";
 import { DataElementToggle } from "./ToggleMultiple";
 import { DataElementRuleOptions, TotalRules } from "./DataElementRule";
+import { RulesFormula } from "../../../data/common/RulesFormula";
 
 export interface DataForm {
     id: Id;
@@ -107,6 +108,7 @@ export interface SectionGrid extends SectionBase {
     enableTopScroll: boolean;
     calculateTotals: CalculateTotalType;
     columnsOrder: Maybe<ColumnOrder>;
+    columnsConfig?: Record<string, { rules?: RulesFormula }>;
 }
 
 export interface SectionWithTotals extends SectionBase {
