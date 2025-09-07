@@ -73,8 +73,10 @@ const DataTableSection: React.FC<DataTableProps> = React.memo(props => {
 
     return (
         <div className={classes.wrapper}>
-            <div style={{ color: sectionStyles?.title.color, backgroundColor: sectionStyles?.title.backgroundColor }}>
-                <h3 className={titleStyle}>{section.name}</h3>
+            <div style={{ backgroundColor: sectionStyles?.title.backgroundColor }}>
+                <h3 style={{ color: sectionStyles?.title.color }} className={titleStyle}>
+                    {section.name}
+                </h3>
             </div>
 
             <Html backgroundColor={sectionStyles?.title.backgroundColor} content={section.texts.header} />
