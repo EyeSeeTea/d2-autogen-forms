@@ -186,7 +186,12 @@ export function applyNumericComparison(rule: { condition: string }, value: Value
         case "!==":
             return numericalValue !== numericalComparisonValue;
         default:
-            throw new Error(`Unsupported operator: ${operator}`);
+            console.warn(
+                `Unsupported operator: ${operator}. Using fallback comparison [condition === String(value)]: ${
+                    rule.condition
+                } === ${String(value)}`
+            );
+            return rule.condition === String(value);
     }
 }
 

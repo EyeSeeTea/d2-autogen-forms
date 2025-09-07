@@ -22,7 +22,8 @@ export type SectionConfig =
     | GridSectionConfig
     | GridWithPeriodsSectionConfig
     | GridWithTotalsSectionConfig
-    | GridWithSubnationalSectionConfig;
+    | GridWithSubnationalSectionConfig
+    | GridIndicatorsCalculated;
 
 export type TotalsRule = (
     | {
@@ -87,6 +88,28 @@ interface GridWithTotalsSectionConfig extends BaseSectionConfig {
     enableTopScroll: boolean;
 }
 
+interface GridIndicatorsCalculated extends BaseSectionConfig {
+    viewType: "grid-indicators-calculated";
+    periods: string[];
+    rows: GridIndicatorsCalculatedRow[];
+    virtualRows: VirtualRow[];
+    virtualColumns: (VirtualColumnDataElement | VirtualColumnCalculated)[];
+}
+
+type VirtualRow = {
+    rowConstantCode: string;
+    dataElementCode: string;
+};
+
+export type GridIndicatorsCalculatedRow = {
+    code: Code;
+    denominator: Maybe<{ text: { code: Code }; dataElementCode: Code }>;
+    value: Maybe<{
+        dataElementCodes: Code[];
+        formula: { value: string };
+    }>;
+};
+
 interface GridWithSubnationalSectionConfig extends BaseSectionConfig {
     viewType: "grid-with-subnational-ous";
     calculateTotals: CalculateTotalType;
@@ -99,6 +122,27 @@ export type CalculateTotalConfig = {
 };
 
 export type CalculateTotalType = Record<string, CalculateTotalConfig | undefined> | undefined;
+
+type D2BaseVirtualColumn = {
+    dataElementCode: string;
+    position: number;
+    texts?: {
+        columnNameCode: string;
+    };
+};
+
+type VirtualColumnDataElement = D2BaseVirtualColumn & {
+    type: "dataElement";
+    dataElementRefValue: string;
+};
+
+type VirtualColumnCalculated = D2BaseVirtualColumn & {
+    type: "calculated";
+    formula: {
+        dataElementCodes: string[];
+        value: string;
+    };
+};
 
 const defaultViewType = "table";
 
@@ -113,6 +157,7 @@ const viewType = oneOf([
     exactly("matrix-grid"),
     exactly("grid-with-periods"),
     exactly("grid-with-subnational-ous"),
+    exactly("grid-indicators-calculated"),
 ]);
 
 const titleVariantType = oneOf([
@@ -282,6 +327,67 @@ const DataStoreConfigCodec = Codec.interface({
                         ),
                     })
                 ),
+                virtualColumns: optional(
+                    array(
+                        oneOf([
+                            Codec.interface({
+                                type: exactly("dataElement"),
+                                dataElementCode: string,
+                                dataElementRefValue: string,
+                                position: number,
+                                texts: optional(
+                                    Codec.interface({
+                                        columnNameCode: string,
+                                    })
+                                ),
+                            }),
+                            Codec.interface({
+                                type: exactly("calculated"),
+                                dataElementCode: string,
+                                position: number,
+                                texts: optional(
+                                    Codec.interface({
+                                        columnNameCode: string,
+                                    })
+                                ),
+                                formula: optional(
+                                    Codec.interface({
+                                        value: string,
+                                        dataElementCodes: array(string),
+                                    })
+                                ),
+                            }),
+                        ])
+                    )
+                ),
+                virtualRows: optional(
+                    array(
+                        Codec.interface({
+                            rowConstantCode: string,
+                            dataElementCode: string,
+                        })
+                    )
+                ),
+                rows: optional(
+                    array(
+                        Codec.interface({
+                            code: string,
+                            denominator: optional(
+                                Codec.interface({
+                                    dataElementCode: string,
+                                })
+                            ),
+                            value: optional(
+                                Codec.interface({
+                                    dataElementCodes: array(string),
+                                    formula: Codec.interface({
+                                        value: string,
+                                    }),
+                                })
+                            ),
+                        })
+                    )
+                ),
             })
         ),
     }),
@@ -354,11 +460,13 @@ export class Dhis2DataStoreDataForm {
     public dataElementsConfig: Record<Code, DataElementConfig>;
     public categoryCombinationsConfig: Record<Code, CategoryCombinationConfig>;
     public subNationals: SubNational[];
+    public constants: Constant[];
 
     constructor(private config: DataFormStoreConfig) {
         this.dataElementsConfig = this.getDataElementsConfig();
         this.categoryCombinationsConfig = config.custom.categoryCombinations;
         this.subNationals = config.subNationals;
+        this.constants = config.constants;
     }
 
     static async build(api: D2Api, dataSetCode?: string): Promise<Dhis2DataStoreDataForm> {
@@ -490,6 +598,30 @@ export class Dhis2DataStoreDataForm {
             .compact()
             .value();
 
+        const virtualColumnsCodes = _(storeConfig.dataSets)
+            .values()
+            .flatMap(dataSet => _.values(dataSet.sections))
+            .flatMap(section => {
+                if (!section.virtualColumns) return [];
+
+                return section.virtualColumns.map(vc => vc.texts?.columnNameCode);
+            })
+            .compact()
+            .value();
+
+        const virtualRowsCodes = _(storeConfig.dataSets)
+            .values()
+            .flatMap(dataSet => _.values(dataSet.sections))
+            .flatMap(section => {
+                if (!section.virtualRows) return [];
+
+                return section.virtualRows.map(vc => vc.rowConstantCode);
+            })
+            .compact()
+            .value();
+
+        const virtualCodes = virtualColumnsCodes.concat(virtualRowsCodes);
+
         const codes = _([...dataSetTexts, ...dataElementTexts, ...sectionTexts])
             .flatMap(t => [
                 typeof t.header !== "string" ? t.header : undefined,
@@ -504,13 +636,15 @@ export class Dhis2DataStoreDataForm {
             .uniq()
             .value();
 
-        if (_.isEmpty(codes)) return [];
+        const totalConstants = codes.length + virtualCodes.length;
+
+        if (totalConstants === 0) return [];
 
         const res = await api.metadata
             .get({
                 constants: {
                     fields: { id: true, code: true, displayDescription: true },
-                    filter: { code: { in: codes } },
+                    filter: { code: { in: [...codes, ...virtualCodes] } },
                 },
             })
             .getData();
@@ -640,6 +774,17 @@ export class Dhis2DataStoreDataForm {
                             subNationalDataset: sectionConfig.subNationalDataset || "",
                         };
                         return [section.id, config] as [typeof section.id, typeof config];
+                    }
+                    case "grid-indicators-calculated": {
+                        const config = {
+                            ...baseConfig,
+                            periods: getPeriods(period, sectionConfig.periods),
+                            rows: sectionConfig.rows ?? [],
+                            virtualColumns: sectionConfig.virtualColumns ?? [],
+                            virtualRows: sectionConfig.virtualRows ?? [],
+                            viewType,
+                        };
+                        return [section.id, config];
                     }
                     default: {
                         const config = { ...baseConfig, viewType };

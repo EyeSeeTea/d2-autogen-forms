@@ -3,6 +3,7 @@ import { Code, Id } from "./Base";
 
 export type Indicator = {
     id: Id;
+    name: string;
     code: string;
     description: string;
     formula: string;

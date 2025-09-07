@@ -195,7 +195,23 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                                 : [],
                             ...base2,
                         };
-
+                    case "grid-indicators-calculated":
+                        return {
+                            viewType: config.viewType,
+                            periods: config.periods,
+                            rows: config.rows,
+                            virtualColumns: config.virtualColumns.map(vc => {
+                                const constant = configDataForm.constants.find(
+                                    c => c.code === vc.texts?.columnNameCode
+                                );
+                                return { ...vc, columnName: constant?.displayDescription ?? "" };
+                            }),
+                            virtualRows: config.virtualRows.map(vc => {
+                                const constant = configDataForm.constants.find(c => c.code === vc.rowConstantCode);
+                                return { ...vc, rowName: constant?.displayDescription ?? "" };
+                            }),
+                            ...base2,
+                        };
                     default:
                         return { viewType: config.viewType, ...base2 };
                 }
@@ -463,6 +479,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
         return d2Indicators.map(d2Indicator => {
             return {
                 id: d2Indicator.id,
+                name: d2Indicator.displayName,
                 code: d2Indicator.code,
                 description: d2Indicator.displayDescription,
                 formula: `((${d2Indicator.numerator})/(${d2Indicator.denominator}))*${d2Indicator.indicatorType.factor}`,
@@ -565,6 +582,7 @@ function getSectionBaseWithToggle(
 const indicatorsFields = {
     id: true,
     code: true,
+    displayName: true,
     displayDescription: true,
     numerator: true,
     denominator: true,
@@ -575,6 +593,7 @@ type BasicDataElement = Pick<DataElement, "id" | "code">;
 
 type D2Indicator = {
     id: string;
+    displayName: string;
     code: string;
     displayDescription: string;
     numerator: string;
