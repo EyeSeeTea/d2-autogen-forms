@@ -380,26 +380,6 @@ const DataStoreConfigCodec = Codec.interface({
                         })
                     )
                 ),
-                rows: optional(
-                    array(
-                        Codec.interface({
-                            code: string,
-                            denominator: optional(
-                                Codec.interface({
-                                    dataElementCode: string,
-                                })
-                            ),
-                            value: optional(
-                                Codec.interface({
-                                    dataElementCodes: array(string),
-                                    formula: Codec.interface({
-                                        value: string,
-                                    }),
-                                })
-                            ),
-                        })
-                    )
-                ),
             })
         ),
     }),
@@ -793,7 +773,6 @@ export class Dhis2DataStoreDataForm {
                         const config = {
                             ...baseConfig,
                             periods: getPeriods(period, sectionConfig.periods),
-                            rows: sectionConfig.rows ?? [],
                             virtualColumns: sectionConfig.virtualColumns ?? [],
                             virtualRows: sectionConfig.virtualRows ?? [],
                             viewType,
