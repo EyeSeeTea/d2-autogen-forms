@@ -54,7 +54,38 @@ export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props 
 
     const onDoubleClick = () => {
         if (!isDev) {
-            window.viewHist(dataElement.id, dataElementCocId);
+            const dhis2: any = (window as any).dhis2;
+            const de = dhis2 && dhis2.de;
+            const hasGetSelected = de && typeof de.getSelectedPeriod === "function";
+            const originalGetSelectedPeriod = hasGetSelected ? de.getSelectedPeriod : undefined;
+            const periodInput = window.document.getElementById("selectedPeriodId") as HTMLInputElement | null;
+            const previousDomValue = periodInput ? periodInput.value : undefined;
+
+            try {
+                if (de && period) {
+                    if (hasGetSelected) de.getSelectedPeriod = () => ({ iso: period });
+                    de.currentPeriod = period;
+                    de.currentPeriodId = period;
+                    de.currentPeriodIso = period;
+                    if (typeof de.setSelectedPeriod === "function") {
+                        try {
+                            de.setSelectedPeriod({ iso: period });
+                        } catch (_) {
+                            // ignore
+                        }
+                    }
+                    if (periodInput) periodInput.value = period;
+                }
+                window.viewHist(dataElement.id, dataElementCocId);
+            } finally {
+                try {
+                    if (de && hasGetSelected && originalGetSelectedPeriod)
+                        de.getSelectedPeriod = originalGetSelectedPeriod;
+                    if (periodInput && typeof previousDomValue !== "undefined") periodInput.value = previousDomValue;
+                } catch (_) {
+                    // noop
+                }
+            }
         }
     };
 
@@ -97,7 +128,11 @@ export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props 
                     rows={rows}
                 />
             </div>
-            <CommentIcon dataElementId={dataElement.id} categoryOptionComboId={dataElementCocId} />
+            <CommentIcon
+                dataElementId={dataElement.id}
+                categoryOptionComboId={dataElementCocId}
+                period={period}
+            />
         </div>
     ) : (
         <div id={elId} className={classes.valueWrapper}>
