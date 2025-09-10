@@ -68,15 +68,15 @@ window.refreshChart = function refreshChart() {
 
     var source =
         "../api/visualizations/history/data.png?de=" +
-        currentDataElementId +
+        encodeURIComponent(currentDataElementId) +
         "&co=" +
-        currentOptionComboId +
+        encodeURIComponent(currentOptionComboId) +
         "&cp=" +
-        currentAttributeOptionComboId +
+        encodeURIComponent(currentAttributeOptionComboId) +
         "&pe=" +
-        periodId +
+        encodeURIComponent(periodId) +
         "&ou=" +
-        dhis2.de.currentOrganisationUnitId +
+        encodeURIComponent(dhis2.de.currentOrganisationUnitId) +
         "&r=" +
         Math.random();
 
