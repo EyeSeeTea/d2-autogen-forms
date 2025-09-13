@@ -154,7 +154,7 @@ const GridWithCategoryColumns: React.FC<GridWithCategoryColumnsProps> = props =>
                                         backgroundColor={section.styles.rows.backgroundColor}
                                         className={classes.centerSpan}
                                     >
-                                        <CustomInput defaultValue={total} disabled />
+                                        <CustomInput value={total} disabled />
                                     </CustomDataTableCell>
                                 ))}
                             </DataTableRow>
