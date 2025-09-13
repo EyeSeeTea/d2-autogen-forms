@@ -221,6 +221,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                             viewType: config.viewType,
                             showCalculatedTotals: config.showCalculatedTotals,
                             categoriesColumns: config.categoriesColumns,
+                            rowsConfig: config.rowsConfig ?? undefined,
                         };
                     default:
                         return { viewType: config.viewType, ...base2 };

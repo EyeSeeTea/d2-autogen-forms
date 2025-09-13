@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { Section, Texts } from "../../../domain/common/entities/DataForm";
+import { Section, SectionWithCategoryColumns, Texts } from "../../../domain/common/entities/DataForm";
 import { DataElement } from "../../../domain/common/entities/DataElement";
 import { makeCocOrderArray } from "../../../data/common/Dhis2DataElement";
 import { Maybe } from "../../../utils/ts-utils";
@@ -28,7 +28,9 @@ interface Column {
 }
 
 interface Row {
+    id: string;
     name: string;
+    cellsVisible: boolean;
     items: Array<{ dataElement: Maybe<DataElement> }>;
 }
 
@@ -39,32 +41,31 @@ type ParentColumn = {
 
 const separator = " - ";
 
-const categoriesColumnsConfig: { dataElementCode: string; categoryCode: string }[] = [];
-
 export class GridWithCategoryColumnsViewModel {
-    static get(section: Section, dataFormInfo: DataFormInfo): Grid {
+    static get(section: SectionWithCategoryColumns, dataFormInfo: DataFormInfo): Grid {
         const { parentColumns, columns } = this.getColumns(section);
-        const rows = this.buildRows(section.dataElements);
-
-        const sortedRows = section.sortRowsBy ? this.sortRows(rows, section.sortRowsBy as "name") : rows;
+        const rows = this.buildRows(section);
 
         return {
             id: section.id,
             name: section.name,
             columns: columns,
-            rows: sortedRows,
+            rows: rows,
             toggle: section.toggle,
             texts: section.texts,
             useIndexes: false,
             parentColumns: parentColumns.length === columns.length ? [] : parentColumns,
             toggleMultiple: section.toggleMultiple,
-            calculateTotals: this.calculateTotals(sortedRows, dataFormInfo),
+            calculateTotals: this.calculateTotals(rows, dataFormInfo),
         };
     }
 
-    private static getColumns(section: Section): { columns: Column[]; parentColumns: ParentColumn[] } {
+    private static getColumns(section: SectionWithCategoryColumns): {
+        columns: Column[];
+        parentColumns: ParentColumn[];
+    } {
         const columns = section.dataElements.map((dataElement): Column => {
-            const category = this.categoryColumn(dataElement);
+            const category = this.categoryColumn(dataElement, section.categoriesColumns);
 
             const columnName = _(dataElement.name).split(separator).last() || "";
             const parentColumnName = _(dataElement.name).split(separator).first() || "";
@@ -92,10 +93,15 @@ export class GridWithCategoryColumnsViewModel {
         return { columns: columns, parentColumns: parentColumns };
     }
 
-    private static buildRows(dataElements: DataElement[]): Row[] {
+    private static buildRows(section: SectionWithCategoryColumns): Row[] {
+        const { dataElements, categoriesColumns } = section;
         const items = dataElements.flatMap(dataElement => {
-            const category = this.categoryColumn(dataElement);
+            const allOptions = _(dataElement.categoryCombos.categories)
+                .flatMap(c => c.categoryOptions.flatMap(co => co))
+                .keyBy(x => x.name)
+                .value();
 
+            const category = this.categoryColumn(dataElement, categoriesColumns);
             // Options for the category used for columns
             const columnOptions = category?.categoryOptions.map(co => co.name) ?? [];
 
@@ -109,7 +115,10 @@ export class GridWithCategoryColumnsViewModel {
             if (combinations.length === 0) return [];
 
             const dataElementsWithCocId = columnOptions.flatMap(columnOption => {
+                const columnOptionCode = allOptions[columnOption]?.code;
+
                 return combinations.map(combination => {
+                    const combinationOptionCode = allOptions[combination]?.code;
                     const cocName = [columnOption].concat(combination).join(", ");
                     const cocDetails = dataElement.categoryCombos.categoryOptionCombos.find(
                         coc => coc.name === cocName
@@ -123,10 +132,11 @@ export class GridWithCategoryColumnsViewModel {
 
                     return {
                         ...dataElement,
-                        // passing an invalid string to avoid DataEntry using the default coc
-                        cocId: cocDetails?.id ?? "<invalid-coc-id>",
+                        cocId: cocDetails?.id,
                         fullName: dataElement.name,
                         cocName: combination,
+                        disabled: !cocDetails,
+                        cocCodes: _([columnOptionCode, combinationOptionCode]).compact().value(),
                     };
                 });
             });
@@ -135,11 +145,28 @@ export class GridWithCategoryColumnsViewModel {
 
         return _(items)
             .groupBy(item => item.cocName)
-            .map((group, name) => ({ name, items: group.map(de => ({ dataElement: de })) }))
+            .map((group, name): Row => {
+                const id = _(group)
+                    .flatMap(x => x.cocCodes)
+                    .uniq()
+                    .join("-");
+
+                const rowConfig = section.rowsConfig?.[id];
+
+                return {
+                    id: id,
+                    name,
+                    cellsVisible: rowConfig?.cellsVisible ?? true,
+                    items: group.map(de => ({ dataElement: de })),
+                };
+            })
             .value();
     }
 
-    private static categoryColumn(dataElement: DataElement) {
+    private static categoryColumn(
+        dataElement: DataElement,
+        categoriesColumnsConfig: SectionWithCategoryColumns["categoriesColumns"]
+    ) {
         const categoryColumnConfig = categoriesColumnsConfig.find(
             config => config.dataElementCode === dataElement.code
         );

@@ -10,6 +10,7 @@ import {
     CategoryColumnConfig,
     ColumnOrder,
     DescriptionText,
+    RowConfig,
     Texts,
     Totals,
 } from "../../domain/common/entities/DataForm";
@@ -131,6 +132,7 @@ interface GridCategoryColumnsConfig extends BaseSectionConfig {
     viewType: "grid-category-columns";
     showCalculatedTotals: boolean;
     categoriesColumns: CategoryColumnConfig[];
+    rowsConfig: Maybe<RowConfig>;
 }
 
 interface GridWithSubnationalSectionConfig extends BaseSectionConfig {
@@ -284,6 +286,7 @@ const DataStoreConfigCodec = Codec.interface({
         texts: optional(textsCodec),
         sections: optional(
             sectionConfig({
+                rowsConfig: optional(record(string, Codec.interface({ cellsVisible: boolean }))),
                 showCalculatedTotals: optional(boolean),
                 categoriesColumns: optional(array(Codec.interface({ dataElementCode: string, categoryCode: string }))),
                 columnsConfig: optional(record(string, Codec.interface({ rules: optional(rulesFormulaCodec) }))),
@@ -801,6 +804,7 @@ export class Dhis2DataStoreDataForm {
                             viewType,
                             categoriesColumns: sectionConfig.categoriesColumns || [],
                             showCalculatedTotals: sectionConfig.showCalculatedTotals || false,
+                            rowsConfig: sectionConfig.rowsConfig,
                         };
                         return [section.id, config] as [typeof section.id, typeof config];
                     }

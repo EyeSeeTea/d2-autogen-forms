@@ -137,7 +137,10 @@ export interface SectionWithCategoryColumns extends SectionBase {
     viewType: "grid-category-columns";
     categoriesColumns: CategoryColumnConfig[];
     showCalculatedTotals: boolean;
+    rowsConfig: Maybe<RowConfig>;
 }
+
+export type RowConfig = Record<string, { cellsVisible: boolean }>;
 
 export type CategoryColumnConfig = { dataElementCode: Code; categoryCode: Code };
 

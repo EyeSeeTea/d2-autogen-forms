@@ -109,7 +109,7 @@ const GridWithCategoryColumns: React.FC<GridWithCategoryColumnsProps> = props =>
 
                     <TableBody>
                         {grid.rows.map((row, idx) => (
-                            <DataTableRow key={`policy-${row.name}`}>
+                            <DataTableRow key={row.id}>
                                 <CustomDataTableCell
                                     backgroundColor={section.styles.rows.backgroundColor}
                                     className={classes.td}
@@ -118,7 +118,7 @@ const GridWithCategoryColumns: React.FC<GridWithCategoryColumnsProps> = props =>
                                 </CustomDataTableCell>
 
                                 {row.items.map((item, idx) =>
-                                    item.dataElement ? (
+                                    item.dataElement?.cocId && row.cellsVisible ? (
                                         <CustomDataTableCell
                                             backgroundColor={section.styles.rows.backgroundColor}
                                             key={item.dataElement.id + item.dataElement.cocId}

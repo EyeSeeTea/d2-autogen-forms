@@ -115,27 +115,11 @@ function getCocOrdered(categoryCombo: D2DataElement["categoryCombo"], config: Dh
         return c.categoryOptions.flatMap(co => co.name);
     });
 
-    // const categoryIndexMap = new Map<string, number>(categoryCombo.categories.map((c, i) => [c.id, i]));
-
     const cocOrderArray = makeCocOrderArray(categoryOptionsNamesArray);
     const result = cocOrderArray.flatMap(cocOrdered => {
         const match = categoryCombo.categoryOptionCombos.find(coc => {
             return coc.name === cocOrdered;
         });
-
-        // const orderedOptions = match?.categoryOptions.sort((a, b) => {
-        //     const indexA =
-        //         categoryIndexMap.get(
-        //             categoryCombo.categories.find(c => c.categoryOptions.some(co => co.id === a.id))?.id || ""
-        //         ) ?? 0;
-
-        //     const indexB =
-        //         categoryIndexMap.get(
-        //             categoryCombo.categories.find(c => c.categoryOptions.some(co => co.id === b.id))?.id || ""
-        //         ) ?? 0;
-
-        //     return indexA - indexB;
-        // });
 
         const orderedOptions = categoryCombo.categories.map(category => {
             return match?.categoryOptions.find(co => category.categoryOptions.some(catOpt => catOpt.id === co.id));
@@ -196,7 +180,7 @@ function getDataElement(dataElement: D2DataElementNewType, config: Dhis2DataStor
                         shortName: co.displayShortName,
                         code: co.code,
                     };
-                    return { id: record.id, name: record[keyName] ?? record.name };
+                    return { id: record.id, code: co.code, name: record[keyName] ?? record.name };
                 }),
             };
         }),
