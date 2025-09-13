@@ -215,6 +215,13 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                             }),
                             ...base2,
                         };
+                    case "grid-category-columns":
+                        return {
+                            ...base2,
+                            viewType: config.viewType,
+                            showCalculatedTotals: config.showCalculatedTotals,
+                            categoriesColumns: config.categoriesColumns,
+                        };
                     default:
                         return { viewType: config.viewType, ...base2 };
                 }

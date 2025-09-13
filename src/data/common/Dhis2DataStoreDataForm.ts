@@ -6,7 +6,13 @@ import { Maybe, NonPartial } from "../../utils/ts-utils";
 import { Code, getCode, Id, NamedRef } from "../../domain/common/entities/Base";
 import { Option } from "../../domain/common/entities/DataElement";
 import { Period } from "../../domain/common/entities/DataValue";
-import { ColumnOrder, DescriptionText, Texts, Totals } from "../../domain/common/entities/DataForm";
+import {
+    CategoryColumnConfig,
+    ColumnOrder,
+    DescriptionText,
+    Texts,
+    Totals,
+} from "../../domain/common/entities/DataForm";
 import { titleVariant } from "../../domain/common/entities/TitleVariant";
 import { SectionStyle, SectionStyleAttrs } from "../../domain/common/entities/SectionStyle";
 import { DataElementRuleOptions, SectionRuleOptions } from "../../domain/common/entities/DataElementRule";
@@ -24,7 +30,8 @@ export type SectionConfig =
     | GridWithPeriodsSectionConfig
     | GridWithTotalsSectionConfig
     | GridWithSubnationalSectionConfig
-    | GridIndicatorsCalculated;
+    | GridIndicatorsCalculated
+    | GridCategoryColumnsConfig;
 
 export type TotalsRule = (
     | {
@@ -120,6 +127,12 @@ export type GridIndicatorsCalculatedRow = {
 
 type GridColumnsConfig = Record<string, { rules?: FromRulesFormulaCodec }>;
 
+interface GridCategoryColumnsConfig extends BaseSectionConfig {
+    viewType: "grid-category-columns";
+    showCalculatedTotals: boolean;
+    categoriesColumns: CategoryColumnConfig[];
+}
+
 interface GridWithSubnationalSectionConfig extends BaseSectionConfig {
     viewType: "grid-with-subnational-ous";
     calculateTotals: CalculateTotalType;
@@ -168,6 +181,7 @@ const viewType = oneOf([
     exactly("grid-with-periods"),
     exactly("grid-with-subnational-ous"),
     exactly("grid-indicators-calculated"),
+    exactly("grid-category-columns"),
 ]);
 
 const titleVariantType = oneOf([
@@ -270,6 +284,8 @@ const DataStoreConfigCodec = Codec.interface({
         texts: optional(textsCodec),
         sections: optional(
             sectionConfig({
+                showCalculatedTotals: optional(boolean),
+                categoriesColumns: optional(array(Codec.interface({ dataElementCode: string, categoryCode: string }))),
                 columnsConfig: optional(record(string, Codec.interface({ rules: optional(rulesFormulaCodec) }))),
                 columnsOrder: optional(record(string, number)),
                 fixedHeaders: optional(boolean),
@@ -778,6 +794,15 @@ export class Dhis2DataStoreDataForm {
                             viewType,
                         };
                         return [section.id, config];
+                    }
+                    case "grid-category-columns": {
+                        const config = {
+                            ...baseConfig,
+                            viewType,
+                            categoriesColumns: sectionConfig.categoriesColumns || [],
+                            showCalculatedTotals: sectionConfig.showCalculatedTotals || false,
+                        };
+                        return [section.id, config] as [typeof section.id, typeof config];
                     }
                     default: {
                         const config = { ...baseConfig, viewType };

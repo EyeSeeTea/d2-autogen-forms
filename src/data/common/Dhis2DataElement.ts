@@ -46,6 +46,7 @@ const dataElementFields = {
         categories: {
             id: true,
             name: true,
+            code: true,
             categoryOptions: {
                 id: true,
                 code: true,
@@ -81,7 +82,7 @@ type D2DataElementNewType = Omit<D2DataElement, "valueType"> & {
     valueType: D2DataElementTypes;
 };
 
-function makeCocOrderArray(namesArray: string[][]): string[] {
+export function makeCocOrderArray(namesArray: string[][]): string[] {
     return namesArray.reduce((prev, current) => {
         return prev
             .map(prevValue => {
@@ -96,6 +97,7 @@ function makeCocOrderArray(namesArray: string[][]): string[] {
 }
 
 function getCocOrdered(categoryCombo: D2DataElement["categoryCombo"], config: Dhis2DataStoreDataForm) {
+    const keyName = config.categoryCombinationsConfig[categoryCombo.code]?.viewType || "formName";
     const allCategoryOptions = categoryCombo.categories
         .map(c => {
             return c.categoryOptions.flatMap(co => ({
@@ -113,15 +115,35 @@ function getCocOrdered(categoryCombo: D2DataElement["categoryCombo"], config: Dh
         return c.categoryOptions.flatMap(co => co.name);
     });
 
+    // const categoryIndexMap = new Map<string, number>(categoryCombo.categories.map((c, i) => [c.id, i]));
+
     const cocOrderArray = makeCocOrderArray(categoryOptionsNamesArray);
     const result = cocOrderArray.flatMap(cocOrdered => {
         const match = categoryCombo.categoryOptionCombos.find(coc => {
             return coc.name === cocOrdered;
         });
 
-        const optionsNames = match?.categoryOptions.map(co => co.displayName);
-        const optionsShortNames = match?.categoryOptions.map(co => co.displayShortName);
-        const optionsFormNames = match?.categoryOptions.map(co => co.displayFormName);
+        // const orderedOptions = match?.categoryOptions.sort((a, b) => {
+        //     const indexA =
+        //         categoryIndexMap.get(
+        //             categoryCombo.categories.find(c => c.categoryOptions.some(co => co.id === a.id))?.id || ""
+        //         ) ?? 0;
+
+        //     const indexB =
+        //         categoryIndexMap.get(
+        //             categoryCombo.categories.find(c => c.categoryOptions.some(co => co.id === b.id))?.id || ""
+        //         ) ?? 0;
+
+        //     return indexA - indexB;
+        // });
+
+        const orderedOptions = categoryCombo.categories.map(category => {
+            return match?.categoryOptions.find(co => category.categoryOptions.some(catOpt => catOpt.id === co.id));
+        });
+
+        const optionsNames = orderedOptions.map(co => co?.displayName);
+        const optionsShortNames = orderedOptions.map(co => co?.displayShortName);
+        const optionsFormNames = orderedOptions.map(co => co?.displayFormName);
 
         const categoryOption =
             categoryCombo.categories.length === 1
@@ -142,7 +164,6 @@ function getCocOrdered(categoryCombo: D2DataElement["categoryCombo"], config: Dh
             : [];
     });
 
-    const keyName = config.categoryCombinationsConfig[categoryCombo.code]?.viewType || "formName";
     return result.map(x => ({ ...x, name: x[keyName] || x.name || "" }));
 }
 
@@ -163,6 +184,22 @@ function getDataElement(dataElement: D2DataElementNewType, config: Dhis2DataStor
     const categoryCombination = {
         id: dataElement.categoryCombo?.id,
         name: dataElement.categoryCombo?.name,
+        categories: dataElement.categoryCombo?.categories.map(cat => {
+            const keyName = config.categoryCombinationsConfig[dataElement.categoryCombo.code]?.viewType || "formName";
+            return {
+                ...cat,
+                categoryOptions: cat.categoryOptions.map(co => {
+                    const record = {
+                        id: co.id,
+                        name: co.displayName,
+                        formName: co.displayFormName,
+                        shortName: co.displayShortName,
+                        code: co.code,
+                    };
+                    return { id: record.id, name: record[keyName] ?? record.name };
+                }),
+            };
+        }),
         categoryOptionCombos: getCocOrdered(dataElement.categoryCombo, config),
     };
     const categoryOptionCombos = dataElement.categoryCombo.categoryOptionCombos;

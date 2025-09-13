@@ -9,6 +9,7 @@ import {
     SectionSimple,
     SectionGrid,
     SectionWithIndicatorsCalculated,
+    SectionWithCategoryColumns,
 } from "../../../domain/common/entities/DataForm";
 import TableForm from "./TableForm";
 import GridForm from "./GridForm";
@@ -26,6 +27,7 @@ import { IconButton } from "material-ui";
 import { ChevronLeft, ChevronRight } from "@material-ui/icons";
 import GridIndicatorsCalculated from "./GridIndicatorsCalculated";
 import { calculateFormula } from "./datatables/InputFormula";
+import GridWithCategoryColumns from "./GridWithCategoryColumns";
 
 export interface TabPanelProps {
     sections: Section[];
@@ -109,6 +111,14 @@ function TypeSwitch(props: TypeSwitchProps) {
                     key={`${section.id}+tab`}
                     dataFormInfo={dataFormInfo}
                     section={section as SectionWithIndicatorsCalculated}
+                />
+            );
+        case "grid-category-columns":
+            return (
+                <GridWithCategoryColumns
+                    key={`${section.id}+tab`}
+                    dataFormInfo={dataFormInfo}
+                    section={section as SectionWithCategoryColumns}
                 />
             );
         default:

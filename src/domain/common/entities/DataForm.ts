@@ -56,6 +56,7 @@ const viewTypes = [
     "matrix-grid",
     "grid-with-subnational-ous",
     "grid-indicators-calculated",
+    "grid-category-columns",
 ] as const;
 export type ViewType = UnionFromValues<typeof DataFormM.viewTypes>;
 
@@ -132,6 +133,14 @@ export interface SectionWithIndicatorsCalculated extends SectionBase {
     virtualRows: { rowConstantCode: string; dataElementCode: string; rowName: string }[];
 }
 
+export interface SectionWithCategoryColumns extends SectionBase {
+    viewType: "grid-category-columns";
+    categoriesColumns: CategoryColumnConfig[];
+    showCalculatedTotals: boolean;
+}
+
+export type CategoryColumnConfig = { dataElementCode: Code; categoryCode: Code };
+
 export type BaseVirtualColumn = {
     dataElementCode: string;
     columnName: string;
@@ -157,7 +166,8 @@ export type Section =
     | SectionWithPeriods
     | SectionWithTotals
     | SectionWithSubnationals
-    | SectionWithIndicatorsCalculated;
+    | SectionWithIndicatorsCalculated
+    | SectionWithCategoryColumns;
 
 export type ColumnOrder = Record<Code, number>;
 
