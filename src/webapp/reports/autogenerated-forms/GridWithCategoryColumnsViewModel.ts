@@ -54,7 +54,7 @@ export class GridWithCategoryColumnsViewModel {
             toggle: section.toggle,
             texts: section.texts,
             useIndexes: false,
-            parentColumns: parentColumns.length === columns.length ? [] : parentColumns,
+            parentColumns: parentColumns,
             toggleMultiple: section.toggleMultiple,
             calculateTotals: this.calculateTotals(rows, dataFormInfo),
         };
