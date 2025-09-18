@@ -90,6 +90,8 @@ export interface SectionBase {
     toggleMultiple?: DataElementToggle;
     indicators: Indicator[];
     fixedHeaders: boolean;
+    enableTopScroll: boolean;
+    fixedRowNames: boolean;
 }
 
 export interface SectionSimple extends SectionBase {
@@ -103,10 +105,7 @@ export interface SectionWithPeriods extends SectionBase {
 
 export interface SectionGrid extends SectionBase {
     viewType: "table" | "grid";
-    fixedHeaders: boolean;
-    fixedRowNames: boolean;
     enableGroups: boolean;
-    enableTopScroll: boolean;
     calculateTotals: CalculateTotalType;
     columnsOrder: Maybe<ColumnOrder>;
     columnsConfig?: Record<string, { rules?: RulesFormula }>;
@@ -116,7 +115,6 @@ export interface SectionWithTotals extends SectionBase {
     viewType: "grid-with-totals";
     calculateTotals: CalculateTotalType;
     columnsOrder: Maybe<ColumnOrder>;
-    enableTopScroll: boolean;
 }
 
 export interface SectionWithSubnationals extends SectionBase {
@@ -138,6 +136,7 @@ export interface SectionWithCategoryColumns extends SectionBase {
     categoriesColumns: CategoryColumnConfig[];
     showCalculatedTotals: boolean;
     rowsConfig: Maybe<RowConfig>;
+    singleCategoryInColumns: boolean;
 }
 
 export type RowConfig = Record<string, { cellsVisible: boolean }>;

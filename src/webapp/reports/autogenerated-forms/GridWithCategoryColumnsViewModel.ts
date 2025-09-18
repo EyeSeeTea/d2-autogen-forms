@@ -20,8 +20,6 @@ export interface Grid {
 
 interface Column {
     name: string;
-    deName?: string;
-    cocName?: string;
     categories?: string[];
     totalCategories: number;
     parentColumnName?: string;
@@ -65,18 +63,16 @@ export class GridWithCategoryColumnsViewModel {
         parentColumns: ParentColumn[];
     } {
         const columns = section.dataElements.map((dataElement): Column => {
-            const category = this.categoryColumn(dataElement, section.categoriesColumns);
+            const category = this.getCategoryColumn(dataElement, section.categoriesColumns);
 
             const columnName = _(dataElement.name).split(separator).last() || "";
             const parentColumnName = _(dataElement.name).split(separator).first() || "";
 
             return {
                 name: columnName,
-                deName: "",
-                cocName: "",
                 parentColumnName: parentColumnName,
-                categories: category?.categoryOptions.map(c => c.name) ?? [],
-                totalCategories: category?.categoryOptions.length || 0,
+                categories: section.singleCategoryInColumns ? [] : category?.categoryOptions.map(c => c.name) ?? [],
+                totalCategories: section.singleCategoryInColumns ? 0 : category?.categoryOptions.length || 0,
             };
         });
 
@@ -96,12 +92,16 @@ export class GridWithCategoryColumnsViewModel {
     private static buildRows(section: SectionWithCategoryColumns): Row[] {
         const { dataElements, categoriesColumns } = section;
         const items = dataElements.flatMap(dataElement => {
+            if (dataElement.categoryCombos.categories.length === 1) {
+                return this.buildItemsForOneCategory(dataElement, section.singleCategoryInColumns);
+            }
+
             const allOptions = _(dataElement.categoryCombos.categories)
                 .flatMap(c => c.categoryOptions.flatMap(co => co))
                 .keyBy(x => x.name)
                 .value();
 
-            const category = this.categoryColumn(dataElement, categoriesColumns);
+            const category = this.getCategoryColumn(dataElement, categoriesColumns);
             // Options for the category used for columns
             const columnOptions = category?.categoryOptions.map(co => co.name) ?? [];
 
@@ -163,7 +163,20 @@ export class GridWithCategoryColumnsViewModel {
             .value();
     }
 
-    private static categoryColumn(
+    private static buildItemsForOneCategory(dataElement: DataElement, inRows: boolean) {
+        const allOptions = dataElement.categoryCombos.categories.flatMap(c => c.categoryOptions.flatMap(co => co));
+
+        return dataElement.categoryCombos.categoryOptionCombos.map(coc => ({
+            ...dataElement,
+            cocId: coc.id,
+            fullName: dataElement.name,
+            cocName: inRows ? coc.name : "",
+            disabled: Boolean(coc.id),
+            cocCodes: [allOptions.find(opt => opt.name === coc.name)?.code ?? ""],
+        }));
+    }
+
+    private static getCategoryColumn(
         dataElement: DataElement,
         categoriesColumnsConfig: SectionWithCategoryColumns["categoriesColumns"]
     ) {

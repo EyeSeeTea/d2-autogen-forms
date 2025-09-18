@@ -68,6 +68,8 @@ interface BaseSectionConfig {
     toggleMultiple: Maybe<ToggleMultiple>;
     indicators?: Record<Code, IndicatorConfig>;
     fixedHeaders: boolean;
+    fixedRowNames: boolean;
+    enableTopScroll: boolean;
 }
 
 interface BasicSectionConfig extends BaseSectionConfig {
@@ -78,9 +80,7 @@ interface GridSectionConfig extends BaseSectionConfig {
     viewType: "table" | "grid";
     calculateTotals: CalculateTotalType;
     columnsOrder: Maybe<ColumnOrder>;
-    fixedRowNames: boolean;
     enableGroups: boolean;
-    enableTopScroll: boolean;
     columnsConfig?: Record<
         string,
         {
@@ -133,6 +133,7 @@ interface GridCategoryColumnsConfig extends BaseSectionConfig {
     showCalculatedTotals: boolean;
     categoriesColumns: CategoryColumnConfig[];
     rowsConfig: Maybe<RowConfig>;
+    singleCategoryInColumns: boolean;
 }
 
 interface GridWithSubnationalSectionConfig extends BaseSectionConfig {
@@ -286,6 +287,7 @@ const DataStoreConfigCodec = Codec.interface({
         texts: optional(textsCodec),
         sections: optional(
             sectionConfig({
+                singleCategoryInColumns: optional(boolean),
                 rowsConfig: optional(record(string, Codec.interface({ cellsVisible: boolean }))),
                 showCalculatedTotals: optional(boolean),
                 categoriesColumns: optional(array(Codec.interface({ dataElementCode: string, categoryCode: string }))),
@@ -750,6 +752,8 @@ export class Dhis2DataStoreDataForm {
                     toggleMultiple: sectionConfig.toggleMultiple,
                     indicators: sectionConfig.indicators,
                     fixedHeaders: sectionConfig.fixedHeaders || false,
+                    fixedRowNames: sectionConfig.fixedRowNames || false,
+                    enableTopScroll: sectionConfig.enableTopScroll || false,
                 };
 
                 const baseConfig = { ...base, viewType };
@@ -771,9 +775,7 @@ export class Dhis2DataStoreDataForm {
                             viewType,
                             calculateTotals: sectionConfig.calculateTotals,
                             columnsOrder: sectionConfig.columnsOrder,
-                            fixedRowNames: sectionConfig.fixedRowNames || false,
                             enableGroups: sectionConfig.enableGroups || false,
-                            enableTopScroll: sectionConfig.enableTopScroll || false,
                             columnsConfig: sectionConfig.columnsConfig,
                         };
                         return [section.id, config] as [typeof section.id, typeof config];
@@ -805,6 +807,7 @@ export class Dhis2DataStoreDataForm {
                             categoriesColumns: sectionConfig.categoriesColumns || [],
                             showCalculatedTotals: sectionConfig.showCalculatedTotals || false,
                             rowsConfig: sectionConfig.rowsConfig,
+                            singleCategoryInColumns: sectionConfig.singleCategoryInColumns || false,
                         };
                         return [section.id, config] as [typeof section.id, typeof config];
                     }

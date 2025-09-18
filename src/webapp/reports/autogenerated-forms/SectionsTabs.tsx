@@ -1,3 +1,4 @@
+import _ from "lodash";
 import React, { useCallback, useEffect, useState } from "react";
 import { Tabs, Tab, Box, makeStyles } from "@material-ui/core";
 import {
@@ -266,12 +267,15 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
                                 return null;
                             }
 
+                            const primaryValue = _(order).split(".").first() ?? "0";
+
                             return (
                                 <Tab
                                     key={section.id + "Tab"}
                                     label={section.name}
                                     id={`tab-${order}`}
                                     aria-controls={`tabpanel-${order}`}
+                                    value={Number(primaryValue)}
                                 />
                             );
                         } else {
@@ -306,7 +310,6 @@ const useStyles = makeStyles({
 });
 
 const StyledAppBar = styled(AppBar)`
-    top: 48px !important;
     z-index: 100 !important;
 `;
 

@@ -152,6 +152,8 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                         ? buildToggleMultiple(config.toggleMultiple, dataElements)
                         : undefined,
                     fixedHeaders: config?.fixedHeaders || false,
+                    enableTopScroll: config?.enableTopScroll || false,
+                    fixedRowNames: config?.fixedRowNames || false,
                 };
 
                 if (!config)
@@ -175,14 +177,11 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                     case "table":
                     case "grid":
                     case "grid-with-totals":
-                        // const columns = this.getSectionColumnsRules(config);
                         return {
                             viewType: config.viewType,
                             calculateTotals: config.calculateTotals,
                             columnsOrder: config.columnsOrder,
-                            fixedRowNames: config.fixedRowNames || false,
                             enableGroups: config.enableGroups || false,
-                            enableTopScroll: config.enableTopScroll || false,
                             columnsConfig: config.columnsConfig,
                             ...base2,
                         };
@@ -222,6 +221,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                             showCalculatedTotals: config.showCalculatedTotals,
                             categoriesColumns: config.categoriesColumns,
                             rowsConfig: config.rowsConfig ?? undefined,
+                            singleCategoryInColumns: config.singleCategoryInColumns ?? false,
                         };
                     default:
                         return { viewType: config.viewType, ...base2 };

@@ -1,3 +1,4 @@
+import _ from "lodash";
 import React from "react";
 import {
     DataTable,
@@ -15,6 +16,7 @@ import { CustomDataTableCell, CustomDataTableColumnHeader, fixHeaderClasses } fr
 import { GridWithCategoryColumnsViewModel } from "./GridWithCategoryColumnsViewModel";
 import i18n from "../../../locales";
 import { CustomInput } from "./widgets/NumberWidget";
+import { useSyncedScroll } from "./hooks/Scroll";
 
 export interface GridWithCategoryColumnsProps {
     dataFormInfo: DataFormInfo;
@@ -27,17 +29,33 @@ const GridWithCategoryColumns: React.FC<GridWithCategoryColumnsProps> = props =>
         () => GridWithCategoryColumnsViewModel.get(section, dataFormInfo),
         [section, dataFormInfo]
     );
+
+    const { wrapper1Ref, wrapper2Ref, wrapper2Width } = useSyncedScroll({ enable: section.enableTopScroll });
+
+    const fixColumns = section.fixedHeaders;
+    const fixRows = section.fixedRowNames;
+
+    const totalCategories = _(grid.columns).sumBy(col => col.totalCategories);
+
     const classes = useStyles();
+
+    const tableClasses = fixColumns ? `${classes.table} ${classes.fixedHeaders}` : classes.table;
 
     return (
         <DataTableSection section={grid} sectionStyles={section.styles} dataFormInfo={dataFormInfo}>
-            <div className={classes.fixedHeaders}>
-                <DataTable className={classes.table} layout="fixed" width="initial">
-                    <TableHead className={classes.tableHeader}>
+            {section.enableTopScroll && (
+                <div style={{ overflowX: "scroll", overflowY: "hidden", height: "11px" }} ref={wrapper1Ref}>
+                    <div style={{ height: "11px", width: `${wrapper2Width}px` }}></div>
+                </div>
+            )}
+            <div ref={wrapper2Ref} className={classes.fixedHeaders}>
+                <DataTable className={tableClasses} layout="fixed" width="initial">
+                    <TableHead className={fixColumns ? classes.tableHeader : ""}>
                         <DataTableRow>
                             {grid.parentColumns.length > 0 && (
                                 <CustomDataTableColumnHeader
                                     backgroundColor={section.styles.columns.backgroundColor}
+                                    fixed={section.fixedHeaders}
                                 ></CustomDataTableColumnHeader>
                             )}
                             {grid.parentColumns.map(column => {
@@ -47,6 +65,7 @@ const GridWithCategoryColumns: React.FC<GridWithCategoryColumnsProps> = props =>
                                         key={column.name}
                                         className={classes.centerSpan}
                                         colSpan={String(column.colSpan)}
+                                        fixed={section.fixedHeaders}
                                     >
                                         <span>{column.name}</span>
                                     </CustomDataTableColumnHeader>
@@ -55,26 +74,17 @@ const GridWithCategoryColumns: React.FC<GridWithCategoryColumnsProps> = props =>
                         </DataTableRow>
 
                         <DataTableRow>
-                            {grid.useIndexes ? (
-                                <CustomDataTableColumnHeader
-                                    backgroundColor={section.styles.columns.backgroundColor}
-                                    width="30px"
-                                >
-                                    <span className={classes.header}>#</span>{" "}
-                                </CustomDataTableColumnHeader>
-                            ) : (
-                                <CustomDataTableColumnHeader
-                                    backgroundColor={section.styles.columns.backgroundColor}
-                                    fixed
-                                    top="0"
-                                ></CustomDataTableColumnHeader>
-                            )}
+                            <CustomDataTableColumnHeader
+                                backgroundColor={section.styles.columns.backgroundColor}
+                                fixed={section.fixedHeaders}
+                                top="0"
+                            ></CustomDataTableColumnHeader>
 
                             {grid.columns.map(column => (
                                 <CustomDataTableColumnHeader
                                     align="center"
                                     backgroundColor={section.styles.columns.backgroundColor}
-                                    fixed
+                                    fixed={section.fixedHeaders}
                                     top="0"
                                     key={`column-${column.name}`}
                                     colSpan={String(column.totalCategories)}
@@ -84,37 +94,42 @@ const GridWithCategoryColumns: React.FC<GridWithCategoryColumnsProps> = props =>
                                 </CustomDataTableColumnHeader>
                             ))}
                         </DataTableRow>
-                        <DataTableRow>
-                            <CustomDataTableColumnHeader
-                                backgroundColor={section.styles.columns.backgroundColor}
-                                fixed
-                                top="0"
-                            ></CustomDataTableColumnHeader>
 
-                            {grid.columns.map(column =>
-                                column.categories?.map((category, idx) => (
-                                    <CustomDataTableColumnHeader
-                                        backgroundColor={section.styles.columns.backgroundColor}
-                                        fixed
-                                        top="0"
-                                        key={`column-${column.name}-${category}-${idx}`}
-                                        className={`${classes.columnWidth} ${classes.centerSpan}`}
-                                    >
-                                        <span>{category}</span>
-                                    </CustomDataTableColumnHeader>
-                                ))
-                            )}
-                        </DataTableRow>
+                        {totalCategories > 0 && (
+                            <DataTableRow>
+                                <CustomDataTableColumnHeader
+                                    backgroundColor={section.styles.columns.backgroundColor}
+                                    fixed={section.fixedHeaders}
+                                    top="0"
+                                ></CustomDataTableColumnHeader>
+
+                                {grid.columns.map(column =>
+                                    column.categories?.map((category, idx) => (
+                                        <CustomDataTableColumnHeader
+                                            backgroundColor={section.styles.columns.backgroundColor}
+                                            fixed={section.fixedHeaders}
+                                            top="0"
+                                            key={`column-${column.name}-${category}-${idx}`}
+                                            className={`${classes.columnWidth} ${classes.centerSpan}`}
+                                        >
+                                            <span>{category}</span>
+                                        </CustomDataTableColumnHeader>
+                                    ))
+                                )}
+                            </DataTableRow>
+                        )}
                     </TableHead>
 
                     <TableBody>
-                        {grid.rows.map((row, idx) => (
+                        {grid.rows.map(row => (
                             <DataTableRow key={row.id}>
                                 <CustomDataTableCell
                                     backgroundColor={section.styles.rows.backgroundColor}
                                     className={classes.td}
+                                    position={fixRows ? "sticky" : undefined}
+                                    left={fixRows ? "0px" : undefined}
                                 >
-                                    <span>{grid.useIndexes ? (idx + 1).toString() : row.name}</span>
+                                    <span>{row.name}</span>
                                 </CustomDataTableCell>
 
                                 {row.items.map((item, idx) =>
@@ -144,6 +159,8 @@ const GridWithCategoryColumns: React.FC<GridWithCategoryColumnsProps> = props =>
                                 <CustomDataTableCell
                                     backgroundColor={section.styles.rows.backgroundColor}
                                     className={classes.td}
+                                    position={fixRows ? "sticky" : undefined}
+                                    left={fixRows ? "0px" : undefined}
                                 >
                                     <strong>{i18n.t("Totals")}</strong>
                                 </CustomDataTableCell>
@@ -178,7 +195,7 @@ const useStyles = makeStyles({
             alignItems: "center",
         },
     },
-    tableHeader: { position: "sticky", top: 0, zIndex: 2 },
+    tableHeader: { position: "sticky", top: 0, zIndex: 3 },
     fixedHeaders: fixHeaderClasses.fixedHeaders,
 });
 
