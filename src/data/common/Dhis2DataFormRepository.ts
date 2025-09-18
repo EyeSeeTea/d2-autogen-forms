@@ -11,7 +11,7 @@ import {
     SectionTotalRule,
     TotalRules,
 } from "../../domain/common/entities/DataElementRule";
-import { DataForm, defaultTexts, Section, SectionBase } from "../../domain/common/entities/DataForm";
+import { DataForm, defaultTexts, RowConfigDetails, Section, SectionBase } from "../../domain/common/entities/DataForm";
 import { Period } from "../../domain/common/entities/DataValue";
 import { Indicator } from "../../domain/common/entities/Indicator";
 import { SectionStyle } from "../../domain/common/entities/SectionStyle";
@@ -214,15 +214,33 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                             }),
                             ...base2,
                         };
-                    case "grid-category-columns":
+                    case "grid-category-columns": {
+                        const rowsConfigWithTexts = _(config.rowsConfig)
+                            .map((rowConfig, key): [string, RowConfigDetails] => {
+                                const constant = configDataForm.constants.find(
+                                    c => c.code === rowConfig.rowNameConstant
+                                );
+
+                                return [
+                                    key,
+                                    {
+                                        cellsVisible: rowConfig.cellsVisible ?? true,
+                                        rowName: constant?.displayDescription ?? "",
+                                    },
+                                ];
+                            })
+                            .fromPairs()
+                            .value();
+
                         return {
                             ...base2,
                             viewType: config.viewType,
                             showCalculatedTotals: config.showCalculatedTotals,
                             categoriesColumns: config.categoriesColumns,
-                            rowsConfig: config.rowsConfig ?? undefined,
+                            rowsConfig: rowsConfigWithTexts ?? undefined,
                             singleCategoryInColumns: config.singleCategoryInColumns ?? false,
                         };
+                    }
                     default:
                         return { viewType: config.viewType, ...base2 };
                 }

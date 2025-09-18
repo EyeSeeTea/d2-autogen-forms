@@ -10,7 +10,6 @@ import {
     CategoryColumnConfig,
     ColumnOrder,
     DescriptionText,
-    RowConfig,
     Texts,
     Totals,
 } from "../../domain/common/entities/DataForm";
@@ -132,7 +131,7 @@ interface GridCategoryColumnsConfig extends BaseSectionConfig {
     viewType: "grid-category-columns";
     showCalculatedTotals: boolean;
     categoriesColumns: CategoryColumnConfig[];
-    rowsConfig: Maybe<RowConfig>;
+    rowsConfig: Maybe<Record<string, { cellsVisible?: boolean; rowNameConstant?: string }>>;
     singleCategoryInColumns: boolean;
 }
 
@@ -288,7 +287,12 @@ const DataStoreConfigCodec = Codec.interface({
         sections: optional(
             sectionConfig({
                 singleCategoryInColumns: optional(boolean),
-                rowsConfig: optional(record(string, Codec.interface({ cellsVisible: boolean }))),
+                rowsConfig: optional(
+                    record(
+                        string,
+                        Codec.interface({ cellsVisible: optional(boolean), rowNameConstant: optional(string) })
+                    )
+                ),
                 showCalculatedTotals: optional(boolean),
                 categoriesColumns: optional(array(Codec.interface({ dataElementCode: string, categoryCode: string }))),
                 columnsConfig: optional(record(string, Codec.interface({ rules: optional(rulesFormulaCodec) }))),
@@ -633,7 +637,15 @@ export class Dhis2DataStoreDataForm {
             .compact()
             .value();
 
-        const virtualCodes = virtualColumnsCodes.concat(virtualRowsCodes);
+        const rowNamesKeys = _(storeConfig.dataSets)
+            .values()
+            .flatMap(dataSet => _.values(dataSet.sections))
+            .flatMap(section => _.values(section.rowsConfig))
+            .map(rowConfig => rowConfig.rowNameConstant)
+            .compact()
+            .value();
+
+        const virtualCodes = virtualColumnsCodes.concat(virtualRowsCodes).concat(rowNamesKeys);
 
         const codes = _([...dataSetTexts, ...dataElementTexts, ...sectionTexts])
             .flatMap(t => [

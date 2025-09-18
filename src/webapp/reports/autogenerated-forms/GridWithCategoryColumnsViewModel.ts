@@ -155,7 +155,7 @@ export class GridWithCategoryColumnsViewModel {
 
                 return {
                     id: id,
-                    name,
+                    name: rowConfig?.rowName ?? name,
                     cellsVisible: rowConfig?.cellsVisible ?? true,
                     items: group.map(de => ({ dataElement: de })),
                 };
@@ -223,10 +223,6 @@ export class GridWithCategoryColumnsViewModel {
 
         return dataValue.value ? Number(dataValue.value) : undefined;
     }
-
-    private static sortRows = (rows: Row[], sortField: "name"): Row[] => {
-        return _.sortBy(rows, [group => !this.isLetter(group[sortField]), group => group[sortField].toLowerCase()]);
-    };
 
     private static isLetter = (value: string): boolean => {
         return /^[a-zA-Z]/.test(value);
