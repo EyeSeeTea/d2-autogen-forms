@@ -55,7 +55,10 @@ export type ViewType = UnionFromValues<typeof DataFormM.viewTypes>;
 
 export type DescriptionText = Maybe<Record<string, Maybe<string>>>;
 
-type FormulaRules = { formula?: string; rules?: DataElementRuleOptions };
+type FormulaRules = {
+    formula?: string;
+    rules?: DataElementRuleOptions;
+};
 export type Totals = FormulaRules & {
     dataElementsCodes: string[];
     formulas: Record<string, TotalsRule> | undefined;

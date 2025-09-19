@@ -141,7 +141,7 @@ export class DisaggregatedCOCsGridViewModel {
     }
 }
 
-type Grid = {
+export type Grid = {
     id: string;
     name: string;
     columns: Column[];
