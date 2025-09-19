@@ -121,7 +121,7 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                                         backgroundColor={props.section.styles.rows.backgroundColor}
                                         colSpan="2"
                                     >
-                                        <span>{row.deName}</span>
+                                        <DataTableCellRowName html={row.dataElement.htmlText} name={row.deName} />
                                     </CustomDataTableCell>
                                 )}
 

@@ -9,6 +9,7 @@ import { D2Api } from "./types/d2-api";
 import App from "./webapp/components/app/App";
 import { getVariant } from "./webapp/reports/variants";
 import "./webapp/utils/wdyr";
+import "./monkey-patch";
 
 declare global {
     interface Window {
