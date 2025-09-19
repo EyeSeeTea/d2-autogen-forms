@@ -45,7 +45,7 @@ type GroupedTable = {
 };
 
 const separator = " - ";
-const columnSeparator = ".";
+const columnSeparator = "|.|";
 
 type Item = {
     name: string;

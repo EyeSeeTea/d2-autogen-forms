@@ -54,7 +54,8 @@ export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props 
 
     const onDoubleClick = () => {
         if (!isDev) {
-            window.viewHist(dataElement.id, dataElementCocId);
+            const historyPeriod = (window.autogenFormCurrentPeriodId = period || dataFormInfo.period);
+            window.viewHist(dataElement.id, dataElementCocId, historyPeriod);
         }
     };
 
@@ -81,6 +82,7 @@ export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props 
             <div
                 onClick={() => onClick(dataElement, rowName)}
                 onBlur={() => onBlur()}
+                onDoubleClick={() => onDoubleClick()}
                 className={`${classes.valueInput} sourcetype`}
                 id={auditId}
             >
@@ -97,7 +99,11 @@ export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props 
                     rows={rows}
                 />
             </div>
-            <CommentIcon dataElementId={dataElement.id} categoryOptionComboId={dataElementCocId} />
+            <CommentIcon
+                dataElementId={dataElement.id}
+                categoryOptionComboId={dataElementCocId}
+                period={period || dataFormInfo.period}
+            />
         </div>
     ) : (
         <div id={elId} className={classes.valueWrapper}>
