@@ -9,11 +9,7 @@ import { Period } from "../../domain/common/entities/DataValue";
 import { DescriptionText, Texts, Totals } from "../../domain/common/entities/DataForm";
 import { titleVariant } from "../../domain/common/entities/TitleVariant";
 import { SectionStyle, SectionStyleAttrs } from "../../domain/common/entities/SectionStyle";
-import {
-    DataElementRuleOptions,
-    SectionRuleOptions,
-    SingleDERuleOptions,
-} from "../../domain/common/entities/DataElementRule";
+import { DataElementRuleOptions, SectionRuleOptions } from "../../domain/common/entities/DataElementRule";
 import { ToggleMultiple } from "../../domain/common/entities/ToggleMultiple";
 
 interface DataSetConfig {
@@ -36,7 +32,7 @@ export type TotalsRule = (
       }
     | {
           type: "dataElements";
-          rules?: SingleDERuleOptions;
+          rules?: DataElementRuleOptions;
       }
 ) & { formula: string };
 
@@ -65,7 +61,7 @@ interface BaseSectionConfig {
 }
 
 interface BasicSectionConfig extends BaseSectionConfig {
-    viewType: "grid-with-combos" | "grid-with-cat-option-combos" | "matrix-grid";
+    viewType: "grid-with-combos" | "grid-with-cat-option-combos" | "matrix-grid" | "grid-disaggregated-cocs";
 }
 
 interface GridSectionConfig extends BaseSectionConfig {
@@ -149,6 +145,7 @@ const viewType = oneOf([
     exactly("grid-with-totals"),
     exactly("grid-with-combos"),
     exactly("grid-with-cat-option-combos"),
+    exactly("grid-disaggregated-cocs"),
     exactly("matrix-grid"),
     exactly("grid-with-periods"),
     exactly("grid-with-subnational-ous"),
@@ -234,6 +231,9 @@ const textsCodec = Codec.interface({
 const DataStoreConfigCodec = Codec.interface({
     categoryCombinations: sectionConfig({
         viewType: optional(oneOf([exactly("name"), exactly("shortName"), exactly("formName")])),
+    }),
+    categoryOptions: sectionConfig({
+        visible: optional(boolean),
     }),
     dataElements: sectionConfig({
         disableComments: optional(boolean),
@@ -438,6 +438,7 @@ const defaultDataStoreConfig: DataFormStoreConfig["custom"] = {
     dataElements: {},
     dataSets: {},
     categoryCombinations: {},
+    categoryOptions: {},
 };
 
 interface DataSet {
@@ -450,15 +451,21 @@ type CategoryCombinationConfig = {
     viewType: "name" | "shortName" | "formName" | undefined;
 };
 
+type CategoryOptionConfig = {
+    visible: Maybe<boolean>;
+};
+
 export class Dhis2DataStoreDataForm {
     public dataElementsConfig: Record<Code, DataElementConfig>;
     public categoryCombinationsConfig: Record<Code, CategoryCombinationConfig>;
+    public categoryOptionsConfig: Record<Code, CategoryOptionConfig>;
     public subNationals: SubNational[];
     public constants: Constant[];
 
     constructor(private config: DataFormStoreConfig) {
         this.dataElementsConfig = this.getDataElementsConfig();
         this.categoryCombinationsConfig = config.custom.categoryCombinations;
+        this.categoryOptionsConfig = config.custom.categoryOptions;
         this.subNationals = config.subNationals;
         this.constants = config.constants;
     }
@@ -495,6 +502,7 @@ export class Dhis2DataStoreDataForm {
                     dataElements: storeConfigFromDataStore.dataElements || {},
                     dataSets: storeConfigFromDataStore.dataSets || {},
                     categoryCombinations: storeConfigFromDataStore.categoryCombinations || {},
+                    categoryOptions: storeConfigFromDataStore.categoryOptions || {},
                 };
 
                 return {

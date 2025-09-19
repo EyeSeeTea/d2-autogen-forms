@@ -12,10 +12,11 @@ export type DataTableCellRowTotalProps = {
     styles: SectionStyle;
     dataFormInfo: DataFormInfo;
     dataElement: DataElement;
+    colSpan?: number;
 };
 
 export const DataTableCellRowTotal: React.FC<DataTableCellRowTotalProps> = props => {
-    const { dataFormInfo, dataElement, styles } = props;
+    const { dataFormInfo, dataElement, styles, colSpan } = props;
 
     const totalValue = _(dataElement.categoryOptionCombos)
         .map(coc => {
@@ -36,7 +37,7 @@ export const DataTableCellRowTotal: React.FC<DataTableCellRowTotalProps> = props
         .sum();
 
     return (
-        <CustomDataTableCell backgroundColor={styles.rows.backgroundColor} key="total-row">
+        <CustomDataTableCell colSpan={colSpan} backgroundColor={styles.rows.backgroundColor} key="total-row">
             <CustomInput value={totalValue} disabled readOnly />
         </CustomDataTableCell>
     );

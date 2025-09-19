@@ -24,6 +24,7 @@ import AppBar from "@material-ui/core/AppBar";
 import styled from "styled-components";
 import { IconButton } from "material-ui";
 import { ChevronLeft, ChevronRight } from "@material-ui/icons";
+import DisaggregatedCOCsGrid from "./DisaggregatedCOCsGrid";
 import GridIndicatorsCalculated from "./GridIndicatorsCalculated";
 
 export interface TabPanelProps {
@@ -86,6 +87,15 @@ function TypeSwitch(props: TypeSwitchProps) {
                     section={section as SectionSimple}
                 />
             );
+        case "grid-disaggregated-cocs":
+            return (
+                <DisaggregatedCOCsGrid
+                    key={`${section.id}+tab`}
+                    dataFormInfo={dataFormInfo}
+                    section={section as SectionSimple}
+                />
+            );
+
         case "matrix-grid":
             return (
                 <MatrixGridForm

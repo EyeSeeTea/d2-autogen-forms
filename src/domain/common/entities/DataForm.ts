@@ -13,7 +13,7 @@ import { Indicator } from "./Indicator";
 import { SectionStyle } from "./SectionStyle";
 import { titleVariant } from "./TitleVariant";
 import { DataElementToggle } from "./ToggleMultiple";
-import { SingleDERuleOptions, TotalRules } from "./DataElementRule";
+import { DataElementRuleOptions, TotalRules } from "./DataElementRule";
 
 export interface DataForm {
     id: Id;
@@ -52,6 +52,7 @@ const viewTypes = [
     "grid-with-totals",
     "grid-with-combos",
     "grid-with-cat-option-combos",
+    "grid-disaggregated-cocs",
     "matrix-grid",
     "grid-with-subnational-ous",
     "grid-indicators-calculated",
@@ -62,7 +63,7 @@ export type DescriptionText = Maybe<Record<string, Maybe<string>>>;
 
 type FormulaRules = {
     formula?: string;
-    rules?: SingleDERuleOptions;
+    rules?: DataElementRuleOptions;
 };
 export type Totals = FormulaRules & {
     dataElementsCodes: string[];
@@ -93,7 +94,7 @@ export interface SectionBase {
 }
 
 export interface SectionSimple extends SectionBase {
-    viewType: "grid-with-combos" | "grid-with-cat-option-combos" | "matrix-grid";
+    viewType: "grid-with-combos" | "grid-with-cat-option-combos" | "matrix-grid" | "grid-disaggregated-cocs";
 }
 
 export interface SectionWithPeriods extends SectionBase {
