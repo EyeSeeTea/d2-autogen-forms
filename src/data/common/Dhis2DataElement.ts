@@ -90,21 +90,31 @@ function makeCocOrderArray(namesArray: string[][]): string[] {
 }
 
 function getCocOrdered(categoryCombo: D2DataElement["categoryCombo"], config: Dhis2DataStoreDataForm) {
-    const allCategoryOptions = categoryCombo.categories
-        .map(c => {
-            return c.categoryOptions.flatMap(co => ({
-                name: co.name,
-                displayName: co.displayName,
-                shortName: co.displayShortName,
-                formName: co.displayFormName,
-            }));
-        })
-        .flatMap(categoriesOptions => {
-            return categoriesOptions.map(co => co);
-        });
+    const allCategoryOptions = categoryCombo.categories.flatMap(c =>
+        _(c.categoryOptions)
+            .flatMap(co => {
+                if (isCategoryOptionHidden(co.code, config)) return undefined;
+
+                return {
+                    name: co.name,
+                    displayName: co.displayName,
+                    shortName: co.displayShortName,
+                    formName: co.displayFormName,
+                    code: co.code,
+                };
+            })
+            .compact()
+            .value()
+    );
 
     const categoryOptionsNamesArray = categoryCombo.categories.map(c => {
-        return c.categoryOptions.flatMap(co => co.name);
+        return _(c.categoryOptions)
+            .flatMap(co => {
+                if (isCategoryOptionHidden(co.code, config)) return undefined;
+                return co.name;
+            })
+            .compact()
+            .value();
     });
 
     const cocOrderArray = makeCocOrderArray(categoryOptionsNamesArray);
@@ -140,6 +150,22 @@ function getCocOrdered(categoryCombo: D2DataElement["categoryCombo"], config: Dh
     return result.map(x => ({ ...x, name: x[keyName] || x.name || "" }));
 }
 
+function isCategoryOptionHidden(code: string, config: Dhis2DataStoreDataForm) {
+    return config.categoryOptionsConfig[code]?.visible === false;
+}
+
+function getVisibleCategoryOptionCombos(
+    categoryOptionCombos: D2DataElement["categoryCombo"]["categoryOptionCombos"],
+    config: Dhis2DataStoreDataForm
+) {
+    const hiddenCategoryOptions = _(config.categoryOptionsConfig)
+        .pickBy(value => value.visible === false)
+        .keys()
+        .value();
+
+    return categoryOptionCombos.filter(coc => !coc.categoryOptions.some(co => hiddenCategoryOptions.includes(co.code)));
+}
+
 function getDataElement(dataElement: D2DataElement, config: Dhis2DataStoreDataForm): DataElement | null {
     const { valueType } = dataElement;
     const deConfig = config.dataElementsConfig[dataElement.code];
@@ -159,7 +185,7 @@ function getDataElement(dataElement: D2DataElement, config: Dhis2DataStoreDataFo
         name: dataElement.categoryCombo?.name,
         categoryOptionCombos: getCocOrdered(dataElement.categoryCombo, config),
     };
-    const categoryOptionCombos = dataElement.categoryCombo.categoryOptionCombos;
+    const categoryOptionCombos = getVisibleCategoryOptionCombos(dataElement.categoryCombo.categoryOptionCombos, config);
 
     const base = {
         id: dataElement.id,
