@@ -225,7 +225,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                                     key,
                                     {
                                         cellsVisible: rowConfig.cellsVisible ?? true,
-                                        rowName: constant?.displayDescription ?? "",
+                                        rowName: constant?.displayDescription,
                                     },
                                 ];
                             })

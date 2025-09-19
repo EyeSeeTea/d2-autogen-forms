@@ -140,7 +140,7 @@ export interface SectionWithCategoryColumns extends SectionBase {
 }
 
 export type RowConfig = Record<string, RowConfigDetails>;
-export type RowConfigDetails = { cellsVisible: boolean; rowName: string };
+export type RowConfigDetails = { cellsVisible: boolean; rowName: Maybe<string> };
 
 export type CategoryColumnConfig = { dataElementCode: Code; categoryCode: Code };
 
