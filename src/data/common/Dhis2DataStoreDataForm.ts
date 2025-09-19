@@ -9,7 +9,11 @@ import { Period } from "../../domain/common/entities/DataValue";
 import { DescriptionText, Texts, Totals } from "../../domain/common/entities/DataForm";
 import { titleVariant } from "../../domain/common/entities/TitleVariant";
 import { SectionStyle, SectionStyleAttrs } from "../../domain/common/entities/SectionStyle";
-import { DataElementRuleOptions, SectionRuleOptions } from "../../domain/common/entities/DataElementRule";
+import {
+    DataElementRuleOptions,
+    SectionRuleOptions,
+    SingleDERuleOptions,
+} from "../../domain/common/entities/DataElementRule";
 import { ToggleMultiple } from "../../domain/common/entities/ToggleMultiple";
 
 interface DataSetConfig {
@@ -32,7 +36,7 @@ export type TotalsRule = (
       }
     | {
           type: "dataElements";
-          rules?: DataElementRuleOptions;
+          rules?: SingleDERuleOptions;
       }
 ) & { formula: string };
 
@@ -160,9 +164,15 @@ const titleVariantType = oneOf([
     exactly("h6"),
 ]);
 
+const singleConditionDERuleCodec = Codec.interface({ dataElements: array(string), condition: string });
+const multipleConditionDERuleCodec = Codec.interface({
+    type: exactly("option"),
+    conditions: array(singleConditionDERuleCodec),
+});
+
 const dataElementRuleCodec = record(
     oneOf([exactly("visible"), exactly("disabled")]),
-    Codec.interface({ dataElements: array(string), condition: string })
+    oneOf([singleConditionDERuleCodec, multipleConditionDERuleCodec])
 );
 
 const dataElementTotalsRuleCodec = Codec.interface({
@@ -562,23 +572,22 @@ export class Dhis2DataStoreDataForm {
             .compact()
             .value();
 
-        const totalsCodes = _(storeConfig.dataSets)
+        const totalsCodes: string[] = _(storeConfig.dataSets)
             .values()
-            .flatMap(dataSet => _.values(dataSet.sections))
-            .flatMap(section => {
-                if (!section.totals) return undefined;
+            .flatMap(dataSet =>
+                _.values(dataSet.sections).flatMap((section: { totals: Maybe<TotalsConfig> }) => {
+                    const totals = section.totals;
+                    if (!totals) return undefined;
 
-                const formulaCodes = _(section.totals.formulas)
-                    .map((_, key) => key)
-                    .compact()
-                    .value();
+                    const formulaCodes = totals.formulas ? Object.keys(totals.formulas) : [];
 
-                return this.isSectionTotals(section.totals)
-                    ? [section.totals.texts?.code, ...formulaCodes]
-                    : _(section.totals)
-                          .map(total => total.texts?.code)
-                          .value();
-            })
+                    return this.isSectionTotals(totals)
+                        ? [totals.texts?.code, ...formulaCodes]
+                        : _(totals)
+                              .map(total => total.texts?.code)
+                              .value();
+                })
+            )
             .compact()
             .value();
 

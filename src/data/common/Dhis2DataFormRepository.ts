@@ -3,11 +3,11 @@ import _ from "lodash";
 import { Code, getId, Id } from "../../domain/common/entities/Base";
 import { DataElement } from "../../domain/common/entities/DataElement";
 import {
+    ConditionRule,
     DataElementRuleOptions,
     DataElementTotalRule,
     Rule,
     RuleType,
-    SectionRuleOptions,
     SectionTotalRule,
     TotalRules,
 } from "../../domain/common/entities/DataElementRule";
@@ -275,15 +275,14 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                     if (formulaRules.type === "sections") {
                         const { rules, formula } = formulaRules;
 
-                        const sectionTotalsRules = rules as SectionRuleOptions;
                         const relatedDataElements = this.getRelatedDataElements(section, dataElementsByCode, formula);
-                        const sectionIds = _(sectionTotalsRules.sectionCodes)
+                        const sectionIds = _(rules.sectionCodes)
                             .map(sectionCode => sections.find(section => section.code === sectionCode)?.id)
                             .compact()
                             .value();
 
                         return {
-                            condition: sectionTotalsRules.condition,
+                            conditions: [rules.condition],
                             formula: formula,
                             relatedDataElements: relatedDataElements,
                             sections: sectionIds,
@@ -308,11 +307,31 @@ export class Dhis2DataFormRepository implements DataFormRepository {
 
         return {
             type: ruleType,
-            dataElements: rule.dataElements.map(dataElementCode => dataElements[dataElementCode]?.id ?? ""),
+            dataElements: this.getTotalDataElements(rule, dataElements),
             relatedDataElements: relatedDataElements,
-            condition: rule.condition,
+            conditions:
+                rule.type === "option" ? rule.conditions.map(condition => condition.condition) : [rule.condition],
             formula: formula,
         };
+    }
+
+    private getTotalDataElements(rule: ConditionRule, dataElements: Record<string, DataElement>): Id[] {
+        const extractedDataElements =
+            rule.type === "option" ? rule.conditions.flatMap(condition => condition.dataElements) : rule.dataElements;
+
+        return _(extractedDataElements)
+            .map(dataElementCode => {
+                const dataElement = dataElements[dataElementCode];
+                if (!dataElement) {
+                    console.warn(`Data element not found for code: ${dataElementCode}`);
+                    return;
+                }
+
+                return dataElement.id;
+            })
+            .compact()
+            .uniq()
+            .value();
     }
 
     private getRelatedDataElements(
@@ -371,6 +390,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
         const rulesConfigByDataElement = dataElementsRulesConfig.filter(
             dataElementActionConfig => dataElementActionConfig.id === dataElement.id
         );
+
         const dataElementRules = _(rulesConfigByDataElement)
             .map((dataElementRuleConfig): Maybe<Rule> => {
                 const relatedDataElement = dataElements[dataElementRuleConfig.relatedDataElementId];
@@ -379,6 +399,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
             })
             .compact()
             .value();
+
         return dataElementRules;
     }
 
@@ -393,18 +414,18 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                 if (!dataElementConfig) return undefined;
                 if (!dataElementConfig.rules) return undefined;
 
-                const disabledDataElements = this.getRuleConfigByType(
-                    "disabled",
-                    dataElementConfig,
-                    allDataElements,
-                    dataElement
-                );
-                const visibleDataElements = this.getRuleConfigByType(
-                    "visible",
-                    dataElementConfig,
-                    allDataElements,
-                    dataElement
-                );
+                const disabledDataElements = this.getRuleConfigByType({
+                    ruleType: "disabled",
+                    dataElementConfig: dataElementConfig,
+                    allDataElements: allDataElements,
+                    dataElement: dataElement,
+                });
+                const visibleDataElements = this.getRuleConfigByType({
+                    ruleType: "visible",
+                    dataElementConfig: dataElementConfig,
+                    allDataElements: allDataElements,
+                    dataElement: dataElement,
+                });
 
                 return [...disabledDataElements, ...visibleDataElements];
             })
@@ -412,15 +433,45 @@ export class Dhis2DataFormRepository implements DataFormRepository {
             .value();
     }
 
-    private getRuleConfigByType(
-        ruleType: RuleType,
-        dataElementConfig: DataElementConfig,
-        allDataElements: BasicDataElement[],
-        dataElement: DataElement
-    ) {
+    private getRuleConfigByType(options: RuleConfigParams): RuleConfig[] {
+        const { ruleType, dataElementConfig, allDataElements, dataElement } = options;
+
         const currentConfig = this.getCurrentConfigByRuleType(dataElementConfig, ruleType);
-        return _(currentConfig?.dataElements)
-            .map((dataElementCode): Maybe<RuleConfig> => {
+
+        switch (currentConfig?.type) {
+            case "option": {
+                return currentConfig.conditions.flatMap(condition => {
+                    return _(condition.dataElements)
+                        .map(dataElementCode => {
+                            const dataElementDetails = allDataElements.find(de => de.code === dataElementCode);
+                            if (!dataElementDetails) return undefined;
+                            return {
+                                type: ruleType,
+                                id: dataElementDetails.id,
+                                relatedDataElementId: dataElement.id,
+                                value: condition.condition,
+                            };
+                        })
+                        .compact()
+                        .value();
+                });
+            }
+            default:
+                return this.buildRuleConfigList({
+                    dataElements: currentConfig?.dataElements || [],
+                    ruleType: ruleType,
+                    dataElementConfig: dataElementConfig,
+                    allDataElements: allDataElements,
+                    dataElement: dataElement,
+                });
+        }
+    }
+
+    private buildRuleConfigList(options: RuleConfigParams & { dataElements: string[] }): RuleConfig[] {
+        const { dataElements, ruleType, dataElementConfig, allDataElements, dataElement } = options;
+
+        return _(dataElements)
+            .map(dataElementCode => {
                 const dataElementDetails = allDataElements.find(de => de.code === dataElementCode);
                 if (!dataElementDetails) return undefined;
                 return {
@@ -434,18 +485,21 @@ export class Dhis2DataFormRepository implements DataFormRepository {
             .value();
     }
 
-    private getConditionValue(dataElementConfig: DataElementConfig, ruleType: RuleType) {
-        switch (ruleType) {
-            case "disabled":
-                return dataElementConfig.rules?.disabled?.condition || "";
-            case "visible":
-                return dataElementConfig.rules?.visible?.condition || "";
+    private getConditionValue(dataElementConfig: DataElementConfig, ruleType: RuleType): string {
+        const ruleCondition = dataElementConfig.rules?.[ruleType];
+
+        switch (ruleCondition?.type) {
+            case "option":
+                return ruleCondition.conditions[0]?.condition || "";
             default:
-                throw Error(`Invalid rule type: ${ruleType}`);
+                return ruleCondition?.condition || "";
         }
     }
 
-    private getCurrentConfigByRuleType(dataElementConfigRules: DataElementConfig, type: RuleType) {
+    private getCurrentConfigByRuleType(
+        dataElementConfigRules: DataElementConfig,
+        type: RuleType
+    ): Maybe<ConditionRule> {
         switch (type) {
             case "disabled":
                 return dataElementConfigRules.rules?.disabled;
@@ -580,4 +634,11 @@ type D2Indicator = {
     numerator: string;
     denominator: string;
     indicatorType: { id: string; factor: number };
+};
+
+type RuleConfigParams = {
+    ruleType: RuleType;
+    dataElementConfig: DataElementConfig;
+    allDataElements: BasicDataElement[];
+    dataElement: DataElement;
 };
