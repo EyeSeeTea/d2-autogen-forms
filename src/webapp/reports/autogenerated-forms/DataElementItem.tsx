@@ -22,6 +22,7 @@ export interface DataElementItemProps {
     columnDataElements?: DataElement[];
     rows?: Row[];
     rowName?: string;
+    lockException?: boolean; // If true, the input will not be disabled if expired
 }
 
 export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props => {
@@ -37,6 +38,7 @@ export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props 
         columnDataElements,
         rows,
         rowName,
+        lockException,
     } = props;
 
     const classes = useStyles();
@@ -97,6 +99,7 @@ export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props 
                     columnDataElements={columnDataElements}
                     cocId={dataElementCocId}
                     rows={rows}
+                    lockException={lockException}
                 />
             </div>
             <CommentIcon
@@ -124,6 +127,7 @@ export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props 
                     columnTotal={columnTotal}
                     columnDataElements={columnDataElements}
                     cocId={dataElementCocId}
+                    lockException={lockException}
                 />
             </div>
         </div>

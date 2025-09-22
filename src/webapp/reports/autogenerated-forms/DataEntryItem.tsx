@@ -31,14 +31,17 @@ export interface DataEntryItemProps {
     columnDataElements?: DataElement[];
     cocId: string;
     rows?: Row[];
+    lockException?: boolean; // If true, the input will not be disabled if expired
 }
 
 function isInputExpired(
     period: string | undefined,
     dataFormPeriod: string,
     dataInputPeriods: dataInputPeriodsType,
-    expiryDays: number
+    expiryDays: number,
+    lockException: boolean
 ) {
+    if (lockException) return false;
     const periodToCheck = period ?? dataFormPeriod;
 
     const dataInputPeriod = dataInputPeriods?.find(p => p.period.id === periodToCheck);
@@ -234,7 +237,7 @@ export function checkDisabledRule(options: UseApplyRulesProps): boolean {
 }
 
 const DataEntryItem: React.FC<DataEntryItemProps> = props => {
-    const { dataElement, dataFormInfo, manualyDisabled: handDisabled, rows } = props;
+    const { dataElement, dataFormInfo, manualyDisabled: handDisabled, rows, lockException } = props;
     const [dataValue, state, notifyChange] = useUpdatableDataValueWithFeedback(props);
 
     const { type } = dataValue;
@@ -244,7 +247,8 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
               props.period,
               dataFormInfo.period,
               dataFormInfo.metadata.dataForm.dataInputPeriods,
-              dataFormInfo.metadata.dataForm.expiryDays
+              dataFormInfo.metadata.dataForm.expiryDays,
+              lockException ?? false
           )
         : handDisabled;
     const config = dataFormInfo.metadata.dataForm.options.dataElements[dataElement.id];
