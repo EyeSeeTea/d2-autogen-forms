@@ -173,7 +173,12 @@ export function verifyConditionByDataValueType(dataValue: DataValue, rule: { con
 }
 
 export function applyNumericComparison(rule: { condition: string }, value: Value): boolean {
-    const [operator, comparisonValue = ""] = rule.condition.split(" ");
+    const [operator, comparisonValue] = rule.condition.split(" ");
+
+    if (!comparisonValue || !operator) {
+        return rule.condition === String(value);
+    }
+
     const numericalValue = parseInt(value as string);
     const numericalComparisonValue = parseInt(comparisonValue);
 
@@ -309,7 +314,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                         options={options.items}
                         onValueChange={notifyChange}
                         state={state}
-                        disabled={disabled}
+                        disabled={isDisabled || disabled}
                     />
                 ) : (
                     <SingleComponent
@@ -317,7 +322,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                         options={options.items}
                         onValueChange={notifyChange}
                         state={state}
-                        disabled={disabled}
+                        disabled={isDisabled || disabled}
                     />
                 );
             default:
