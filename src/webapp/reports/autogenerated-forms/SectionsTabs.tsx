@@ -84,7 +84,7 @@ function TypeSwitch(props: TypeSwitchProps) {
                 <GridWithCatOptionCombos
                     key={`${section.id}+tab`}
                     dataFormInfo={dataFormInfo}
-                    section={section as SectionSimple}
+                    section={section as SectionWithPeriods}
                 />
             );
         case "grid-disaggregated-cocs":

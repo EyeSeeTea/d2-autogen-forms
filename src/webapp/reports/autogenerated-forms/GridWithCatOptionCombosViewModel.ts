@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { Section, Texts } from "../../../domain/common/entities/DataForm";
+import { Section, SectionWithPeriods, Texts } from "../../../domain/common/entities/DataForm";
 import { DataElement } from "../../../domain/common/entities/DataElement";
 import { CategoryOptionCombo } from "../../../domain/common/entities/CategoryOptionCombo";
 import { Maybe } from "../../../utils/ts-utils";
@@ -11,13 +11,16 @@ export interface Grid {
     id: string;
     name: string;
     columns: Column[];
+    period: SectionPeriod;
     rows: Row[];
-    toggle: Section["toggle"];
-    toggleMultiple: Section["toggleMultiple"];
+    toggle: SectionWithPeriods["toggle"];
+    toggleMultiple: SectionWithPeriods["toggleMultiple"];
     texts: Texts;
     summary: Summary[];
     indicators: Indicator[];
 }
+
+type SectionPeriod = Maybe<string>;
 
 interface SubSectionGrid {
     name: string;
@@ -62,7 +65,7 @@ export function getFormulaByColumnName(section: Section, columnName: string): Ma
 }
 
 export class GridWithCatOptionCombosViewModel {
-    static get(section: Section, dataFormInfo: DataFormInfo): Grid {
+    static get(section: SectionWithPeriods, dataFormInfo: DataFormInfo): Grid {
         const subsections = _(section.dataElements)
             .flatMap(dataElement => {
                 const categoryOptionCombos = dataElement.categoryCombos.categoryOptionCombos;
@@ -168,12 +171,22 @@ export class GridWithCatOptionCombosViewModel {
             indicators: section.indicators,
             name: section.name,
             columns: columns,
+            period: GridWithCatOptionCombosViewModel.getSectionPeriod(section),
             rows: rows,
             toggle: section.toggle,
             toggleMultiple: section.toggleMultiple,
             texts: section.texts,
             summary: section.totals ? summary : [],
         };
+    }
+
+    private static getSectionPeriod(section: SectionWithPeriods): SectionPeriod {
+        if (section.periods.length === 0) return undefined;
+        if (section.periods.length > 1) {
+            console.warn(`Section ${section.name} has more than one period, only the first one will be used.`);
+            return section.periods[0];
+        }
+        return section.periods[0];
     }
 
     private static getColumnWithDataElements(selectedDataElements: DataElement[], column: Column): TotalItem[] {
