@@ -11,7 +11,7 @@ export interface Grid {
     id: string;
     name: string;
     columns: Column[];
-    period: SectionPeriod;
+    periods: string[];
     rows: Row[];
     toggle: SectionWithPeriods["toggle"];
     toggleMultiple: SectionWithPeriods["toggleMultiple"];
@@ -19,8 +19,6 @@ export interface Grid {
     summary: Summary[];
     indicators: Indicator[];
 }
-
-type SectionPeriod = Maybe<string>;
 
 interface SubSectionGrid {
     name: string;
@@ -41,6 +39,7 @@ interface Row {
         dataElement: DataElement;
         deName: string;
         name: string;
+        period?: string;
     }[];
 }
 
@@ -100,7 +99,30 @@ export class GridWithCatOptionCombosViewModel {
             })
             .value();
 
-        const rows = _(subsections)
+        const rows = GridWithCatOptionCombosViewModel.getRows(subsections, section, dataFormInfo);
+        const columns = GridWithCatOptionCombosViewModel.getColumns(subsections, section, dataFormInfo, rows);
+        const summary = GridWithCatOptionCombosViewModel.getSummary(section, columns, dataFormInfo);
+
+        return {
+            id: section.id,
+            indicators: section.indicators,
+            name: section.name,
+            columns: columns,
+            periods: section.periods,
+            rows: rows,
+            toggle: section.toggle,
+            toggleMultiple: section.toggleMultiple,
+            texts: section.texts,
+            summary: section.totals ? summary : [],
+        };
+    }
+
+    private static getRows(
+        subsections: SubSectionGrid[],
+        section: SectionWithPeriods,
+        dataFormInfo: DataFormInfo
+    ): Row[] {
+        return _(subsections)
             .flatMap(subsection => subsection.dataElements)
             .uniqBy(de => de.name)
             .groupBy(de => _(de.name.split(separator)).initial().join(" - "))
@@ -111,34 +133,40 @@ export class GridWithCatOptionCombosViewModel {
                 return {
                     groupName: groupName,
                     groupDescription: groupDescription,
-                    rows: group.map(de => {
-                        return { dataElement: de, deName: _.last(de.name.split(separator)) ?? "", name: de.name };
+                    rows: group.flatMap(de => {
+                        const row = { dataElement: de, deName: _.last(de.name.split(separator)) ?? "", name: de.name };
+
+                        return section.periods.length > 0 ? section.periods.map(period => ({ ...row, period })) : [row];
                     }),
                 };
             })
             .value();
+    }
 
-        const columns: Column[] = _.orderBy(
-            subsections.map(subsection => {
-                const columnDescription = getDescription(
-                    section.columnsDescriptions,
-                    dataFormInfo,
-                    subsection.code || ""
-                );
-                const columnDataElements = rows.flatMap(row => {
-                    return subsection.dataElements.filter(de => row.rows.map(r => r.name).includes(de.name));
-                });
+    private static getColumns(
+        subsections: SubSectionGrid[],
+        section: SectionWithPeriods,
+        dataFormInfo: DataFormInfo,
+        rows: Row[]
+    ): Column[] {
+        const subsectionColumns = subsections.map(subsection => {
+            const columnDescription = getDescription(section.columnsDescriptions, dataFormInfo, subsection.code || "");
+            const columnDataElements = rows.flatMap(row => {
+                return subsection.dataElements.filter(de => row.rows.map(r => r.name).includes(de.name));
+            });
 
-                return {
-                    name: subsection.name,
-                    dataElements: columnDataElements,
-                    description: columnDescription,
-                };
-            }),
-            [section.sortRowsBy ? section.sortRowsBy : ""]
-        );
+            return {
+                name: subsection.name,
+                dataElements: columnDataElements,
+                description: columnDescription,
+            };
+        });
 
-        const summary = _(section.totals)
+        return _.orderBy(subsectionColumns, [section.sortRowsBy ? section.sortRowsBy : ""]);
+    }
+
+    private static getSummary(section: SectionWithPeriods, columns: Column[], dataFormInfo: DataFormInfo): Summary[] {
+        return _(section.totals)
             .map((sectionTotal, key) => {
                 const cellTotals = columns.map(column => {
                     const allDataElements = dataFormInfo.metadata.dataForm.dataElements;
@@ -165,28 +193,6 @@ export class GridWithCatOptionCombosViewModel {
             })
             .filter(summaryRow => summaryRow.cells.every(cell => cell.items.length > 0))
             .value();
-
-        return {
-            id: section.id,
-            indicators: section.indicators,
-            name: section.name,
-            columns: columns,
-            period: GridWithCatOptionCombosViewModel.getSectionPeriod(section),
-            rows: rows,
-            toggle: section.toggle,
-            toggleMultiple: section.toggleMultiple,
-            texts: section.texts,
-            summary: section.totals ? summary : [],
-        };
-    }
-
-    private static getSectionPeriod(section: SectionWithPeriods): SectionPeriod {
-        if (section.periods.length === 0) return undefined;
-        if (section.periods.length > 1) {
-            console.warn(`Section ${section.name} has more than one period, only the first one will be used.`);
-            return section.periods[0];
-        }
-        return section.periods[0];
     }
 
     private static getColumnWithDataElements(selectedDataElements: DataElement[], column: Column): TotalItem[] {
