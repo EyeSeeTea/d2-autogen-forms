@@ -76,7 +76,7 @@ export const useJsonProcessor = (): JsonProcessorState => {
                 }
             });
         },
-        [parseJson, processWithYielding]
+        [processWithYielding]
     );
 
     return {
