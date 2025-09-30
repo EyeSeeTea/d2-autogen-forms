@@ -1,19 +1,14 @@
 import _ from "lodash";
-import {
-    CalculateTotalType,
-    GridIndicatorsCalculatedRow,
-    SubNational,
-    TotalsRule,
-} from "../../../data/common/Dhis2DataStoreDataForm";
 import { Maybe, UnionFromValues } from "../../../utils/ts-utils";
 import { Code, Id } from "./Base";
 import { DataElement, dataInputPeriodsType } from "./DataElement";
 import { Period } from "./DataValue";
 import { Indicator } from "./Indicator";
 import { SectionStyle } from "./SectionStyle";
-import { titleVariant } from "./TitleVariant";
+import { TitleVariant } from "./TitleVariant";
 import { DataElementToggle } from "./ToggleMultiple";
-import { DataElementRuleOptions, TotalRules } from "./DataElementRule";
+import { DataElementRuleOptions, SectionRuleOptions, TotalRules } from "./DataElementRule";
+import { CalculateTotalType, GridIndicatorsCalculatedRow } from "./AutogenConfig";
 
 export interface DataForm {
     id: Id;
@@ -65,6 +60,18 @@ type FormulaRules = {
     formula?: string;
     rules?: DataElementRuleOptions;
 };
+
+type TotalsRule = (
+    | {
+          type: "sections";
+          rules?: SectionRuleOptions;
+      }
+    | {
+          type: "dataElements";
+          rules?: DataElementRuleOptions;
+      }
+) & { formula: string };
+
 export type Totals = FormulaRules & {
     dataElementsCodes: string[];
     formulas: Record<string, TotalsRule> | undefined;
@@ -82,7 +89,7 @@ export interface SectionBase {
     texts: Texts;
     tabs: { active: boolean; order?: string };
     sortRowsBy: string;
-    titleVariant: titleVariant;
+    titleVariant: TitleVariant;
     styles: SectionStyle;
     columnsDescriptions: DescriptionText;
     groupDescriptions: DescriptionText;
@@ -117,6 +124,12 @@ export interface SectionWithSubnationals extends SectionBase {
     calculateTotals: CalculateTotalType;
     subNationals: SubNational[];
 }
+
+export type SubNational = {
+    id: Id;
+    parentId: Id;
+    name: string;
+};
 
 export interface SectionWithIndicatorsCalculated extends SectionBase {
     viewType: "grid-indicators-calculated";

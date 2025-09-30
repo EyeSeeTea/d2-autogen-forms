@@ -4,6 +4,6 @@ export class GetFormConfigUseCase {
     constructor(private dataStoreConfigRepository: DataStoreConfigurationRepository) {}
 
     execute(namespace: string) {
-        return this.dataStoreConfigRepository.getFormConfig(namespace);
+        return this.dataStoreConfigRepository.get(namespace);
     }
 }
