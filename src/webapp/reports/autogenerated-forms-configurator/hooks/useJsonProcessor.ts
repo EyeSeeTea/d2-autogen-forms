@@ -65,7 +65,7 @@ export const useJsonProcessor = (): JsonProcessorState => {
                 if (!json.trim()) return true;
 
                 try {
-                    const parsed = parseJson(json);
+                    const parsed = JSON.parse(json);
                     if (typeof parsed !== "object" || parsed === null) {
                         return false;
                     }
