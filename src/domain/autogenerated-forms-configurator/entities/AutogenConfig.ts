@@ -1,12 +1,5 @@
-import { Code } from "../../common/entities/Base";
-
-export interface AutogenConfig {
+export type AutogenConfig = {
     categoryCombinations: unknown;
     dataElements: unknown;
     dataSets: unknown;
-}
-
-export interface CodedRef {
-    name: string;
-    code: Code;
-}
+};

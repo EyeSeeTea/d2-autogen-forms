@@ -2,8 +2,7 @@ import React, { useEffect, useRef, useCallback } from "react";
 import styled from "styled-components";
 import MonacoEditor, { Monaco, loader } from "@monaco-editor/react";
 import { CircularProgress } from "material-ui";
-import { getAutogenConfigSchema } from "./schemas";
-import { useAutogenSchema } from "./hooks/useAutogenSchema";
+import { autogenConfigSchema } from "./schemas";
 import { useJsonProcessor } from "./hooks/useJsonProcessor";
 import { Code } from "../../../domain/common/entities/Base";
 import i18n from "../../../locales";
@@ -22,7 +21,6 @@ export const Editor: React.FC<EditorProps> = React.memo(props => {
 
     const valueGetter = useRef<Monaco>();
 
-    const autogenConfigSchema = useAutogenSchema(dataSetCode);
     const { isProcessing, error } = useJsonProcessor();
     const { editorOptions, isLargeFile, handleChange, handleEditorDidMount, handleEditorValidation } = useAutogenEditor(
         { ...props, isProcessing, error }
@@ -34,15 +32,13 @@ export const Editor: React.FC<EditorProps> = React.memo(props => {
             .then((monaco: Monaco) => {
                 const diagnosticOptions = {
                     validate: !isLargeFile,
-                    schemas: isLargeFile
-                        ? []
-                        : [getAutogenConfigSchema({ ...autogenConfigSchema, dataSetCode: dataSetCode })],
+                    schemas: isLargeFile ? [] : [autogenConfigSchema],
                 };
 
                 monaco.languages.json.jsonDefaults.setDiagnosticsOptions(diagnosticOptions);
             })
             .catch(error => console.error("Monaco initialization error:", error));
-    }, [autogenConfigSchema, dataSetCode, isLargeFile]);
+    }, [dataSetCode, isLargeFile]);
 
     const handleEditorBeforeMount = useCallback((_valueGetter: Monaco) => {
         valueGetter.current = _valueGetter;
