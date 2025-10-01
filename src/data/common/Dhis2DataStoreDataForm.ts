@@ -1,4 +1,4 @@
-import _ from "lodash";
+import _, { first } from "lodash";
 import { D2Api } from "@eyeseetea/d2-api/2.34";
 import { boolean, Codec, exactly, GetType, oneOf, optional, record, string, number, array } from "purify-ts";
 import { Namespaces } from "./clients/storage/Namespaces";
@@ -86,6 +86,9 @@ interface GridSectionConfig extends BaseSectionConfig {
             rules?: FromRulesFormulaCodec;
         }
     >;
+    firstColumnConfig?: {
+        width: number;
+    };
 }
 
 interface GridWithPeriodsSectionConfig extends BaseSectionConfig {
@@ -101,6 +104,9 @@ interface GridWithTotalsSectionConfig extends BaseSectionConfig {
     enableGroups: boolean;
     enableTopScroll: boolean;
     columnsConfig?: GridColumnsConfig;
+    firstColumnConfig?: {
+        width: number;
+    };
 }
 
 interface GridIndicatorsCalculated extends BaseSectionConfig {
@@ -286,6 +292,7 @@ const DataStoreConfigCodec = Codec.interface({
         texts: optional(textsCodec),
         sections: optional(
             sectionConfig({
+                firstColumnConfig: optional(Codec.interface({ width: number })),
                 singleCategoryInColumns: optional(boolean),
                 rowsConfig: optional(
                     record(
@@ -789,6 +796,7 @@ export class Dhis2DataStoreDataForm {
                             columnsOrder: sectionConfig.columnsOrder,
                             enableGroups: sectionConfig.enableGroups || false,
                             columnsConfig: sectionConfig.columnsConfig,
+                            firstColumnConfig: sectionConfig.firstColumnConfig,
                         };
                         return [section.id, config] as [typeof section.id, typeof config];
                     }

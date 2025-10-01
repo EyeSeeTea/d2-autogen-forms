@@ -109,6 +109,9 @@ export interface SectionGrid extends SectionBase {
     calculateTotals: CalculateTotalType;
     columnsOrder: Maybe<ColumnOrder>;
     columnsConfig?: Record<string, { rules?: RulesFormula }>;
+    firstColumnConfig: Maybe<{
+        width: number;
+    }>;
 }
 
 export interface SectionWithTotals extends SectionBase {

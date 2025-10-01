@@ -50,6 +50,7 @@ const GridForm: React.FC<GridFormProps> = props => {
     const fixColumns = section.fixedHeaders;
     const fixRows = section.fixedRowNames;
     const mainContentStyles = fixColumns ? fixHeaderClasses.fixedHeaders : {};
+    const firstColumnWidth = section.firstColumnConfig?.width || 800;
 
     return (
         <DataTableSection section={grid} sectionStyles={props.section.styles} dataFormInfo={dataFormInfo}>
@@ -88,7 +89,7 @@ const GridForm: React.FC<GridFormProps> = props => {
                                 !_.isEmpty(grid.rows) && (
                                     <CustomDataTableColumnHeader
                                         backgroundColor={props.section.styles.columns.backgroundColor}
-                                        width="800px"
+                                        width={`${firstColumnWidth}px`}
                                         position={fixColumns ? "sticky" : undefined}
                                         left={fixColumns ? "162px" : undefined}
                                     ></CustomDataTableColumnHeader>
