@@ -1,4 +1,4 @@
-import _, { first } from "lodash";
+import _ from "lodash";
 import { D2Api } from "@eyeseetea/d2-api/2.34";
 import { boolean, Codec, exactly, GetType, oneOf, optional, record, string, number, array } from "purify-ts";
 import { Namespaces } from "./clients/storage/Namespaces";
