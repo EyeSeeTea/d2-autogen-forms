@@ -1,8 +1,8 @@
 import { AutogenConfig } from "../../common/entities/AutogenConfig";
-import { DataStoreConfigurationRepository } from "../repositories/DataStoreConfigurationRepository";
+import { AutogenConfigRepository } from "../repositories/AutogenConfigRepository";
 
 export class SaveFormConfigUseCase {
-    constructor(private dataStoreConfigRepository: DataStoreConfigurationRepository) {}
+    constructor(private dataStoreConfigRepository: AutogenConfigRepository) {}
 
     execute(namespace: string, config: AutogenConfig) {
         return this.dataStoreConfigRepository.save(namespace, config);

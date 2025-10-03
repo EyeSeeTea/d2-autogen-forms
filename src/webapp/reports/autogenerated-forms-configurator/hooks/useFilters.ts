@@ -13,7 +13,7 @@ export type Option = {
     text: string;
 };
 
-export function useFilters(): FiltersState {
+export function useFilters(dataSetCode: string): FiltersState {
     const { compositionRoot } = useAppContext();
     const [dataSets, setDataSets] = useState<AutogenConfigDataSets>({
         dataSetsWithExistingConfig: [],
@@ -22,7 +22,7 @@ export function useFilters(): FiltersState {
 
     useEffect(() => {
         compositionRoot.dataStoreConfig.getDataSets().then(dataSets => setDataSets(dataSets));
-    }, [compositionRoot.dataStoreConfig]);
+    }, [compositionRoot.dataStoreConfig, dataSetCode]);
 
     const dataSetItems = useMemoOptionsFromNamedRef(dataSets.dataSetsWithExistingConfig);
     const newDataSetItems = useMemoOptionsFromNamedRef(dataSets.dataSetsWithoutConfig);

@@ -8,10 +8,10 @@ import { TitleVariant } from "./TitleVariant";
 import { ToggleMultiple } from "./ToggleMultiple";
 
 export type AutogenConfig = {
-    categoryCombinations: Record<Code, CategoryCombinationConfig>;
-    categoryOptions: Record<Code, CategoryOptionConfig>;
-    dataElements: Record<Code, DataElementConfig>;
-    dataSets: Record<Code, DataSetConfig>;
+    categoryCombinations?: Record<Code, CategoryCombinationConfig>;
+    categoryOptions?: Record<Code, CategoryOptionConfig>;
+    dataElements?: Record<Code, DataElementConfig>;
+    dataSets: Record<Code, DataSetConfig | {}>;
 };
 
 export type DataSetConfig = {
