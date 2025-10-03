@@ -1,3 +1,5 @@
 import { CodedRef } from "../../common/entities/Base";
 
-export type DataSet = CodedRef;
+export type DataSet = CodedRef & {
+    configExists: boolean;
+};

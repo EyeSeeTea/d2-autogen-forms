@@ -63,8 +63,7 @@ export const Editor: React.FC<EditorProps> = React.memo(props => {
 
             <StyledEditor
                 loading={<CircularProgress />}
-                height="80vh"
-                width="60vw"
+                height={"70vh"}
                 language="json"
                 defaultLanguage="json"
                 defaultValue={DEFAULT_JSON_VALUE}

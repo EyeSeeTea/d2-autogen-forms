@@ -1,15 +1,16 @@
 import React, { ReactNode } from "react";
-import { createTheme, FormControl, InputLabel, MuiThemeProvider } from "@material-ui/core";
+import { createTheme, FormControl, FormHelperText, InputLabel, MuiThemeProvider } from "@material-ui/core";
 import cyan from "@material-ui/core/colors/cyan";
 
 interface DropdownFormProps {
     label: string;
     children: ReactNode;
     className?: string;
+    helperText?: string;
 }
 
 const DropdownForm: React.FC<DropdownFormProps> = props => {
-    const { label, children, className } = props;
+    const { label, children, className, helperText } = props;
     const materialTheme = getMaterialTheme();
 
     return (
@@ -17,6 +18,7 @@ const DropdownForm: React.FC<DropdownFormProps> = props => {
             <FormControl className={className}>
                 <InputLabel>{label}</InputLabel>
                 {children}
+                {helperText && <FormHelperText>{helperText}</FormHelperText>}
             </FormControl>
         </MuiThemeProvider>
     );
