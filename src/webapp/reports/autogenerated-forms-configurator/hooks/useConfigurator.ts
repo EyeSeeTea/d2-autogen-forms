@@ -27,7 +27,6 @@ type ConfiguratorState = {
 
 // TO DO: separate hook files, maybe one for configurator actions
 // TO DO: unit tests
-// TO DO: alphabetical order for config value
 
 export function useConfigurator(): ConfiguratorState {
     const { compositionRoot } = useAppContext();

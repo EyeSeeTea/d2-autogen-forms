@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from "react";
+import _ from "lodash";
 import { AutogenConfig } from "../../../../domain/common/entities/AutogenConfig";
 
 type JsonProcessorState = {
@@ -46,7 +47,8 @@ export const useJsonProcessor = (): JsonProcessorState => {
     }, []);
 
     const formatJson = useCallback(
-        async (config: AutogenConfig): Promise<string> => processWithYielding(() => JSON.stringify(config, null, 4)),
+        async (config: AutogenConfig): Promise<string> =>
+            processWithYielding(() => JSON.stringify(sortConfig(config), null, 4)),
         [processWithYielding]
     );
 
@@ -86,4 +88,19 @@ export const useJsonProcessor = (): JsonProcessorState => {
         parseJson: parseJson,
         validateJson: validateJson,
     };
+};
+
+const sortConfig = (obj: unknown): unknown => {
+    if (_.isArray(obj)) {
+        return _.map(obj, sortConfig);
+    }
+    if (_.isPlainObject(obj)) {
+        return _(obj)
+            .toPairs()
+            .sortBy(0)
+            .map(([key, value]) => [key, sortConfig(value)])
+            .fromPairs()
+            .value();
+    }
+    return obj;
 };
