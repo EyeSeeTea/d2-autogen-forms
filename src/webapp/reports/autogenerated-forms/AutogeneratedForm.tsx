@@ -189,7 +189,7 @@ function useDataFormInfo(): [
         // Hiding arrows for input of type number
         // adding directly to css works in dev, but not in data entry.
         const css =
-                "input::-webkit-outer-spin-button,input::-webkit-inner-spin-button {-webkit-appearance: none !important; margin: 0; } input[type=number] { -moz-appearance: textfield !important; }",
+                'input::-webkit-outer-spin-button,input::-webkit-inner-spin-button {-webkit-appearance: none !important; margin: 0; } input[type=number] { -moz-appearance: textfield !important; }[data-test="dhis2-uicore-layer"] {z-index: 10 !important;}',
             head = document.head || document.getElementsByTagName("head")[0],
             style = document.createElement("style");
         style.setAttribute("id", "disabled-arrows-css");

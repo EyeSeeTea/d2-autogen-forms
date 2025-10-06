@@ -43,6 +43,7 @@ export class GridWithCategoryColumnsViewModel {
     static get(section: SectionWithCategoryColumns, dataFormInfo: DataFormInfo): Grid {
         const { parentColumns, columns } = this.getColumns(section);
         const rows = this.buildRows(section);
+        const calculateTotals = this.calculateTotals(rows, dataFormInfo);
 
         return {
             id: section.id,
@@ -54,7 +55,7 @@ export class GridWithCategoryColumnsViewModel {
             useIndexes: false,
             parentColumns: parentColumns,
             toggleMultiple: section.toggleMultiple,
-            calculateTotals: this.calculateTotals(rows, dataFormInfo),
+            calculateTotals: calculateTotals,
         };
     }
 
@@ -223,8 +224,4 @@ export class GridWithCategoryColumnsViewModel {
 
         return dataValue.value ? Number(dataValue.value) : undefined;
     }
-
-    private static isLetter = (value: string): boolean => {
-        return /^[a-zA-Z]/.test(value);
-    };
 }
