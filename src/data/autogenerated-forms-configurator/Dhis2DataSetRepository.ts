@@ -30,7 +30,7 @@ export class Dhis2DataSetRepository implements DataSetRepository {
             })
             .getData();
 
-        return dataSets;
+        return dataSets.map(dataSet => ({ name: dataSet.name.trim(), code: dataSet.code.trim() }));
     }
 }
 

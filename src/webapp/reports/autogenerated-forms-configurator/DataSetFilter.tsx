@@ -10,10 +10,11 @@ type ConfiguratorFiltersProps = {
     dataSetItems: Option[];
     dataSetCode: Code;
     onChange: (dataSet: DataSetViewModel) => void;
+    helperText?: string;
 };
 
 export const DataSetFilter: React.FC<ConfiguratorFiltersProps> = React.memo(props => {
-    const { dataSetItems, dataSetCode, onChange } = props;
+    const { dataSetItems, dataSetCode, onChange, helperText } = props;
 
     const setDataSet = useCallback<SingleDropdownHandler>(
         dataSetCode => {
@@ -36,18 +37,26 @@ export const DataSetFilter: React.FC<ConfiguratorFiltersProps> = React.memo(prop
                 label={i18n.t("Select dataset")}
                 hideEmpty
             />
+            {helperText && <HelperText>{helperText}</HelperText>}
         </Container>
     );
 });
 
 const Container = styled.div`
     display: flex;
+    flex-direction: column;
     gap: 1rem;
     flex-wrap: wrap;
 `;
 
 const SingleDropdownStyled = styled(Dropdown)`
     width: 35rem;
+`;
+
+const HelperText = styled.span`
+    font-size: 0.875rem;
+    color: ${props => props.theme.palette.text.secondary};
+    margin-left: 10px;
 `;
 
 type SingleDropdownHandler = DropdownProps["onChange"];
