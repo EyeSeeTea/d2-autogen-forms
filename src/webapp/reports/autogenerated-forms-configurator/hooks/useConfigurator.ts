@@ -25,9 +25,6 @@ type ConfiguratorState = {
     updateNewDataSet: (dataSet: DataSetViewModel) => void;
 };
 
-// TO DO: separate hook files, maybe one for configurator actions
-// TO DO: unit tests
-
 export function useConfigurator(): ConfiguratorState {
     const { compositionRoot } = useAppContext();
     const snackbar = useSnackbar();
