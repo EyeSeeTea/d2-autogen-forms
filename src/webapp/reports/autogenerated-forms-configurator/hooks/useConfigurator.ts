@@ -2,20 +2,31 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAppContext } from "../../../contexts/app-context";
 import { useJsonProcessor } from "./useJsonProcessor";
 import { AutogenConfig } from "../../../../domain/common/entities/AutogenConfig";
+import { CodedRef } from "../../../../domain/common/entities/Base";
+
+export type DataSetViewModel = CodedRef;
 
 type ConfiguratorState = {
     configValue: string;
-    dataSetCode: string;
+    dataSet: DataSetViewModel;
     disableSave: boolean;
-    newDataSetCode: string;
+    newDataSet: DataSetViewModel;
     clearConfig: () => void;
-    createNewConfig: (dataSetCode: string) => void;
+    createNewConfig: (dataSet: DataSetViewModel) => void;
+    deleteConfig: (dataSet: DataSetViewModel) => void;
     saveConfig: () => Promise<void>;
     updateConfigValue: (value: string) => void;
-    updateDataSetCode: (dataSetCode: string) => void;
+    updateDataSet: (dataSet: DataSetViewModel) => void;
     updateJsonValidity: (isValid: boolean) => void;
-    updateNewDataSet: (dataSetCode: string) => void;
+    updateNewDataSet: (dataSet: DataSetViewModel) => void;
 };
+
+// TO DO: add snackbar notifications
+// TO DO: loading states
+// TO DO: separate hook files, maybe one for configurator actions
+// TO DO: unit tests
+// TO DO: use cases for each action
+// TO DO: alphabetical order for config value
 
 export function useConfigurator(): ConfiguratorState {
     const { compositionRoot } = useAppContext();
@@ -23,17 +34,17 @@ export function useConfigurator(): ConfiguratorState {
 
     const [configValue, updateConfigValue] = useState<string>(DEFAULT_JSON_VALUE);
     const [isJSONValid, updateJsonValidity] = useState<boolean>(false);
-    const [dataSetCode, updateDataSetCode] = useState<string>("");
-    const [newDataSetCode, updateNewDataSet] = useState<string>("");
+    const [dataSet, updateDataSet] = useState<DataSetViewModel>(emptyDataSetViewModel);
+    const [newDataSet, updateNewDataSet] = useState<DataSetViewModel>(emptyDataSetViewModel);
 
     useEffect(() => {
-        if (dataSetCode !== "") {
-            compositionRoot.dataStoreConfig.getFormConfig(dataSetCode).then(async config => {
-                const formattedConfig = await formatJson(config);
-                updateConfigValue(formattedConfig);
-            });
-        }
-    }, [compositionRoot.dataStoreConfig, dataSetCode, formatJson]);
+        if (!dataSet.code) return;
+
+        compositionRoot.dataStoreConfig.getFormConfig(dataSet.code).then(async config => {
+            const formattedConfig = await formatJson(config);
+            updateConfigValue(formattedConfig);
+        });
+    }, [compositionRoot.dataStoreConfig, dataSet, formatJson]);
 
     const clearConfig = useCallback(() => {
         updateConfigValue(DEFAULT_JSON_VALUE);
@@ -41,18 +52,16 @@ export function useConfigurator(): ConfiguratorState {
     }, []);
 
     const createNewConfig = useCallback(
-        dataSetCode => {
+        (dataSet: DataSetViewModel) => {
             const newConfig: AutogenConfig = {
                 dataSets: {
-                    [dataSetCode]: {},
+                    [dataSet.code]: {},
                 },
             };
             const formattedConfig = JSON.stringify(newConfig, null, 4);
-            // TO DO: add snackbar notifications
-            // TO DO: add delete button
-            // TO DO: loading states
-            compositionRoot.dataStoreConfig.saveFormConfig(dataSetCode, newConfig).then(() => {
-                updateDataSetCode(dataSetCode);
+
+            compositionRoot.dataStoreConfig.saveFormConfig(dataSet.code, newConfig).then(() => {
+                updateDataSet(dataSet);
                 updateConfigValue(formattedConfig);
                 updateJsonValidity(true);
             });
@@ -60,25 +69,35 @@ export function useConfigurator(): ConfiguratorState {
         [compositionRoot.dataStoreConfig]
     );
 
-    const saveConfig = useCallback(async () => {
-        const parsedConfig = await parseJson(configValue);
-        await compositionRoot.dataStoreConfig.saveFormConfig(dataSetCode, parsedConfig);
-    }, [compositionRoot.dataStoreConfig, dataSetCode, configValue, parseJson]);
-
-    const disableSave = useMemo(
-        () => !dataSetCode || !isJSONValid || !configValue,
-        [dataSetCode, isJSONValid, configValue]
+    const deleteConfig = useCallback(
+        (dataSet: DataSetViewModel) => {
+            compositionRoot.dataStoreConfig.deleteFormConfig(dataSet.code).then(() => {
+                updateDataSet(emptyDataSetViewModel);
+                clearConfig();
+            });
+        },
+        [compositionRoot.dataStoreConfig, clearConfig]
     );
+
+    const saveConfig = useCallback(async () => {
+        if (!dataSet) return;
+
+        const parsedConfig = await parseJson(configValue);
+        await compositionRoot.dataStoreConfig.saveFormConfig(dataSet.code, parsedConfig);
+    }, [compositionRoot.dataStoreConfig, dataSet, configValue, parseJson]);
+
+    const disableSave = useMemo(() => !dataSet || !isJSONValid || !configValue, [dataSet, isJSONValid, configValue]);
 
     return {
         configValue: configValue,
-        dataSetCode: dataSetCode,
+        dataSet: dataSet,
         disableSave: disableSave,
-        newDataSetCode: newDataSetCode,
+        newDataSet: newDataSet,
         clearConfig: clearConfig,
         createNewConfig: createNewConfig,
+        deleteConfig: deleteConfig,
         saveConfig: saveConfig,
-        updateDataSetCode: updateDataSetCode,
+        updateDataSet: updateDataSet,
         updateConfigValue: updateConfigValue,
         updateJsonValidity: updateJsonValidity,
         updateNewDataSet: updateNewDataSet,
@@ -86,3 +105,4 @@ export function useConfigurator(): ConfiguratorState {
 }
 
 export const DEFAULT_JSON_VALUE = "{}";
+const emptyDataSetViewModel: DataSetViewModel = { code: "", name: "" };

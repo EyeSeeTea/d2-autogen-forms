@@ -1,9 +1,9 @@
 import { AutogenConfigRepository } from "../repositories/AutogenConfigRepository";
 
-export class GetFormConfigUseCase {
+export class DeleteFormConfigUseCase {
     constructor(private autogenConfigRepository: AutogenConfigRepository) {}
 
-    execute(namespace: string) {
-        return this.autogenConfigRepository.get(namespace);
+    execute(dataSetCode: string) {
+        return this.autogenConfigRepository.delete(dataSetCode);
     }
 }

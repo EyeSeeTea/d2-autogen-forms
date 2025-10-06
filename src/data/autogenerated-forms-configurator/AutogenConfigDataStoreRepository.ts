@@ -5,7 +5,7 @@ import { StorageClient } from "../common/clients/storage/StorageClient";
 import { Instance } from "../common/entities/Instance";
 import { DataStoreStorageClient } from "../common/clients/storage/DataStoreStorageClient";
 
-export class AutogenConfigD2Repository implements AutogenConfigRepository {
+export class AutogenConfigDataStoreRepository implements AutogenConfigRepository {
     private globalStorageClient: StorageClient;
 
     constructor(private api: D2Api) {
@@ -20,6 +20,10 @@ export class AutogenConfigD2Repository implements AutogenConfigRepository {
         }
 
         return dataStoreConfig;
+    }
+
+    async delete(dataSetCode: string): Promise<void> {
+        return await this.globalStorageClient.removeObject(dataSetCode);
     }
 
     async save(dataSetCode: string, config: AutogenConfig): Promise<void> {

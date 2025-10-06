@@ -1,10 +1,11 @@
 import { AutogenConfig } from "../../common/entities/AutogenConfig";
+import { Code } from "../../common/entities/Base";
 import { AutogenConfigRepository } from "../repositories/AutogenConfigRepository";
 
 export class SaveFormConfigUseCase {
-    constructor(private dataStoreConfigRepository: AutogenConfigRepository) {}
+    constructor(private autogenConfigRepository: AutogenConfigRepository) {}
 
-    execute(namespace: string, config: AutogenConfig) {
-        return this.dataStoreConfigRepository.save(namespace, config);
+    execute(dataSetCode: Code, config: AutogenConfig) {
+        return this.autogenConfigRepository.save(dataSetCode, config);
     }
 }

@@ -4,11 +4,12 @@ import React, { useCallback } from "react";
 import styled from "styled-components";
 import { Option } from "./hooks/useFilters";
 import { Code } from "../../../domain/common/entities/Base";
+import { DataSetViewModel } from "./hooks/useConfigurator";
 
 type ConfiguratorFiltersProps = {
     dataSetItems: Option[];
     dataSetCode: Code;
-    onChange: (dataSetCode: Code) => void;
+    onChange: (dataSet: DataSetViewModel) => void;
 };
 
 export const DataSetFilter: React.FC<ConfiguratorFiltersProps> = React.memo(props => {
@@ -16,9 +17,14 @@ export const DataSetFilter: React.FC<ConfiguratorFiltersProps> = React.memo(prop
 
     const setDataSet = useCallback<SingleDropdownHandler>(
         dataSetCode => {
-            if (dataSetCode) onChange(dataSetCode);
+            const dataSet = dataSetItems.find(ds => ds.value === dataSetCode);
+            if (dataSet)
+                onChange({
+                    code: dataSet.value,
+                    name: dataSet.text,
+                });
         },
-        [onChange]
+        [dataSetItems, onChange]
     );
 
     return (
