@@ -1,5 +1,6 @@
 import _ from "lodash";
 import { getId, Id } from "../../domain/common/entities/Base";
+import { CompulsoryDataValue } from "../../domain/common/entities/CompulsoryDataValue";
 import { DataElement } from "../../domain/common/entities/DataElement";
 import {
     DataValue,
@@ -38,11 +39,22 @@ export class Dhis2DataValueRepository implements DataValueRepository {
         const dataSetCode = dataSetResponse.objects[0]?.code;
         if (!dataSetCode) throw new Error(`Data set not found: ${options.dataSetId}`);
 
-        const dataElements = await this.getDataElements(dataValues, dataSetCode);
+        const compulsoryDataElements = await this.getCompulsoryDataElements(options.dataSetId);
+
+        const deIdsFromPayload = _.uniq(_.map(dataValues, dv => dv.dataElement));
+        const deIdsRequired = _.uniq(_.map(compulsoryDataElements, r => r.dataElementId));
+        const allDataElementIds = _(deIdsFromPayload).concat(deIdsRequired).uniq().value();
+
+        const dataElements = await this.getDataElements(dataValues, dataSetCode, allDataElementIds);
 
         const dataValuesFiles = await this.getFileResourcesMapping(dataElements, dataValues);
 
-        return _(dataValues)
+        const isEmptyStr = (s?: string | null): boolean => !s || s.trim() === "";
+
+        const isRequiredCombo = (deId: Id, cocId: Id): boolean =>
+            _.some(compulsoryDataElements, req => req.dataElementId === deId && req.categoryOptionComboId === cocId);
+
+        const dataValuesByType = _(dataValues)
             .map((dv): DataValue | null => {
                 const dataElement = dataElements[dv.dataElement];
                 if (!dataElement) {
@@ -50,10 +62,13 @@ export class Dhis2DataValueRepository implements DataValueRepository {
                     return null;
                 }
 
+                const isRequired = isRequiredCombo(dv.dataElement, dv.categoryOptionCombo) && isEmptyStr(dv.value);
+
                 const selector = {
                     orgUnitId: dv.orgUnit,
                     period: dv.period,
                     categoryOptionComboId: dv.categoryOptionCombo,
+                    isRequired,
                 };
 
                 const { type } = dataElement;
@@ -138,6 +153,142 @@ export class Dhis2DataValueRepository implements DataValueRepository {
             })
             .compact()
             .value();
+
+        return this.checkCompulsoryAndBuildDataValues({
+            compulsoryDataValues: compulsoryDataElements,
+            orgUnitIds: options.orgUnits,
+            periods: options.periods,
+            dataValues: dataValuesByType,
+            dataElements: dataElements,
+        });
+    }
+
+    private checkCompulsoryAndBuildDataValues(options: {
+        compulsoryDataValues: CompulsoryDataValue[];
+        orgUnitIds: Id[];
+        periods: Period[];
+        dataValues: DataValue[];
+        dataElements: Record<Id, DataElement>;
+    }): DataValue[] {
+        const { dataElements, compulsoryDataValues, orgUnitIds, periods, dataValues } = options;
+
+        const allCombos = _.flatMap(orgUnitIds, orgUnitId =>
+            _.flatMap(periods, period =>
+                _.map(compulsoryDataValues, req => ({
+                    dataElementId: req.dataElementId,
+                    categoryOptionComboId: req.categoryOptionComboId,
+                    orgUnitId,
+                    period,
+                }))
+            )
+        );
+
+        const existingKeys = new Set(
+            _.map(dataValues, dv => `${dv.dataElement.id}|${dv.categoryOptionComboId}|${dv.orgUnitId}|${dv.period}`)
+        );
+
+        const missingCombos = _.filter(allCombos, combo => {
+            const key = `${combo.dataElementId}|${combo.categoryOptionComboId}|${combo.orgUnitId}|${combo.period}`;
+            return !existingKeys.has(key);
+        });
+
+        const missingRequired = _(missingCombos)
+            .map((combo): Maybe<DataValue> => {
+                const dataElement = dataElements[combo.dataElementId];
+                if (!dataElement) return undefined;
+
+                const isMultiple = Boolean(dataElement.options?.isMultiple) || dataElement.type === "MULTI_TEXT";
+                const selector = {
+                    orgUnitId: combo.orgUnitId,
+                    period: combo.period,
+                    categoryOptionComboId: combo.categoryOptionComboId,
+                    isRequired: true,
+                };
+
+                const { type } = dataElement;
+
+                switch (type) {
+                    case "TEXT":
+                        return isMultiple
+                            ? { type: "TEXT", isMultiple: true, dataElement: dataElement, values: [], ...selector }
+                            : { type: "TEXT", isMultiple: false, dataElement: dataElement, value: "", ...selector };
+                    case "MULTI_TEXT":
+                        return {
+                            type: "MULTI_TEXT",
+                            isMultiple: true,
+                            dataElement: dataElement,
+                            values: [],
+                            ...selector,
+                        };
+                    case "NUMBER":
+                        return isMultiple
+                            ? { type: "NUMBER", isMultiple: true, dataElement: dataElement, values: [], ...selector }
+                            : {
+                                  type: "NUMBER",
+                                  isMultiple: false,
+                                  dataElement: dataElement,
+                                  value: "",
+                                  ...selector,
+                              };
+                    case "PERCENTAGE":
+                        return {
+                            type: "PERCENTAGE",
+                            isMultiple: false,
+                            dataElement: dataElement,
+                            value: "",
+                            ...selector,
+                        };
+                    case "BOOLEAN":
+                        return {
+                            type: "BOOLEAN",
+                            isMultiple: false,
+                            dataElement: dataElement,
+                            value: undefined,
+                            ...selector,
+                        };
+                    case "FILE":
+                        return {
+                            type: "FILE",
+                            dataElement: dataElement,
+                            file: undefined,
+                            isMultiple: false,
+                            ...selector,
+                        };
+                    case "DATE":
+                        return {
+                            type: "DATE",
+                            dataElement: dataElement,
+                            value: undefined,
+                            isMultiple: false,
+                            ...selector,
+                        };
+                    default:
+                        assertUnreachable(type);
+                }
+            })
+            .compact()
+            .value();
+
+        return dataValues.concat(missingRequired);
+    }
+
+    private async getCompulsoryDataElements(dataSetId: Id): Promise<CompulsoryDataValue[]> {
+        return this.api.models.dataSets
+            .get({
+                fields: {
+                    compulsoryDataElementOperands: { dataElement: { id: true }, categoryOptionCombo: { id: true } },
+                },
+                filter: { id: { eq: dataSetId } },
+            })
+            .getData()
+            .then(response => {
+                const first = response.objects[0];
+                if (!first) throw new Error(`Data set not found: ${dataSetId}`);
+
+                return first.compulsoryDataElementOperands.map(
+                    cdeo => new CompulsoryDataValue(cdeo.dataElement.id, cdeo.categoryOptionCombo.id)
+                );
+            });
     }
 
     private async getFileResourcesMapping(
@@ -182,9 +333,10 @@ export class Dhis2DataValueRepository implements DataValueRepository {
         );
     }
 
-    private async getDataElements(dataValues: DataValueSetsDataValue[], dataSetCode: string) {
+    private async getDataElements(dataValues: DataValueSetsDataValue[], dataSetCode: string, allDataElementIds: Id[]) {
         const dataElementIds = dataValues.map(dv => dv.dataElement);
-        return new Dhis2DataElement(this.api).get(dataElementIds, dataSetCode);
+        const uniqDataElementIds = _(dataElementIds).concat(allDataElementIds).uniq().value();
+        return new Dhis2DataElement(this.api).get(uniqDataElementIds, dataSetCode);
     }
 
     async save(dataValue: DataValue): Promise<DataValue> {

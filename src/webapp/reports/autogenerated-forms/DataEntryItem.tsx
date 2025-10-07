@@ -230,6 +230,8 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
     const { dataElement, dataFormInfo, manualyDisabled: handDisabled, rows } = props;
     const [dataValue, state, notifyChange] = useUpdatableDataValueWithFeedback(props);
 
+    const hasCompulsoryError = dataValue.isRequired ? "required" : state;
+
     const { type } = dataValue;
     const { options } = dataElement;
     const disabled = !handDisabled
@@ -263,7 +265,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                         dataValue={dataValue}
                         options={options.items}
                         onValueChange={notifyChange}
-                        state={state}
+                        state={hasCompulsoryError}
                         disabled={isDisabled || disabled}
                     />
                 );
@@ -273,7 +275,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                         dataValue={dataValue}
                         options={options.items}
                         onValueChange={notifyChange}
-                        state={state}
+                        state={hasCompulsoryError}
                         disabled={isDisabled || disabled}
                     />
                 );
@@ -285,7 +287,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                             dataFormInfo={dataFormInfo}
                             options={options.items}
                             onValueChange={notifyChange}
-                            state={state}
+                            state={hasCompulsoryError}
                             disabled={isDisabled || disabled}
                             sourceTypeDEs={[]}
                             rows={rows}
@@ -297,7 +299,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                             dataValue={dataValue}
                             options={options.items}
                             onValueChange={notifyChange}
-                            state={state}
+                            state={hasCompulsoryError}
                             disabled={isDisabled || disabled}
                         />
                     ) : (
@@ -305,7 +307,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                             dataValue={dataValue}
                             options={options.items}
                             onValueChange={notifyChange}
-                            state={state}
+                            state={hasCompulsoryError}
                             disabled={isDisabled || disabled}
                         />
                     );
@@ -316,7 +318,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                         dataValue={dataValue}
                         options={options.items}
                         onValueChange={notifyChange}
-                        state={state}
+                        state={hasCompulsoryError}
                         disabled={isDisabled || disabled}
                     />
                 ) : (
@@ -324,7 +326,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                         dataValue={dataValue}
                         options={options.items}
                         onValueChange={notifyChange}
-                        state={state}
+                        state={hasCompulsoryError}
                         disabled={isDisabled || disabled}
                     />
                 );
@@ -338,7 +340,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                     <BooleanComponent
                         dataValue={dataValue}
                         onValueChange={notifyChange}
-                        state={state}
+                        state={hasCompulsoryError}
                         disabled={isDisabled || disabled}
                     />
                 );
@@ -347,7 +349,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                     <NumberWidget
                         dataValue={dataValue}
                         onValueChange={notifyChange}
-                        state={state}
+                        state={hasCompulsoryError}
                         disabled={isDisabled || disabled}
                     />
                 );
@@ -356,7 +358,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                     <PercentageWidget
                         dataValue={dataValue}
                         onValueChange={notifyChange}
-                        state={state}
+                        state={hasCompulsoryError}
                         disabled={isDisabled || disabled}
                     />
                 );
@@ -365,7 +367,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                     <TextWidget
                         dataValue={dataValue}
                         onValueChange={notifyChange}
-                        state={state}
+                        state={hasCompulsoryError}
                         disabled={isDisabled || disabled}
                     />
                 );
@@ -374,7 +376,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                     <FileWidget
                         dataValue={dataValue}
                         onValueChange={notifyChange}
-                        state={state}
+                        state={hasCompulsoryError}
                         disabled={isDisabled || disabled}
                     />
                 );
@@ -383,7 +385,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                     <DateWidget
                         dataValue={dataValue}
                         onValueChange={notifyChange}
-                        state={state}
+                        state={hasCompulsoryError}
                         disabled={isDisabled || disabled}
                     />
                 );
@@ -424,19 +426,36 @@ function useUpdatableDataValueWithFeedback(options: DataEntryItemProps) {
     const saveWithTotals = dataFormInfo.data.saveWithTotals;
 
     const notifyChange = React.useCallback(
-        dataValue => {
+        dataValueCb => {
             setState("saving");
             if (columnTotal && columnDataElements && cocId) {
-                saveWithTotals(dataValue, columnTotal, columnDataElements, cocId)
+                saveWithTotals(dataValueCb, columnTotal, columnDataElements, cocId)
                     .then(() => setState("saveSuccessful"))
                     .catch(() => setState("saveError"));
             } else {
-                save(dataValue)
-                    .then(() => setState("saveSuccessful"))
+                save(dataValueCb)
+                    .then(() => {
+                        // validate compulsory fields
+                        const value = getValueAccordingType(dataValueCb);
+                        const isRequired = dataFormInfo.metadata.dataForm.compulsoryDataValues.find(
+                            cdv => cdv.dataElementId === dataValue.dataElement.id && cdv.categoryOptionComboId === cocId
+                        );
+                        const state =
+                            isRequired && (_.isNil(value) || _.isEmpty(value)) ? "required" : "saveSuccessful";
+                        setState(state);
+                    })
                     .catch(() => setState("saveError"));
             }
         },
-        [columnDataElements, columnTotal, save, saveWithTotals, cocId]
+        [
+            columnDataElements,
+            columnTotal,
+            save,
+            saveWithTotals,
+            cocId,
+            dataFormInfo.metadata.dataForm.compulsoryDataValues,
+            dataValue.dataElement.id,
+        ]
     );
 
     return [dataValue, state, notifyChange] as const;

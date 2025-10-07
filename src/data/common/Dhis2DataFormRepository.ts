@@ -1,6 +1,7 @@
 import _ from "lodash";
 
 import { Code, getId, Id } from "../../domain/common/entities/Base";
+import { CompulsoryDataValue } from "../../domain/common/entities/CompulsoryDataValue";
 import { DataElement } from "../../domain/common/entities/DataElement";
 import {
     DataElementRuleOptions,
@@ -54,6 +55,9 @@ export class Dhis2DataFormRepository implements DataFormRepository {
             texts: dataSetConfig.texts,
             options: { dataElements: dataElementsOptions },
             totalRules: totalRules,
+            compulsoryDataValues: dataSet.compulsoryDataElementOperands.map(
+                operand => new CompulsoryDataValue(operand.dataElement.id, operand.categoryOptionCombo.id)
+            ),
         };
     }
 
@@ -530,6 +534,7 @@ function getMetadataQuery(options: { dataSetId: Id }) {
                 id: true,
                 code: true,
                 expiryDays: true,
+                compulsoryDataElementOperands: { dataElement: { id: true }, categoryOptionCombo: { id: true } },
                 dataInputPeriods: {
                     closingDate: true,
                     openingDate: true,

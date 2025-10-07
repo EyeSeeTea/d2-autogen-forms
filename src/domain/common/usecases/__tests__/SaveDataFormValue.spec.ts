@@ -21,7 +21,7 @@ describe("SaveDataFormValueUseCase", () => {
 
         const stubDataValueStore = instance(mockDataValueStore);
 
-        const result = await useCase.execute(stubDataValueStore, dataValue);
+        const result = await useCase.execute(stubDataValueStore, dataValue, []);
 
         verify(mockDataValueStore.get(dataValue.dataElement, dataValue)).once();
         verify(mockDataValueStore.set(anything())).never();
@@ -39,7 +39,7 @@ describe("SaveDataFormValueUseCase", () => {
         const dataValueStore = DataValueStore.from([dataValue]);
         const saveDataValueStore = DataValueStore.from([saveDataValue]);
 
-        const result = await useCase.execute(dataValueStore, saveDataValue);
+        const result = await useCase.execute(dataValueStore, saveDataValue, []);
 
         verify(mockDataValueRepository.save(deepEqual(saveDataValue))).once();
         expect(result).toStrictEqual(saveDataValueStore);
@@ -63,7 +63,7 @@ describe("SaveDataFormValueUseCase", () => {
         const dataValueStore = DataValueStore.from([dataValue]);
         const saveDataValueStore = DataValueStore.from([saveDataValue]);
 
-        const result = await useCase.execute(dataValueStore, saveDataValue);
+        const result = await useCase.execute(dataValueStore, saveDataValue, []);
 
         verify(mockDataValueRepository.save(deepEqual(saveDataValue))).once();
         expect(result).toStrictEqual(saveDataValueStore);

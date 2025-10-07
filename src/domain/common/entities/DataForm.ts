@@ -15,6 +15,7 @@ import { titleVariant } from "./TitleVariant";
 import { DataElementToggle } from "./ToggleMultiple";
 import { DataElementRuleOptions, TotalRules } from "./DataElementRule";
 import { RulesFormula } from "../../../data/common/RulesFormula";
+import { CompulsoryDataValue } from "./CompulsoryDataValue";
 
 export interface DataForm {
     id: Id;
@@ -28,6 +29,7 @@ export interface DataForm {
     };
     indicators: Indicator[];
     totalRules: TotalRules;
+    compulsoryDataValues: CompulsoryDataValue[];
 }
 
 export interface Texts {
