@@ -1,18 +1,16 @@
 import _ from "lodash";
 
-export const sortObjectKeys = <T>(obj: T): T => {
+export const sortObjectKeys = (obj: unknown): unknown => {
     if (_.isArray(obj)) {
-        return _.map(obj, sortObjectKeys) as T;
+        return _.map(obj, sortObjectKeys);
     }
-
     if (_.isPlainObject(obj)) {
-        return _(obj as object)
+        return _(obj)
             .toPairs()
-            .sortBy(([key]) => key)
+            .sortBy(0)
             .map(([key, value]) => [key, sortObjectKeys(value)])
             .fromPairs()
-            .value() as T;
+            .value();
     }
-
     return obj;
 };
