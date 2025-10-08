@@ -22,7 +22,7 @@ export interface DataElementItemProps {
     columnDataElements?: DataElement[];
     rows?: Row[];
     rowName?: string;
-    lockException?: boolean; // If true, the input will not be disabled if expired
+    lockException?: boolean;
 }
 
 export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props => {

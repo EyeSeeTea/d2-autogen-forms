@@ -31,7 +31,7 @@ export interface DataEntryItemProps {
     columnDataElements?: DataElement[];
     cocId: string;
     rows?: Row[];
-    lockException?: boolean; // If true, the input will not be disabled if expired
+    lockException?: boolean; // If true, the input will be not disabled when the period is not the same as the data form period
 }
 
 function isInputExpired(
