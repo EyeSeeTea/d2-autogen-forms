@@ -282,7 +282,7 @@ const DataStoreConfigCodec = Codec.interface({
                         type: oneOf([exactly("dataElement"), exactly("dataElementExternal")]),
                         code: string,
                         condition: optional(string),
-                        disabled: optional(string),
+                        disabled: optional(boolean),
                     })
                 ),
                 titleVariant: optional(titleVariantType),
@@ -822,11 +822,11 @@ export class Dhis2DataStoreDataForm {
             type: "dataElement" | "dataElementExternal";
             code: string;
             condition: Maybe<string>;
-            disabled?: string;
+            disabled?: boolean;
         }>;
     }): Toggle {
         const { toggle } = sectionConfig;
-        return toggle ? { ...toggle, disabled: Boolean(toggle.disabled) || false } : { type: "none" };
+        return toggle ? { ...toggle, disabled: toggle.disabled ?? false } : { type: "none" };
     }
 
     private getSectionTotals(
