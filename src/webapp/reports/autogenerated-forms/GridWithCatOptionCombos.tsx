@@ -18,7 +18,8 @@ import { DataTableCellRowTotal } from "./datatables/DataTableCellRowTotal";
 import { DataTableCellSummary } from "./datatables/DataTableCellSummary";
 import { DataTableCellRowName } from "./datatables/DataTableCellRowName";
 import { Html } from "./Html";
-import { RowIndicatorItem } from "../../components/IndicatorItem/IndicatorItem";
+import { IndicatorItem } from "../../components/IndicatorItem/IndicatorItem";
+import { checkIndicatorDirection } from "../../../domain/common/entities/Indicator";
 
 export interface GridWithCatOptionCombosProps {
     dataFormInfo: DataFormInfo;
@@ -55,6 +56,8 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
     );
 
     const showRowTotals = props.section.showRowTotals;
+    const showIndicatorsAfter = section.indicators.some(indicator => checkIndicatorDirection(indicator, "after"));
+    const showIndicatorsBefore = section.indicators.some(indicator => checkIndicatorDirection(indicator, "before"));
 
     return (
         <DataTableSection section={grid} dataFormInfo={dataFormInfo} sectionStyles={props.section.styles}>
@@ -64,7 +67,7 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                         <CustomDataTableColumnHeader
                             backgroundColor={props.section.styles.columns.backgroundColor}
                             width="400px"
-                            colSpan="2"
+                            colSpan={`${showIndicatorsBefore ? "3" : "2"}`}
                         ></CustomDataTableColumnHeader>
 
                         {grid.columns.map(column => (
@@ -81,6 +84,14 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                                 </div>
                             </CustomDataTableColumnHeader>
                         ))}
+
+                        {showIndicatorsAfter && (
+                            <CustomDataTableColumnHeader
+                                backgroundColor={props.section.styles.columns.backgroundColor}
+                                key="column-indicators"
+                            ></CustomDataTableColumnHeader>
+                        )}
+
                         {showRowTotals && (
                             <CustomDataTableColumnHeader
                                 backgroundColor={props.section.styles.columns.backgroundColor}
@@ -125,6 +136,19 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                                     </CustomDataTableCell>
                                 )}
 
+                                {section.indicators.map(
+                                    indicator =>
+                                        indicator.dataElement?.code === row.dataElement.code &&
+                                        checkIndicatorDirection(indicator, "before") && (
+                                            <IndicatorItem
+                                                key={`${indicator.id}-${row.dataElement.code}`}
+                                                indicator={indicator}
+                                                dataFormInfo={dataFormInfo}
+                                                periods={[dataFormInfo.period]}
+                                            />
+                                        )
+                                )}
+
                                 {grid.columns.map(column => {
                                     const dataElement = column.dataElements.find(de => de.name === row.name);
                                     return dataElement ? (
@@ -145,6 +169,20 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                                         ></CustomDataTableCell>
                                     );
                                 })}
+
+                                {section.indicators.map(
+                                    indicator =>
+                                        indicator.dataElement?.code === row.dataElement.code &&
+                                        checkIndicatorDirection(indicator, "after") && (
+                                            <IndicatorItem
+                                                key={`${indicator.id}-${row.dataElement.code}`}
+                                                indicator={indicator}
+                                                dataFormInfo={dataFormInfo}
+                                                periods={[dataFormInfo.period]}
+                                            />
+                                        )
+                                )}
+
                                 {showRowTotals && (
                                     <DataTableCellRowTotal
                                         dataFormInfo={dataFormInfo}
@@ -155,10 +193,11 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                             </DataTableRow>
                         ));
                     })}
+
                     {grid.summary.map(summary => (
                         <DataTableRow key={`${summary.cellName}-totals`}>
                             <CustomDataTableCell
-                                colSpan="2"
+                                colSpan={`${showIndicatorsBefore ? "3" : "2"}`}
                                 backgroundColor={props.section.styles.totals.backgroundColor}
                                 key="total-column-name"
                             >
@@ -184,18 +223,6 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                             )}
                         </DataTableRow>
                     ))}
-
-                    {section.indicators.map(indicator => {
-                        return (
-                            <RowIndicatorItem
-                                key={`parent_${indicator.id}`}
-                                indicator={indicator}
-                                colSpan="2"
-                                dataFormInfo={dataFormInfo}
-                                periods={[dataFormInfo.period]}
-                            />
-                        );
-                    })}
                 </TableBody>
             </DataTable>
         </DataTableSection>
