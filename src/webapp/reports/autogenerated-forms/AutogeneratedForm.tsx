@@ -199,6 +199,7 @@ function useDataFormInfo(): [
         if (!dataForm) return;
         // add event listener to button #completeButton
         const completeButton = document.getElementById("completeButton");
+        const incompleteButton = document.getElementById("undoButton");
         function handleCompleteButtonClick() {
             // Data Entry display a different popup error for custom forms after complete/incomplete action
             document.querySelector("#headerMessage")?.remove();
@@ -210,7 +211,7 @@ function useDataFormInfo(): [
                 })
                 .then(({ store, dataValues }) => {
                     const requiredDataValues = dataValues.filter(dv => dv.isRequired);
-                    if (requiredDataValues.length > 0) {
+                    if (requiredDataValues.length > 0 && dataForm?.showErrorOnCompulsory) {
                         window.dhis2?.de.displayValidationDialog(
                             `<h3>Validation Result &nbsp;<img src="../images/warning_small.png"></h3><p class="bold">This form has compulsory fields. Please fill those items marked red in the form.</p>`,
                             300
@@ -224,7 +225,12 @@ function useDataFormInfo(): [
                 });
         }
         completeButton?.addEventListener("click", handleCompleteButtonClick);
-        return () => completeButton?.removeEventListener("click", handleCompleteButtonClick);
+        incompleteButton?.addEventListener("click", handleCompleteButtonClick);
+
+        return () => {
+            completeButton?.removeEventListener("click", handleCompleteButtonClick);
+            incompleteButton?.removeEventListener("click", handleCompleteButtonClick);
+        };
     }, [dataForm, orgUnits, compositionRoot.dataForms, dataSetId, orgUnitId, period]);
 
     React.useEffect(() => {

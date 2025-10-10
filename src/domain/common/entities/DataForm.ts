@@ -30,6 +30,7 @@ export interface DataForm {
     indicators: Indicator[];
     totalRules: TotalRules;
     compulsoryDataValues: CompulsoryDataValue[];
+    showErrorOnCompulsory: boolean;
 }
 
 export interface Texts {

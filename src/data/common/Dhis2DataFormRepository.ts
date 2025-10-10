@@ -58,6 +58,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
             compulsoryDataValues: dataSet.compulsoryDataElementOperands.map(
                 operand => new CompulsoryDataValue(operand.dataElement.id, operand.categoryOptionCombo.id)
             ),
+            showErrorOnCompulsory: dataSet.compulsoryFieldsCompleteOnly,
         };
     }
 
@@ -534,6 +535,7 @@ function getMetadataQuery(options: { dataSetId: Id }) {
                 id: true,
                 code: true,
                 expiryDays: true,
+                compulsoryFieldsCompleteOnly: true,
                 compulsoryDataElementOperands: { dataElement: { id: true }, categoryOptionCombo: { id: true } },
                 dataInputPeriods: {
                     closingDate: true,

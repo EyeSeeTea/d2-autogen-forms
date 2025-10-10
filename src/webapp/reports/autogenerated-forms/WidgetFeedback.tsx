@@ -13,7 +13,7 @@ export const widgetFeedbackStylesByState: Record<WidgetState, CSSProperties> = {
     saving: { ...baseStyles, backgroundColor: "yellow" },
     saveSuccessful: { ...baseStyles, backgroundColor: "rgb(185, 255, 185)" },
     saveError: { ...baseStyles, backgroundColor: "red" },
-    required: { ...baseStyles, backgroundColor: "orange" },
+    required: { ...baseStyles, backgroundColor: "red" },
 };
 
 export const WidgetFeedback: React.FC<{ state: WidgetState }> = React.memo(props => {
