@@ -94,11 +94,11 @@ export interface SectionBase {
 }
 
 export interface SectionSimple extends SectionBase {
-    viewType: "grid-with-combos" | "grid-with-cat-option-combos" | "matrix-grid" | "grid-disaggregated-cocs";
+    viewType: "grid-with-combos" | "matrix-grid" | "grid-disaggregated-cocs";
 }
 
 export interface SectionWithPeriods extends SectionBase {
-    viewType: "grid-with-periods";
+    viewType: "grid-with-periods" | "grid-with-cat-option-combos";
     periods: string[];
 }
 
