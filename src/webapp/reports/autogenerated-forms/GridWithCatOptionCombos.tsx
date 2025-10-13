@@ -18,7 +18,7 @@ import { DataTableCellRowTotal } from "./datatables/DataTableCellRowTotal";
 import { DataTableCellSummary } from "./datatables/DataTableCellSummary";
 import { DataTableCellRowName } from "./datatables/DataTableCellRowName";
 import { Html } from "./Html";
-import { IndicatorItem } from "../../components/IndicatorItem/IndicatorItem";
+import { IndicatorItem, RowIndicatorItem } from "../../components/IndicatorItem/IndicatorItem";
 import { checkIndicatorDirection } from "../../../domain/common/entities/Indicator";
 import i18n from "../../../locales";
 
@@ -56,24 +56,27 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
         [section, dataFormInfo]
     );
 
-    const showRowTotals = props.section.showRowTotals;
+    const showRowTotals = section.showRowTotals;
     const showIndicatorsAfter = section.indicators.some(indicator => checkIndicatorDirection(indicator, "after"));
     const showIndicatorsBefore = section.indicators.some(indicator => checkIndicatorDirection(indicator, "before"));
+    const nonDirectionalIndicators = section.indicators.filter(
+        indicator => !checkIndicatorDirection(indicator, "before") && !checkIndicatorDirection(indicator, "after")
+    );
 
     return (
-        <DataTableSection section={grid} dataFormInfo={dataFormInfo} sectionStyles={props.section.styles}>
+        <DataTableSection section={grid} dataFormInfo={dataFormInfo} sectionStyles={section.styles}>
             <DataTable className={classes.table} layout="fixed" width="initial">
                 <TableHead>
                     <DataTableRow>
                         <CustomDataTableColumnHeader
-                            backgroundColor={props.section.styles.columns.backgroundColor}
+                            backgroundColor={section.styles.columns.backgroundColor}
                             width="400px"
                             colSpan={`${showIndicatorsBefore ? "3" : "2"}`}
                         ></CustomDataTableColumnHeader>
 
                         {grid.periods.length > 0 && (
                             <CustomDataTableColumnHeader
-                                backgroundColor={props.section.styles.columns.backgroundColor}
+                                backgroundColor={section.styles.columns.backgroundColor}
                                 width="50px"
                             >
                                 {i18n.t("Period")}
@@ -82,7 +85,7 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
 
                         {grid.columns.map(column => (
                             <CustomDataTableColumnHeader
-                                backgroundColor={props.section.styles.columns.backgroundColor}
+                                backgroundColor={section.styles.columns.backgroundColor}
                                 key={column.name}
                             >
                                 <div className={classes.header}>
@@ -97,14 +100,14 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
 
                         {showIndicatorsAfter && (
                             <CustomDataTableColumnHeader
-                                backgroundColor={props.section.styles.columns.backgroundColor}
+                                backgroundColor={section.styles.columns.backgroundColor}
                                 key="column-indicators"
                             ></CustomDataTableColumnHeader>
                         )}
 
                         {showRowTotals && (
                             <CustomDataTableColumnHeader
-                                backgroundColor={props.section.styles.columns.backgroundColor}
+                                backgroundColor={section.styles.columns.backgroundColor}
                                 key="column-row-totals"
                             >
                                 <div dangerouslySetInnerHTML={{ __html: grid.texts.rowTotals || "" }}></div>
@@ -123,7 +126,7 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                                     <>
                                         {idx === 0 && (
                                             <CustomDataTableCell
-                                                backgroundColor={props.section.styles.rows.backgroundColor}
+                                                backgroundColor={section.styles.rows.backgroundColor}
                                                 rowSpan={rows.length.toString()}
                                             >
                                                 <span className={classes.rowTitle}>{groupName}</span>
@@ -131,15 +134,13 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                                             </CustomDataTableCell>
                                         )}
 
-                                        <CustomDataTableCell
-                                            backgroundColor={props.section.styles.rows.backgroundColor}
-                                        >
+                                        <CustomDataTableCell backgroundColor={section.styles.rows.backgroundColor}>
                                             <DataTableCellRowName html={row.dataElement.htmlText} name={row.deName} />
                                         </CustomDataTableCell>
                                     </>
                                 ) : (
                                     <CustomDataTableCell
-                                        backgroundColor={props.section.styles.rows.backgroundColor}
+                                        backgroundColor={section.styles.rows.backgroundColor}
                                         colSpan="2"
                                     >
                                         <DataTableCellRowName html={row.dataElement.htmlText} name={row.deName} />
@@ -159,7 +160,7 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                                 )}
 
                                 {row.period && (
-                                    <CustomDataTableCell backgroundColor={props.section.styles.rows.backgroundColor}>
+                                    <CustomDataTableCell backgroundColor={section.styles.rows.backgroundColor}>
                                         <span>{row.period}</span>
                                     </CustomDataTableCell>
                                 )}
@@ -168,7 +169,7 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                                     const dataElement = column.dataElements.find(de => de.name === row.name);
                                     return dataElement ? (
                                         <CustomDataTableCell
-                                            backgroundColor={props.section.styles.rows.backgroundColor}
+                                            backgroundColor={section.styles.rows.backgroundColor}
                                             key={[dataElement.id, column.name].join("-")}
                                         >
                                             <DataElementItem
@@ -181,7 +182,7 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                                         </CustomDataTableCell>
                                     ) : (
                                         <CustomDataTableCell
-                                            backgroundColor={props.section.styles.rows.backgroundColor}
+                                            backgroundColor={section.styles.rows.backgroundColor}
                                             key={`cell-${idx}-${column.name}`}
                                         ></CustomDataTableCell>
                                     );
@@ -202,7 +203,7 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                                 {showRowTotals && (
                                     <DataTableCellRowTotal
                                         dataFormInfo={dataFormInfo}
-                                        styles={props.section.styles}
+                                        styles={section.styles}
                                         dataElement={row.dataElement}
                                     />
                                 )}
@@ -210,11 +211,21 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                         ));
                     })}
 
+                    {nonDirectionalIndicators.map(indicator => (
+                        <RowIndicatorItem
+                            key={`parent_${indicator.id}`}
+                            indicator={indicator}
+                            colSpan="2"
+                            dataFormInfo={dataFormInfo}
+                            periods={[dataFormInfo.period]}
+                        />
+                    ))}
+
                     {grid.summary.map(summary => (
                         <DataTableRow key={`${summary.cellName}-totals`}>
                             <CustomDataTableCell
                                 colSpan={`${showIndicatorsBefore ? "3" : "2"}`}
-                                backgroundColor={props.section.styles.totals.backgroundColor}
+                                backgroundColor={section.styles.totals.backgroundColor}
                                 key="total-column-name"
                             >
                                 <Html content={summary.cellName} />
@@ -224,7 +235,7 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                                     <DataTableCellFormula
                                         key={itemTotal.columnName}
                                         dataFormInfo={dataFormInfo}
-                                        styles={props.section.styles}
+                                        styles={section.styles}
                                         total={itemTotal}
                                         formula={itemTotal.formula}
                                     />
@@ -233,7 +244,7 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                             {showRowTotals && (
                                 <DataTableCellSummary
                                     dataFormInfo={dataFormInfo}
-                                    styles={props.section.styles}
+                                    styles={section.styles}
                                     dataElements={summary.cells}
                                 />
                             )}
