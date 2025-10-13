@@ -55,7 +55,7 @@ interface Row {
 const separator = " - ";
 
 export class GridViewModel {
-    static get(section: SectionGrid, dataFormInfo: DataFormInfo, viewType?: SectionGrid["viewType"]): Grid {
+    static get(section: SectionGrid, dataFormInfo: DataFormInfo, viewType: SectionGrid["viewType"]): Grid {
         const dataElements = getDataElementsWithIndexProccessing(section);
         const { columns, rows, summary } = this.getGridComponents(section, dataFormInfo, dataElements, viewType);
         const indicators = this.getIndicators(section);
@@ -89,7 +89,7 @@ export class GridViewModel {
         section: SectionGrid,
         dataFormInfo: DataFormInfo,
         dataElements: DataElement[],
-        viewType?: SectionGrid["viewType"]
+        viewType: SectionGrid["viewType"]
     ): GridComponents {
         const subsections = _(dataElements)
             .groupBy(dataElement => getSubsectionName(dataElement))
@@ -194,7 +194,7 @@ export class GridViewModel {
         subsections: SubSectionGrid[],
         section: SectionGrid,
         columns: Column[],
-        viewType?: SectionGrid["viewType"]
+        viewType: SectionGrid["viewType"]
     ): Summary[] {
         const allDataElements = subsections.flatMap(subSection => subSection.dataElements);
 
@@ -218,7 +218,7 @@ export class GridViewModel {
                         };
                     })
                     .value();
-            default:
+            case "grid":
                 return _(section.totals)
                     .map((sectionTotal, key) => {
                         const selectedDataElements = allDataElements.filter(dataElement =>
@@ -245,6 +245,9 @@ export class GridViewModel {
                     })
                     .filter(summaryRow => summaryRow.cells.every(cell => cell.items.length > 0))
                     .value();
+            default:
+                console.warn(`Unsupported viewType ${viewType} in GridViewModel.getSummary`);
+                return [];
         }
     }
 
