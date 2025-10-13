@@ -42,12 +42,24 @@ type SectionTotals = Totals & {
 
 type TotalsConfig = SectionTotals | Record<string, SectionTotals>;
 
+type DataElementToggle = {
+    type: "dataElement";
+    code: Code;
+    disabled: boolean;
+};
+
+type DataElementExternalToggle = {
+    type: "dataElementExternal";
+    code: Code;
+    condition: string | undefined;
+    disabled: boolean;
+};
+
+type Toggle = DataElementToggle | DataElementExternalToggle | { type: "none" };
+
 interface BaseSectionConfig {
     texts: Texts;
-    toggle:
-        | { type: "none" }
-        | { type: "dataElement"; code: Code }
-        | { type: "dataElementExternal"; code: Code; condition: string | undefined };
+    toggle: Toggle;
     tabs: { active: true; order: string | number } | { active: false };
     sortRowsBy: string;
     titleVariant: titleVariant;
@@ -270,6 +282,7 @@ const DataStoreConfigCodec = Codec.interface({
                         type: oneOf([exactly("dataElement"), exactly("dataElementExternal")]),
                         code: string,
                         condition: optional(string),
+                        disabled: optional(boolean),
                     })
                 ),
                 titleVariant: optional(titleVariantType),
@@ -732,7 +745,7 @@ export class Dhis2DataStoreDataForm {
                 const viewType = sectionConfig.viewType || dataSetDefaultViewType;
 
                 const base: BaseSectionConfig = {
-                    toggle: sectionConfig.toggle || { type: "none" },
+                    toggle: this.getSectionToggle(sectionConfig),
                     texts: {
                         header: this.getTextFromConstants(sectionConfig?.texts?.header, constantsByCode),
                         footer: this.getTextFromConstants(sectionConfig?.texts?.footer, constantsByCode),
@@ -821,6 +834,18 @@ export class Dhis2DataStoreDataForm {
             },
             sections: sections,
         };
+    }
+
+    private getSectionToggle(sectionConfig: {
+        toggle: Maybe<{
+            type: "dataElement" | "dataElementExternal";
+            code: string;
+            condition: Maybe<string>;
+            disabled?: boolean;
+        }>;
+    }): Toggle {
+        const { toggle } = sectionConfig;
+        return toggle ? { ...toggle, disabled: toggle.disabled ?? false } : { type: "none" };
     }
 
     private getSectionTotals(

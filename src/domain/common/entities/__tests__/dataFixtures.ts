@@ -36,9 +36,13 @@ export const sectionBase: Omit<SectionBase, "id" | "name" | "viewType"> = {
     groupDescriptions: undefined,
     disableComments: false,
     showRowTotals: false,
-    toggleMultiple: [],
+    toggleMultiple: {
+        logicalOperator: "AND",
+        toggleDataElements: [],
+    },
     indicators: [],
     dataElements: [dataElementText],
+    code: "",
 };
 
 export const dataFormBase: Omit<DataForm, "sections"> = {
@@ -49,6 +53,10 @@ export const dataFormBase: Omit<DataForm, "sections"> = {
     texts: defaultTexts,
     options: { dataElements: {} },
     indicators: [],
+    totalRules: {
+        dataElementTotalRules: [],
+        sectionTotalRules: [],
+    },
 };
 
 export const dataValueBase: DataValueBase = {

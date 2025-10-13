@@ -77,8 +77,8 @@ export interface SectionBase {
     dataElements: DataElement[];
     toggle:
         | { type: "none" }
-        | { type: "dataElement"; dataElement: DataElement }
-        | { type: "dataElementExternal"; dataElement: DataElement; condition: string };
+        | { type: "dataElement"; dataElement: DataElement; disabled: boolean }
+        | { type: "dataElementExternal"; dataElement: DataElement; condition: string; disabled: boolean };
     texts: Texts;
     tabs: { active: boolean; order?: string };
     sortRowsBy: string;
