@@ -77,8 +77,8 @@ export interface SectionBase {
     dataElements: DataElement[];
     toggle:
         | { type: "none" }
-        | { type: "dataElement"; dataElement: DataElement }
-        | { type: "dataElementExternal"; dataElement: DataElement; condition: string };
+        | { type: "dataElement"; dataElement: DataElement; disabled: boolean }
+        | { type: "dataElementExternal"; dataElement: DataElement; condition: string; disabled: boolean };
     texts: Texts;
     tabs: { active: boolean; order?: string };
     sortRowsBy: string;
@@ -94,11 +94,11 @@ export interface SectionBase {
 }
 
 export interface SectionSimple extends SectionBase {
-    viewType: "grid-with-combos" | "grid-with-cat-option-combos" | "matrix-grid" | "grid-disaggregated-cocs";
+    viewType: "grid-with-combos" | "matrix-grid" | "grid-disaggregated-cocs";
 }
 
 export interface SectionWithPeriods extends SectionBase {
-    viewType: "grid-with-periods";
+    viewType: "grid-with-periods" | "grid-with-cat-option-combos";
     periods: string[];
 }
 

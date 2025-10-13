@@ -42,12 +42,24 @@ type SectionTotals = Totals & {
 
 type TotalsConfig = SectionTotals | Record<string, SectionTotals>;
 
+type DataElementToggle = {
+    type: "dataElement";
+    code: Code;
+    disabled: boolean;
+};
+
+type DataElementExternalToggle = {
+    type: "dataElementExternal";
+    code: Code;
+    condition: string | undefined;
+    disabled: boolean;
+};
+
+type Toggle = DataElementToggle | DataElementExternalToggle | { type: "none" };
+
 interface BaseSectionConfig {
     texts: Texts;
-    toggle:
-        | { type: "none" }
-        | { type: "dataElement"; code: Code }
-        | { type: "dataElementExternal"; code: Code; condition: string | undefined };
+    toggle: Toggle;
     tabs: { active: true; order: string | number } | { active: false };
     sortRowsBy: string;
     titleVariant: titleVariant;
@@ -61,7 +73,7 @@ interface BaseSectionConfig {
 }
 
 interface BasicSectionConfig extends BaseSectionConfig {
-    viewType: "grid-with-combos" | "grid-with-cat-option-combos" | "matrix-grid" | "grid-disaggregated-cocs";
+    viewType: "grid-with-combos" | "matrix-grid" | "grid-disaggregated-cocs";
 }
 
 interface GridSectionConfig extends BaseSectionConfig {
@@ -70,7 +82,7 @@ interface GridSectionConfig extends BaseSectionConfig {
 }
 
 interface GridWithPeriodsSectionConfig extends BaseSectionConfig {
-    viewType: "grid-with-periods";
+    viewType: "grid-with-cat-option-combos" | "grid-with-periods";
     periods: string[];
 }
 
@@ -270,6 +282,7 @@ const DataStoreConfigCodec = Codec.interface({
                         type: oneOf([exactly("dataElement"), exactly("dataElementExternal")]),
                         code: string,
                         condition: optional(string),
+                        disabled: optional(boolean),
                     })
                 ),
                 titleVariant: optional(titleVariantType),
@@ -412,19 +425,37 @@ type DataFormStoreConfigFromCodec = GetType<typeof DataStoreConfigCodec>;
 
 type PeriodInterval = { type: "relative-interval"; startOffset: number; endOffset: number };
 
-function getPeriods(dataSetPeriod: string, interval: Maybe<PeriodInterval>): string[] {
+function getPeriodsByViewType(
+    viewType: SectionConfig["viewType"],
+    dataSetPeriod: string,
+    interval: Maybe<PeriodInterval>
+): string[] {
     const dataSetYear = parseInt(dataSetPeriod);
 
-    const interval2: PeriodInterval = interval || {
-        type: "relative-interval",
-        startOffset: -2,
-        endOffset: 0,
-    };
+    switch (viewType) {
+        case "grid-indicators-calculated":
+        case "grid-with-periods": {
+            const interval2: PeriodInterval = interval || {
+                type: "relative-interval",
+                startOffset: -2,
+                endOffset: 0,
+            };
 
-    return _(dataSetYear + interval2.startOffset)
-        .range(dataSetYear + interval2.endOffset + 1)
-        .map(year => year.toString())
-        .value();
+            return _(dataSetYear + interval2.startOffset)
+                .range(dataSetYear + interval2.endOffset + 1)
+                .map(year => year.toString())
+                .value();
+        }
+        case "grid-with-cat-option-combos":
+            if (!interval) return [];
+
+            return _(dataSetYear + interval.startOffset)
+                .range(dataSetYear + interval.endOffset + 1)
+                .map(year => year.toString())
+                .value();
+        default:
+            throw new Error(`Unsupported viewType ${viewType} for periods calculation`);
+    }
 }
 
 interface DataFormStoreConfig {
@@ -714,7 +745,7 @@ export class Dhis2DataStoreDataForm {
                 const viewType = sectionConfig.viewType || dataSetDefaultViewType;
 
                 const base: BaseSectionConfig = {
-                    toggle: sectionConfig.toggle || { type: "none" },
+                    toggle: this.getSectionToggle(sectionConfig),
                     texts: {
                         header: this.getTextFromConstants(sectionConfig?.texts?.header, constantsByCode),
                         footer: this.getTextFromConstants(sectionConfig?.texts?.footer, constantsByCode),
@@ -744,11 +775,12 @@ export class Dhis2DataStoreDataForm {
                 const baseConfig = { ...base, viewType };
 
                 switch (viewType) {
+                    case "grid-with-cat-option-combos":
                     case "grid-with-periods": {
                         const config = {
                             ...baseConfig,
                             viewType,
-                            periods: getPeriods(period, sectionConfig.periods),
+                            periods: getPeriodsByViewType(viewType, period, sectionConfig.periods),
                         };
                         return [section.id, config] as [typeof section.id, typeof config];
                     }
@@ -774,7 +806,7 @@ export class Dhis2DataStoreDataForm {
                     case "grid-indicators-calculated": {
                         const config = {
                             ...baseConfig,
-                            periods: getPeriods(period, sectionConfig.periods),
+                            periods: getPeriodsByViewType(viewType, period, sectionConfig.periods),
                             rows: sectionConfig.rows ?? [],
                             virtualColumns: sectionConfig.virtualColumns ?? [],
                             virtualRows: sectionConfig.virtualRows ?? [],
@@ -802,6 +834,18 @@ export class Dhis2DataStoreDataForm {
             },
             sections: sections,
         };
+    }
+
+    private getSectionToggle(sectionConfig: {
+        toggle: Maybe<{
+            type: "dataElement" | "dataElementExternal";
+            code: string;
+            condition: Maybe<string>;
+            disabled?: boolean;
+        }>;
+    }): Toggle {
+        const { toggle } = sectionConfig;
+        return toggle ? { ...toggle, disabled: toggle.disabled ?? false } : { type: "none" };
     }
 
     private getSectionTotals(
