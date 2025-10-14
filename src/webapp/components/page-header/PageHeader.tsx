@@ -37,8 +37,8 @@ export interface PageHeaderProps {
 }
 
 const styles = {
-    backArrow: { paddingTop: 10, marginBottom: 5 },
-    help: { marginBottom: 8 },
+    backArrow: { paddingBlockStart: 10, marginBlockEnd: 5 },
+    help: { marginBlockEnd: 8 },
     text: { display: "inline-block", fontWeight: 300 },
 };
 

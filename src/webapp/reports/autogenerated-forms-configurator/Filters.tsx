@@ -51,7 +51,7 @@ const Container = styled.div`
 `;
 
 const SingleDropdownStyled = styled(Dropdown)`
-    margin-left: -10px;
+    margin-inline-start: -10px;
     width: 50%;
 `;
 

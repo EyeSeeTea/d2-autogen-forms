@@ -91,7 +91,7 @@ const ProcessingIndicator = styled.div`
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-bottom: 16px;
+    margin-block-end: 16px;
     padding: 8px 16px;
     background-color: #e3f2fd;
     border-radius: 4px;

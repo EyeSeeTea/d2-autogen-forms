@@ -99,9 +99,9 @@ const DataTableSection: React.FC<DataTableProps> = React.memo(props => {
 const useStyles = makeStyles({
     wrapper: { margin: 10, border: "1px solid black" },
     toggleWrapper: { margin: 10 },
-    toggleTitle: { marginBottom: 10 },
+    toggleTitle: { marginBlockEnd: 10 },
     title: { textAlign: "center", margin: 0, padding: "1em" },
-    subtitle: { textAlign: "center", marginBottom: 10 },
+    subtitle: { textAlign: "center", marginBlockEnd: 10 },
     h1: {
         fontSize: "6rem !important",
         margin: "18px !important",
