@@ -81,6 +81,7 @@ export interface SectionBase {
         | { type: "dataElementExternal"; dataElement: DataElement; condition: string; disabled: boolean };
     texts: Texts;
     tabs: { active: boolean; order?: string };
+    showIndex: boolean;
     sortRowsBy: string;
     titleVariant: titleVariant;
     styles: SectionStyle;

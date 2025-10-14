@@ -8,6 +8,7 @@ import { evaluateTotalRule, verifyConditionByDataValueType } from "./DataEntryIt
 import { Html } from "./Html";
 import { Id } from "../../../domain/common/entities/Base";
 import { ToggleDataElement } from "../../../domain/common/entities/ToggleMultiple";
+import { getTabIndices } from "./SectionsTabs";
 
 export interface DataTableProps {
     section: DataTableSectionObj;
@@ -19,6 +20,8 @@ export interface DataTableProps {
 interface DataTableSectionObj {
     id: Id;
     name: string;
+    showIndex?: Section["showIndex"];
+    tabs?: Section["tabs"];
     titleVariant?: Section["titleVariant"];
     texts: Section["texts"];
     toggle: Section["toggle"];
@@ -27,11 +30,15 @@ interface DataTableSectionObj {
 
 const DataTableSection: React.FC<DataTableProps> = React.memo(props => {
     const { section, children, dataFormInfo, sectionStyles } = props;
-    const sectionTotalRules = dataFormInfo.metadata.dataForm.totalRules.sectionTotalRules.filter(sectionTotalRule =>
-        sectionTotalRule.sections.includes(section.id)
-    );
-    const { toggle, toggleMultiple } = section;
     const classes = useStyles();
+
+    const { id, name: sectionName, toggle, toggleMultiple } = section;
+
+    const sectionTotalRules = dataFormInfo.metadata.dataForm.totalRules.sectionTotalRules.filter(sectionTotalRule =>
+        sectionTotalRule.sections.includes(id)
+    );
+
+    const sectionLabel = getIndexedLabel(section, sectionName);
 
     const isSectionDisabled = React.useMemo(() => {
         if (toggle.type === "none") return false;
@@ -79,7 +86,7 @@ const DataTableSection: React.FC<DataTableProps> = React.memo(props => {
     return (
         <div className={classes.wrapper}>
             <div style={{ backgroundColor: sectionStyles?.title.backgroundColor }}>
-                <h3 className={titleStyle}>{section.name}</h3>
+                <h3 className={titleStyle}>{sectionLabel}</h3>
             </div>
 
             <Html backgroundColor={sectionStyles?.title.backgroundColor} content={section.texts.header} />
@@ -132,6 +139,18 @@ const useStyles = makeStyles({
         margin: "18px !important",
     },
 });
+
+export function getIndexedLabel(
+    section: { tabs?: { active: boolean; order?: string }; showIndex?: boolean },
+    name: string,
+    dataElementIndex?: number
+): string {
+    const [primaryTabIndex, secondaryTabIndex] = getTabIndices(section.tabs?.order);
+
+    return section.showIndex && primaryTabIndex !== -1
+        ? `${primaryTabIndex + 1}.${secondaryTabIndex}${dataElementIndex ? `.${dataElementIndex}` : ""} - ${name}`
+        : name;
+}
 
 function isDataValueEnabled(dataValue: DataValue): boolean {
     return dataValue.type === "BOOLEAN" ? Boolean(dataValue.value) : false;

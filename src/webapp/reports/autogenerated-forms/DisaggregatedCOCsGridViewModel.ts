@@ -5,6 +5,7 @@ import { DataElement } from "../../../domain/common/entities/DataElement";
 import { Indicator } from "../../../domain/common/entities/Indicator";
 import { getDescription } from "../../../utils/viewTypes";
 import { Maybe } from "../../../utils/ts-utils";
+import { getDataElementLabel } from "./GridFormViewModel";
 
 export class DisaggregatedCOCsGridViewModel {
     static get(section: Section, dataFormInfo: DataFormInfo): Grid {
@@ -18,6 +19,8 @@ export class DisaggregatedCOCsGridViewModel {
             name: section.name,
             columns: columns,
             rows: rows,
+            showIndex: section.showIndex,
+            tabs: section.tabs,
             toggle: section.toggle,
             toggleMultiple: section.toggleMultiple,
             texts: section.texts,
@@ -39,7 +42,10 @@ export class DisaggregatedCOCsGridViewModel {
                 .uniqBy(column => column.name)
                 .value();
 
-            return { columnItems: sortItems(columnItems), dataElement: dataElement };
+            return {
+                columnItems: sortItems(columnItems),
+                dataElement: { ...dataElement, name: getDataElementLabel(section, dataElement) },
+            };
         });
 
         return columns;
@@ -146,6 +152,8 @@ export type Grid = {
     name: string;
     columns: Column[];
     rows: Row[];
+    showIndex: Section["showIndex"];
+    tabs: Section["tabs"];
     toggle: Section["toggle"];
     toggleMultiple: Section["toggleMultiple"];
     texts: Texts;
