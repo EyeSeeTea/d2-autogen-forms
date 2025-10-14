@@ -3,11 +3,12 @@ import { Monaco } from "@monaco-editor/react";
 import { EditorProps } from "../Editor";
 import { useJsonProcessor } from "./useJsonProcessor";
 import { DEFAULT_JSON_VALUE } from "./useConfigurator";
+import { Maybe } from "../../../../utils/ts-utils";
 
 type Marker = Record<string, unknown>;
 type AutogenEditorProps = Omit<EditorProps, "dataSetCode"> & {
     isProcessing: boolean;
-    error: string | null;
+    error: Maybe<string>;
 };
 type AutogenEditorState = {
     editorOptions: Monaco["options"];
@@ -15,7 +16,7 @@ type AutogenEditorState = {
     handleChange: (value: string | undefined) => void;
     handleEditorDidMount: (editor: Monaco["editor"], monaco: Monaco) => void;
     handleEditorValidation: (markers: Marker[]) => void;
-    processingError: string | null;
+    processingError: Maybe<string>;
 };
 
 export function useAutogenEditor(props: AutogenEditorProps): AutogenEditorState {
