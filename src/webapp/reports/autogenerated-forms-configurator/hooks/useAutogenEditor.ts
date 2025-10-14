@@ -25,7 +25,7 @@ export function useAutogenEditor(props: AutogenEditorProps): AutogenEditorState 
     const [isLargeFile, setIsLargeFile] = useState(false);
     const [validationDebounceMs, setValidationDebounceMs] = useState(300);
 
-    const validationTimeoutRef = useRef<NodeJS.Timeout>();
+    const validationTimeoutRef = useRef<number>();
     const lastValidationRef = useRef<string>("");
     const isValidatingRef = useRef<boolean>(false);
 
@@ -120,7 +120,7 @@ export function useAutogenEditor(props: AutogenEditorProps): AutogenEditorState 
                 clearTimeout(validationTimeoutRef.current);
             }
 
-            validationTimeoutRef.current = setTimeout(() => {
+            validationTimeoutRef.current = window.setTimeout(() => {
                 if (!isProcessing && !isValidatingRef.current) {
                     performValidation(value);
                 }

@@ -73,9 +73,7 @@ export const Editor: React.FC<EditorProps> = React.memo(props => {
                 defaultLanguage="json"
                 defaultValue={DEFAULT_JSON_VALUE}
                 value={configValue}
-                onChange={value => {
-                    if (value) handleChange(value);
-                }}
+                onChange={handleChange}
                 options={editorOptions}
                 onValidate={handleEditorValidation}
                 beforeMount={handleEditorBeforeMount}
