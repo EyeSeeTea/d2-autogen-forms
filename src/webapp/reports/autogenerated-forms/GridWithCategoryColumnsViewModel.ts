@@ -99,19 +99,19 @@ export class GridWithCategoryColumnsViewModel {
 
             const allOptions = _(dataElement.categoryCombos.categories)
                 .flatMap(c => c.categoryOptions.flatMap(co => co))
-                .keyBy(x => x.name)
+                .keyBy(x => x.originalName)
                 .value();
 
             const category = this.getCategoryColumn(dataElement, categoriesColumns);
             // Options for the category used for columns
-            const columnOptions = category?.categoryOptions.map(co => co.name) ?? [];
+            const columnOptions = category?.categoryOptions.map(co => co.originalName) ?? [];
 
             // Other categories without the one used for columns
             const restCategories = _(dataElement.categoryCombos.categories)
                 .filter(c => c.code !== category?.code)
                 .value();
 
-            const restCategoryOptions = restCategories.map(c => c.categoryOptions.flatMap(co => co.name));
+            const restCategoryOptions = restCategories.map(c => c.categoryOptions.flatMap(co => co.originalName));
             const combinations = restCategoryOptions.length > 0 ? makeCocOrderArray(restCategoryOptions) : [];
             if (combinations.length === 0) return [];
 
@@ -120,22 +120,25 @@ export class GridWithCategoryColumnsViewModel {
 
                 return combinations.map(combination => {
                     const combinationOptionCode = allOptions[combination]?.code;
-                    const cocName = [columnOption].concat(combination).join(", ");
+                    const cocOriginalName = [columnOption].concat(combination).join(", ");
                     const cocDetails = dataElement.categoryCombos.categoryOptionCombos.find(
-                        coc => coc.name === cocName
+                        coc => coc.originalName === cocOriginalName
                     );
 
                     if (!cocDetails) {
                         console.warn(
-                            `Category option combo with name ${cocName} not found for data element ${dataElement.name}`
+                            `Category option combo with name ${cocOriginalName} not found for data element ${dataElement.name}`
                         );
                     }
+
+                    const cocName = allOptions[combination]?.name ?? "";
 
                     return {
                         ...dataElement,
                         cocId: cocDetails?.id,
                         fullName: dataElement.name,
-                        cocName: combination,
+                        cocName: cocName,
+                        groupRowId: combination,
                         disabled: !cocDetails,
                         cocCodes: _([columnOptionCode, combinationOptionCode]).compact().value(),
                     };
@@ -145,12 +148,14 @@ export class GridWithCategoryColumnsViewModel {
         });
 
         return _(items)
-            .groupBy(item => item.cocName)
-            .map((group, name): Row => {
+            .groupBy(item => item.groupRowId)
+            .map((group): Row => {
                 const id = _(group)
                     .flatMap(x => x.cocCodes)
                     .uniq()
                     .join("-");
+
+                const name = group[0].cocName ?? "";
 
                 const rowConfig = section.rowsConfig?.[id];
 
@@ -173,7 +178,8 @@ export class GridWithCategoryColumnsViewModel {
             fullName: dataElement.name,
             cocName: inRows ? coc.name : "",
             disabled: Boolean(coc.id),
-            cocCodes: [allOptions.find(opt => opt.name === coc.name)?.code ?? ""],
+            groupRowId: inRows ? `${coc.name}${cocNameIdSeparator}${coc.id}` : "",
+            cocCodes: [allOptions.find(opt => opt.originalName === coc.originalName)?.code ?? ""],
         }));
     }
 
@@ -225,3 +231,5 @@ export class GridWithCategoryColumnsViewModel {
         return dataValue.value ? Number(dataValue.value) : undefined;
     }
 }
+
+const cocNameIdSeparator = "|_|";

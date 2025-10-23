@@ -68,9 +68,15 @@ type Options = Maybe<{ isMultiple: boolean; items: Option<string>[] }>;
 type CategoryCombos = {
     id: Id;
     name: string;
-    categories: Array<{ id: Id; code: Code; name: string; categoryOptions: { id: Id; name: string; code: Code }[] }>;
+    categories: Array<{
+        id: Id;
+        code: Code;
+        name: string;
+        categoryOptions: { id: Id; originalName: string; name: string; code: Code }[];
+    }>;
     categoryOptionCombos: {
         id: Id;
+        originalName: string;
         name: string;
         formName: string | undefined;
         shortName: string | undefined;

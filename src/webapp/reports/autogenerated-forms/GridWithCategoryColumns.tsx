@@ -155,7 +155,7 @@ const GridWithCategoryColumns: React.FC<GridWithCategoryColumnsProps> = props =>
                         ))}
 
                         {section.showCalculatedTotals && (
-                            <DataTableRow key="totals-row">
+                            <DataTableRow>
                                 <CustomDataTableCell
                                     backgroundColor={section.styles.rows.backgroundColor}
                                     className={classes.td}

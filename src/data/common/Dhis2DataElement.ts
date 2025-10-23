@@ -148,7 +148,7 @@ function getCocOrdered(categoryCombo: D2DataElement["categoryCombo"], config: Dh
             : [];
     });
 
-    return result.map(x => ({ ...x, name: x[keyName] || x.name || "" }));
+    return result.map(x => ({ ...x, originalName: x.name, name: x[keyName] || x.name || "" }));
 }
 
 function getDataElement(dataElement: D2DataElementNewType, config: Dhis2DataStoreDataForm): DataElement | null {
@@ -180,7 +180,12 @@ function getDataElement(dataElement: D2DataElementNewType, config: Dhis2DataStor
                         shortName: co.displayShortName,
                         code: co.code,
                     };
-                    return { id: record.id, code: co.code, name: record[keyName] ?? record.name };
+                    return {
+                        id: record.id,
+                        originalName: co.displayName,
+                        code: co.code,
+                        name: record[keyName] ?? record.name,
+                    };
                 }),
             };
         }),
