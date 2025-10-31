@@ -14,9 +14,8 @@ import { makeStyles } from "@material-ui/core";
 import DataTableSection from "./DataTableSection";
 import { CustomDataTableCell, CustomDataTableColumnHeader, fixHeaderClasses } from "./datatables/CustomDataTables";
 import { GridWithCategoryColumnsViewModel } from "./GridWithCategoryColumnsViewModel";
-import i18n from "../../../locales";
-import { CustomInput } from "./widgets/NumberWidget";
 import { useSyncedScroll } from "./hooks/Scroll";
+import { getValueAccordingType } from "./DataEntryItem";
 
 export interface GridWithCategoryColumnsProps {
     dataFormInfo: DataFormInfo;
@@ -25,9 +24,32 @@ export interface GridWithCategoryColumnsProps {
 
 const GridWithCategoryColumns: React.FC<GridWithCategoryColumnsProps> = props => {
     const { section, dataFormInfo } = props;
+
+    const dataElementFilter = React.useMemo(() => {
+        return dataFormInfo.metadata.dataForm.dataElements.find(
+            de => de.code === section.categoryOptionFilter?.dataElementCode
+        );
+    }, [dataFormInfo, section.categoryOptionFilter?.dataElementCode]);
+
+    const filterValue = React.useMemo(() => {
+        if (!dataElementFilter) return "";
+
+        const dataValue = dataFormInfo.data.values.getOrEmpty(dataElementFilter, {
+            categoryOptionComboId: dataFormInfo.categoryOptionComboId,
+            orgUnitId: dataFormInfo.orgUnitId,
+            period: dataFormInfo.period,
+        });
+
+        const value = getValueAccordingType(dataValue);
+
+        if (!value) return "";
+
+        return value.toString();
+    }, [dataFormInfo, dataElementFilter]);
+
     const grid = React.useMemo(
-        () => GridWithCategoryColumnsViewModel.get(section, dataFormInfo),
-        [section, dataFormInfo]
+        () => GridWithCategoryColumnsViewModel.get(section, filterValue, section.categoryOptionFilter?.config ?? []),
+        [section, filterValue]
     );
 
     const { wrapper1Ref, wrapper2Ref, wrapper2Width } = useSyncedScroll({ enable: section.enableTopScroll });
@@ -45,7 +67,7 @@ const GridWithCategoryColumns: React.FC<GridWithCategoryColumnsProps> = props =>
         <DataTableSection section={grid} sectionStyles={section.styles} dataFormInfo={dataFormInfo}>
             {section.enableTopScroll && (
                 <div style={{ overflowX: "scroll", overflowY: "hidden", height: "11px" }} ref={wrapper1Ref}>
-                    <div style={{ height: "11px", width: `${wrapper2Width}px` }}></div>
+                    <div style={{ height: "10px", width: `${wrapper2Width}px` }}></div>
                 </div>
             )}
             <div ref={wrapper2Ref} className={classes.fixedHeaders}>
@@ -142,6 +164,11 @@ const GridWithCategoryColumns: React.FC<GridWithCategoryColumnsProps> = props =>
                                                 dataElement={item.dataElement}
                                                 dataFormInfo={dataFormInfo}
                                                 noComment={section.disableComments}
+                                                columnDataElements={
+                                                    item.columnDataElements ? item.columnDataElements : undefined
+                                                }
+                                                columnTotal={item.columnTotal}
+                                                manualyDisabled={item.disabled}
                                             />
                                         </CustomDataTableCell>
                                     ) : (
@@ -153,29 +180,6 @@ const GridWithCategoryColumns: React.FC<GridWithCategoryColumnsProps> = props =>
                                 )}
                             </DataTableRow>
                         ))}
-
-                        {section.showCalculatedTotals && (
-                            <DataTableRow>
-                                <CustomDataTableCell
-                                    backgroundColor={section.styles.rows.backgroundColor}
-                                    className={classes.td}
-                                    position={fixRows ? "sticky" : undefined}
-                                    left={fixRows ? "0px" : undefined}
-                                >
-                                    <strong>{i18n.t("Totals")}</strong>
-                                </CustomDataTableCell>
-
-                                {grid.calculateTotals.map((total, idx) => (
-                                    <CustomDataTableCell
-                                        key={`total-${idx}`}
-                                        backgroundColor={section.styles.rows.backgroundColor}
-                                        className={classes.centerSpan}
-                                    >
-                                        <CustomInput value={total ?? ""} disabled />
-                                    </CustomDataTableCell>
-                                ))}
-                            </DataTableRow>
-                        )}
                     </TableBody>
                 </DataTable>
             </div>

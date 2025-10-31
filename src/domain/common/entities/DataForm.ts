@@ -140,10 +140,22 @@ export interface SectionWithIndicatorsCalculated extends SectionBase {
 export interface SectionWithCategoryColumns extends SectionBase {
     viewType: "grid-category-columns";
     categoriesColumns: CategoryColumnConfig[];
-    showCalculatedTotals: boolean;
     rowsConfig: Maybe<RowConfig>;
     singleCategoryInColumns: boolean;
+    categoryOptionFilter: Maybe<CategoryOptionFilter>;
 }
+
+export type CategoryOptionFilter = {
+    dataElementCode: Code;
+    config: TypeCategoryOptionFilterConfig[];
+};
+
+export type TypeCategoryOptionFilterConfig = {
+    code: string;
+    disabled: boolean;
+    showWhenValue: string[];
+    children: Array<{ categoryOptionCode: string }>;
+};
 
 export type RowConfig = Record<string, RowConfigDetails>;
 export type RowConfigDetails = { cellsVisible: boolean; rowName: Maybe<string> };

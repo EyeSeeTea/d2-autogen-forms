@@ -8,6 +8,7 @@ import { Option } from "../../domain/common/entities/DataElement";
 import { Period } from "../../domain/common/entities/DataValue";
 import {
     CategoryColumnConfig,
+    CategoryOptionFilter,
     ColumnOrder,
     DescriptionText,
     Texts,
@@ -135,10 +136,10 @@ type GridColumnsConfig = Record<string, { rules?: FromRulesFormulaCodec }>;
 
 interface GridCategoryColumnsConfig extends BaseSectionConfig {
     viewType: "grid-category-columns";
-    showCalculatedTotals: boolean;
     categoriesColumns: CategoryColumnConfig[];
     rowsConfig: Maybe<Record<string, { cellsVisible?: boolean; rowNameConstant?: string }>>;
     singleCategoryInColumns: boolean;
+    categoryOptionFilter: Maybe<CategoryOptionFilter>;
 }
 
 interface GridWithSubnationalSectionConfig extends BaseSectionConfig {
@@ -262,6 +263,18 @@ const textsCodec = Codec.interface({
     name: optional(oneOf([string, selector])),
 });
 
+const categoryOptionFilterConfigCodec = Codec.interface({
+    dataElementCode: string,
+    config: array(
+        Codec.interface({
+            code: string,
+            disabled: optional(boolean),
+            showWhenValue: optional(array(oneOf([string, exactly("null")]))),
+            children: array(Codec.interface({ categoryOptionCode: string })),
+        })
+    ),
+});
+
 const DataStoreConfigCodec = Codec.interface({
     categoryCombinations: sectionConfig({
         viewType: optional(oneOf([exactly("name"), exactly("shortName"), exactly("formName")])),
@@ -292,6 +305,7 @@ const DataStoreConfigCodec = Codec.interface({
         texts: optional(textsCodec),
         sections: optional(
             sectionConfig({
+                categoryOptionFilter: optional(categoryOptionFilterConfigCodec),
                 firstColumnConfig: optional(Codec.interface({ width: number })),
                 singleCategoryInColumns: optional(boolean),
                 rowsConfig: optional(
@@ -300,7 +314,6 @@ const DataStoreConfigCodec = Codec.interface({
                         Codec.interface({ cellsVisible: optional(boolean), rowNameConstant: optional(string) })
                     )
                 ),
-                showCalculatedTotals: optional(boolean),
                 categoriesColumns: optional(array(Codec.interface({ dataElementCode: string, categoryCode: string }))),
                 columnsConfig: optional(record(string, Codec.interface({ rules: optional(rulesFormulaCodec) }))),
                 columnsOrder: optional(record(string, number)),
@@ -825,9 +838,9 @@ export class Dhis2DataStoreDataForm {
                             ...baseConfig,
                             viewType,
                             categoriesColumns: sectionConfig.categoriesColumns || [],
-                            showCalculatedTotals: sectionConfig.showCalculatedTotals || false,
                             rowsConfig: sectionConfig.rowsConfig,
                             singleCategoryInColumns: sectionConfig.singleCategoryInColumns || false,
+                            categoryOptionFilter: sectionConfig.categoryOptionFilter,
                         };
                         return [section.id, config] as [typeof section.id, typeof config];
                     }

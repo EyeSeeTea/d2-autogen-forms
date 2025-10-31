@@ -134,18 +134,26 @@ export class GridWithTotalsViewModel {
                             );
                         });
 
+                    if (columnTotal) {
+                        columnTotal = { ...columnTotal, cocId: dataElement?.cocId };
+                    }
+
                     const dataElementsInTotalColumn = dataElementsByTotal.find(
                         x => x.totalColumn === parentTotal?.code
                     );
 
                     columnDataElements = dataElementsInTotalColumn
-                        ? dataElements.filter(de => dataElementsInTotalColumn.dataElements.includes(de.code))
-                        : indexedDEs.filter(de => {
-                              return (
-                                  de.name.match(/^\d+\.\d+ - /g) &&
-                                  de.name.endsWith(`${dataElement?.name.split(separator)[0]}`)
-                              );
-                          });
+                        ? dataElements
+                              .filter(de => dataElementsInTotalColumn.dataElements.includes(de.code))
+                              .map(de => ({ ...de, cocId: dataElement?.cocId }))
+                        : indexedDEs
+                              .filter(de => {
+                                  return (
+                                      de.name.match(/^\d+\.\d+ - /g) &&
+                                      de.name.endsWith(`${dataElement?.name.split(separator)[0]}`)
+                                  );
+                              })
+                              .map(de => ({ ...de, cocId: dataElement?.cocId }));
                 }
 
                 return {

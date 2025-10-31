@@ -242,10 +242,10 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                         return {
                             ...base2,
                             viewType: config.viewType,
-                            showCalculatedTotals: config.showCalculatedTotals,
                             categoriesColumns: config.categoriesColumns,
                             rowsConfig: rowsConfigWithTexts ?? undefined,
                             singleCategoryInColumns: config.singleCategoryInColumns ?? false,
+                            categoryOptionFilter: config.categoryOptionFilter,
                         };
                     }
                     default:

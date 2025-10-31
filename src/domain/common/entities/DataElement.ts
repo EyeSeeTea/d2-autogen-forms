@@ -65,6 +65,13 @@ export interface DataElementDate extends DataElementBase {
 
 type Options = Maybe<{ isMultiple: boolean; items: Option<string>[] }>;
 
+export type CategoryOption = {
+    id: Id;
+    originalName: string;
+    name: string;
+    code: Code;
+};
+
 type CategoryCombos = {
     id: Id;
     name: string;
@@ -72,7 +79,7 @@ type CategoryCombos = {
         id: Id;
         code: Code;
         name: string;
-        categoryOptions: { id: Id; originalName: string; name: string; code: Code }[];
+        categoryOptions: CategoryOption[];
     }>;
     categoryOptionCombos: {
         id: Id;
