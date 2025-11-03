@@ -10,6 +10,7 @@ import {
     CategoryColumnConfig,
     CategoryOptionFilter,
     ColumnOrder,
+    DataElementWidget,
     DescriptionText,
     Texts,
     Totals,
@@ -287,7 +288,9 @@ const DataStoreConfigCodec = Codec.interface({
             Codec.interface({
                 optionSet: optional(selector),
                 isMultiple: optional(boolean),
-                widget: optional(oneOf([exactly("dropdown"), exactly("radio"), exactly("sourceType")])),
+                widget: optional(
+                    oneOf([exactly("dropdown"), exactly("radio"), exactly("sourceType"), exactly("checkbox")])
+                ),
                 visible: optional(
                     Codec.interface({
                         dataElementCode: optional(string),
@@ -438,7 +441,7 @@ export interface DataElementConfig {
     selection?: {
         optionSet?: OptionSet;
         isMultiple: boolean;
-        widget: Maybe<"dropdown" | "radio" | "sourceType">;
+        widget: Maybe<DataElementWidget>;
         visible: { dataElementCode: string; value: string } | undefined;
     };
 }

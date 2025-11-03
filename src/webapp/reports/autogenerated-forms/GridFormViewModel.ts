@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { ColumnOrder, Section, SectionGrid, Texts } from "../../../domain/common/entities/DataForm";
+import { ColumnOrder, DataElementWidget, Section, SectionGrid, Texts } from "../../../domain/common/entities/DataForm";
 import { DataElement, DataElementNumber } from "../../../domain/common/entities/DataElement";
 import { titleVariant } from "../../../domain/common/entities/TitleVariant";
 import { Maybe } from "../../../utils/ts-utils";
@@ -457,7 +457,7 @@ function getSubsectionName(dataElement: DataElement): string {
     return _(dataElement.name).split(separator).initial().join(separator);
 }
 
-export function isSourceTypeColumn(widget: Maybe<"dropdown" | "radio" | "sourceType">) {
+export function isSourceTypeColumn(widget: Maybe<DataElementWidget>): boolean {
     return widget === "sourceType";
 }
 

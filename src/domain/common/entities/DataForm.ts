@@ -25,7 +25,7 @@ export interface DataForm {
     sections: Section[];
     texts: Texts;
     options: {
-        dataElements: Record<Id, { widget: "dropdown" | "radio" | "sourceType" }>;
+        dataElements: Record<Id, { widget: DataElementWidget }>;
     };
     indicators: Indicator[];
     totalRules: TotalRules;
@@ -213,3 +213,5 @@ export class DataFormM {
             .value();
     }
 }
+
+export type DataElementWidget = "dropdown" | "radio" | "sourceType" | "checkbox";

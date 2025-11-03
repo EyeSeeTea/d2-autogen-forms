@@ -19,6 +19,8 @@ import { Row } from "./GridWithTotalsViewModel";
 import PercentageWidget from "./widgets/PercentageWidget";
 import { DataElementTotalRule, Rule, SectionTotalRule } from "../../../domain/common/entities/DataElementRule";
 import _ from "lodash";
+import { DataForm } from "../../../domain/common/entities/DataForm";
+import CheckboxWidget from "./widgets/CheckboxWidget";
 
 export interface DataEntryItemProps {
     dataElement: DataElement;
@@ -244,7 +246,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
         : handDisabled;
     const config = dataFormInfo.metadata.dataForm.options.dataElements[dataElement.id];
     const SingleComponent = config?.widget === "radio" ? SingleSelectRadioWidget : SingleSelectWidget;
-    const BooleanComponent = config?.widget === "dropdown" ? BooleanDropdownWidget : YesNoWidget;
+    const BooleanComponent = getBooleanComponent(dataFormInfo.metadata.dataForm, dataElement.id);
 
     const { isVisible, isDisabled } = useApplyRules({ dataElement, dataFormInfo, period: props.period });
 
@@ -462,3 +464,15 @@ function useUpdatableDataValueWithFeedback(options: DataEntryItemProps) {
 }
 
 export default React.memo(DataEntryItem);
+
+function getBooleanComponent(dataForm: DataForm, dataElementId: string) {
+    const config = dataForm.options.dataElements[dataElementId];
+    switch (config?.widget) {
+        case "dropdown":
+            return BooleanDropdownWidget;
+        case "checkbox":
+            return CheckboxWidget;
+        default:
+            return YesNoWidget;
+    }
+}

@@ -1,7 +1,6 @@
 import _ from "lodash";
-import { Section, SectionWithTotals, Texts } from "../../../domain/common/entities/DataForm";
+import { DataElementWidget, Section, SectionWithTotals, Texts } from "../../../domain/common/entities/DataForm";
 import { DataElement } from "../../../domain/common/entities/DataElement";
-import { Maybe } from "../../../utils/ts-utils";
 import { isSourceTypeColumn } from "./GridFormViewModel";
 
 export interface Grid {
@@ -53,7 +52,7 @@ export class GridWithTotalsViewModel {
     static get(
         section: SectionWithTotals,
         sectionDataElements: DataElement[],
-        dataElementsConfig: Record<string, { widget: Maybe<"dropdown" | "radio" | "sourceType"> }>
+        dataElementsConfig: Record<string, { widget: DataElementWidget }>
     ): Grid {
         const dataElements = getDataElementsWithIndexProccessing(section);
 

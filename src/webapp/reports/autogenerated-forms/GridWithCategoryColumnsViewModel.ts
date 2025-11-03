@@ -58,7 +58,6 @@ export class GridWithCategoryColumnsViewModel {
         filterValue: Maybe<string>,
         categoryOptionValues: TypeCategoryOptionFilterConfig[]
     ): Grid {
-        console.count("Rendered:GridWithCategoryColumnsViewModel.get");
         const { parentColumns, columns } = this.getColumns(section);
 
         const rows = this.buildRows(section, categoryOptionValues, filterValue);
