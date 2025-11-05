@@ -55,7 +55,15 @@ type DataElementExternalToggle = {
     disabled: boolean;
 };
 
-type Toggle = DataElementToggle | DataElementExternalToggle | { type: "none" };
+type OrgUnitToggle = {
+    type: "orgUnit";
+    orgUnits: string[];
+    dataElements: Maybe<string[]>;
+    condition: "show" | "hide";
+    disabled: boolean;
+};
+
+type Toggle = DataElementToggle | DataElementExternalToggle | OrgUnitToggle | { type: "none" };
 
 interface BaseSectionConfig {
     texts: Texts;
@@ -240,6 +248,23 @@ const textsCodec = Codec.interface({
     name: optional(oneOf([string, selector])),
 });
 
+const dataElementToggleCodec = Codec.interface({
+    type: oneOf([exactly("dataElement"), exactly("dataElementExternal")]),
+    code: string,
+    condition: optional(string),
+    disabled: optional(boolean),
+});
+
+const orgUnitToggleCodec = Codec.interface({
+    type: exactly("orgUnit"),
+    orgUnits: array(string),
+    dataElements: optional(array(string)),
+    condition: oneOf([exactly("show"), exactly("hide")]),
+    disabled: optional(boolean),
+});
+
+const toggleCodec = oneOf([dataElementToggleCodec, orgUnitToggleCodec]);
+
 const DataStoreConfigCodec = Codec.interface({
     categoryCombinations: sectionConfig({
         viewType: optional(oneOf([exactly("name"), exactly("shortName"), exactly("formName")])),
@@ -277,14 +302,7 @@ const DataStoreConfigCodec = Codec.interface({
                 sortRowsBy: optional(string),
                 viewType: optional(viewType),
                 texts: optional(textsCodec),
-                toggle: optional(
-                    Codec.interface({
-                        type: oneOf([exactly("dataElement"), exactly("dataElementExternal")]),
-                        code: string,
-                        condition: optional(string),
-                        disabled: optional(boolean),
-                    })
-                ),
+                toggle: optional(toggleCodec),
                 titleVariant: optional(titleVariantType),
                 columnsDescriptions: optional(record(string, oneOf([string, selector]))),
                 groupDescriptions: optional(record(string, oneOf([string, selector]))),
@@ -837,15 +855,39 @@ export class Dhis2DataStoreDataForm {
     }
 
     private getSectionToggle(sectionConfig: {
-        toggle: Maybe<{
-            type: "dataElement" | "dataElementExternal";
-            code: string;
-            condition: Maybe<string>;
-            disabled?: boolean;
-        }>;
+        toggle: Maybe<
+            | {
+                  type: "dataElement" | "dataElementExternal";
+                  code: string;
+                  condition: Maybe<string>;
+                  disabled?: boolean;
+              }
+            | {
+                  type: "orgUnit";
+                  orgUnits: string[];
+                  dataElements: Maybe<string[]>;
+                  condition: "show" | "hide";
+                  disabled?: boolean;
+              }
+        >;
     }): Toggle {
         const { toggle } = sectionConfig;
-        return toggle ? { ...toggle, disabled: toggle.disabled ?? false } : { type: "none" };
+
+        switch (toggle?.type) {
+            case "dataElement":
+                return { type: "dataElement", code: toggle.code, disabled: toggle.disabled ?? false };
+            case "dataElementExternal":
+                return {
+                    type: "dataElementExternal",
+                    code: toggle.code,
+                    condition: toggle.condition,
+                    disabled: toggle.disabled ?? false,
+                };
+            case "orgUnit":
+                return { ...toggle, disabled: toggle.disabled ?? false };
+            default:
+                return { type: "none" };
+        }
     }
 
     private getSectionTotals(

@@ -14,6 +14,7 @@ import { SectionStyle } from "./SectionStyle";
 import { titleVariant } from "./TitleVariant";
 import { DataElementToggle } from "./ToggleMultiple";
 import { DataElementRuleOptions, TotalRules } from "./DataElementRule";
+import { OrgUnit } from "./OrgUnit";
 
 export interface DataForm {
     id: Id;
@@ -28,6 +29,8 @@ export interface DataForm {
     indicators: Indicator[];
     totalRules: TotalRules;
 }
+
+export type DataFormWithOU = DataForm & { orgUnit: OrgUnit };
 
 export interface Texts {
     header: Maybe<string>;
@@ -78,7 +81,8 @@ export interface SectionBase {
     toggle:
         | { type: "none" }
         | { type: "dataElement"; dataElement: DataElement; disabled: boolean }
-        | { type: "dataElementExternal"; dataElement: DataElement; condition: string; disabled: boolean };
+        | { type: "dataElementExternal"; dataElement: DataElement; condition: string; disabled: boolean }
+        | { type: "orgUnit"; orgUnits: Code[]; condition: "show" | "hide"; dataElements: Code[]; disabled: boolean };
     texts: Texts;
     tabs: { active: boolean; order?: string };
     sortRowsBy: string;

@@ -6,6 +6,7 @@ import { useAppContext } from "../../contexts/app-context";
 import {
     DataForm,
     DataFormM,
+    DataFormWithOU,
     SectionWithIndicatorsCalculated,
     SectionWithSubnationals,
 } from "../../../domain/common/entities/DataForm";
@@ -178,7 +179,7 @@ function useDataFormInfo(): [
     const [key] = React.useState(0);
     const { compositionRoot, config } = useAppContext();
     const { orgUnitId, period, dataSetId, reloadKey, initForm } = useDataEntrySelector();
-    const [dataForm, setDataForm] = useState<DataForm>();
+    const [dataForm, setDataForm] = useState<DataFormWithOU>();
     const [dataValues, setDataValues] = useState<DataValueStore>();
     const [isLoading, loadingActions] = useBooleanState(false);
     const [ignoreRules, setIgnoreRules] = React.useState<IgnoreValidationRule[]>([]);
@@ -364,7 +365,7 @@ function useDataFormInfo(): [
 }
 
 export interface DataFormInfo {
-    metadata: { dataForm: DataForm };
+    metadata: { dataForm: DataFormWithOU };
     data: {
         values: DataValueStore;
         save: (dataValue: DataValue) => Promise<void>;
