@@ -18,6 +18,7 @@ import { DataTableCellRowName } from "./datatables/DataTableCellRowName";
 import _ from "lodash";
 import { checkIndicatorDirection } from "../../../domain/common/entities/Indicator";
 import { RowIndicatorItem } from "../../components/IndicatorItem/IndicatorItem";
+import { DataTableCellFormula } from "./datatables/DataTableCellFormula";
 
 export interface TableFormProps {
     dataFormInfo: DataFormInfo;
@@ -26,7 +27,10 @@ export interface TableFormProps {
 
 const TableForm: React.FC<TableFormProps> = React.memo(props => {
     const { dataFormInfo } = props;
-    const section = React.useMemo(() => GridViewModel.get(props.section, dataFormInfo), [props.section, dataFormInfo]);
+    const section = React.useMemo(
+        () => GridViewModel.get(props.section, dataFormInfo, "table"),
+        [props.section, dataFormInfo]
+    );
     const classes = useStyles();
 
     return (
@@ -84,6 +88,28 @@ const TableForm: React.FC<TableFormProps> = React.memo(props => {
                             </React.Fragment>
                         );
                     })}
+
+                    {section.summary.map(summary => (
+                        <DataTableRow key={`total-custom-row-${summary.cellName}`}>
+                            <CustomDataTableCell
+                                backgroundColor={props.section.styles.totals.backgroundColor}
+                                key={`total-column-${summary.cellName}`}
+                            >
+                                {summary.cellName}
+                            </CustomDataTableCell>
+                            {summary.cells.map(itemTotal => {
+                                return (
+                                    <DataTableCellFormula
+                                        key={itemTotal.columnName}
+                                        dataFormInfo={dataFormInfo}
+                                        styles={props.section.styles}
+                                        total={itemTotal}
+                                        formula={itemTotal.formula}
+                                    />
+                                );
+                            })}
+                        </DataTableRow>
+                    ))}
 
                     {section.indicators.map(indicator => {
                         return (
