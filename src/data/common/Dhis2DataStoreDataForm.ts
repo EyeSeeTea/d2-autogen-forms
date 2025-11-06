@@ -2,7 +2,7 @@ import _ from "lodash";
 import { D2Api } from "@eyeseetea/d2-api/2.34";
 import { boolean, Codec, exactly, GetType, oneOf, optional, record, string, number, array } from "purify-ts";
 import { Namespaces } from "./clients/storage/Namespaces";
-import { Maybe, NonPartial } from "../../utils/ts-utils";
+import { assertUnreachable, Maybe, NonPartial } from "../../utils/ts-utils";
 import { Code, getCode, Id, NamedRef } from "../../domain/common/entities/Base";
 import { Option } from "../../domain/common/entities/DataElement";
 import { Period } from "../../domain/common/entities/DataValue";
@@ -872,8 +872,9 @@ export class Dhis2DataStoreDataForm {
         >;
     }): Toggle {
         const { toggle } = sectionConfig;
+        if (!toggle) return { type: "none" };
 
-        switch (toggle?.type) {
+        switch (toggle.type) {
             case "dataElement":
                 return { type: "dataElement", code: toggle.code, disabled: toggle.disabled ?? false };
             case "dataElementExternal":
@@ -886,7 +887,7 @@ export class Dhis2DataStoreDataForm {
             case "orgUnit":
                 return { ...toggle, disabled: toggle.disabled ?? false };
             default:
-                return { type: "none" };
+                return assertUnreachable(toggle);
         }
     }
 

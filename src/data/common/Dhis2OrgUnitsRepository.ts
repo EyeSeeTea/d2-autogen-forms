@@ -18,7 +18,7 @@ export class Dhis2OrgUnitsRepository implements OrgUnitsRepository {
 
         const organisationUnit = organisationUnits[0];
         if (!organisationUnit) {
-            throw new Error(`OrgUnit with code ${id} not found`);
+            throw new Error(`OrgUnit with id ${id} not found`);
         }
 
         return organisationUnit;
