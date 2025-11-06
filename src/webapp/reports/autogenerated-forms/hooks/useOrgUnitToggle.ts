@@ -15,16 +15,16 @@ export function useOrgUnitToggle(dataFormInfo: DataFormInfo, dataElement: DataEl
             ),
         [dataFormInfo.metadata.dataForm.sections, dataElement.id]
     );
-    if (!section) return getOUToggleState(true, false);
+    if (!section) return getOUToggleState(false, true);
 
     const { toggle } = section;
-    if (toggle.type !== "orgUnit") return getOUToggleState(true, false);
+    if (toggle.type !== "orgUnit") return getOUToggleState(false, true);
     if (toggle.dataElements.length === 0 && toggle.disabled) return getOUToggleState(true, true);
 
     const orgUnitCode = dataFormInfo.metadata.dataForm.orgUnit.code;
     if (!orgUnitCode) {
         console.warn(`Org unit ${dataFormInfo.metadata.dataForm.orgUnit.name} has no code`);
-        return getOUToggleState(true, false);
+        return getOUToggleState(false, true);
     }
     const isOrgUnitInToggleList = toggle.orgUnits.includes(orgUnitCode);
     const dataElementExistsInToggle = toggle.dataElements.includes(dataElement.code);
@@ -35,10 +35,10 @@ export function useOrgUnitToggle(dataFormInfo: DataFormInfo, dataElement: DataEl
                 if (toggle.disabled) return getOUToggleState(true, true);
                 return getOUToggleState(false, false);
             }
-            return getOUToggleState(true, false);
+            return getOUToggleState(false, true);
         }
         case "show": {
-            if (isOrgUnitInToggleList && dataElementExistsInToggle) return getOUToggleState(true, false);
+            if (isOrgUnitInToggleList && dataElementExistsInToggle) return getOUToggleState(false, true);
             else {
                 if (toggle.disabled) return getOUToggleState(true, true);
                 return getOUToggleState(false, false);
@@ -47,7 +47,7 @@ export function useOrgUnitToggle(dataFormInfo: DataFormInfo, dataElement: DataEl
     }
 }
 
-const getOUToggleState = (isVisible: boolean, isDisabled: boolean): OrgUnitToggleState => ({
-    isVisibleByOrgUnit: isVisible,
+const getOUToggleState = (isDisabled: boolean, isVisible: boolean): OrgUnitToggleState => ({
     isDisabledByOrgUnit: isDisabled,
+    isVisibleByOrgUnit: isVisible,
 });
