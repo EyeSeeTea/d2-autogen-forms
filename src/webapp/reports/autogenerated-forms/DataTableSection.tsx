@@ -9,6 +9,7 @@ import { Html } from "./Html";
 import { Id } from "../../../domain/common/entities/Base";
 import { ToggleDataElement } from "../../../domain/common/entities/ToggleMultiple";
 import { getTabIndices } from "./SectionsTabs";
+import { Maybe } from "../../../utils/ts-utils";
 
 export interface DataTableProps {
     section: DataTableSectionObj;
@@ -38,7 +39,7 @@ const DataTableSection: React.FC<DataTableProps> = React.memo(props => {
         sectionTotalRule.sections.includes(id)
     );
 
-    const sectionLabel = getIndexedLabel(section, sectionName);
+    const sectionLabel = getIndexedLabel(section, sectionName, undefined);
 
     const isSectionDisabled = React.useMemo(() => {
         if (toggle.type === "none") return false;
@@ -143,7 +144,7 @@ const useStyles = makeStyles({
 export function getIndexedLabel(
     section: { tabs?: { active: boolean; order?: string }; showIndex?: boolean },
     name: string,
-    dataElementIndex?: number
+    dataElementIndex: Maybe<number>
 ): string {
     const [primaryTabIndex, secondaryTabIndex] = getTabIndices(section.tabs?.order);
 
