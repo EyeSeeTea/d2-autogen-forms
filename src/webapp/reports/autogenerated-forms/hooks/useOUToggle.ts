@@ -30,11 +30,12 @@ export function useOUToggle(dataFormInfo: DataFormInfo, dataElement: DataElement
             return { isOUToggleDisabled: false, isOUToggleVisible: true };
         }
         case "show": {
-            if (!isOrgUnitInToggleList && dataElementExistsInToggle) {
+            if (isOrgUnitInToggleList && dataElementExistsInToggle)
+                return { isOUToggleDisabled: false, isOUToggleVisible: true };
+            else {
                 if (toggle.disabled) return { isOUToggleDisabled: true, isOUToggleVisible: true };
                 return { isOUToggleDisabled: false, isOUToggleVisible: false };
             }
-            return { isOUToggleDisabled: false, isOUToggleVisible: true };
         }
     }
 }
