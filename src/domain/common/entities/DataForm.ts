@@ -143,7 +143,14 @@ export interface SectionWithCategoryColumns extends SectionBase {
     rowsConfig: Maybe<RowConfig>;
     singleCategoryInColumns: boolean;
     categoryOptionFilter: Maybe<CategoryOptionFilter>;
+    dataElementsToExclude: DataElementsToExclude[];
 }
+
+export type DataElementsToExclude = {
+    codesToExclude: Array<{ code: string }>;
+    formula: { condition: string; value: string };
+    dataElements: Array<{ code: string }>;
+};
 
 export type CategoryOptionFilter = {
     dataElementCode: Code;

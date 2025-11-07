@@ -246,6 +246,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                             rowsConfig: rowsConfigWithTexts ?? undefined,
                             singleCategoryInColumns: config.singleCategoryInColumns ?? false,
                             categoryOptionFilter: config.categoryOptionFilter,
+                            dataElementsToExclude: config.dataElementsToExclude || [],
                         };
                     }
                     default:

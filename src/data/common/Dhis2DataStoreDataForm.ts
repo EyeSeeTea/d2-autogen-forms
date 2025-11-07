@@ -10,6 +10,7 @@ import {
     CategoryColumnConfig,
     CategoryOptionFilter,
     ColumnOrder,
+    DataElementsToExclude,
     DataElementWidget,
     DescriptionText,
     Texts,
@@ -72,6 +73,15 @@ interface BaseSectionConfig {
     fixedRowNames: boolean;
     enableTopScroll: boolean;
 }
+
+const dataElementsToExcludeCodec = Codec.interface({
+    codesToExclude: array(Codec.interface({ code: string })),
+    formula: Codec.interface({
+        condition: string,
+        value: string,
+    }),
+    dataElements: array(Codec.interface({ code: string })),
+});
 
 interface BasicSectionConfig extends BaseSectionConfig {
     viewType: "grid-with-combos" | "grid-with-cat-option-combos" | "matrix-grid";
@@ -141,6 +151,7 @@ interface GridCategoryColumnsConfig extends BaseSectionConfig {
     rowsConfig: Maybe<Record<string, { cellsVisible?: boolean; rowNameConstant?: string }>>;
     singleCategoryInColumns: boolean;
     categoryOptionFilter: Maybe<CategoryOptionFilter>;
+    dataElementsToExclude: Maybe<DataElementsToExclude[]>;
 }
 
 interface GridWithSubnationalSectionConfig extends BaseSectionConfig {
@@ -308,6 +319,7 @@ const DataStoreConfigCodec = Codec.interface({
         texts: optional(textsCodec),
         sections: optional(
             sectionConfig({
+                dataElementsToExclude: optional(array(dataElementsToExcludeCodec)),
                 categoryOptionFilter: optional(categoryOptionFilterConfigCodec),
                 firstColumnConfig: optional(Codec.interface({ width: number })),
                 singleCategoryInColumns: optional(boolean),
@@ -844,6 +856,7 @@ export class Dhis2DataStoreDataForm {
                             rowsConfig: sectionConfig.rowsConfig,
                             singleCategoryInColumns: sectionConfig.singleCategoryInColumns || false,
                             categoryOptionFilter: sectionConfig.categoryOptionFilter,
+                            dataElementsToExclude: sectionConfig.dataElementsToExclude ?? [],
                         };
                         return [section.id, config] as [typeof section.id, typeof config];
                     }

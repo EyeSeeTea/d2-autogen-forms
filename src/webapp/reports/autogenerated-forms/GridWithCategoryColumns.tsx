@@ -16,6 +16,7 @@ import { CustomDataTableCell, CustomDataTableColumnHeader, fixHeaderClasses } fr
 import { GridWithCategoryColumnsViewModel } from "./GridWithCategoryColumnsViewModel";
 import { useSyncedScroll } from "./hooks/Scroll";
 import { getValueAccordingType } from "./DataEntryItem";
+import { calculateFormula } from "./datatables/InputFormula";
 
 export interface GridWithCategoryColumnsProps {
     dataFormInfo: DataFormInfo;
@@ -47,9 +48,32 @@ const GridWithCategoryColumns: React.FC<GridWithCategoryColumnsProps> = props =>
         return value.toString();
     }, [dataFormInfo, dataElementFilter]);
 
+    const dataElementCodesToExclude = React.useMemo(() => {
+        if (!section.dataElementsToExclude || section.dataElementsToExclude.length === 0) return [];
+
+        const excludeConfig = section.dataElementsToExclude.find(de => {
+            const formulaValue = calculateFormula({
+                dataFormInfo,
+                formula: de.formula.value,
+                dataElementCodes: de.dataElements.map(d => d.code),
+            });
+            return formulaValue === de.formula.condition;
+        });
+
+        if (!excludeConfig) return [];
+
+        return excludeConfig.codesToExclude.map(c => c.code);
+    }, [dataFormInfo, section]);
+
     const grid = React.useMemo(
-        () => GridWithCategoryColumnsViewModel.get(section, filterValue, section.categoryOptionFilter?.config ?? []),
-        [section, filterValue]
+        () =>
+            GridWithCategoryColumnsViewModel.get(
+                section,
+                filterValue,
+                section.categoryOptionFilter?.config ?? [],
+                dataElementCodesToExclude
+            ),
+        [section, filterValue, dataElementCodesToExclude]
     );
 
     const { wrapper1Ref, wrapper2Ref, wrapper2Width } = useSyncedScroll({ enable: section.enableTopScroll });
@@ -108,7 +132,7 @@ const GridWithCategoryColumns: React.FC<GridWithCategoryColumnsProps> = props =>
                                     backgroundColor={section.styles.columns.backgroundColor}
                                     fixed={section.fixedHeaders}
                                     top="0"
-                                    key={`column-${column.name}`}
+                                    key={`column-${column.code}`}
                                     colSpan={String(column.totalCategories)}
                                     className={`${classes.columnWidth} ${classes.centerSpan}`}
                                 >

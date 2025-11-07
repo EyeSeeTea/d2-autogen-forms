@@ -18,6 +18,7 @@ export interface Grid {
 
 interface Column {
     name: string;
+    code: string;
     categories?: string[];
     totalCategories: number;
     parentColumnName?: string;
@@ -42,8 +43,6 @@ type ParentColumn = {
 
 const separator = " - ";
 
-export const dataElementFilterCode = "NTD_AGE_GRP_NA_LEP";
-
 export type TypeCategoryOptionFilterConfig = {
     code: string;
     name?: string;
@@ -56,11 +55,22 @@ export class GridWithCategoryColumnsViewModel {
     static get(
         section: SectionWithCategoryColumns,
         filterValue: Maybe<string>,
-        categoryOptionValues: TypeCategoryOptionFilterConfig[]
+        categoryOptionValues: TypeCategoryOptionFilterConfig[],
+        dataElementCodesToExclude: string[]
     ): Grid {
-        const { parentColumns, columns } = this.getColumns(section);
+        const dataElementsCodeToShowSet = new Set(dataElementCodesToExclude);
+        const dataElementsToShow =
+            dataElementsCodeToShowSet.size > 0
+                ? section.dataElements.filter(de => dataElementsCodeToShowSet.has(de.code))
+                : section.dataElements;
 
-        const rows = this.buildRows(section, categoryOptionValues, filterValue);
+        const { parentColumns, columns } = this.getColumns({ ...section, dataElements: dataElementsToShow });
+
+        const rows = this.buildRows(
+            { ...section, dataElements: dataElementsToShow },
+            categoryOptionValues,
+            filterValue
+        );
 
         return {
             id: section.id,
@@ -79,17 +89,21 @@ export class GridWithCategoryColumnsViewModel {
         columns: Column[];
         parentColumns: ParentColumn[];
     } {
-        const columns = section.dataElements.map((dataElement): Column => {
-            const category = this.getCategoryColumn(dataElement, section.categoriesColumns);
+        const { categoriesColumns, dataElements, singleCategoryInColumns } = section;
+        const columns = dataElements.map((dataElement): Column => {
+            const category = this.getCategoryColumn(dataElement, categoriesColumns);
 
             const columnName = _(dataElement.name).split(separator).last() || "";
             const parentColumnName = _(dataElement.name).split(separator).first() || "";
 
             return {
                 name: columnName,
+                code: singleCategoryInColumns
+                    ? dataElement.code
+                    : `${dataElement.code}-${category?.categoryOptions.join("-")}`,
                 parentColumnName: parentColumnName,
-                categories: section.singleCategoryInColumns ? [] : category?.categoryOptions.map(c => c.name) ?? [],
-                totalCategories: section.singleCategoryInColumns ? 0 : category?.categoryOptions.length || 0,
+                categories: singleCategoryInColumns ? [] : category?.categoryOptions.map(c => c.name) ?? [],
+                totalCategories: singleCategoryInColumns ? 0 : category?.categoryOptions.length || 0,
             };
         });
 
