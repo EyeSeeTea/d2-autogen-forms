@@ -124,7 +124,7 @@ export const RowIndicatorItem: React.FC<IndicatorRowItemProps> = React.memo(prop
     return (
         <DataTableRow>
             <DataTableCell colSpan={colSpan}>
-                <span>{indicator.description}</span>
+                <span>{indicator.description || indicator.name}</span>
             </DataTableCell>
             <IndicatorItem key={indicator.id} indicator={indicator} dataFormInfo={dataFormInfo} periods={periods} />
         </DataTableRow>
