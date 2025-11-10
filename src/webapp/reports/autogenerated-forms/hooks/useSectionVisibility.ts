@@ -37,27 +37,21 @@ export function useSectionVisibility(section: DataTableSectionObj, dataFormInfo:
     }, [dataFormInfo, sectionTotalRules]);
 
     const isVisible = useMemo(() => {
-        if (toggle.type === "dataElementExternal" && !isOpen) {
-            return false;
-        }
-
-        if (toggle.type === "orgUnit" && toggle.dataElements.length === 0) {
-            const visibility = evaluateOrgUnitToggle(dataFormInfo, toggle);
-            if (visibility !== null) return visibility;
-        }
-
-        if (!toggleMultiple) return true;
-
-        if (sectionTotalRules.length !== 0 && !isVisibleFromTotals) {
-            return false;
-        }
-
-        if (toggleMultiple.toggleDataElements.length !== 0) {
-            return evaluateToggleMultiple(dataFormInfo, toggleMultiple);
-        }
+        if (section.hidden !== undefined) return !section.hidden;
+        if (toggle.type === "dataElementExternal" && !isOpen) return false;
+        if (sectionTotalRules.length > 0 && !isVisibleFromTotals) return false;
+        if (toggleMultiple) return evaluateToggleMultiple(dataFormInfo, toggleMultiple);
 
         return true;
-    }, [toggle, toggleMultiple, sectionTotalRules.length, isVisibleFromTotals, isOpen, dataFormInfo]);
+    }, [
+        section.hidden,
+        toggle.type,
+        isOpen,
+        sectionTotalRules.length,
+        isVisibleFromTotals,
+        toggleMultiple,
+        dataFormInfo,
+    ]);
 
     return { isDisabled: isDisabled, isOpen: isOpen, isVisible: isVisible };
 }
@@ -77,36 +71,13 @@ function evaluateSectionOpenState(toggle: Section["toggle"], dataFormInfo: DataF
     }
 }
 
-function evaluateOrgUnitToggle(
-    dataFormInfo: DataFormInfo,
-    toggle: Extract<Section["toggle"], { type: "orgUnit" }>
-): boolean | null {
-    const orgUnitCode = dataFormInfo.metadata.dataForm.orgUnit.code;
-    const isOrgUnitInList = toggle.orgUnits.includes(orgUnitCode);
-
-    if (!orgUnitCode) {
-        console.warn(
-            `Organization unit ${dataFormInfo.metadata.dataForm.orgUnit.id} has no code. ` +
-                `Cannot evaluate orgUnit toggle for section. Defaulting to visible.`
-        );
-        return null;
-    }
-
-    switch (toggle.condition) {
-        case "hide":
-            return !isOrgUnitInList;
-        case "show":
-            return isOrgUnitInList;
-        default:
-            console.error(`Unknown orgUnit toggle condition: ${toggle.condition}`);
-            return null;
-    }
-}
-
 function evaluateToggleMultiple(
     dataFormInfo: DataFormInfo,
     toggleMultiple: NonNullable<Section["toggleMultiple"]>
 ): boolean {
+    const hasToggleDataElements = toggleMultiple.toggleDataElements.length > 0;
+    if (!hasToggleDataElements) return true;
+
     const { logicalOperator, toggleDataElements } = toggleMultiple;
 
     const evaluateToggleCondition = (toggle: ToggleDataElement): boolean => {

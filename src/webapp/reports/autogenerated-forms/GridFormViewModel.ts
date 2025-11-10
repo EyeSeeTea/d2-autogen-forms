@@ -21,6 +21,7 @@ export interface Grid {
     titleVariant: titleVariant;
     summary: Summary[];
     indicators: Indicator[];
+    hidden: boolean;
 }
 
 interface SubSectionGrid {
@@ -191,6 +192,7 @@ export class GridViewModel {
                 const indicator = getIndicatorRelatedToDataElement(section.indicators, dataElement.code);
                 return { ...dataElement, indicator };
             }),
+            hidden: section.hidden || false,
         };
     }
 

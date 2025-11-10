@@ -37,7 +37,7 @@ describe("GetDataFormUseCase", () => {
         const useCase = new GetDataFormUseCase(instance(mockDataFormRepository), instance(mockOrgUnitRepository));
         const result = await useCase.execute(options);
 
-        expect(result).toEqual({ ...expectedDataForm, orgUnit: expectedOrgUnit });
+        expect(result).toEqual(expectedDataForm);
         verify(mockDataFormRepository.get(deepEqual(dataFormRepositoryGetOptions))).once();
     });
 

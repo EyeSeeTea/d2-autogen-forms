@@ -55,10 +55,10 @@ type DataElementExternalToggle = {
     disabled: boolean;
 };
 
-type OrgUnitToggle = {
+export type OrgUnitToggle = {
     type: "orgUnit";
     orgUnits: string[];
-    dataElements: Maybe<string[]>;
+    dataElements: string[];
     condition: "show" | "hide";
     disabled: boolean;
 };
@@ -871,7 +871,7 @@ export class Dhis2DataStoreDataForm {
                     disabled: toggle.disabled ?? false,
                 };
             case "orgUnit":
-                return { ...toggle, disabled: toggle.disabled ?? false };
+                return { ...toggle, dataElements: toggle.dataElements ?? [], disabled: toggle.disabled ?? false };
             default:
                 return assertUnreachable(toggle);
         }

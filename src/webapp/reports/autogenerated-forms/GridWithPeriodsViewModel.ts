@@ -24,6 +24,7 @@ export interface GridWithPeriodsI {
     tabs: PeriodTab[];
     summary: Summary[];
     indicators: Indicator[];
+    hidden: boolean;
 }
 
 interface DataElementRow {
@@ -201,6 +202,7 @@ export class GridWithPeriodsViewModel {
                 indicatorsRelatedToDataElements.length > 0
                     ? section.indicators.filter(indicator => !indicatorsRelatedToDataElements.includes(indicator.id))
                     : section.indicators,
+            hidden: section.hidden || false,
         };
     }
 

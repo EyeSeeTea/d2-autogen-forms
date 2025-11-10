@@ -21,6 +21,7 @@ export type DataTableSectionObj = {
     texts: Section["texts"];
     toggle: Section["toggle"];
     toggleMultiple: Section["toggleMultiple"];
+    hidden: boolean;
 };
 
 const DataTableSection: React.FC<DataTableProps> = React.memo(props => {

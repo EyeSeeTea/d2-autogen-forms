@@ -14,7 +14,6 @@ import { SectionStyle } from "./SectionStyle";
 import { titleVariant } from "./TitleVariant";
 import { DataElementToggle } from "./ToggleMultiple";
 import { DataElementRuleOptions, TotalRules } from "./DataElementRule";
-import { OrgUnit } from "./OrgUnit";
 
 export interface DataForm {
     id: Id;
@@ -29,8 +28,6 @@ export interface DataForm {
     indicators: Indicator[];
     totalRules: TotalRules;
 }
-
-export type DataFormWithOU = DataForm & { orgUnit: OrgUnit };
 
 export interface Texts {
     header: Maybe<string>;
@@ -95,6 +92,7 @@ export interface SectionBase {
     showRowTotals: boolean;
     toggleMultiple?: DataElementToggle;
     indicators: Indicator[];
+    hidden?: boolean;
 }
 
 export interface SectionSimple extends SectionBase {

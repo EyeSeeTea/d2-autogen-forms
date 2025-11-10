@@ -22,6 +22,7 @@ export class DisaggregatedCOCsGridViewModel {
             toggleMultiple: section.toggleMultiple,
             texts: section.texts,
             summary: section.totals ? summary : [],
+            hidden: section.hidden || false,
         };
     }
 
@@ -151,6 +152,7 @@ export type Grid = {
     texts: Texts;
     summary: Summary[];
     indicators: Indicator[];
+    hidden: boolean;
 };
 
 export type ColumnItem = {
