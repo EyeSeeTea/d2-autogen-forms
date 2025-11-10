@@ -504,6 +504,8 @@ type CategoryOptionConfig = {
     visible: Maybe<boolean>;
 };
 
+type ToggleConfig = GetType<typeof toggleCodec>;
+
 export class Dhis2DataStoreDataForm {
     public dataElementsConfig: Record<Code, DataElementConfig>;
     public categoryCombinationsConfig: Record<Code, CategoryCombinationConfig>;
@@ -854,23 +856,7 @@ export class Dhis2DataStoreDataForm {
         };
     }
 
-    private getSectionToggle(sectionConfig: {
-        toggle: Maybe<
-            | {
-                  type: "dataElement" | "dataElementExternal";
-                  code: string;
-                  condition: Maybe<string>;
-                  disabled?: boolean;
-              }
-            | {
-                  type: "orgUnit";
-                  orgUnits: string[];
-                  dataElements: Maybe<string[]>;
-                  condition: "show" | "hide";
-                  disabled?: boolean;
-              }
-        >;
-    }): Toggle {
+    private getSectionToggle(sectionConfig: { toggle: Maybe<ToggleConfig> }): Toggle {
         const { toggle } = sectionConfig;
         if (!toggle) return { type: "none" };
 
