@@ -35,7 +35,7 @@ export interface DataEntryItemProps {
 }
 
 function isInputExpired(
-    period: string | undefined,
+    period: Maybe<string>,
     dataFormPeriod: string,
     dataInputPeriods: dataInputPeriodsType,
     expiryDays: number,
