@@ -1,6 +1,7 @@
-import { DataForm, PeriodType, SectionBase, defaultTexts } from "../DataForm";
+import { DataForm, SectionBase, defaultTexts } from "../DataForm";
 import { DataElementText } from "../DataElement";
 import { DataValue, DataValueBase, DataValueTextSingle } from "../DataValue";
+import { PeriodType } from "../Period";
 
 export const dataElementText: DataElementText = {
     id: "1",
