@@ -128,6 +128,8 @@ export class GridWithCategoryColumnsViewModel {
         const { dataElements, categoriesColumns } = section;
         const categoriesToShow = categoryOptionValues.filter(c => c.showWhenValue.includes(filterValue));
         const items = dataElements.flatMap(dataElement => {
+            const multipleCombinationsInRow = dataElement.categoryCombos.categories.length > 2;
+
             const categoryOptionsToShow = categoriesToShow.flatMap(c =>
                 [c.code].concat(c.children.map(child => child.categoryOptionCode))
             );
@@ -146,19 +148,18 @@ export class GridWithCategoryColumnsViewModel {
 
             const allOptions = _(dataElement.categoryCombos.categories)
                 .flatMap(c => c.categoryOptions.flatMap(co => co))
-                .keyBy(x => x.originalName)
+                .keyBy(x => x.code)
                 .value();
 
             const category = this.getCategoryColumn(dataElement, categoriesColumns);
-            // Options for the category used for columns
-            const columnOptions = category?.categoryOptions.map(co => co.originalName) ?? [];
 
-            // Other categories without the one used for columns
+            const columnOptions = category?.categoryOptions.map(co => co.code) ?? [];
+
             const restCategories = _(dataElement.categoryCombos.categories)
                 .filter(c => c.code !== category?.code)
                 .value();
 
-            const restCategoryOptions = restCategories.map(c => c.categoryOptions.flatMap(co => co.originalName));
+            const restCategoryOptions = restCategories.map(c => c.categoryOptions.flatMap(co => co.code));
             const combinations = restCategoryOptions.length > 0 ? makeCocOrderArray(restCategoryOptions) : [];
             if (combinations.length === 0) return [];
 
@@ -167,12 +168,18 @@ export class GridWithCategoryColumnsViewModel {
 
                 return _(combinations)
                     .map(combination => {
-                        const combinationOptionCode = allOptions[combination]?.code;
-                        if (applyFilter && !catOptionsToShowSet.has(combinationOptionCode ?? "")) return undefined;
+                        const combinationOptionCode = multipleCombinationsInRow
+                            ? combination.split(", ").map(co => allOptions[co]?.code) ?? []
+                            : [allOptions[combination]?.code];
+
+                        if (applyFilter && !catOptionsToShowSet.has(combinationOptionCode[0] ?? "")) return undefined;
 
                         const cocOriginalName = [columnOption].concat(combination).join(", ");
-                        const cocDetails = dataElement.categoryCombos.categoryOptionCombos.find(
-                            coc => coc.originalName === cocOriginalName
+                        const cocDetails = this.findCombinationByOptionCodes(
+                            dataElement,
+                            _([columnOptionCode, ...combinationOptionCode])
+                                .compact()
+                                .value()
                         );
 
                         if (!cocDetails) {
@@ -181,7 +188,12 @@ export class GridWithCategoryColumnsViewModel {
                             );
                         }
 
-                        const cocName = allOptions[combination]?.name ?? "";
+                        const cocName = multipleCombinationsInRow
+                            ? combination
+                                  .split(", ")
+                                  .map(co => allOptions[co]?.name)
+                                  .join(", ")
+                            : allOptions[combination]?.name ?? "";
 
                         return {
                             ...dataElement,
@@ -190,7 +202,9 @@ export class GridWithCategoryColumnsViewModel {
                             cocName: cocName,
                             groupRowId: combination,
                             disabled: !cocDetails,
-                            cocCodes: _([columnOptionCode, combinationOptionCode]).compact().value(),
+                            cocCodes: _([columnOptionCode, ...combinationOptionCode])
+                                .compact()
+                                .value(),
                         };
                     })
                     .compact()
@@ -334,24 +348,20 @@ export class GridWithCategoryColumnsViewModel {
 
     private static findCombinationByOptionCodes(dataElement: DataElement, optionCodes: string[]) {
         const categories = dataElement.categoryCombos.categories;
-        // Normalize input codes into a Set for O(1) lookups
+
         const codeSet = new Set(optionCodes.map(c => c));
 
-        // For each category (in order), pick the option whose code is in optionCodes
         const selectedOptionNames = _(categories)
             .map(cat => cat.categoryOptions.find(categoryOption => codeSet.has(categoryOption.code))?.originalName)
             .compact()
             .value();
 
-        // If we didn't find an option for each category, we cannot build a full combo
         if (selectedOptionNames.length !== categories.length) {
             return undefined;
         }
 
-        // Build the expected combined name, respecting original category order
         const expectedName = selectedOptionNames.join(", ");
 
-        // Find the matching categoryOptionCombo by normalized name
         const match = dataElement.categoryCombos.categoryOptionCombos.find(coc => coc.originalName === expectedName);
 
         return match ? { id: match.id, name: match.name } : undefined;
