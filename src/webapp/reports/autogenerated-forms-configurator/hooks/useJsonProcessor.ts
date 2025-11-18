@@ -1,9 +1,10 @@
 import { useCallback, useRef, useState } from "react";
 import { sortObjectKeys } from "../../../utils/sortObjectKeys";
 import { AutogenConfig } from "../../../../domain/common/entities/AutogenConfig";
+import { Maybe } from "../../../../utils/ts-utils";
 
 type JsonProcessorState = {
-    error: string | null;
+    error: Maybe<string>;
     isProcessing: boolean;
     formatJson: (config: AutogenConfig) => Promise<string>;
     parseJson: (json: string) => Promise<AutogenConfig>;
@@ -12,14 +13,14 @@ type JsonProcessorState = {
 
 export const useJsonProcessor = (): JsonProcessorState => {
     const [isProcessing, setIsProcessing] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<Maybe<string>>();
     const cancelRef = useRef<boolean>(false);
 
     const processWithYielding = useCallback(async <T>(processor: () => T): Promise<T> => {
         return new Promise((resolve, reject) => {
             cancelRef.current = false;
             setIsProcessing(true);
-            setError(null);
+            setError(undefined);
 
             const processChunk = () => {
                 if (cancelRef.current) {

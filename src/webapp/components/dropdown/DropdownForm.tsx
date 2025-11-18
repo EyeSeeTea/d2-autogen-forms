@@ -33,33 +33,33 @@ const getMaterialTheme = () =>
                     "&$focused": {
                         color: "#aaaaaa",
                     },
-                    top: "-9px !important",
-                    marginLeft: 10,
+                    insetBlockStart: "-9px !important",
+                    marginInlineStart: 10,
                 },
             },
             MuiInput: {
                 root: {
-                    marginLeft: 10,
+                    marginInlineStart: 10,
                 },
                 formControl: {
                     minWidth: 200,
-                    marginTop: "8px !important",
+                    marginBlockStart: "8px !important",
                 },
                 input: {
                     color: "#565656",
                 },
                 underline: {
                     "&&&&:hover:before": {
-                        borderBottom: `1px solid #bdbdbd`,
+                        borderBlockEnd: `1px solid #bdbdbd`,
                     },
                     "&:hover:not($disabled):before": {
-                        borderBottom: `1px solid #aaaaaa`,
+                        borderBlockEnd: `1px solid #aaaaaa`,
                     },
                     "&:after": {
-                        borderBottom: `2px solid ${cyan["500"]}`,
+                        borderBlockEnd: `2px solid ${cyan["500"]}`,
                     },
                     "&:before": {
-                        borderBottom: `1px solid #bdbdbd`,
+                        borderBlockEnd: `1px solid #bdbdbd`,
                     },
                 },
             },

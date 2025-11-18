@@ -3,19 +3,20 @@ import { Monaco } from "@monaco-editor/react";
 import { EditorProps } from "../Editor";
 import { useJsonProcessor } from "./useJsonProcessor";
 import { DEFAULT_JSON_VALUE } from "./useConfigurator";
+import { Maybe } from "../../../../utils/ts-utils";
 
 type Marker = Record<string, unknown>;
 type AutogenEditorProps = Omit<EditorProps, "dataSetCode"> & {
     isProcessing: boolean;
-    error: string | null;
+    error: Maybe<string>;
 };
 type AutogenEditorState = {
     editorOptions: Monaco["options"];
     isLargeFile: boolean;
-    handleChange: (value: string | undefined) => void;
+    handleChange: (value: Maybe<string>) => void;
     handleEditorDidMount: (editor: Monaco["editor"], monaco: Monaco) => void;
     handleEditorValidation: (markers: Marker[]) => void;
-    processingError: string | null;
+    processingError: Maybe<string>;
 };
 
 export function useAutogenEditor(props: AutogenEditorProps): AutogenEditorState {
@@ -25,33 +26,31 @@ export function useAutogenEditor(props: AutogenEditorProps): AutogenEditorState 
     const [isLargeFile, setIsLargeFile] = useState(false);
     const [validationDebounceMs, setValidationDebounceMs] = useState(300);
 
-    const validationTimeoutRef = useRef<NodeJS.Timeout>();
+    const validationTimeoutRef = useRef<number>();
     const lastValidationRef = useRef<string>("");
     const isValidatingRef = useRef<boolean>(false);
 
+    const fileSize = useMemo(() => calculateFileSizeInKB(configValue), [configValue]);
+    const isHugeFile = useMemo(() => fileSize > HUGE_FILE_SIZE, [fileSize]);
+
     useEffect(() => {
-        const fileSize = configValue?.length || 0;
         const isLarge = fileSize > LARGE_FILE_SIZE;
-        const isHuge = fileSize > HUGE_FILE_SIZE;
 
         setIsLargeFile(isLarge);
-        setValidationDebounceMs(isHuge ? 2000 : isLarge ? 1000 : 300);
-    }, [configValue?.length]);
+        setValidationDebounceMs(isHugeFile ? 2000 : isLarge ? 1000 : 300);
+    }, [isHugeFile, fileSize]);
 
-    const editorOptions = useMemo(() => {
-        const fileSize = configValue?.length || 0;
-        const isHuge = fileSize > HUGE_FILE_SIZE;
-
-        return {
+    const editorOptions = useMemo(
+        () => ({
             selectOnLineNumbers: true,
             automaticLayout: true,
-            minimap: { enabled: isLargeFile && !isHuge },
+            minimap: { enabled: isLargeFile && !isHugeFile },
             wordWrap: "on" as const,
             scrollBeyondLastLine: false,
-            folding: !isHuge,
+            folding: !isHugeFile,
             lineNumbers: "on" as const,
             renderWhitespace: isLargeFile ? ("none" as const) : ("selection" as const),
-            ...(isHuge && {
+            ...(isHugeFile && {
                 renderValidationDecorations: "off" as const,
                 occurrencesHighlight: false,
                 selectionHighlight: false,
@@ -64,12 +63,13 @@ export function useAutogenEditor(props: AutogenEditorProps): AutogenEditorState 
                 },
             }),
             ...(isLargeFile &&
-                !isHuge && {
+                !isHugeFile && {
                     renderValidationDecorations: "warning" as const,
                     occurrencesHighlight: false,
                 }),
-        };
-    }, [isLargeFile, configValue?.length]);
+        }),
+        [isLargeFile, isHugeFile]
+    );
 
     const performValidation = useCallback(
         async (jsonContent: string) => {
@@ -108,7 +108,7 @@ export function useAutogenEditor(props: AutogenEditorProps): AutogenEditorState 
     );
 
     const handleChange = useCallback(
-        (value: string | undefined) => {
+        (value: Maybe<string>) => {
             if (!value?.trim()) {
                 updateConfigValue(DEFAULT_JSON_VALUE);
                 updateJsonValidity(true);
@@ -120,7 +120,7 @@ export function useAutogenEditor(props: AutogenEditorProps): AutogenEditorState 
                 clearTimeout(validationTimeoutRef.current);
             }
 
-            validationTimeoutRef.current = setTimeout(() => {
+            validationTimeoutRef.current = window.setTimeout(() => {
                 if (!isProcessing && !isValidatingRef.current) {
                     performValidation(value);
                 }
@@ -159,11 +159,11 @@ export function useAutogenEditor(props: AutogenEditorProps): AutogenEditorState 
                 });
             }
 
-            let validationThrottle: NodeJS.Timeout;
+            let validationThrottle: number;
             editor.onDidChangeModelContent(() => {
                 if (validationThrottle) clearTimeout(validationThrottle);
 
-                validationThrottle = setTimeout(() => {
+                validationThrottle = window.setTimeout(() => {
                     try {
                         if (!isLargeFile && !isValidatingRef.current) {
                             const markers = monaco.editor.getModelMarkers({});
@@ -211,5 +211,13 @@ export function useAutogenEditor(props: AutogenEditorProps): AutogenEditorState 
     };
 }
 
-const LARGE_FILE_SIZE = 100000; // 100KB
-const HUGE_FILE_SIZE = 500000; // 500KB
+const LARGE_FILE_SIZE = 100; // 100KB
+const HUGE_FILE_SIZE = 500; // 500KB
+
+function calculateFileSizeInKB(input: string): number {
+    const encoder = new TextEncoder();
+    const sizeInBytes = encoder.encode(input).length;
+    const sizeInKB = sizeInBytes / 1024;
+
+    return sizeInKB;
+}

@@ -73,9 +73,7 @@ export const Editor: React.FC<EditorProps> = React.memo(props => {
                 defaultLanguage="json"
                 defaultValue={DEFAULT_JSON_VALUE}
                 value={configValue}
-                onChange={value => {
-                    if (value) handleChange(value);
-                }}
+                onChange={handleChange}
                 options={editorOptions}
                 onValidate={handleEditorValidation}
                 beforeMount={handleEditorBeforeMount}
@@ -93,7 +91,7 @@ const ProcessingIndicator = styled.div`
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-bottom: 16px;
+    margin-block-end: 16px;
     padding: 8px 16px;
     background-color: #e3f2fd;
     border-radius: 4px;
