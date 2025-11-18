@@ -55,12 +55,24 @@ export type TotalsConfig = SectionTotals | Record<string, SectionTotals>;
 
 export type IndicatorConfig = { position: Maybe<{ dataElement: string; direction: "after" | "before" }> };
 
+type DataElementToggle = {
+    type: "dataElement";
+    code: Code;
+    disabled: boolean;
+};
+
+type DataElementExternalToggle = {
+    type: "dataElementExternal";
+    code: Code;
+    condition: string | undefined;
+    disabled: boolean;
+};
+
+export type Toggle = DataElementToggle | DataElementExternalToggle | { type: "none" };
+
 export type BaseSectionConfig = {
     texts: Texts;
-    toggle:
-        | { type: "none" }
-        | { type: "dataElement"; code: Code }
-        | { type: "dataElementExternal"; code: Code; condition: string | undefined };
+    toggle: Toggle;
     tabs: { active: true; order: string | number } | { active: false };
     sortRowsBy: string;
     titleVariant: TitleVariant;
@@ -74,7 +86,7 @@ export type BaseSectionConfig = {
 };
 
 type BasicSectionConfig = BaseSectionConfig & {
-    viewType: "grid-with-combos" | "grid-with-cat-option-combos" | "matrix-grid" | "grid-disaggregated-cocs";
+    viewType: "grid-with-combos" | "matrix-grid" | "grid-disaggregated-cocs";
 };
 
 type GridSectionConfig = BaseSectionConfig & {
@@ -83,7 +95,7 @@ type GridSectionConfig = BaseSectionConfig & {
 };
 
 type GridWithPeriodsSectionConfig = BaseSectionConfig & {
-    viewType: "grid-with-periods";
+    viewType: "grid-with-periods" | "grid-with-cat-option-combos";
     periods: string[];
 };
 

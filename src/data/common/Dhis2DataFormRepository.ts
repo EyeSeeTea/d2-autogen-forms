@@ -153,6 +153,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                 const base2 = getSectionBaseWithToggle(config, base, dataElements);
 
                 switch (config.viewType) {
+                    case "grid-with-cat-option-combos":
                     case "grid-with-periods":
                         return { viewType: config.viewType, periods: config.periods, ...base2 };
                     case "table":
@@ -576,7 +577,7 @@ function getSectionBaseWithToggle(
             if (toggleDataElement) {
                 return {
                     ...base,
-                    toggle: { type: "dataElement", dataElement: toggleDataElement },
+                    toggle: { type: "dataElement", dataElement: toggleDataElement, disabled: toggle.disabled },
                     dataElements: _.without(base.dataElements, toggleDataElement),
                 };
             } else {
@@ -597,6 +598,7 @@ function getSectionBaseWithToggle(
                         type: "dataElementExternal",
                         dataElement: toggleDataElement,
                         condition: toggle.condition || "",
+                        disabled: toggle.disabled,
                     },
                 };
             } else {

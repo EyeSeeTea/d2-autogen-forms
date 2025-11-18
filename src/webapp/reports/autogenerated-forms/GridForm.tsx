@@ -40,7 +40,7 @@ export interface GridFormProps {
 
 const GridForm: React.FC<GridFormProps> = props => {
     const { dataFormInfo, section } = props;
-    const grid = React.useMemo(() => GridViewModel.get(section, dataFormInfo), [section, dataFormInfo]);
+    const grid = React.useMemo(() => GridViewModel.get(section, dataFormInfo, "grid"), [section, dataFormInfo]);
     const classes = useStyles();
 
     return (
