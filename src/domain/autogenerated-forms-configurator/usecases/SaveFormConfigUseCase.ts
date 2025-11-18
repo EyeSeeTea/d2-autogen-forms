@@ -5,7 +5,7 @@ import { AutogenConfigRepository } from "../repositories/AutogenConfigRepository
 export class SaveFormConfigUseCase {
     constructor(private autogenConfigRepository: AutogenConfigRepository) {}
 
-    execute(dataSetCode: Code, config: AutogenConfig) {
+    execute(dataSetCode: Code, config: AutogenConfig): Promise<void> {
         return this.autogenConfigRepository.save(dataSetCode, config);
     }
 }
