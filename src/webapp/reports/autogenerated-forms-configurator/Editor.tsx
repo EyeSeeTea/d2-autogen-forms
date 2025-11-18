@@ -44,7 +44,12 @@ export const Editor: React.FC<EditorProps> = React.memo(props => {
         valueGetter.current = _valueGetter;
     }, []);
 
-    if (error) return <ErrorContainer>{i18n.t(`Processing Error: {{error}}`, { error: error })}</ErrorContainer>;
+    if (error)
+        return (
+            <ErrorContainer>
+                {i18n.t(`Processing Error: {{error}}`, { error: error, nsSeparator: false })}
+            </ErrorContainer>
+        );
 
     return (
         <EditorContainer>

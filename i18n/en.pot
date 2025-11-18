@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2025-10-06T20:57:30.629Z\n"
-"PO-Revision-Date: 2025-10-06T20:57:30.629Z\n"
+"POT-Creation-Date: 2025-11-18T07:36:32.359Z\n"
+"PO-Revision-Date: 2025-11-18T07:36:32.359Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -93,6 +93,9 @@ msgid "? This action cannot be undone."
 msgstr ""
 
 msgid "Select dataset"
+msgstr ""
+
+msgid "Processing Error: {{error}}"
 msgstr ""
 
 msgid "Processing large JSON..."
