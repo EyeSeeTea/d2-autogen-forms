@@ -27,7 +27,13 @@ export interface DataForm {
     };
     indicators: Indicator[];
     totalRules: TotalRules;
+    validationRuleConfig: ValidationRuleConfig;
 }
+
+export type ValidationRuleConfig = {
+    ignoreCompulsoryPair: boolean;
+    ignoreExclusivePair: boolean;
+};
 
 export interface Texts {
     header: Maybe<string>;

@@ -11,7 +11,8 @@ export class ValidateDatasetRulesUseCase {
     constructor(private ruleRepository: RuleRepository) {}
 
     async execute(dataSetId: Id, options: ValidateUseCaseOptions): Promise<ValidationResult[]> {
-        const rules = await this.getRules(dataSetId, options.cacheKey);
+        const allRules = await this.getRules(dataSetId, options.cacheKey);
+        const rules = this.filterRules(allRules, options);
         if (rules.length === 0) return [];
         const results = await this.ruleRepository.validate(dataSetId, options);
         return this.buildValidationRuleMessages(rules, results);
@@ -45,6 +46,20 @@ export class ValidateDatasetRulesUseCase {
 
     private buildRuleMessage(rule: ValidationRule): string {
         return rule.message;
+    }
+
+    private filterRules(rules: ValidationRule[], options: ValidateDataSetOptions): ValidationRule[] {
+        return rules.filter(rule => {
+            if (options.config?.ignoreCompulsoryPair) {
+                const isCompulsoryPair = rule.operator === "compulsory_pair";
+                if (isCompulsoryPair) return false;
+            }
+            if (options.config?.ignoreExclusivePair) {
+                const isExclusivePair = rule.operator === "exclusive_pair";
+                if (isExclusivePair) return false;
+            }
+            return true;
+        });
     }
 }
 

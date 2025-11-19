@@ -1,4 +1,5 @@
 import { Id } from "../../common/entities/Base";
+import { ValidationRuleConfig } from "../../common/entities/DataForm";
 import { Period } from "../../common/entities/DataValue";
 import { ValidationResult } from "../../common/entities/ValidationResult";
 import { ValidationRule } from "../../common/entities/ValidationRule";
@@ -8,4 +9,4 @@ export interface RuleRepository {
     validate(dataSetId: Id, options: ValidateDataSetOptions): Promise<ValidationResult[]>;
 }
 
-export type ValidateDataSetOptions = { period: Period; orgUnitId: Id };
+export type ValidateDataSetOptions = { period: Period; orgUnitId: Id; config: ValidationRuleConfig };

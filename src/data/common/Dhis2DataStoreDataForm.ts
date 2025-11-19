@@ -6,7 +6,7 @@ import { Maybe, NonPartial } from "../../utils/ts-utils";
 import { Code, getCode, Id, NamedRef } from "../../domain/common/entities/Base";
 import { Option } from "../../domain/common/entities/DataElement";
 import { Period } from "../../domain/common/entities/DataValue";
-import { DescriptionText, Texts, Totals } from "../../domain/common/entities/DataForm";
+import { DescriptionText, Texts, Totals, ValidationRuleConfig } from "../../domain/common/entities/DataForm";
 import { titleVariant } from "../../domain/common/entities/TitleVariant";
 import { SectionStyle, SectionStyleAttrs } from "../../domain/common/entities/SectionStyle";
 import { DataElementRuleOptions, SectionRuleOptions } from "../../domain/common/entities/DataElementRule";
@@ -15,6 +15,7 @@ import { ToggleMultiple } from "../../domain/common/entities/ToggleMultiple";
 interface DataSetConfig {
     texts: Texts;
     sections: Record<Id, SectionConfig>;
+    validationRuleConfig: ValidationRuleConfig;
 }
 
 export type SectionConfig =
@@ -396,6 +397,12 @@ const DataStoreConfigCodec = Codec.interface({
                         })
                     )
                 ),
+            })
+        ),
+        validationRuleConfig: optional(
+            Codec.interface({
+                ignoreCompulsoryPair: optional(boolean),
+                ignoreExclusivePair: optional(boolean),
             })
         ),
     }),
@@ -833,6 +840,10 @@ export class Dhis2DataStoreDataForm {
                 name: this.getTextFromConstants(dataSetConfig?.texts?.name, constantsByCode),
             },
             sections: sections,
+            validationRuleConfig: {
+                ignoreCompulsoryPair: dataSetConfig?.validationRuleConfig?.ignoreCompulsoryPair || false,
+                ignoreExclusivePair: dataSetConfig?.validationRuleConfig?.ignoreExclusivePair || false,
+            },
         };
     }
 

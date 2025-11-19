@@ -54,6 +54,10 @@ export class Dhis2DataFormRepository implements DataFormRepository {
             texts: dataSetConfig.texts,
             options: { dataElements: dataElementsOptions },
             totalRules: totalRules,
+            validationRuleConfig: {
+                ignoreCompulsoryPair: dataSetConfig.validationRuleConfig.ignoreCompulsoryPair,
+                ignoreExclusivePair: dataSetConfig.validationRuleConfig.ignoreExclusivePair,
+            },
         };
     }
 
