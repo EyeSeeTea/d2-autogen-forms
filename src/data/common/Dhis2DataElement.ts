@@ -210,8 +210,9 @@ function getDataElement(dataElement: D2DataElementNewType, config: Dhis2DataStor
 
     switch (valueType) {
         case "TEXT":
+            return { type: "TEXT", isLongText: false, related: undefined, ...base };
         case "LONG_TEXT":
-            return { type: "TEXT", related: undefined, ...base };
+            return { type: "TEXT", isLongText: true, related: undefined, ...base };
         case "MULTI_TEXT":
             return { type: "MULTI_TEXT", related: undefined, ...base };
         case "INTEGER":
