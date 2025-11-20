@@ -33,6 +33,11 @@ const DataTableSection: React.FC<DataTableProps> = React.memo(props => {
     const { toggle, toggleMultiple } = section;
     const classes = useStyles();
 
+    const isSectionDisabled = React.useMemo(() => {
+        if (toggle.type === "none") return false;
+        return toggle.disabled;
+    }, [toggle]);
+
     const isSectionOpen = React.useMemo(() => {
         if (toggle.type === "dataElement") {
             const dataValue = dataFormInfo.data.values.getOrEmpty(toggle.dataElement, dataFormInfo);
@@ -86,7 +91,7 @@ const DataTableSection: React.FC<DataTableProps> = React.memo(props => {
                 </div>
             )}
 
-            {isSectionOpen && (
+            {(isSectionOpen || isSectionDisabled) && (
                 <>
                     {children}
                     <Html content={section.texts.footer} />

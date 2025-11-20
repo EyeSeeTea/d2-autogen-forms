@@ -31,14 +31,17 @@ export interface DataEntryItemProps {
     columnDataElements?: DataElement[];
     cocId: string;
     rows?: Row[];
+    lockException?: boolean; // If true, the input will be not disabled when the period is not the same as the data form period
 }
 
 function isInputExpired(
     period: string | undefined,
     dataFormPeriod: string,
     dataInputPeriods: dataInputPeriodsType,
-    expiryDays: number
+    expiryDays: number,
+    lockException: boolean
 ) {
+    if (lockException) return false;
     const periodToCheck = period ?? dataFormPeriod;
 
     const dataInputPeriod = dataInputPeriods?.find(p => p.period.id === periodToCheck);
@@ -173,7 +176,12 @@ export function verifyConditionByDataValueType(dataValue: DataValue, rule: { con
 }
 
 export function applyNumericComparison(rule: { condition: string }, value: Value): boolean {
-    const [operator, comparisonValue = ""] = rule.condition.split(" ");
+    const [operator, comparisonValue] = rule.condition.split(" ");
+
+    if (!comparisonValue || !operator) {
+        return rule.condition === String(value);
+    }
+
     const numericalValue = parseInt(value as string);
     const numericalComparisonValue = parseInt(comparisonValue);
 
@@ -234,7 +242,7 @@ export function checkDisabledRule(options: UseApplyRulesProps): boolean {
 }
 
 const DataEntryItem: React.FC<DataEntryItemProps> = props => {
-    const { dataElement, dataFormInfo, manualyDisabled: handDisabled, rows } = props;
+    const { dataElement, dataFormInfo, manualyDisabled: handDisabled, rows, lockException } = props;
     const [dataValue, state, notifyChange] = useUpdatableDataValueWithFeedback(props);
 
     const { type } = dataValue;
@@ -244,7 +252,8 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
               props.period,
               dataFormInfo.period,
               dataFormInfo.metadata.dataForm.dataInputPeriods,
-              dataFormInfo.metadata.dataForm.expiryDays
+              dataFormInfo.metadata.dataForm.expiryDays,
+              lockException ?? false
           )
         : handDisabled;
     const config = dataFormInfo.metadata.dataForm.options.dataElements[dataElement.id];
@@ -314,7 +323,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                         options={options.items}
                         onValueChange={notifyChange}
                         state={state}
-                        disabled={disabled}
+                        disabled={isDisabled || disabled}
                     />
                 ) : (
                     <SingleComponent
@@ -322,7 +331,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                         options={options.items}
                         onValueChange={notifyChange}
                         state={state}
-                        disabled={disabled}
+                        disabled={isDisabled || disabled}
                     />
                 );
             default:

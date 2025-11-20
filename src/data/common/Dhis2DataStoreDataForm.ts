@@ -3,137 +3,22 @@ import { D2Api } from "@eyeseetea/d2-api/2.34";
 import { boolean, Codec, exactly, GetType, oneOf, optional, record, string, number, array } from "purify-ts";
 import { Namespaces } from "./clients/storage/Namespaces";
 import { Maybe, NonPartial } from "../../utils/ts-utils";
-import { Code, getCode, Id, NamedRef } from "../../domain/common/entities/Base";
-import { Option } from "../../domain/common/entities/DataElement";
+import { Code, getCode, Id } from "../../domain/common/entities/Base";
 import { Period } from "../../domain/common/entities/DataValue";
-import { DescriptionText, Texts, Totals } from "../../domain/common/entities/DataForm";
-import { titleVariant } from "../../domain/common/entities/TitleVariant";
-import { SectionStyle, SectionStyleAttrs } from "../../domain/common/entities/SectionStyle";
-import { DataElementRuleOptions, SectionRuleOptions } from "../../domain/common/entities/DataElementRule";
-import { ToggleMultiple } from "../../domain/common/entities/ToggleMultiple";
-
-interface DataSetConfig {
-    texts: Texts;
-    sections: Record<Id, SectionConfig>;
-}
-
-export type SectionConfig =
-    | BasicSectionConfig
-    | GridSectionConfig
-    | GridWithPeriodsSectionConfig
-    | GridWithTotalsSectionConfig
-    | GridWithSubnationalSectionConfig
-    | GridIndicatorsCalculated;
-
-export type TotalsRule = (
-    | {
-          type: "sections";
-          rules?: SectionRuleOptions;
-      }
-    | {
-          type: "dataElements";
-          rules?: DataElementRuleOptions;
-      }
-) & { formula: string };
-
-type SectionTotals = Totals & {
-    texts?: { name?: string; code?: string };
-};
-
-type TotalsConfig = SectionTotals | Record<string, SectionTotals>;
-
-interface BaseSectionConfig {
-    texts: Texts;
-    toggle:
-        | { type: "none" }
-        | { type: "dataElement"; code: Code }
-        | { type: "dataElementExternal"; code: Code; condition: string | undefined };
-    tabs: { active: true; order: string | number } | { active: false };
-    sortRowsBy: string;
-    titleVariant: titleVariant;
-    styles: SectionStyleAttrs;
-    columnsDescriptions: DescriptionText;
-    groupDescriptions: DescriptionText;
-    disableComments: boolean;
-    totals?: Record<string, SectionTotals>;
-    toggleMultiple: Maybe<ToggleMultiple>;
-    indicators?: Record<Code, IndicatorConfig>;
-}
-
-interface BasicSectionConfig extends BaseSectionConfig {
-    viewType: "grid-with-combos" | "grid-with-cat-option-combos" | "matrix-grid" | "grid-disaggregated-cocs";
-}
-
-interface GridSectionConfig extends BaseSectionConfig {
-    viewType: "table" | "grid";
-    calculateTotals: CalculateTotalType;
-}
-
-interface GridWithPeriodsSectionConfig extends BaseSectionConfig {
-    viewType: "grid-with-periods";
-    periods: string[];
-}
-
-interface GridWithTotalsSectionConfig extends BaseSectionConfig {
-    viewType: "grid-with-totals";
-    calculateTotals: CalculateTotalType;
-}
-
-interface GridIndicatorsCalculated extends BaseSectionConfig {
-    viewType: "grid-indicators-calculated";
-    periods: string[];
-    rows: GridIndicatorsCalculatedRow[];
-    virtualRows: VirtualRow[];
-    virtualColumns: (VirtualColumnDataElement | VirtualColumnCalculated)[];
-}
-
-type VirtualRow = {
-    rowConstantCode: string;
-    dataElementCode: string;
-};
-
-export type GridIndicatorsCalculatedRow = {
-    code: Code;
-    denominator: Maybe<{ text: { code: Code }; dataElementCode: Code }>;
-    value: Maybe<{
-        dataElementCodes: Code[];
-        formula: { value: string };
-    }>;
-};
-
-interface GridWithSubnationalSectionConfig extends BaseSectionConfig {
-    viewType: "grid-with-subnational-ous";
-    calculateTotals: CalculateTotalType;
-    subNationalDataset: string;
-}
-
-export type CalculateTotalConfig = {
-    totalDeCode: Code | undefined;
-    disabled: boolean | undefined;
-};
-
-export type CalculateTotalType = Record<string, CalculateTotalConfig | undefined> | undefined;
-
-type D2BaseVirtualColumn = {
-    dataElementCode: string;
-    position: number;
-    texts?: {
-        columnNameCode: string;
-    };
-};
-
-type VirtualColumnDataElement = D2BaseVirtualColumn & {
-    type: "dataElement";
-    dataElementRefValue: string;
-};
-
-type VirtualColumnCalculated = D2BaseVirtualColumn & {
-    type: "calculated";
-    formula: {
-        dataElementCodes: string[];
-        value: string;
-    };
-};
+import { SectionStyle } from "../../domain/common/entities/SectionStyle";
+import {
+    BaseSectionConfig,
+    CategoryCombinationConfig,
+    CategoryOptionConfig,
+    DataElementConfig,
+    DataSetConfig,
+    OptionSet,
+    SectionConfig,
+    SectionTotals,
+    Toggle,
+    TotalsConfig,
+} from "../../domain/common/entities/AutogenConfig";
+import { SubNational } from "../../domain/common/entities/DataForm";
 
 const defaultViewType = "table";
 
@@ -228,7 +113,7 @@ const textsCodec = Codec.interface({
     name: optional(oneOf([string, selector])),
 });
 
-const DataStoreConfigCodec = Codec.interface({
+export const DataStoreConfigCodec = Codec.interface({
     categoryCombinations: sectionConfig({
         viewType: optional(oneOf([exactly("name"), exactly("shortName"), exactly("formName")])),
     }),
@@ -253,7 +138,6 @@ const DataStoreConfigCodec = Codec.interface({
         ),
         texts: optional(textsCodec),
     }),
-
     dataSets: sectionConfig({
         disableComments: optional(boolean),
         viewType: optional(viewType),
@@ -270,6 +154,7 @@ const DataStoreConfigCodec = Codec.interface({
                         type: oneOf([exactly("dataElement"), exactly("dataElementExternal")]),
                         code: string,
                         condition: optional(string),
+                        disabled: optional(boolean),
                     })
                 ),
                 titleVariant: optional(titleVariantType),
@@ -388,43 +273,42 @@ const DataStoreConfigCodec = Codec.interface({
     }),
 });
 
-export interface DataElementConfig {
-    rules?: DataElementRuleOptions;
-    disableComments?: boolean;
-    texts?: Texts;
-    selection?: {
-        optionSet?: OptionSet;
-        isMultiple: boolean;
-        widget: Maybe<"dropdown" | "radio" | "sourceType">;
-        visible: { dataElementCode: string; value: string } | undefined;
-    };
-}
-
-export type IndicatorConfig = { position: Maybe<{ dataElement: string; direction: "after" | "before" }> };
-
-interface OptionSet extends NamedRef {
-    code: string;
-    options: Option<string>[];
-}
-
 type Selector = GetType<typeof selector>;
 type DataFormStoreConfigFromCodec = GetType<typeof DataStoreConfigCodec>;
 
 type PeriodInterval = { type: "relative-interval"; startOffset: number; endOffset: number };
 
-function getPeriods(dataSetPeriod: string, interval: Maybe<PeriodInterval>): string[] {
+function getPeriodsByViewType(
+    viewType: SectionConfig["viewType"],
+    dataSetPeriod: string,
+    interval: Maybe<PeriodInterval>
+): string[] {
     const dataSetYear = parseInt(dataSetPeriod);
 
-    const interval2: PeriodInterval = interval || {
-        type: "relative-interval",
-        startOffset: -2,
-        endOffset: 0,
-    };
+    switch (viewType) {
+        case "grid-indicators-calculated":
+        case "grid-with-periods": {
+            const interval2: PeriodInterval = interval || {
+                type: "relative-interval",
+                startOffset: -2,
+                endOffset: 0,
+            };
 
-    return _(dataSetYear + interval2.startOffset)
-        .range(dataSetYear + interval2.endOffset + 1)
-        .map(year => year.toString())
-        .value();
+            return _(dataSetYear + interval2.startOffset)
+                .range(dataSetYear + interval2.endOffset + 1)
+                .map(year => year.toString())
+                .value();
+        }
+        case "grid-with-cat-option-combos":
+            if (!interval) return [];
+
+            return _(dataSetYear + interval.startOffset)
+                .range(dataSetYear + interval.endOffset + 1)
+                .map(year => year.toString())
+                .value();
+        default:
+            throw new Error(`Unsupported viewType ${viewType} for periods calculation`);
+    }
 }
 
 interface DataFormStoreConfig {
@@ -446,14 +330,6 @@ interface DataSet {
     code: string;
     sections: Array<{ id: string; code: string }>;
 }
-
-type CategoryCombinationConfig = {
-    viewType: "name" | "shortName" | "formName" | undefined;
-};
-
-type CategoryOptionConfig = {
-    visible: Maybe<boolean>;
-};
 
 export class Dhis2DataStoreDataForm {
     public dataElementsConfig: Record<Code, DataElementConfig>;
@@ -714,7 +590,7 @@ export class Dhis2DataStoreDataForm {
                 const viewType = sectionConfig.viewType || dataSetDefaultViewType;
 
                 const base: BaseSectionConfig = {
-                    toggle: sectionConfig.toggle || { type: "none" },
+                    toggle: this.getSectionToggle(sectionConfig),
                     texts: {
                         header: this.getTextFromConstants(sectionConfig?.texts?.header, constantsByCode),
                         footer: this.getTextFromConstants(sectionConfig?.texts?.footer, constantsByCode),
@@ -744,11 +620,12 @@ export class Dhis2DataStoreDataForm {
                 const baseConfig = { ...base, viewType };
 
                 switch (viewType) {
+                    case "grid-with-cat-option-combos":
                     case "grid-with-periods": {
                         const config = {
                             ...baseConfig,
                             viewType,
-                            periods: getPeriods(period, sectionConfig.periods),
+                            periods: getPeriodsByViewType(viewType, period, sectionConfig.periods),
                         };
                         return [section.id, config] as [typeof section.id, typeof config];
                     }
@@ -774,7 +651,7 @@ export class Dhis2DataStoreDataForm {
                     case "grid-indicators-calculated": {
                         const config = {
                             ...baseConfig,
-                            periods: getPeriods(period, sectionConfig.periods),
+                            periods: getPeriodsByViewType(viewType, period, sectionConfig.periods),
                             rows: sectionConfig.rows ?? [],
                             virtualColumns: sectionConfig.virtualColumns ?? [],
                             virtualRows: sectionConfig.virtualRows ?? [],
@@ -802,6 +679,18 @@ export class Dhis2DataStoreDataForm {
             },
             sections: sections,
         };
+    }
+
+    private getSectionToggle(sectionConfig: {
+        toggle: Maybe<{
+            type: "dataElement" | "dataElementExternal";
+            code: string;
+            condition: Maybe<string>;
+            disabled?: boolean;
+        }>;
+    }): Toggle {
+        const { toggle } = sectionConfig;
+        return toggle ? { ...toggle, disabled: toggle.disabled ?? false } : { type: "none" };
     }
 
     private getSectionTotals(
@@ -920,9 +809,3 @@ interface Constant {
 function sectionConfig<T extends Record<string, Codec<any>>>(properties: T) {
     return optional(record(string, Codec.interface(properties)));
 }
-
-export type SubNational = {
-    id: Id;
-    parentId: Id;
-    name: string;
-};

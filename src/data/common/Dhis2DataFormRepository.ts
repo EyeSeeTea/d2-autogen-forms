@@ -11,7 +11,7 @@ import {
     SectionTotalRule,
     TotalRules,
 } from "../../domain/common/entities/DataElementRule";
-import { DataForm, defaultTexts, Section, SectionBase } from "../../domain/common/entities/DataForm";
+import { DataForm, defaultTexts, Section, SectionBase, SubNational } from "../../domain/common/entities/DataForm";
 import { Period } from "../../domain/common/entities/DataValue";
 import { Indicator } from "../../domain/common/entities/Indicator";
 import { SectionStyle } from "../../domain/common/entities/SectionStyle";
@@ -20,13 +20,8 @@ import { DataFormRepository } from "../../domain/common/repositories/DataFormRep
 import { D2Api, MetadataPick } from "../../types/d2-api";
 import { Maybe } from "../../utils/ts-utils";
 import { Dhis2DataElement } from "./Dhis2DataElement";
-import {
-    DataElementConfig,
-    Dhis2DataStoreDataForm,
-    IndicatorConfig,
-    SectionConfig,
-    SubNational,
-} from "./Dhis2DataStoreDataForm";
+import { Dhis2DataStoreDataForm } from "./Dhis2DataStoreDataForm";
+import { DataElementConfig, IndicatorConfig, SectionConfig } from "../../domain/common/entities/AutogenConfig";
 
 export class Dhis2DataFormRepository implements DataFormRepository {
     constructor(private api: D2Api) {}
@@ -158,6 +153,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                 const base2 = getSectionBaseWithToggle(config, base, dataElements);
 
                 switch (config.viewType) {
+                    case "grid-with-cat-option-combos":
                     case "grid-with-periods":
                         return { viewType: config.viewType, periods: config.periods, ...base2 };
                     case "table":
@@ -581,7 +577,7 @@ function getSectionBaseWithToggle(
             if (toggleDataElement) {
                 return {
                     ...base,
-                    toggle: { type: "dataElement", dataElement: toggleDataElement },
+                    toggle: { type: "dataElement", dataElement: toggleDataElement, disabled: toggle.disabled },
                     dataElements: _.without(base.dataElements, toggleDataElement),
                 };
             } else {
@@ -602,6 +598,7 @@ function getSectionBaseWithToggle(
                         type: "dataElementExternal",
                         dataElement: toggleDataElement,
                         condition: toggle.condition || "",
+                        disabled: toggle.disabled,
                     },
                 };
             } else {

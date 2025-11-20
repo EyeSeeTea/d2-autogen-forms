@@ -6,7 +6,7 @@ export const indicatorAfter: Indicator = {
     description: "Indicator 1",
     formula: "formula_1",
     dataElement: { code: "DE_1", direction: "after" },
-    name: "",
+    name: "Indicator 1",
 };
 
 export const indicatorBefore: Indicator = {
@@ -15,7 +15,7 @@ export const indicatorBefore: Indicator = {
     description: "Indicator 2",
     formula: "formula_2",
     dataElement: { code: "DE_2", direction: "before" },
-    name: "",
+    name: "Indicator 2",
 };
 
 export const indicators: Indicator[] = [indicatorAfter, indicatorBefore];

@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: i18next-conv\n"
-"POT-Creation-Date: 2025-08-27T03:27:08.033Z\n"
+"POT-Creation-Date: 2025-11-18T07:36:32.359Z\n"
 "PO-Revision-Date: 2018-10-25T09:02:35.143Z\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -56,8 +56,59 @@ msgstr "Téléverser fichier"
 msgid "Apply to all"
 msgstr "Appliquer à tous"
 
+msgid "Add new data form configuration"
+msgstr ""
+
 msgid "Save"
 msgstr ""
 
-msgid "Data set"
+msgid "Delete config"
+msgstr ""
+
+msgid "Cancel"
+msgstr ""
+
+msgid "Create config"
+msgstr ""
+
+msgid "Only datasets with codes are listed here."
+msgstr ""
+
+msgid "An empty configuration will be created for the dataset"
+msgstr ""
+
+msgid "{{dataSet}}."
+msgstr ""
+
+msgid "Delete data form configuration"
+msgstr ""
+
+msgid "Are you sure you want to delete the configuration for dataset"
+msgstr ""
+
+msgid "{{dataSet}}"
+msgstr ""
+
+msgid "? This action cannot be undone."
+msgstr ""
+
+msgid "Select dataset"
+msgstr ""
+
+msgid "Processing Error: {{error}}"
+msgstr ""
+
+msgid "Processing large JSON..."
+msgstr ""
+
+msgid "Large file detected. Some features are disabled for better performance."
+msgstr ""
+
+msgid "New configuration created"
+msgstr ""
+
+msgid "Configuration deleted"
+msgstr ""
+
+msgid "Configuration saved"
 msgstr ""
