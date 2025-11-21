@@ -1,6 +1,6 @@
 import React from "react";
 // @ts-ignore
-import { Input } from "@dhis2/ui";
+import { Input, TextArea } from "@dhis2/ui";
 import { WidgetFeedback } from "../WidgetFeedback";
 import { DataValueTextSingle } from "../../../../domain/common/entities/DataValue";
 import { WidgetProps } from "./WidgetBase";
@@ -30,7 +30,11 @@ const TextWidget: React.FC<TextWidgetProps> = props => {
 
     return (
         <WidgetFeedback state={props.state}>
-            <Input onBlur={notifyChange} onChange={updateState} value={stateValue} disabled={disabled} />
+            {dataValue.dataElement.isLongText ? (
+                <TextArea onBlur={notifyChange} onChange={updateState} value={stateValue} disabled={disabled} />
+            ) : (
+                <Input onBlur={notifyChange} onChange={updateState} value={stateValue} disabled={disabled} />
+            )}
         </WidgetFeedback>
     );
 };
