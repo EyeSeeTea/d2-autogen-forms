@@ -18,6 +18,7 @@ export type Grid = GridComponents & {
     texts: Texts;
     titleVariant: titleVariant;
     indicators: Indicator[];
+    dataEntryPeriod: string;
 };
 
 type GridComponents = {
@@ -82,6 +83,7 @@ export class GridViewModel {
                 const indicator = getIndicatorRelatedToDataElement(section.indicators, dataElement.code);
                 return { ...dataElement, indicator };
             }),
+            dataEntryPeriod: section.periods[0] ?? "",
         };
     }
 

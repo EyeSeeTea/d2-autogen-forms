@@ -153,7 +153,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                         : undefined,
                 };
 
-                if (!config) return { viewType: "table", calculateTotals: undefined, ...base };
+                if (!config) return { viewType: "table", calculateTotals: undefined, periods: [period], ...base };
 
                 const base2 = getSectionBaseWithToggle(config, base, dataElements);
 
@@ -163,8 +163,18 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                         return { viewType: config.viewType, periods: config.periods, ...base2 };
                     case "table":
                     case "grid":
+                        return {
+                            viewType: config.viewType,
+                            calculateTotals: config.calculateTotals,
+                            periods: config.periods,
+                            ...base2,
+                        };
                     case "grid-with-totals":
-                        return { viewType: config.viewType, calculateTotals: config.calculateTotals, ...base2 };
+                        return {
+                            viewType: config.viewType,
+                            calculateTotals: config.calculateTotals,
+                            ...base2,
+                        };
                     case "grid-with-subnational-ous":
                         return {
                             viewType: config.viewType,
