@@ -138,3 +138,7 @@ const useStyles = makeStyles({
     valueInput: { flexGrow: 1, border: "0 !important" },
     valueWrapper: { display: "flex" },
 });
+
+export function isDataValueEnabled(dataValue: DataValue): boolean {
+    return dataValue.type === "BOOLEAN" ? Boolean(dataValue.value) : false;
+}

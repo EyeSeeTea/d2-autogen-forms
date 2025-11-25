@@ -15,7 +15,7 @@ import { CustomDataTableCell, CustomDataTableColumnHeader } from "./datatables/C
 import { ColumnItem, DisaggregatedCOCsGridViewModel, Grid } from "./DisaggregatedCOCsGridViewModel";
 import { DataTableCellRowTotal } from "./datatables/DataTableCellRowTotal";
 import { Html } from "./Html";
-import { checkVisibleRule } from "./DataEntryItem";
+import { checkVisibleRule } from "./hooks/useApplyRules";
 
 type DisaggregatedCOCsGridProps = {
     dataFormInfo: DataFormInfo;

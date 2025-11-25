@@ -13,6 +13,7 @@ export interface GridCalculatedModel {
     toggleMultiple: Section["toggleMultiple"];
     texts: Texts;
     tables: GroupedTable[];
+    hidden: boolean;
 }
 
 type ParseSection = {
@@ -181,6 +182,7 @@ export class GridIndicatorsCalculatedViewModel {
             toggle: section.toggle,
             toggleMultiple: section.toggleMultiple,
             tables: tables,
+            hidden: section.hidden || false,
         };
     }
 

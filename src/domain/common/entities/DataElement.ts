@@ -29,6 +29,7 @@ interface DataElementBase {
     disabledComments?: boolean;
     rules: Rule[];
     htmlText: Maybe<string>;
+    disabled?: boolean;
 }
 
 export interface DataElementBoolean extends DataElementBase {
@@ -48,6 +49,7 @@ export interface DataElementPercentage extends DataElementBase {
 
 export interface DataElementText extends DataElementBase {
     type: "TEXT";
+    isLongText: boolean;
 }
 
 export interface DataElementFile extends DataElementBase {

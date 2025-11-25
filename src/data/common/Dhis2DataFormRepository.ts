@@ -113,6 +113,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                         config?.tabs && config.tabs.active
                             ? { active: true, order: config.tabs.order.toString() }
                             : { active: false },
+                    showIndex: config?.showIndex ?? false,
                     sortRowsBy: config?.sortRowsBy || "",
                     disableComments: config?.disableComments ?? false,
                     dataElements: _(section.dataElements)
@@ -613,6 +614,18 @@ function getSectionBaseWithToggle(
                 console.warn(`Data element for toggle not found in section: ${toggle.code}`);
                 return base;
             }
+        }
+        case "orgUnit": {
+            return {
+                ...base,
+                toggle: {
+                    type: "orgUnit",
+                    orgUnits: toggle.orgUnits,
+                    condition: toggle.condition,
+                    dataElements: toggle.dataElements ?? [],
+                    disabled: toggle.disabled,
+                },
+            };
         }
         default:
             return base;

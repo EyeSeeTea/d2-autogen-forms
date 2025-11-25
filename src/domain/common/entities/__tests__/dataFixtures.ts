@@ -24,6 +24,7 @@ export const dataElementText: DataElementText = {
     rules: [],
     htmlText: undefined,
     related: undefined,
+    isLongText: false,
 };
 
 export const sectionBase: Omit<SectionBase, "id" | "name" | "viewType"> = {

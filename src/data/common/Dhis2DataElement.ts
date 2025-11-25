@@ -203,8 +203,9 @@ function getDataElement(dataElement: D2DataElement, config: Dhis2DataStoreDataFo
 
     switch (valueType) {
         case "TEXT":
+            return { type: "TEXT", isLongText: false, related: undefined, ...base };
         case "LONG_TEXT":
-            return { type: "TEXT", related: undefined, ...base };
+            return { type: "TEXT", isLongText: true, related: undefined, ...base };
         case "INTEGER":
         case "INTEGER_NEGATIVE":
         case "INTEGER_POSITIVE":
