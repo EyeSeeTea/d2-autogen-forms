@@ -82,6 +82,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
                     displayName: true,
                     dataViewOrganisationUnits: {
                         id: true,
+                        code: true,
                         displayName: toName,
                         path: true,
                         level: true,

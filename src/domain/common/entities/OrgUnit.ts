@@ -1,10 +1,11 @@
 import _ from "lodash";
-import { Id } from "./Base";
+import { Code, Id } from "./Base";
 
 export type OrgUnitPath = string;
 
 export interface OrgUnit {
     id: Id;
+    code: Code;
     path: OrgUnitPath;
     name: string;
     level: number;
@@ -41,6 +42,6 @@ export function getOrgUnitParentPath(path: OrgUnitPath) {
 
 export function getOrgUnitsFromId(orgUnitIds: string[], orgUnits: OrgUnit[]): OrgUnit[] {
     return orgUnitIds.flatMap(orgUnitId => {
-        return orgUnits.filter(ou => ou.id === orgUnitId)
-    })
+        return orgUnits.filter(ou => ou.id === orgUnitId);
+    });
 }

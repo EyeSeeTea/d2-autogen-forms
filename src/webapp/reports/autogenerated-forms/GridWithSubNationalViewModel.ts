@@ -13,6 +13,7 @@ export interface Grid {
     useIndexes: boolean;
     texts: Texts;
     parentColumns: ParentColumn[];
+    hidden: boolean;
 }
 
 interface SubSectionGrid {
@@ -165,6 +166,7 @@ export class GridWithSubNationalViewModel {
             useIndexes: useIndexes,
             parentColumns,
             toggleMultiple: section.toggleMultiple,
+            hidden: section.hidden || false,
         };
     }
 }

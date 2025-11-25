@@ -2,7 +2,7 @@ import _ from "lodash";
 import { D2Api } from "@eyeseetea/d2-api/2.34";
 import { boolean, Codec, exactly, GetType, oneOf, optional, record, string, number, array } from "purify-ts";
 import { Namespaces } from "./clients/storage/Namespaces";
-import { Maybe, NonPartial } from "../../utils/ts-utils";
+import { assertUnreachable, Maybe, NonPartial } from "../../utils/ts-utils";
 import { Code, getCode, Id, NamedRef } from "../../domain/common/entities/Base";
 import { Option } from "../../domain/common/entities/DataElement";
 import { Period } from "../../domain/common/entities/DataValue";
@@ -55,12 +55,21 @@ type DataElementExternalToggle = {
     disabled: boolean;
 };
 
-type Toggle = DataElementToggle | DataElementExternalToggle | { type: "none" };
+export type OrgUnitToggle = {
+    type: "orgUnit";
+    orgUnits: string[];
+    dataElements: string[];
+    condition: "show" | "hide";
+    disabled: boolean;
+};
+
+type Toggle = DataElementToggle | DataElementExternalToggle | OrgUnitToggle | { type: "none" };
 
 interface BaseSectionConfig {
     texts: Texts;
     toggle: Toggle;
     tabs: { active: true; order: string | number } | { active: false };
+    showIndex: boolean;
     sortRowsBy: string;
     titleVariant: titleVariant;
     styles: SectionStyleAttrs;
@@ -254,6 +263,23 @@ const sectionOffsetPeriodType = Codec.interface({
 
 const periodsConfigType = oneOf([relativeIntervalPeriodType, sectionOffsetPeriodType]);
 
+const dataElementToggleCodec = Codec.interface({
+    type: oneOf([exactly("dataElement"), exactly("dataElementExternal")]),
+    code: string,
+    condition: optional(string),
+    disabled: optional(boolean),
+});
+
+const orgUnitToggleCodec = Codec.interface({
+    type: exactly("orgUnit"),
+    orgUnits: array(string),
+    dataElements: optional(array(string)),
+    condition: oneOf([exactly("show"), exactly("hide")]),
+    disabled: optional(boolean),
+});
+
+const toggleCodec = oneOf([dataElementToggleCodec, orgUnitToggleCodec]);
+
 const DataStoreConfigCodec = Codec.interface({
     categoryCombinations: sectionConfig({
         viewType: optional(oneOf([exactly("name"), exactly("shortName"), exactly("formName")])),
@@ -284,6 +310,7 @@ const DataStoreConfigCodec = Codec.interface({
         disableComments: optional(boolean),
         viewType: optional(viewType),
         texts: optional(textsCodec),
+        showIndex: optional(boolean),
         sections: optional(
             sectionConfig({
                 disableComments: optional(boolean),
@@ -291,14 +318,7 @@ const DataStoreConfigCodec = Codec.interface({
                 sortRowsBy: optional(string),
                 viewType: optional(viewType),
                 texts: optional(textsCodec),
-                toggle: optional(
-                    Codec.interface({
-                        type: oneOf([exactly("dataElement"), exactly("dataElementExternal")]),
-                        code: string,
-                        condition: optional(string),
-                        disabled: optional(boolean),
-                    })
-                ),
+                toggle: optional(toggleCodec),
                 titleVariant: optional(titleVariantType),
                 columnsDescriptions: optional(record(string, oneOf([string, selector]))),
                 groupDescriptions: optional(record(string, oneOf([string, selector]))),
@@ -309,6 +329,7 @@ const DataStoreConfigCodec = Codec.interface({
                         order: oneOf([string, number]),
                     })
                 ),
+                showIndex: optional(boolean),
                 periods: optional(periodsConfigType),
                 calculateTotals: optional(
                     record(
@@ -513,6 +534,8 @@ type CategoryCombinationConfig = {
 type CategoryOptionConfig = {
     visible: Maybe<boolean>;
 };
+
+type ToggleConfig = GetType<typeof toggleCodec>;
 
 export class Dhis2DataStoreDataForm {
     public dataElementsConfig: Record<Code, DataElementConfig>;
@@ -756,7 +779,7 @@ export class Dhis2DataStoreDataForm {
         });
     }
 
-    private getCommentsVisibility(dataSetValue: Maybe<boolean>, sectionValue: Maybe<boolean>) {
+    private getEffectiveBooleanValue(dataSetValue: Maybe<boolean>, sectionValue: Maybe<boolean>) {
         return sectionValue ?? dataSetValue ?? false;
     }
 
@@ -781,10 +804,11 @@ export class Dhis2DataStoreDataForm {
                         totals: this.getTextFromConstants(sectionConfig?.texts?.totals, constantsByCode),
                         name: this.getTextFromConstants(sectionConfig?.texts?.name, constantsByCode),
                     },
+                    showIndex: this.getEffectiveBooleanValue(dataSetConfig?.showIndex, sectionConfig.showIndex),
                     sortRowsBy: sectionConfig.sortRowsBy || "",
                     tabs: sectionConfig.tabs || { active: false },
                     titleVariant: sectionConfig.titleVariant,
-                    disableComments: this.getCommentsVisibility(
+                    disableComments: this.getEffectiveBooleanValue(
                         dataSetConfig?.disableComments,
                         sectionConfig.disableComments
                     ),
@@ -865,16 +889,25 @@ export class Dhis2DataStoreDataForm {
         };
     }
 
-    private getSectionToggle(sectionConfig: {
-        toggle: Maybe<{
-            type: "dataElement" | "dataElementExternal";
-            code: string;
-            condition: Maybe<string>;
-            disabled?: boolean;
-        }>;
-    }): Toggle {
+    private getSectionToggle(sectionConfig: { toggle: Maybe<ToggleConfig> }): Toggle {
         const { toggle } = sectionConfig;
-        return toggle ? { ...toggle, disabled: toggle.disabled ?? false } : { type: "none" };
+        if (!toggle) return { type: "none" };
+
+        switch (toggle.type) {
+            case "dataElement":
+                return { type: "dataElement", code: toggle.code, disabled: toggle.disabled ?? false };
+            case "dataElementExternal":
+                return {
+                    type: "dataElementExternal",
+                    code: toggle.code,
+                    condition: toggle.condition,
+                    disabled: toggle.disabled ?? false,
+                };
+            case "orgUnit":
+                return { ...toggle, dataElements: toggle.dataElements ?? [], disabled: toggle.disabled ?? false };
+            default:
+                return assertUnreachable(toggle);
+        }
     }
 
     private getSectionTotals(
