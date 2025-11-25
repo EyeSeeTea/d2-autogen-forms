@@ -29,6 +29,7 @@ interface DataElementBase {
     disabledComments?: boolean;
     rules: Rule[];
     htmlText: Maybe<string>;
+    disabled?: boolean;
 }
 
 export interface DataElementBoolean extends DataElementBase {

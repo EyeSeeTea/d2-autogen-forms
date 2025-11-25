@@ -12,6 +12,7 @@ export interface MatrixGrid {
     toggle: Section["toggle"];
     toggleMultiple: Section["toggleMultiple"];
     texts: Texts;
+    hidden: boolean;
 }
 
 interface Column {
@@ -58,6 +59,7 @@ export class MatrixGridViewModel {
             toggle: section.toggle,
             toggleMultiple: section.toggleMultiple,
             texts: section.texts,
+            hidden: section.hidden || false,
         };
     }
 }

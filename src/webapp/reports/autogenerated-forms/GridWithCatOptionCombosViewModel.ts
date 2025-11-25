@@ -21,6 +21,7 @@ export interface Grid {
     texts: Texts;
     summary: Summary[];
     indicators: Indicator[];
+    hidden: boolean;
 }
 
 interface SubSectionGrid {
@@ -121,6 +122,7 @@ export class GridWithCatOptionCombosViewModel {
             toggleMultiple: section.toggleMultiple,
             texts: section.texts,
             summary: section.totals ? summary : [],
+            hidden: section.hidden || false,
         };
     }
 

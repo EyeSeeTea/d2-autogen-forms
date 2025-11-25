@@ -612,6 +612,18 @@ function getSectionBaseWithToggle(
                 return base;
             }
         }
+        case "orgUnit": {
+            return {
+                ...base,
+                toggle: {
+                    type: "orgUnit",
+                    orgUnits: toggle.orgUnits,
+                    condition: toggle.condition,
+                    dataElements: toggle.dataElements ?? [],
+                    disabled: toggle.disabled,
+                },
+            };
+        }
         default:
             return base;
     }

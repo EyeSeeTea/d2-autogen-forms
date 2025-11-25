@@ -78,7 +78,8 @@ export interface SectionBase {
     toggle:
         | { type: "none" }
         | { type: "dataElement"; dataElement: DataElement; disabled: boolean }
-        | { type: "dataElementExternal"; dataElement: DataElement; condition: string; disabled: boolean };
+        | { type: "dataElementExternal"; dataElement: DataElement; condition: string; disabled: boolean }
+        | { type: "orgUnit"; orgUnits: Code[]; condition: "show" | "hide"; dataElements: Code[]; disabled: boolean };
     texts: Texts;
     tabs: { active: boolean; order?: string };
     showIndex: boolean;
@@ -92,6 +93,7 @@ export interface SectionBase {
     showRowTotals: boolean;
     toggleMultiple?: DataElementToggle;
     indicators: Indicator[];
+    hidden?: boolean;
 }
 
 export interface SectionSimple extends SectionBase {
