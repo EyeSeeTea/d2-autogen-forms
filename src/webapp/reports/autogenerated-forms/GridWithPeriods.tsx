@@ -53,18 +53,18 @@ const GridWithPeriods: React.FC<GridWithPeriodsProps> = props => {
         setActiveTab(value);
     };
 
-    const categoryOptionCombination = grid.tabs[activeTab]?.id;
+    const categoryOptionCombination = grid.periodTabs[activeTab]?.id;
 
     return (
         <DataTableSection section={grid} sectionStyles={props.section.styles} dataFormInfo={dataFormInfo}>
-            {grid.tabs.length > 0 ? (
+            {grid.periodTabs.length > 0 ? (
                 <>
                     <Tabs value={activeTab} onChange={handleChange}>
-                        {grid.tabs.map(tabPeriod => {
+                        {grid.periodTabs.map(tabPeriod => {
                             return <Tab key={tabPeriod.id + "Tab"} label={tabPeriod.name} />;
                         })}
                     </Tabs>
-                    {grid.tabs.map(tabPeriod => {
+                    {grid.periodTabs.map(tabPeriod => {
                         if (tabPeriod.id !== categoryOptionCombination) return null;
                         return (
                             <PeriodTable
