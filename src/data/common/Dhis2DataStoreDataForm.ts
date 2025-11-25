@@ -484,8 +484,10 @@ function formatPeriodsByPeriodType(dataSetPeriod: Id, interval: PeriodInterval, 
             return getQuarterlyPeriods(dataSetPeriod, interval);
         case PeriodType.YEARLY:
             return getYearlyPeriods(dataSetPeriod, interval);
-        default:
-            throw new Error(`PeriodType ${periodType} not implemented`);
+        default: {
+            console.warn(`PeriodType ${periodType} not implemented`);
+            return getYearlyPeriods(dataSetPeriod, interval);
+        }
     }
 }
 

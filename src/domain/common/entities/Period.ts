@@ -9,6 +9,7 @@ export enum PeriodType {
     MONTHLY = "Monthly",
     QUARTERLY = "Quarterly",
     YEARLY = "Yearly",
+    UNKNOWN = "Unknown",
 }
 
 export function validatePeriodType(periodType: string): PeriodType {
@@ -20,6 +21,6 @@ export function validatePeriodType(periodType: string): PeriodType {
         case PeriodType.YEARLY:
             return periodType;
         default:
-            throw new Error(`Invalid period type: ${periodType}`);
+            return PeriodType.UNKNOWN;
     }
 }
