@@ -111,6 +111,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                         config?.tabs && config.tabs.active
                             ? { active: true, order: config.tabs.order.toString() }
                             : { active: false },
+                    showIndex: config?.showIndex ?? false,
                     sortRowsBy: config?.sortRowsBy || "",
                     disableComments: config?.disableComments ?? false,
                     dataElements: _(section.dataElements)

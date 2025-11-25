@@ -82,6 +82,7 @@ export interface SectionBase {
         | { type: "orgUnit"; orgUnits: Code[]; condition: "show" | "hide"; dataElements: Code[]; disabled: boolean };
     texts: Texts;
     tabs: { active: boolean; order?: string };
+    showIndex: boolean;
     sortRowsBy: string;
     titleVariant: titleVariant;
     styles: SectionStyle;

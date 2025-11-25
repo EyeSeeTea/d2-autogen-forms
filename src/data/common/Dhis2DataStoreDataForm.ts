@@ -69,6 +69,7 @@ interface BaseSectionConfig {
     texts: Texts;
     toggle: Toggle;
     tabs: { active: true; order: string | number } | { active: false };
+    showIndex: boolean;
     sortRowsBy: string;
     titleVariant: titleVariant;
     styles: SectionStyleAttrs;
@@ -295,6 +296,7 @@ const DataStoreConfigCodec = Codec.interface({
         disableComments: optional(boolean),
         viewType: optional(viewType),
         texts: optional(textsCodec),
+        showIndex: optional(boolean),
         sections: optional(
             sectionConfig({
                 disableComments: optional(boolean),
@@ -313,6 +315,7 @@ const DataStoreConfigCodec = Codec.interface({
                         order: oneOf([string, number]),
                     })
                 ),
+                showIndex: optional(boolean),
                 periods: optional(
                     Codec.interface({
                         type: exactly("relative-interval"),
@@ -748,7 +751,7 @@ export class Dhis2DataStoreDataForm {
         });
     }
 
-    private getCommentsVisibility(dataSetValue: Maybe<boolean>, sectionValue: Maybe<boolean>) {
+    private getEffectiveBooleanValue(dataSetValue: Maybe<boolean>, sectionValue: Maybe<boolean>) {
         return sectionValue ?? dataSetValue ?? false;
     }
 
@@ -773,10 +776,11 @@ export class Dhis2DataStoreDataForm {
                         totals: this.getTextFromConstants(sectionConfig?.texts?.totals, constantsByCode),
                         name: this.getTextFromConstants(sectionConfig?.texts?.name, constantsByCode),
                     },
+                    showIndex: this.getEffectiveBooleanValue(dataSetConfig?.showIndex, sectionConfig.showIndex),
                     sortRowsBy: sectionConfig.sortRowsBy || "",
                     tabs: sectionConfig.tabs || { active: false },
                     titleVariant: sectionConfig.titleVariant,
-                    disableComments: this.getCommentsVisibility(
+                    disableComments: this.getEffectiveBooleanValue(
                         dataSetConfig?.disableComments,
                         sectionConfig.disableComments
                     ),
