@@ -87,7 +87,7 @@ const TableForm: React.FC<TableFormProps> = React.memo(props => {
                                         <CustomDataTableCell
                                             backgroundColor={props.section.styles.rows.backgroundColor}
                                         >
-                                            <span>{section.dataEntryPeriod}</span>
+                                            <span>{section.dataEntryPeriod.label}</span>
                                         </CustomDataTableCell>
                                     )}
 

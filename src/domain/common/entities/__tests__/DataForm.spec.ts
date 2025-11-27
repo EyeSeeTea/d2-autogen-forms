@@ -82,7 +82,7 @@ function createSectionWithPeriods(id: Id, periods: Period[]): SectionWithPeriods
         id,
         name: `Section ${id}`,
         viewType: "grid-with-periods",
-        periods,
+        periods: periods.map(periodId => ({ id: periodId, label: periodId })),
         ...sectionBase,
     };
 }

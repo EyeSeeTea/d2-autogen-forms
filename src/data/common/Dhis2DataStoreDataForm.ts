@@ -5,12 +5,12 @@ import { Namespaces } from "./clients/storage/Namespaces";
 import { assertUnreachable, Maybe, NonPartial } from "../../utils/ts-utils";
 import { Code, getCode, Id, NamedRef } from "../../domain/common/entities/Base";
 import { Option } from "../../domain/common/entities/DataElement";
-import { Period } from "../../domain/common/entities/DataValue";
 import { DescriptionText, Texts, Totals } from "../../domain/common/entities/DataForm";
 import { titleVariant } from "../../domain/common/entities/TitleVariant";
 import { SectionStyle, SectionStyleAttrs } from "../../domain/common/entities/SectionStyle";
 import { DataElementRuleOptions, SectionRuleOptions } from "../../domain/common/entities/DataElementRule";
 import { ToggleMultiple } from "../../domain/common/entities/ToggleMultiple";
+import { Period, PeriodType, validatePeriodType } from "../../domain/common/entities/Period";
 
 interface DataSetConfig {
     texts: Texts;
@@ -88,12 +88,12 @@ interface BasicSectionConfig extends BaseSectionConfig {
 interface GridSectionConfig extends BaseSectionConfig {
     viewType: "table" | "grid";
     calculateTotals: CalculateTotalType;
-    periods: string[];
+    periods: Period[];
 }
 
 interface GridWithPeriodsSectionConfig extends BaseSectionConfig {
     viewType: "grid-with-cat-option-combos" | "grid-with-periods";
-    periods: string[];
+    periods: Period[];
 }
 
 interface GridWithTotalsSectionConfig extends BaseSectionConfig {
@@ -103,7 +103,7 @@ interface GridWithTotalsSectionConfig extends BaseSectionConfig {
 
 interface GridIndicatorsCalculated extends BaseSectionConfig {
     viewType: "grid-indicators-calculated";
-    periods: string[];
+    periods: Period[];
     rows: GridIndicatorsCalculatedRow[];
     virtualRows: VirtualRow[];
     virtualColumns: (VirtualColumnDataElement | VirtualColumnCalculated)[];
@@ -458,27 +458,41 @@ type SectionPeriod = PeriodInterval | PeriodSectionOffset;
 
 function getSectionPeriods(
     viewType: SectionConfig["viewType"],
-    dataSetPeriod: string,
-    periodConfig: Maybe<SectionPeriod>
-): string[] {
-    const dataSetYear = parseInt(dataSetPeriod);
+    dataSetPeriod: Id,
+    periodConfig: Maybe<SectionPeriod>,
+    periodType: PeriodType
+): Period[] {
     if (!periodConfig) return [];
 
-    switch (periodConfig?.type) {
-        case "section-offset": {
-            const year = dataSetYear + periodConfig.offset;
-            return [year.toString()];
-        }
+    switch (periodConfig.type) {
+        case "section-offset":
+            return formatSectionOffsetPeriodsByPeriodType(dataSetPeriod, periodConfig.offset, periodType);
         case "relative-interval":
-            return getRelativeIntervalPeriodsByViewType(viewType, dataSetYear, periodConfig);
+            return getRelativeIntervalPeriodsByViewType(viewType, dataSetPeriod, periodConfig, periodType);
+    }
+}
+
+function formatSectionOffsetPeriodsByPeriodType(dataSetPeriod: Id, offset: number, periodType: PeriodType): Period[] {
+    switch (periodType) {
+        case PeriodType.YEARLY: {
+            const year = parseInt(dataSetPeriod) + offset;
+            return [{ id: year.toString(), label: year.toString() }];
+        }
+        // TODO: Implement other period types
+        default: {
+            console.warn(`PeriodType ${periodType} not implemented for section-offset`);
+            const year = parseInt(dataSetPeriod) + offset;
+            return [{ id: year.toString(), label: year.toString() }];
+        }
     }
 }
 
 function getRelativeIntervalPeriodsByViewType(
     viewType: SectionConfig["viewType"],
-    dataSetYear: number,
-    interval: PeriodInterval
-): string[] {
+    dataSetPeriod: Id,
+    interval: PeriodInterval,
+    periodType: PeriodType
+): Period[] {
     switch (viewType) {
         case "grid-indicators-calculated":
         case "grid-with-periods": {
@@ -488,23 +502,128 @@ function getRelativeIntervalPeriodsByViewType(
                 endOffset: 0,
             };
 
-            return _(dataSetYear + interval2.startOffset)
-                .range(dataSetYear + interval2.endOffset + 1)
-                .map(year => year.toString())
-                .value();
+            return formatRelativeIntervalPeriodsByPeriodType(dataSetPeriod, interval2, periodType);
         }
-        case "table":
-        case "grid":
         case "grid-with-cat-option-combos":
             if (!interval) return [];
-
-            return _(dataSetYear + interval.startOffset)
-                .range(dataSetYear + interval.endOffset + 1)
-                .map(year => year.toString())
-                .value();
+            return formatRelativeIntervalPeriodsByPeriodType(dataSetPeriod, interval, periodType);
         default:
             throw new Error(`Unsupported viewType ${viewType} for periods calculation`);
     }
+}
+
+function formatRelativeIntervalPeriodsByPeriodType(
+    dataSetPeriod: Id,
+    interval: PeriodInterval,
+    periodType: PeriodType
+): Period[] {
+    switch (periodType) {
+        case PeriodType.DAILY:
+            return getDailyPeriods(dataSetPeriod, interval);
+        case PeriodType.WEEKLY:
+            return getWeeklyPeriods(dataSetPeriod, interval);
+        case PeriodType.MONTHLY:
+            return getMonthlyPeriods(dataSetPeriod, interval);
+        case PeriodType.QUARTERLY:
+            return getQuarterlyPeriods(dataSetPeriod, interval);
+        case PeriodType.YEARLY:
+            return getYearlyPeriods(dataSetPeriod, interval);
+        default: {
+            console.warn(`PeriodType ${periodType} not implemented`);
+            return getYearlyPeriods(dataSetPeriod, interval);
+        }
+    }
+}
+
+function getDailyPeriods(dataSetPeriod: Id, interval: PeriodInterval): Period[] {
+    const dateStr = dataSetPeriod;
+    const year = parseInt(dateStr.slice(0, 4));
+    const month = parseInt(dateStr.slice(4, 6));
+    const day = parseInt(dateStr.slice(6, 8));
+
+    const baseDate = new Date(year, month - 1, day);
+    const baseDateValue = baseDate.valueOf();
+    const oneDayMs = 24 * 60 * 60 * 1000;
+    const startDateValue = baseDateValue + interval.startOffset * oneDayMs;
+    const endDateValue = baseDateValue + interval.endOffset * oneDayMs;
+    const dayCount = Math.floor((endDateValue - startDateValue) / oneDayMs) + 1;
+
+    return Array.from({ length: dayCount }, (_, i) => {
+        const currentDate = new Date(startDateValue + i * oneDayMs);
+        const periodYear = currentDate.getFullYear();
+        const periodMonth = (currentDate.getMonth() + 1).toString().padStart(2, "0");
+        const periodDay = currentDate.getDate().toString().padStart(2, "0");
+        const id = `${periodYear}${periodMonth}${periodDay}`;
+        const label = `${periodYear}-${periodMonth}-${periodDay}`;
+
+        return { id: id, label: label };
+    });
+}
+
+function getWeeklyPeriods(dataSetPeriod: Id, interval: PeriodInterval): Period[] {
+    const year = parseInt(dataSetPeriod.slice(0, 4));
+    const week = parseInt(dataSetPeriod.slice(5));
+
+    const startWeekOffset = year * 53 + week - 1 + interval.startOffset;
+    const endWeekOffset = year * 53 + week - 1 + interval.endOffset;
+
+    return _(startWeekOffset)
+        .range(endWeekOffset + 1)
+        .map(weekOffset => {
+            const periodYear = Math.floor(weekOffset / 53);
+            const periodWeek = (weekOffset % 53) + 1;
+            const weekStr = periodWeek.toString();
+            const id = `${periodYear}W${weekStr}`;
+
+            return { id: id, label: `${periodYear}-W${weekStr}` };
+        })
+        .value();
+}
+
+function getMonthlyPeriods(dataSetPeriod: Id, interval: PeriodInterval): Period[] {
+    const year = parseInt(dataSetPeriod.slice(0, 4));
+    const month = parseInt(dataSetPeriod.slice(4, 6));
+
+    const startMonthOffset = year * 12 + month - 1 + interval.startOffset;
+    const endMonthOffset = year * 12 + month - 1 + interval.endOffset;
+
+    return _(startMonthOffset)
+        .range(endMonthOffset + 1)
+        .map(monthOffset => {
+            const periodYear = Math.floor(monthOffset / 12);
+            const periodMonth = (monthOffset % 12) + 1;
+            const monthStr = periodMonth.toString().padStart(2, "0");
+            const id = `${periodYear}${monthStr}`;
+            return { id: id, label: `${periodYear}-${monthStr}` };
+        })
+        .value();
+}
+
+function getQuarterlyPeriods(dataSetPeriod: Id, interval: PeriodInterval): Period[] {
+    const year = parseInt(dataSetPeriod.slice(0, 4));
+    const quarter = parseInt(dataSetPeriod.slice(5, 6));
+
+    const startQuarterOffset = year * 4 + quarter - 1 + interval.startOffset;
+    const endQuarterOffset = year * 4 + quarter - 1 + interval.endOffset;
+
+    return _(startQuarterOffset)
+        .range(endQuarterOffset + 1)
+        .map(quarterOffset => {
+            const periodYear = Math.floor(quarterOffset / 4);
+            const periodQuarter = (quarterOffset % 4) + 1;
+            const id = `${periodYear}Q${periodQuarter}`;
+            return { id: id, label: `${periodYear}-Q${periodQuarter}` };
+        })
+        .value();
+}
+
+function getYearlyPeriods(dataSetPeriod: Id, interval: PeriodInterval): Period[] {
+    const year = parseInt(dataSetPeriod);
+
+    return _(year + interval.startOffset)
+        .range(year + interval.endOffset + 1)
+        .map(year => ({ id: year.toString(), label: year.toString() }))
+        .value();
 }
 
 interface DataFormStoreConfig {
@@ -525,6 +644,7 @@ interface DataSet {
     id: Id;
     code: string;
     sections: Array<{ id: string; code: string }>;
+    periodType: string;
 }
 
 type CategoryCombinationConfig = {
@@ -783,10 +903,11 @@ export class Dhis2DataStoreDataForm {
         return sectionValue ?? dataSetValue ?? false;
     }
 
-    getDataSetConfig(dataSet: DataSet, period: Period): DataSetConfig {
+    getDataSetConfig(dataSet: DataSet, period: Id): DataSetConfig {
         const dataSetConfig = this.config.custom.dataSets?.[dataSet.code];
         const dataSetDefaultViewType = dataSetConfig?.viewType || defaultViewType;
         const constantsByCode = _.keyBy(this.config.constants, getCode);
+        const periodType = validatePeriodType(dataSet.periodType);
 
         const sections = _(dataSetConfig?.sections)
             .toPairs()
@@ -832,7 +953,7 @@ export class Dhis2DataStoreDataForm {
                         const config = {
                             ...baseConfig,
                             viewType,
-                            periods: getSectionPeriods(viewType, period, sectionConfig.periods),
+                            periods: getSectionPeriods(viewType, period, sectionConfig.periods, periodType),
                         };
                         return [section.id, config] as [typeof section.id, typeof config];
                     }
@@ -843,7 +964,7 @@ export class Dhis2DataStoreDataForm {
                             ...baseConfig,
                             viewType,
                             calculateTotals: sectionConfig.calculateTotals,
-                            periods: getSectionPeriods(viewType, period, sectionConfig.periods),
+                            periods: getSectionPeriods(viewType, period, sectionConfig.periods, periodType),
                         };
                         return [section.id, config] as [typeof section.id, typeof config];
                     }
@@ -859,7 +980,7 @@ export class Dhis2DataStoreDataForm {
                     case "grid-indicators-calculated": {
                         const config = {
                             ...baseConfig,
-                            periods: getSectionPeriods(viewType, period, sectionConfig.periods),
+                            periods: getSectionPeriods(viewType, period, sectionConfig.periods, periodType),
                             rows: sectionConfig.rows ?? [],
                             virtualColumns: sectionConfig.virtualColumns ?? [],
                             virtualRows: sectionConfig.virtualRows ?? [],

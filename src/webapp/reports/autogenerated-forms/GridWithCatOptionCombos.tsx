@@ -161,7 +161,7 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
 
                                 {row.period && (
                                     <CustomDataTableCell backgroundColor={section.styles.rows.backgroundColor}>
-                                        <span>{row.period}</span>
+                                        <span>{row.period.id}</span>
                                     </CustomDataTableCell>
                                 )}
 
@@ -176,7 +176,7 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                                                 dataElement={dataElement}
                                                 dataFormInfo={dataFormInfo}
                                                 noComment={dataElement.disabledComments}
-                                                period={row.period || dataFormInfo.period}
+                                                period={row.period?.id || dataFormInfo.period}
                                                 lockException={row.period ? true : false}
                                             />
                                         </CustomDataTableCell>
