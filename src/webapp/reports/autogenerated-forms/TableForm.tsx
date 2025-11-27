@@ -19,6 +19,7 @@ import _ from "lodash";
 import { checkIndicatorDirection } from "../../../domain/common/entities/Indicator";
 import { RowIndicatorItem } from "../../components/IndicatorItem/IndicatorItem";
 import { DataTableCellFormula } from "./datatables/DataTableCellFormula";
+import i18n from "../../../locales";
 
 export interface TableFormProps {
     dataFormInfo: DataFormInfo;
@@ -41,10 +42,25 @@ const TableForm: React.FC<TableFormProps> = React.memo(props => {
                         {!_.isEmpty(section.columns) && (
                             <CustomDataTableColumnHeader
                                 backgroundColor={props.section.styles.columns.backgroundColor}
-                                colSpan="2"
+                                colSpan={section.dataEntryPeriod ? 1 : 2}
                             >
                                 <span className={classes.header}>{section.name}</span>
                             </CustomDataTableColumnHeader>
+                        )}
+
+                        {section.dataEntryPeriod && (
+                            <>
+                                <CustomDataTableColumnHeader
+                                    backgroundColor={props.section.styles.columns.backgroundColor}
+                                    width="50px"
+                                >
+                                    {i18n.t("Period")}
+                                </CustomDataTableColumnHeader>
+                                <CustomDataTableColumnHeader
+                                    backgroundColor={props.section.styles.columns.backgroundColor}
+                                    colSpan={1}
+                                ></CustomDataTableColumnHeader>
+                            </>
                         )}
                     </DataTableRow>
                 </TableHead>
@@ -61,10 +77,19 @@ const TableForm: React.FC<TableFormProps> = React.memo(props => {
                                         periods={[dataFormInfo.period]}
                                     />
                                 )}
+
                                 <DataTableRow>
                                     <CustomDataTableCell backgroundColor={props.section.styles.rows.backgroundColor}>
                                         <DataTableCellRowName html={dataElement.htmlText} name={dataElement.name} />
                                     </CustomDataTableCell>
+
+                                    {section.dataEntryPeriod && (
+                                        <CustomDataTableCell
+                                            backgroundColor={props.section.styles.rows.backgroundColor}
+                                        >
+                                            <span>{section.dataEntryPeriod}</span>
+                                        </CustomDataTableCell>
+                                    )}
 
                                     <CustomDataTableCell
                                         backgroundColor={props.section.styles.rows.backgroundColor}
@@ -77,6 +102,7 @@ const TableForm: React.FC<TableFormProps> = React.memo(props => {
                                         />
                                     </CustomDataTableCell>
                                 </DataTableRow>
+
                                 {dataElement.indicator && checkIndicatorDirection(dataElement.indicator, "after") && (
                                     <RowIndicatorItem
                                         indicator={dataElement.indicator}

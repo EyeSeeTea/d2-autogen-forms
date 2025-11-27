@@ -23,6 +23,7 @@ export type Grid = GridComponents & {
     texts: Texts;
     titleVariant: titleVariant;
     indicators: Indicator[];
+    dataEntryPeriod: string;
     hidden: boolean;
 };
 
@@ -90,6 +91,7 @@ export class GridViewModel {
                 const indicator = getIndicatorRelatedToDataElement(section.indicators, dataElement.code);
                 return { ...dataElement, indicator };
             }),
+            dataEntryPeriod: section.periods[0] ?? "",
             hidden: section.hidden || false,
         };
     }

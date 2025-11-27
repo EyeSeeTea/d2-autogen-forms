@@ -140,7 +140,7 @@ export class GridWithCatOptionCombosViewModel {
                 const groupDescription = getDescription(section.groupDescriptions, dataFormInfo, firstDeInGroup);
 
                 return {
-                    groupName: groupName,
+                    groupName: group.length > 1 ? groupName : "",
                     groupDescription: groupDescription,
                     rows: group.flatMap(de => {
                         const deLabel = getDataElementLabel(de, section);

@@ -88,6 +88,7 @@ interface BasicSectionConfig extends BaseSectionConfig {
 interface GridSectionConfig extends BaseSectionConfig {
     viewType: "table" | "grid";
     calculateTotals: CalculateTotalType;
+    periods: string[];
 }
 
 interface GridWithPeriodsSectionConfig extends BaseSectionConfig {
@@ -249,6 +250,19 @@ const textsCodec = Codec.interface({
     name: optional(oneOf([string, selector])),
 });
 
+const relativeIntervalPeriodType = Codec.interface({
+    type: exactly("relative-interval"),
+    startOffset: number,
+    endOffset: number,
+});
+
+const sectionOffsetPeriodType = Codec.interface({
+    type: exactly("section-offset"),
+    offset: number,
+});
+
+const periodsConfigType = oneOf([relativeIntervalPeriodType, sectionOffsetPeriodType]);
+
 const dataElementToggleCodec = Codec.interface({
     type: oneOf([exactly("dataElement"), exactly("dataElementExternal")]),
     code: string,
@@ -316,13 +330,7 @@ const DataStoreConfigCodec = Codec.interface({
                     })
                 ),
                 showIndex: optional(boolean),
-                periods: optional(
-                    Codec.interface({
-                        type: exactly("relative-interval"),
-                        startOffset: number,
-                        endOffset: number,
-                    })
-                ),
+                periods: optional(periodsConfigType),
                 calculateTotals: optional(
                     record(
                         string,
@@ -445,14 +453,32 @@ type Selector = GetType<typeof selector>;
 type DataFormStoreConfigFromCodec = GetType<typeof DataStoreConfigCodec>;
 
 type PeriodInterval = { type: "relative-interval"; startOffset: number; endOffset: number };
+type PeriodSectionOffset = { type: "section-offset"; offset: number };
+type SectionPeriod = PeriodInterval | PeriodSectionOffset;
 
-function getPeriodsByViewType(
+function getSectionPeriods(
     viewType: SectionConfig["viewType"],
     dataSetPeriod: string,
-    interval: Maybe<PeriodInterval>
+    periodConfig: Maybe<SectionPeriod>
 ): string[] {
     const dataSetYear = parseInt(dataSetPeriod);
+    if (!periodConfig) return [];
 
+    switch (periodConfig?.type) {
+        case "section-offset": {
+            const year = dataSetYear + periodConfig.offset;
+            return [year.toString()];
+        }
+        case "relative-interval":
+            return getRelativeIntervalPeriodsByViewType(viewType, dataSetYear, periodConfig);
+    }
+}
+
+function getRelativeIntervalPeriodsByViewType(
+    viewType: SectionConfig["viewType"],
+    dataSetYear: number,
+    interval: PeriodInterval
+): string[] {
     switch (viewType) {
         case "grid-indicators-calculated":
         case "grid-with-periods": {
@@ -467,6 +493,8 @@ function getPeriodsByViewType(
                 .map(year => year.toString())
                 .value();
         }
+        case "table":
+        case "grid":
         case "grid-with-cat-option-combos":
             if (!interval) return [];
 
@@ -804,7 +832,7 @@ export class Dhis2DataStoreDataForm {
                         const config = {
                             ...baseConfig,
                             viewType,
-                            periods: getPeriodsByViewType(viewType, period, sectionConfig.periods),
+                            periods: getSectionPeriods(viewType, period, sectionConfig.periods),
                         };
                         return [section.id, config] as [typeof section.id, typeof config];
                     }
@@ -815,6 +843,7 @@ export class Dhis2DataStoreDataForm {
                             ...baseConfig,
                             viewType,
                             calculateTotals: sectionConfig.calculateTotals,
+                            periods: getSectionPeriods(viewType, period, sectionConfig.periods),
                         };
                         return [section.id, config] as [typeof section.id, typeof config];
                     }
@@ -830,7 +859,7 @@ export class Dhis2DataStoreDataForm {
                     case "grid-indicators-calculated": {
                         const config = {
                             ...baseConfig,
-                            periods: getPeriodsByViewType(viewType, period, sectionConfig.periods),
+                            periods: getSectionPeriods(viewType, period, sectionConfig.periods),
                             rows: sectionConfig.rows ?? [],
                             virtualColumns: sectionConfig.virtualColumns ?? [],
                             virtualRows: sectionConfig.virtualRows ?? [],
