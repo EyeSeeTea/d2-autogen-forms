@@ -42,7 +42,7 @@ const TableForm: React.FC<TableFormProps> = React.memo(props => {
                         {!_.isEmpty(section.columns) && (
                             <CustomDataTableColumnHeader
                                 backgroundColor={props.section.styles.columns.backgroundColor}
-                                colSpan={section.dataEntryPeriod ? 1 : 2}
+                                colSpan={section.dataEntryPeriod ? "1" : "2"}
                             >
                                 <span className={classes.header}>{section.name}</span>
                             </CustomDataTableColumnHeader>
@@ -58,7 +58,7 @@ const TableForm: React.FC<TableFormProps> = React.memo(props => {
                                 </CustomDataTableColumnHeader>
                                 <CustomDataTableColumnHeader
                                     backgroundColor={props.section.styles.columns.backgroundColor}
-                                    colSpan={1}
+                                    colSpan={"1"}
                                 ></CustomDataTableColumnHeader>
                             </>
                         )}
