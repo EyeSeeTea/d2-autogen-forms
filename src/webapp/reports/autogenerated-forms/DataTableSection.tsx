@@ -6,7 +6,6 @@ import { DataElementItem } from "./DataElementItem";
 import { Html } from "./Html";
 import { Id } from "../../../domain/common/entities/Base";
 import { useSectionVisibility } from "./hooks/useSectionVisibility";
-import { ToggleDataElement } from "../../../domain/common/entities/ToggleMultiple";
 import { getTabIndices } from "./SectionsTabs";
 import { Maybe } from "../../../utils/ts-utils";
 
@@ -31,16 +30,8 @@ export type DataTableSectionObj = {
 
 const DataTableSection: React.FC<DataTableProps> = React.memo(props => {
     const { section, children, dataFormInfo, sectionStyles } = props;
-    const { toggle } = section;
     const classes = useStyles();
-    const classes = useStyles();
-
-    const { id, name: sectionName, toggle, toggleMultiple } = section;
-
-    const sectionTotalRules = dataFormInfo.metadata.dataForm.totalRules.sectionTotalRules.filter(sectionTotalRule =>
-        sectionTotalRule.sections.includes(id)
-    );
-
+    const { name: sectionName, toggle } = section;
     const sectionLabel = getIndexedLabel(section, sectionName, undefined);
 
     const {
@@ -120,10 +111,6 @@ export function getIndexedLabel(
     return section.showIndex && primaryTabIndex !== -1
         ? `${primaryTabIndex + 1}.${secondaryTabIndex}${dataElementIndex ? `.${dataElementIndex}` : ""} - ${name}`
         : name;
-}
-
-function isDataValueEnabled(dataValue: DataValue): boolean {
-    return dataValue.type === "BOOLEAN" ? Boolean(dataValue.value) : false;
 }
 
 export default React.memo(DataTableSection);
