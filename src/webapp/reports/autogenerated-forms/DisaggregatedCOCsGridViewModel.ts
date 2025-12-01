@@ -185,16 +185,34 @@ type Summary = {
 
 const separator = ", ";
 
-const sortItems = <T extends { name: string }>(items: T[]): T[] => {
-    return _(items)
-        .sortBy(item => {
-            const match = item.name.match(/^(\d+)(?:\D|$)/);
-            const numericValue = match ? match[1] : undefined;
-            const parsedNumericValue = numericValue ? parseInt(numericValue, 10) : undefined;
+const sortItems = <T extends { name: string }>(items: T[], unknownPatterns: string[] = ["unknown", "other"]): T[] => {
+    const itemsWithSortKeys = items.map(item => {
+        const raw = item.name;
+        const lower = raw.toLowerCase();
+        const isUnknown = _.some(unknownPatterns, p => lower.includes(p.toLowerCase()));
+        const match = raw.match(/\d+/);
+        const hasNumber = !!match && !isUnknown;
+        const num = hasNumber && match[0] ? parseInt(match[0], 10) : Number.POSITIVE_INFINITY;
 
-            return [parsedNumericValue === undefined ? 1 : 0, parsedNumericValue ?? item.name.toLowerCase()];
-        })
-        .value();
+        return {
+            item,
+            sortKey: {
+                isUnknown: isUnknown,
+                hasNumber: hasNumber,
+                num: num,
+                alpha: lower,
+            },
+        };
+    });
+
+    const sortedItems = _.sortBy(itemsWithSortKeys, [
+        x => (x.sortKey.isUnknown ? 1 : 0),
+        x => (x.sortKey.hasNumber ? 0 : 1),
+        x => (x.sortKey.hasNumber ? x.sortKey.num : Number.POSITIVE_INFINITY),
+        x => x.sortKey.alpha,
+    ]);
+
+    return sortedItems.map(x => x.item);
 };
 
 function getColumnNameFromCoc(categoryOptionCombo: { name: string }): Maybe<string> {
