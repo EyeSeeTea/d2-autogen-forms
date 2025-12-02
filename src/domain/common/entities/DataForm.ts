@@ -8,12 +8,12 @@ import {
 import { Maybe, UnionFromValues } from "../../../utils/ts-utils";
 import { Code, Id } from "./Base";
 import { DataElement, dataInputPeriodsType } from "./DataElement";
-import { Period } from "./DataValue";
 import { Indicator } from "./Indicator";
 import { SectionStyle } from "./SectionStyle";
 import { titleVariant } from "./TitleVariant";
 import { DataElementToggle } from "./ToggleMultiple";
 import { DataElementRuleOptions, TotalRules } from "./DataElementRule";
+import { Period, PeriodType } from "./Period";
 
 export interface DataForm {
     id: Id;
@@ -27,6 +27,7 @@ export interface DataForm {
     };
     indicators: Indicator[];
     totalRules: TotalRules;
+    periodType: PeriodType;
 }
 
 export interface Texts {
@@ -102,7 +103,7 @@ export interface SectionSimple extends SectionBase {
 
 export interface SectionWithPeriods extends SectionBase {
     viewType: "grid-with-periods" | "grid-with-cat-option-combos";
-    periods: string[];
+    periods: Period[];
 }
 
 export interface SectionGrid extends SectionBase {
@@ -123,7 +124,7 @@ export interface SectionWithSubnationals extends SectionBase {
 
 export interface SectionWithIndicatorsCalculated extends SectionBase {
     viewType: "grid-indicators-calculated";
-    periods: string[];
+    periods: Period[];
     rows: GridIndicatorsCalculatedRow[];
     virtualColumns: (VirtualColumnCalculated | VirtualColumnDataElement)[];
     virtualRows: { rowConstantCode: string; dataElementCode: string; rowName: string }[];
@@ -159,14 +160,13 @@ export type Section =
 export class DataFormM {
     static viewTypes = viewTypes;
 
-    static getReferencedPeriods(dataForm: DataForm, basePeriod: Period): Period[] {
+    static getReferencedPeriods(dataForm: DataForm, basePeriod: Id): string[] {
         return _(dataForm.sections)
             .flatMap(section => {
                 switch (section.viewType) {
                     case "grid-with-periods":
-                        return section.periods;
                     case "grid-indicators-calculated":
-                        return section.periods;
+                        return section.periods.map(period => period.id);
                     default:
                         return [];
                 }
