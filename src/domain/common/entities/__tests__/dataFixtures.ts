@@ -1,6 +1,7 @@
 import { DataForm, SectionBase, defaultTexts } from "../DataForm";
 import { DataElementText } from "../DataElement";
 import { DataValue, DataValueBase, DataValueTextSingle } from "../DataValue";
+import { PeriodType } from "../Period";
 
 export const dataElementText: DataElementText = {
     id: "1",
@@ -58,6 +59,7 @@ export const dataFormBase: Omit<DataForm, "sections"> = {
         dataElementTotalRules: [],
         sectionTotalRules: [],
     },
+    periodType: PeriodType.YEARLY,
 };
 
 export const dataValueBase: DataValueBase = {

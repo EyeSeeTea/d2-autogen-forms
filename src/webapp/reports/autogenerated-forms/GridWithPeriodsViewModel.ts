@@ -13,12 +13,13 @@ import { getFormulaByColumnName, Summary } from "./GridWithCatOptionCombosViewMo
 import { getIndicatorRelatedToDataElement, Indicator } from "../../../domain/common/entities/Indicator";
 import { GridViewModel } from "./GridFormViewModel";
 import { getIndexedLabel } from "./DataTableSection";
+import { Period, PeriodType } from "../../../domain/common/entities/Period";
 
 export interface GridWithPeriodsI {
     id: string;
     name: string;
     rows: Row[];
-    periods: string[];
+    periods: Period[];
     showIndex: Section["showIndex"];
     tabs: Section["tabs"];
     toggle: Section["toggle"];
@@ -27,6 +28,7 @@ export interface GridWithPeriodsI {
     periodTabs: PeriodTab[];
     summary: Summary[];
     indicators: Indicator[];
+    lockException: boolean;
     hidden: boolean;
 }
 
@@ -63,7 +65,39 @@ const separator = /:| - /;
 
 export class GridWithPeriodsViewModel {
     static get(section: SectionWithPeriods, dataFormInfo: DataFormInfo): GridWithPeriodsI {
-        const rows = _(section.dataElements)
+        const rows = GridWithPeriodsViewModel.getRows(section, dataFormInfo);
+        const summary = GridWithPeriodsViewModel.getSummary(section);
+        const indicators = GridWithPeriodsViewModel.getIndicators(rows, section);
+        const lockException = dataFormInfo.metadata.dataForm.periodType !== PeriodType.YEARLY;
+
+        return {
+            id: section.id,
+            name: section.name,
+            rows: rows,
+            periods: section.periods,
+            toggle: section.toggle,
+            texts: section.texts,
+            tabs: section.tabs,
+            showIndex: section.showIndex,
+            toggleMultiple: section.toggleMultiple,
+            summary: section.totals ? summary : [],
+            indicators: indicators,
+            lockException: lockException,
+            periodTabs: this.buildTabs(section.dataElements),
+            hidden: section.hidden || false,
+        };
+    }
+
+    private static getIndicators(rows: Row[], section: SectionWithPeriods): Indicator[] {
+        const indicatorsRelatedToDataElements = getIndicatorIdsFromRows(rows);
+
+        return indicatorsRelatedToDataElements.length > 0
+            ? section.indicators.filter(indicator => !indicatorsRelatedToDataElements.includes(indicator.id))
+            : section.indicators;
+    }
+
+    private static getRows(section: SectionWithPeriods, dataFormInfo: DataFormInfo) {
+        return _(section.dataElements)
             .groupBy(dataElement => _(dataElement.name).split(separator).first())
             .toPairs()
             .map(([groupName, dataElementsForGroup]): Row => {
@@ -152,8 +186,10 @@ export class GridWithPeriodsViewModel {
                 }
             })
             .value();
+    }
 
-        const summary = _(section.totals)
+    private static getSummary(section: SectionWithPeriods): Summary[] {
+        return _(section.totals)
             .map((sectionTotal, key) => {
                 const cellTotals = section.periods.map(column => {
                     const allDataElements = section.dataElements;
@@ -163,11 +199,11 @@ export class GridWithPeriodsViewModel {
 
                     const columnWithDataElements = GridViewModel.getColumnWithDataElements(
                         selectedDataElements,
-                        column
+                        column.id
                     );
 
                     return {
-                        columnName: column,
+                        columnName: column.label,
                         formula: getFormulaByColumnName(section, "") || sectionTotal.formula || "",
                         items: columnWithDataElements,
                     };
@@ -180,38 +216,6 @@ export class GridWithPeriodsViewModel {
             })
             .filter(summaryRow => summaryRow.cells.every(cell => cell.items.length > 0))
             .value();
-
-        const indicatorsRelatedToDataElements = _(rows)
-            .flatMap(row => {
-                if (row.type === "dataElement") {
-                    return row.indicator?.id || [];
-                } else if (row.type === "group") {
-                    return row.rows.map(row => row.indicator?.id);
-                } else if (row.type === "subGroup") {
-                    return row.rows.map(row => row.indicator?.id);
-                }
-            })
-            .compact()
-            .value();
-
-        return {
-            id: section.id,
-            name: section.name,
-            rows: rows,
-            periods: section.periods,
-            showIndex: section.showIndex,
-            tabs: section.tabs,
-            toggle: section.toggle,
-            texts: section.texts,
-            periodTabs: this.buildTabs(section.dataElements),
-            toggleMultiple: section.toggleMultiple,
-            summary: section.totals ? summary : [],
-            indicators:
-                indicatorsRelatedToDataElements.length > 0
-                    ? section.indicators.filter(indicator => !indicatorsRelatedToDataElements.includes(indicator.id))
-                    : section.indicators,
-            hidden: section.hidden || false,
-        };
     }
 
     private static buildTabs(dataElements: DataElement[]): PeriodTab[] {
@@ -233,6 +237,21 @@ export class GridWithPeriodsViewModel {
     private static hasOnlyDefaultCategoryOption(allCategoryOptions: CategoryOptionCombo[]): boolean {
         return allCategoryOptions.filter(c => c.name === DEFAULT_CATEGORY_OPTION_COMBO_CODE).length === 1;
     }
+}
+
+function getIndicatorIdsFromRows(rows: Row[]) {
+    return _(rows)
+        .flatMap(row => {
+            if (row.type === "dataElement") {
+                return row.indicator?.id || [];
+            } else if (row.type === "group") {
+                return row.rows.map(row => row.indicator?.id);
+            } else if (row.type === "subGroup") {
+                return row.rows.map(row => row.indicator?.id);
+            }
+        })
+        .compact()
+        .value();
 }
 
 function isRowSubGroup(dataElement: DataElement): boolean {

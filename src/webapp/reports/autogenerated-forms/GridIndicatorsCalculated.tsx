@@ -85,7 +85,7 @@ const GridIndicatorsCalculated: React.FC<GridIndicatorsCalculatedProps> = props 
                                                     <InputFormula
                                                         dataFormInfo={dataFormInfo}
                                                         formula={cell.formula.formula}
-                                                        period={period}
+                                                        period={period.id}
                                                         dataElementCodes={cell.formula.dataElementCodes}
                                                     />
                                                 ) : cell.dataElement ? (
@@ -93,7 +93,7 @@ const GridIndicatorsCalculated: React.FC<GridIndicatorsCalculatedProps> = props 
                                                         manualyDisabled={cell.disabled}
                                                         dataElement={cell.dataElement}
                                                         dataFormInfo={dataFormInfo}
-                                                        period={period}
+                                                        period={period.id}
                                                     />
                                                 ) : (
                                                     <CustomInput
