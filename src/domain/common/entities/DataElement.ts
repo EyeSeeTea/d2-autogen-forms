@@ -17,12 +17,7 @@ interface DataElementBase {
     description?: string;
     options?: Options;
     categoryCombos: CategoryCombos;
-    categoryOptionCombos: {
-        id: Id;
-        name: string;
-        shortName: string | undefined;
-        formName?: string;
-    }[];
+    categoryOptionCombos: CategoryOptionCombo[];
     cocId?: string;
     orgUnit?: Id;
     related: { dataElement: DataElement; value: string } | undefined;
@@ -62,19 +57,25 @@ export interface DataElementDate extends DataElementBase {
 
 type Options = Maybe<{ isMultiple: boolean; items: Option<string>[] }>;
 
+type CategoryOption = {
+    id: Id;
+    code: string;
+    name: string;
+    displayFormName: string;
+};
+
 type CategoryCombos = {
     id: Id;
     name: string;
-    categoryOptionCombos: {
-        id: Id;
-        name: string;
-        formName: string | undefined;
-        shortName: string | undefined;
-        categoryOptions?: {
-            id: Id;
-            code: string;
-        }[];
-    }[];
+    categoryOptionCombos: CategoryOptionCombo[];
+};
+
+export type CategoryOptionCombo = {
+    id: Id;
+    name: string;
+    shortName: Maybe<string>;
+    formName?: string;
+    categoryOptions: CategoryOption[];
 };
 
 type NumberType =
