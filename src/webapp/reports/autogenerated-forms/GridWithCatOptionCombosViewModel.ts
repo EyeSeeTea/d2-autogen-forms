@@ -47,7 +47,7 @@ type SubRow = {
     dataElement: DataElement;
     deName: string;
     name: string;
-    period?: string;
+    period?: Period;
 };
 
 const separator = " - ";
