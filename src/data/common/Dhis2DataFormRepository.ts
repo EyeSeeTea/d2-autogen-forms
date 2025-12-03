@@ -12,7 +12,6 @@ import {
     TotalRules,
 } from "../../domain/common/entities/DataElementRule";
 import { DataForm, defaultTexts, Section, SectionBase } from "../../domain/common/entities/DataForm";
-import { Period } from "../../domain/common/entities/DataValue";
 import { Indicator } from "../../domain/common/entities/Indicator";
 import { SectionStyle } from "../../domain/common/entities/SectionStyle";
 import { buildToggleMultiple } from "../../domain/common/entities/ToggleMultiple";
@@ -27,6 +26,8 @@ import {
     SectionConfig,
     SubNational,
 } from "./Dhis2DataStoreDataForm";
+import { validatePeriodType } from "../../domain/common/entities/Period";
+import { Period } from "../../domain/common/entities/DataValue";
 
 export class Dhis2DataFormRepository implements DataFormRepository {
     constructor(private api: D2Api) {}
@@ -54,6 +55,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
             texts: dataSetConfig.texts,
             options: { dataElements: dataElementsOptions },
             totalRules: totalRules,
+            periodType: validatePeriodType(dataSet.periodType),
         };
     }
 
@@ -536,6 +538,7 @@ function getMetadataQuery(options: { dataSetId: Id }) {
                 id: true,
                 code: true,
                 expiryDays: true,
+                periodType: true,
                 dataInputPeriods: {
                     closingDate: true,
                     openingDate: true,

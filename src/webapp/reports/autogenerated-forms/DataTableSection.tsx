@@ -31,7 +31,9 @@ export type DataTableSectionObj = {
 const DataTableSection: React.FC<DataTableProps> = React.memo(props => {
     const { section, children, dataFormInfo, sectionStyles } = props;
     const classes = useStyles();
+
     const { name: sectionName, toggle } = section;
+
     const sectionLabel = getIndexedLabel(section, sectionName, undefined);
 
     const {

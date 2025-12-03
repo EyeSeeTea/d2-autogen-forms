@@ -18,4 +18,8 @@ export const dataForm: Omit<DataForm, "id"> = {
         },
     },
     indicators: [],
+    totalRules: {
+        dataElementTotalRules: [],
+        sectionTotalRules: [],
+    },
 };
