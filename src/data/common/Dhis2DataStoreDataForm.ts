@@ -88,7 +88,7 @@ interface BasicSectionConfig extends BaseSectionConfig {
 interface GridSectionConfig extends BaseSectionConfig {
     viewType: "table" | "grid";
     calculateTotals: CalculateTotalType;
-    periods: string[];
+    periods: Period[];
 }
 
 interface GridWithPeriodsSectionConfig extends BaseSectionConfig {

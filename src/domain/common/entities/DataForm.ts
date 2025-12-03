@@ -109,7 +109,7 @@ export interface SectionWithPeriods extends SectionBase {
 export interface SectionGrid extends SectionBase {
     viewType: "table" | "grid";
     calculateTotals: CalculateTotalType;
-    periods: string[];
+    periods: Period[];
 }
 
 export interface SectionWithTotals extends SectionBase {
