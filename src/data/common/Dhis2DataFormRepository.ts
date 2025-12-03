@@ -154,7 +154,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                         : undefined,
                 };
 
-                if (!config) return { viewType: "table", calculateTotals: undefined, periods: [period], ...base };
+                if (!config) return { viewType: "table", calculateTotals: undefined, periods: [], ...base };
 
                 const base2 = getSectionBaseWithToggle(config, base, dataElements);
 
