@@ -134,22 +134,38 @@ const DisaggregatedCOCsGrid: React.FC<DisaggregatedCOCsGridProps> = props => {
                                 <span>{row.name}</span>
                             </CustomDataTableCell>
 
-                            {row.items.map(
-                                ({ dataElement, rowItems }) =>
-                                    isDataElementVisible(dataElement) && (
+                            {grid.columns
+                                .filter(column => isDataElementVisible(column.dataElement))
+                                .map(({ columnItems, dataElement }) => {
+                                    const rowItems = row.items.find(
+                                        rowItem => rowItem.dataElement.id === dataElement.id
+                                    )?.rowItems;
+
+                                    return (
                                         <>
-                                            {rowItems.map(rowItem => (
-                                                <CustomDataTableCell
-                                                    backgroundColor={section.styles.rows.backgroundColor}
-                                                    key={`${rowItem.id}-${rowItem.cocId}`}
-                                                >
-                                                    <DataElementItem
-                                                        dataElement={rowItem}
-                                                        dataFormInfo={dataFormInfo}
-                                                        noComment={rowItem.disabledComments}
-                                                    />
-                                                </CustomDataTableCell>
-                                            ))}
+                                            {columnItems.map((columnItem, colIndex) => {
+                                                const rowItem = rowItems?.find(
+                                                    rowItem => rowItem.columnName === columnItem.name
+                                                );
+
+                                                return rowItem ? (
+                                                    <CustomDataTableCell
+                                                        backgroundColor={section.styles.rows.backgroundColor}
+                                                        key={`${rowItem.id}-${rowItem.cocId}`}
+                                                    >
+                                                        <DataElementItem
+                                                            dataElement={rowItem}
+                                                            dataFormInfo={dataFormInfo}
+                                                            noComment={rowItem.disabledComments}
+                                                        />
+                                                    </CustomDataTableCell>
+                                                ) : (
+                                                    <CustomDataTableCell
+                                                        backgroundColor={section.styles.rows.backgroundColor}
+                                                        key={`${columnItem.name}-${colIndex}`}
+                                                    ></CustomDataTableCell>
+                                                );
+                                            })}
 
                                             {showRowTotals && (
                                                 <DataTableCellRowTotal
@@ -159,8 +175,8 @@ const DisaggregatedCOCsGrid: React.FC<DisaggregatedCOCsGridProps> = props => {
                                                 />
                                             )}
                                         </>
-                                    )
-                            )}
+                                    );
+                                })}
                         </DataTableRow>
                     ))}
 
