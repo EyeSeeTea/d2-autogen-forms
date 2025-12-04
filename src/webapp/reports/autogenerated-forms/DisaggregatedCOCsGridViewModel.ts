@@ -226,7 +226,7 @@ function getRowNameFromCoc(categoryOptionCombo: CategoryOptionCombo): Maybe<stri
 }
 
 function getCocFormName(categoryOptionCombo: CategoryOptionCombo, cocName: Maybe<string>): Maybe<string> {
-    const cocFormName = categoryOptionCombo.categoryOptions.find(co => co.name === cocName)?.displayFormName;
+    const cocFormName = categoryOptionCombo.categoryOptions.find(co => cocName?.includes(co.name))?.displayFormName;
 
     return cocFormName || cocName;
 }
