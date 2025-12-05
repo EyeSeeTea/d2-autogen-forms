@@ -185,6 +185,8 @@ type Summary = {
 
 const separator = ", ";
 
+// Unknown patterns: "Other/unknown" will always be at the end. This logic is specific for TUB_ANNUAL_DATA dataSet
+// TO-DO: Move patterns into datastore config when rules vary per dataset.
 const sortItems = <T extends { name: string }>(items: T[], unknownPatterns: string[] = ["unknown", "other"]): T[] => {
     const itemsWithSortKeys = items.map(item => {
         const raw = item.name;
