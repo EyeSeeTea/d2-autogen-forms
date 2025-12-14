@@ -12,7 +12,8 @@ import { DataElementRuleOptions, SectionRuleOptions } from "../../domain/common/
 import { ToggleMultiple } from "../../domain/common/entities/ToggleMultiple";
 import { Period, PeriodType, validatePeriodType } from "../../domain/common/entities/Period";
 
-interface DataSetConfig {
+export interface DataSetConfig {
+    removePrefix: Maybe<string>;
     texts: Texts;
     sections: Record<Id, SectionConfig>;
 }
@@ -308,6 +309,7 @@ const DataStoreConfigCodec = Codec.interface({
 
     dataSets: sectionConfig({
         disableComments: optional(boolean),
+        removePrefix: optional(string),
         viewType: optional(viewType),
         texts: optional(textsCodec),
         showIndex: optional(boolean),
@@ -908,6 +910,7 @@ export class Dhis2DataStoreDataForm {
         const dataSetDefaultViewType = dataSetConfig?.viewType || defaultViewType;
         const constantsByCode = _.keyBy(this.config.constants, getCode);
         const periodType = validatePeriodType(dataSet.periodType);
+        const removePrefix = dataSetConfig?.removePrefix;
 
         const sections = _(dataSetConfig?.sections)
             .toPairs()
@@ -1006,6 +1009,7 @@ export class Dhis2DataStoreDataForm {
                 totals: this.getTextFromConstants(dataSetConfig?.texts?.totals, constantsByCode),
                 name: this.getTextFromConstants(dataSetConfig?.texts?.name, constantsByCode),
             },
+            removePrefix: removePrefix,
             sections: sections,
         };
     }
