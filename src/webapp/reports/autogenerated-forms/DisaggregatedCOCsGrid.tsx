@@ -75,7 +75,7 @@ const DisaggregatedCOCsGrid: React.FC<DisaggregatedCOCsGridProps> = props => {
                                         key={`column-${dataElement.id}`}
                                         colSpan={getColSpan(columnItems)}
                                     >
-                                        <span className={classes.header}>1{dataElement.name}</span>
+                                        <span className={classes.header}>{dataElement.name}</span>
                                     </CustomDataTableColumnHeader>
                                 )}
                             </>
