@@ -14,6 +14,7 @@ import { titleVariant } from "./TitleVariant";
 import { DataElementToggle } from "./ToggleMultiple";
 import { DataElementRuleOptions, TotalRules } from "./DataElementRule";
 import { Period, PeriodType } from "./Period";
+import { RulesFormula } from "../../../data/common/RulesFormula";
 
 export interface DataForm {
     id: Id;
@@ -95,6 +96,7 @@ export interface SectionBase {
     toggleMultiple?: DataElementToggle;
     indicators: Indicator[];
     hidden?: boolean;
+    columnsConfig?: Record<string, { rules?: RulesFormula }>;
 }
 
 export interface SectionSimple extends SectionBase {

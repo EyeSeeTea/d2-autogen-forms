@@ -11,6 +11,7 @@ import { SectionStyle, SectionStyleAttrs } from "../../domain/common/entities/Se
 import { DataElementRuleOptions, SectionRuleOptions } from "../../domain/common/entities/DataElementRule";
 import { ToggleMultiple } from "../../domain/common/entities/ToggleMultiple";
 import { Period, PeriodType, validatePeriodType } from "../../domain/common/entities/Period";
+import { FromRulesFormulaCodec, rulesFormulaCodec } from "./RulesFormula";
 
 interface DataSetConfig {
     texts: Texts;
@@ -64,6 +65,7 @@ export type OrgUnitToggle = {
 };
 
 type Toggle = DataElementToggle | DataElementExternalToggle | OrgUnitToggle | { type: "none" };
+type GridColumnsConfig = Record<string, { rules?: FromRulesFormulaCodec }>;
 
 interface BaseSectionConfig {
     texts: Texts;
@@ -79,10 +81,12 @@ interface BaseSectionConfig {
     totals?: Record<string, SectionTotals>;
     toggleMultiple: Maybe<ToggleMultiple>;
     indicators?: Record<Code, IndicatorConfig>;
+    columnsConfig?: GridColumnsConfig;
 }
 
 interface BasicSectionConfig extends BaseSectionConfig {
     viewType: "grid-with-combos" | "matrix-grid" | "grid-disaggregated-cocs";
+    columnsConfig?: Record<string, { rules?: FromRulesFormulaCodec }>;
 }
 
 interface GridSectionConfig extends BaseSectionConfig {
@@ -313,6 +317,7 @@ const DataStoreConfigCodec = Codec.interface({
         showIndex: optional(boolean),
         sections: optional(
             sectionConfig({
+                columnsConfig: optional(record(string, Codec.interface({ rules: optional(rulesFormulaCodec) }))),
                 disableComments: optional(boolean),
                 subNationalDataset: optional(string),
                 sortRowsBy: optional(string),
@@ -943,6 +948,7 @@ export class Dhis2DataStoreDataForm {
                     totals: this.getSectionTotals(sectionConfig, constantsByCode),
                     toggleMultiple: sectionConfig.toggleMultiple,
                     indicators: sectionConfig.indicators,
+                    columnsConfig: sectionConfig.columnsConfig,
                 };
 
                 const baseConfig = { ...base, viewType };
