@@ -16,6 +16,7 @@ import { ColumnItem, DisaggregatedCOCsGridViewModel, Grid } from "./Disaggregate
 import { DataTableCellRowTotal } from "./datatables/DataTableCellRowTotal";
 import { Html } from "./Html";
 import { checkVisibleRule } from "./hooks/useApplyRules";
+import { DataElement } from "../../../domain/common/entities/DataElement";
 
 type DisaggregatedCOCsGridProps = {
     dataFormInfo: DataFormInfo;
@@ -137,14 +138,14 @@ const DisaggregatedCOCsGrid: React.FC<DisaggregatedCOCsGridProps> = props => {
                             {grid.columns
                                 .filter(column => isDataElementVisible(column.dataElement))
                                 .map(({ columnItems, dataElement }) => {
-                                    const rowItems = row.items.find(
+                                    const rowItemByDe = row.items.find(
                                         rowItem => rowItem.dataElement.id === dataElement.id
-                                    )?.rowItems;
+                                    );
 
                                     return (
                                         <>
                                             {columnItems.map((columnItem, colIndex) => {
-                                                const rowItem = rowItems?.find(
+                                                const rowItem = rowItemByDe?.rowItems?.find(
                                                     rowItem => rowItem.columnName === columnItem.name
                                                 );
 
@@ -172,6 +173,7 @@ const DisaggregatedCOCsGrid: React.FC<DisaggregatedCOCsGridProps> = props => {
                                                     dataFormInfo={dataFormInfo}
                                                     styles={section.styles}
                                                     dataElement={dataElement}
+                                                    onlyCocIds={rowItemByDe?.cocIdsToSum}
                                                 />
                                             )}
                                         </>
@@ -198,6 +200,7 @@ const DisaggregatedCOCsGrid: React.FC<DisaggregatedCOCsGridProps> = props => {
                                                 dataFormInfo={dataFormInfo}
                                                 styles={section.styles}
                                                 dataElement={cell}
+                                                onlyCocIds={cell.cocIdsToSum}
                                             />
                                             {showRowTotals && (
                                                 <CustomDataTableCell
@@ -236,7 +239,7 @@ export default React.memo(DisaggregatedCOCsGrid);
 
 type GridLayoutState = {
     getColSpan: (columnItems?: ColumnItem[]) => number;
-    isDataElementVisible: (dataElement: any) => boolean;
+    isDataElementVisible: (dataElement: DataElement) => boolean;
 };
 
 function useGridLayout(grid: Grid, dataFormInfo: DataFormInfo): GridLayoutState {

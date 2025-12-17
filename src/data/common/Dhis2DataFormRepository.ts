@@ -21,6 +21,7 @@ import { Maybe } from "../../utils/ts-utils";
 import { Dhis2DataElement } from "./Dhis2DataElement";
 import {
     DataElementConfig,
+    DataSetConfig,
     Dhis2DataStoreDataForm,
     IndicatorConfig,
     SectionConfig,
@@ -103,9 +104,9 @@ export class Dhis2DataFormRepository implements DataFormRepository {
 
                 const sectionIndicators = this.buildIndicators(section.indicators);
                 const base: SectionBase = {
-                    indicators: this.buildIndicatorsWithConfig(sectionIndicators, config?.indicators),
+                    indicators: this.buildIndicatorsWithConfig(dataSetConfig, sectionIndicators, config?.indicators),
                     id: section.id,
-                    name: section.displayName,
+                    name: removePrefixFromName(dataSetConfig, section.displayName),
                     code: section.code,
                     toggle: { type: "none" },
                     texts: config?.texts || defaultTexts,
@@ -135,6 +136,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                             const deRelated = d2DataElement ? dataElements[d2DataElement.id] : undefined;
                             return {
                                 ...dataElement,
+                                name: removePrefixFromName(dataSetConfig, dataElement.name),
                                 disabledComments: deConfig?.disableComments || false,
                                 related: deRelated
                                     ? { dataElement: deRelated, value: deHideConfig?.value || "" }
@@ -154,9 +156,10 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                     toggleMultiple: config?.toggleMultiple
                         ? buildToggleMultiple(config.toggleMultiple, dataElements)
                         : undefined,
+                    columnsConfig: config?.columnsConfig,
                 };
 
-                if (!config) return { viewType: "table", calculateTotals: undefined, ...base };
+                if (!config) return { viewType: "table", calculateTotals: undefined, periods: [], ...base };
 
                 const base2 = getSectionBaseWithToggle(config, base, dataElements);
 
@@ -166,8 +169,18 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                         return { viewType: config.viewType, periods: config.periods, ...base2 };
                     case "table":
                     case "grid":
+                        return {
+                            viewType: config.viewType,
+                            calculateTotals: config.calculateTotals,
+                            periods: config.periods,
+                            ...base2,
+                        };
                     case "grid-with-totals":
-                        return { viewType: config.viewType, calculateTotals: config.calculateTotals, ...base2 };
+                        return {
+                            viewType: config.viewType,
+                            calculateTotals: config.calculateTotals,
+                            ...base2,
+                        };
                     case "grid-with-subnational-ous":
                         return {
                             viewType: config.viewType,
@@ -364,16 +377,31 @@ export class Dhis2DataFormRepository implements DataFormRepository {
     }
 
     private buildIndicatorsWithConfig(
+        dataSetConfig: DataSetConfig,
         indicators: Indicator[],
         indicatorsConfig: Maybe<Record<Code, IndicatorConfig>>
     ): Indicator[] {
-        if (!indicatorsConfig) return indicators;
+        if (!indicatorsConfig)
+            return indicators.map(indicator => ({
+                ...indicator,
+                name: removePrefixFromName(dataSetConfig, indicator.name),
+                description: removePrefixFromName(dataSetConfig, indicator.description),
+            }));
+
         return _(indicators)
             .map((indicator): Indicator => {
                 const config = indicatorsConfig[indicator.code];
-                if (!config) return indicator;
+
+                if (!config)
+                    return {
+                        ...indicator,
+                        name: removePrefixFromName(dataSetConfig, indicator.name),
+                        description: removePrefixFromName(dataSetConfig, indicator.description),
+                    };
                 return {
                     ...indicator,
+                    name: removePrefixFromName(dataSetConfig, indicator.name),
+                    description: removePrefixFromName(dataSetConfig, indicator.description),
                     dataElement: config.position
                         ? {
                               code: config.position.dataElement,
@@ -530,6 +558,10 @@ export class Dhis2DataFormRepository implements DataFormRepository {
 
 type Metadata = ReturnType<typeof getMetadataQuery>;
 type D2DataSet = MetadataPick<Metadata>["dataSets"][number];
+
+function removePrefixFromName(dataSetConfig: { removePrefix: Maybe<string> }, name: Maybe<string>): string {
+    return dataSetConfig.removePrefix && name ? name.replace(dataSetConfig.removePrefix, "").trim() : name || "";
+}
 
 function getMetadataQuery(options: { dataSetId: Id }) {
     return {

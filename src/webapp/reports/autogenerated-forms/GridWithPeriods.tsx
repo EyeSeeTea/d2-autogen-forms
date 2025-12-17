@@ -365,7 +365,7 @@ const DataTableDataElementCell: React.FC<DataTableDataElementCellProps> = props 
             {periods.map(period => (
                 <CustomDataTableCell
                     backgroundColor={section.styles.rows.backgroundColor}
-                    key={[dataElement.id, period].join("-")}
+                    key={[dataElement.id, period.id].join("-")}
                 >
                     <DataElementItem
                         noComment={dataElement.disabledComments}
