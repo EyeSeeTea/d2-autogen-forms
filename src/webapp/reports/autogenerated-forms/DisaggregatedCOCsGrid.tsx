@@ -16,6 +16,7 @@ import { ColumnItem, DisaggregatedCOCsGridViewModel, Grid } from "./Disaggregate
 import { DataTableCellRowTotal } from "./datatables/DataTableCellRowTotal";
 import { Html } from "./Html";
 import { checkVisibleRule } from "./hooks/useApplyRules";
+import { DataElement } from "../../../domain/common/entities/DataElement";
 
 type DisaggregatedCOCsGridProps = {
     dataFormInfo: DataFormInfo;
@@ -134,33 +135,50 @@ const DisaggregatedCOCsGrid: React.FC<DisaggregatedCOCsGridProps> = props => {
                                 <span>{row.name}</span>
                             </CustomDataTableCell>
 
-                            {row.items.map(
-                                ({ dataElement, rowItems }) =>
-                                    isDataElementVisible(dataElement) && (
+                            {grid.columns
+                                .filter(column => isDataElementVisible(column.dataElement))
+                                .map(({ columnItems, dataElement }) => {
+                                    const rowItemByDe = row.items.find(
+                                        rowItem => rowItem.dataElement.id === dataElement.id
+                                    );
+
+                                    return (
                                         <>
-                                            {rowItems.map(rowItem => (
-                                                <CustomDataTableCell
-                                                    backgroundColor={section.styles.rows.backgroundColor}
-                                                    key={`${rowItem.id}-${rowItem.cocId}`}
-                                                >
-                                                    <DataElementItem
-                                                        dataElement={rowItem}
-                                                        dataFormInfo={dataFormInfo}
-                                                        noComment={rowItem.disabledComments}
-                                                    />
-                                                </CustomDataTableCell>
-                                            ))}
+                                            {columnItems.map((columnItem, colIndex) => {
+                                                const rowItem = rowItemByDe?.rowItems?.find(
+                                                    rowItem => rowItem.columnName === columnItem.name
+                                                );
+
+                                                return rowItem ? (
+                                                    <CustomDataTableCell
+                                                        backgroundColor={section.styles.rows.backgroundColor}
+                                                        key={`${rowItem.id}-${rowItem.cocId}`}
+                                                    >
+                                                        <DataElementItem
+                                                            dataElement={rowItem}
+                                                            dataFormInfo={dataFormInfo}
+                                                            noComment={rowItem.disabledComments}
+                                                        />
+                                                    </CustomDataTableCell>
+                                                ) : (
+                                                    <CustomDataTableCell
+                                                        backgroundColor={section.styles.rows.backgroundColor}
+                                                        key={`${columnItem.name}-${colIndex}`}
+                                                    ></CustomDataTableCell>
+                                                );
+                                            })}
 
                                             {showRowTotals && (
                                                 <DataTableCellRowTotal
                                                     dataFormInfo={dataFormInfo}
                                                     styles={section.styles}
                                                     dataElement={dataElement}
+                                                    onlyCocIds={rowItemByDe?.cocIdsToSum}
                                                 />
                                             )}
                                         </>
-                                    )
-                            )}
+                                    );
+                                })}
                         </DataTableRow>
                     ))}
 
@@ -182,6 +200,7 @@ const DisaggregatedCOCsGrid: React.FC<DisaggregatedCOCsGridProps> = props => {
                                                 dataFormInfo={dataFormInfo}
                                                 styles={section.styles}
                                                 dataElement={cell}
+                                                onlyCocIds={cell.cocIdsToSum}
                                             />
                                             {showRowTotals && (
                                                 <CustomDataTableCell
@@ -220,7 +239,7 @@ export default React.memo(DisaggregatedCOCsGrid);
 
 type GridLayoutState = {
     getColSpan: (columnItems?: ColumnItem[]) => number;
-    isDataElementVisible: (dataElement: any) => boolean;
+    isDataElementVisible: (dataElement: DataElement) => boolean;
 };
 
 function useGridLayout(grid: Grid, dataFormInfo: DataFormInfo): GridLayoutState {

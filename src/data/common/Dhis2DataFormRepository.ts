@@ -156,6 +156,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                     toggleMultiple: config?.toggleMultiple
                         ? buildToggleMultiple(config.toggleMultiple, dataElements)
                         : undefined,
+                    columnsConfig: config?.columnsConfig,
                 };
 
                 if (!config) return { viewType: "table", calculateTotals: undefined, periods: [], ...base };
