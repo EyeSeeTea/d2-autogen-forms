@@ -268,7 +268,6 @@ const sortItems = <T extends { name: string }>(items: T[], unknownPatterns: stri
         x => (x.sortKey.isUnknown ? 1 : 0),
         x => (x.sortKey.hasNumber ? 0 : 1),
 
-        // ✅ MENOR A MAYOR
         x => x.sortKey.start,
         x => x.sortKey.end,
 
