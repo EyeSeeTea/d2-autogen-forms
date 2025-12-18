@@ -90,7 +90,7 @@ export class GridViewModel {
             tabs: section.tabs,
             dataElements: dataElements.map(dataElement => {
                 const indicator = getIndicatorRelatedToDataElement(section.indicators, dataElement.code);
-                return { ...dataElement, indicator };
+                return { ...dataElement, indicator, name: getDataElementLabel(section, dataElement) };
             }),
             dataEntryPeriod: section.periods[0],
             hidden: section.hidden || false,
@@ -156,7 +156,7 @@ export class GridViewModel {
             }))
             .value();
 
-        return subsections.map(subsection => {
+        return subsections.map((subsection, index) => {
             const firstDataElement = _(subsection.dataElements).first();
             const indicator = getIndicatorRelatedToDataElement(section.indicators, firstDataElement?.code || "");
             const items = columns.map(column => {
@@ -195,8 +195,8 @@ export class GridViewModel {
             return {
                 includePadding: 0,
                 indicator: indicator,
-                name: subsection.name,
-                htmlText: firstItemWithHtmlText,
+                name: getIndexedLabel(section, subsection.name, index + 1),
+                htmlText: firstItemWithHtmlText ? getIndexedLabel(section, firstItemWithHtmlText, index + 1) : "",
                 items: items,
             };
         });
