@@ -13,19 +13,39 @@ const TextWidget: React.FC<TextWidgetProps> = props => {
     const { onValueChange, dataValue, disabled } = props;
 
     const [stateValue, setStateValue] = React.useState(dataValue.value);
+    const [emailError, setEmailError] = React.useState<string | undefined>();
     React.useEffect(() => setStateValue(dataValue.value), [dataValue.value]);
 
-    const updateState = React.useCallback(({ value }: { value: string }) => {
-        setStateValue(value);
+    const validateEmail = React.useCallback((email: string) => {
+        if (!email) return true;
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
     }, []);
+
+    const updateState = React.useCallback(
+        ({ value }: { value: string }) => {
+            setStateValue(value);
+            if (dataValue.dataElement.isEmail && value) {
+                if (!validateEmail(value)) {
+                    setEmailError("Please enter a valid email address");
+                } else {
+                    setEmailError(undefined);
+                }
+            }
+        },
+        [dataValue.dataElement.isEmail, validateEmail]
+    );
 
     const notifyChange = React.useCallback(
         ({ value: newValue }: { value: string }) => {
+            if (dataValue.dataElement.isEmail && newValue && !validateEmail(newValue)) {
+                return;
+            }
             if (dataValue.value !== newValue) {
                 onValueChange({ ...dataValue, value: newValue });
             }
         },
-        [onValueChange, dataValue]
+        [onValueChange, dataValue, validateEmail]
     );
 
     return (
@@ -33,7 +53,15 @@ const TextWidget: React.FC<TextWidgetProps> = props => {
             {dataValue.dataElement.isLongText ? (
                 <TextArea onBlur={notifyChange} onChange={updateState} value={stateValue} disabled={disabled} />
             ) : (
-                <Input onBlur={notifyChange} onChange={updateState} value={stateValue} disabled={disabled} />
+                <Input
+                    onBlur={notifyChange}
+                    onChange={updateState}
+                    value={stateValue}
+                    disabled={disabled}
+                    type={dataValue.dataElement.isEmail ? "email" : "text"}
+                    error={emailError ? true : false}
+                    validationText={emailError}
+                />
             )}
         </WidgetFeedback>
     );

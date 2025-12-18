@@ -45,6 +45,7 @@ export interface DataElementPercentage extends DataElementBase {
 export interface DataElementText extends DataElementBase {
     type: "TEXT";
     isLongText: boolean;
+    isEmail?: boolean;
 }
 
 export interface DataElementFile extends DataElementBase {
