@@ -1,4 +1,4 @@
-import { Indicator, checkIndicatorDirection, getIndicatorRelatedToDataElement, IndicatorDirection } from "../Indicator";
+import { checkIndicatorDirection, getIndicatorRelatedToDataElement, IndicatorDirection } from "../Indicator";
 import { indicatorAfter, indicatorBefore, indicators } from "./indicatorFixtures";
 
 describe("Indicator", () => {

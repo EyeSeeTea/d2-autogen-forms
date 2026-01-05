@@ -13,7 +13,8 @@ import DataTableSection from "./DataTableSection";
 import { MatrixGridViewModel } from "./MatrixGridViewModel";
 import { CustomDataTableCell, CustomDataTableColumnHeader } from "./datatables/CustomDataTables";
 import { DataElementItem } from "./DataElementItem";
-import { checkVisibleRule } from "./DataEntryItem";
+import { DataTableCellRowName } from "./datatables/DataTableCellRowName";
+import { checkVisibleRule } from "./hooks/useApplyRules";
 
 export interface MatrixGridFormProps {
     dataFormInfo: DataFormInfo;
@@ -69,7 +70,7 @@ const MatrixGridForm: React.FC<MatrixGridFormProps> = props => {
                                             backgroundColor={props.section.styles.rows.backgroundColor}
                                             key={dataElement.id}
                                         >
-                                            {dataElement.name}
+                                            <DataTableCellRowName html={dataElement.htmlText} name={dataElement.name} />
                                         </CustomDataTableCell>
                                         <CustomDataTableCell
                                             backgroundColor={props.section.styles.rows.backgroundColor}

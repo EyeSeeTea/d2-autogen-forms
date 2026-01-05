@@ -8,7 +8,6 @@ import {
 import { Maybe, UnionFromValues } from "../../../utils/ts-utils";
 import { Code, Id } from "./Base";
 import { DataElement, dataInputPeriodsType } from "./DataElement";
-import { Period } from "./DataValue";
 import { Indicator } from "./Indicator";
 import { SectionStyle } from "./SectionStyle";
 import { titleVariant } from "./TitleVariant";
@@ -16,6 +15,7 @@ import { DataElementToggle } from "./ToggleMultiple";
 import { DataElementRuleOptions, TotalRules } from "./DataElementRule";
 import { RulesFormula } from "../../../data/common/RulesFormula";
 import { CompulsoryDataValue } from "./CompulsoryDataValue";
+import { Period, PeriodType } from "./Period";
 
 export interface DataForm {
     id: Id;
@@ -31,6 +31,7 @@ export interface DataForm {
     totalRules: TotalRules;
     compulsoryDataValues: CompulsoryDataValue[];
     showErrorOnCompulsory: boolean;
+    periodType: PeriodType;
 }
 
 export interface Texts {
@@ -56,6 +57,7 @@ const viewTypes = [
     "grid-with-totals",
     "grid-with-combos",
     "grid-with-cat-option-combos",
+    "grid-disaggregated-cocs",
     "matrix-grid",
     "grid-with-subnational-ous",
     "grid-indicators-calculated",
@@ -65,7 +67,10 @@ export type ViewType = UnionFromValues<typeof DataFormM.viewTypes>;
 
 export type DescriptionText = Maybe<Record<string, Maybe<string>>>;
 
-type FormulaRules = { formula?: string; rules?: DataElementRuleOptions };
+type FormulaRules = {
+    formula?: string;
+    rules?: DataElementRuleOptions;
+};
 export type Totals = FormulaRules & {
     dataElementsCodes: string[];
     formulas: Record<string, TotalsRule> | undefined;
@@ -78,10 +83,12 @@ export interface SectionBase {
     dataElements: DataElement[];
     toggle:
         | { type: "none" }
-        | { type: "dataElement"; dataElement: DataElement }
-        | { type: "dataElementExternal"; dataElement: DataElement; condition: string };
+        | { type: "dataElement"; dataElement: DataElement; disabled: boolean }
+        | { type: "dataElementExternal"; dataElement: DataElement; condition: string; disabled: boolean }
+        | { type: "orgUnit"; orgUnits: Code[]; condition: "show" | "hide"; dataElements: Code[]; disabled: boolean };
     texts: Texts;
     tabs: { active: boolean; order?: string; rules?: RulesFormula };
+    showIndex: boolean;
     sortRowsBy: string;
     titleVariant: titleVariant;
     styles: SectionStyle;
@@ -95,15 +102,17 @@ export interface SectionBase {
     fixedHeaders: boolean;
     enableTopScroll: boolean;
     fixedRowNames: boolean;
+    hidden?: boolean;
+    columnsConfig?: Record<string, { rules?: RulesFormula }>;
 }
 
 export interface SectionSimple extends SectionBase {
-    viewType: "grid-with-combos" | "grid-with-cat-option-combos" | "matrix-grid";
+    viewType: "grid-with-combos" | "matrix-grid" | "grid-disaggregated-cocs";
 }
 
 export interface SectionWithPeriods extends SectionBase {
-    viewType: "grid-with-periods";
-    periods: string[];
+    viewType: "grid-with-periods" | "grid-with-cat-option-combos";
+    periods: Period[];
 }
 
 export interface SectionGrid extends SectionBase {
@@ -115,12 +124,17 @@ export interface SectionGrid extends SectionBase {
     firstColumnConfig: Maybe<{
         width: number;
     }>;
+    periods: Period[];
 }
 
 export interface SectionWithTotals extends SectionBase {
     viewType: "grid-with-totals";
     calculateTotals: CalculateTotalType;
     columnsOrder: Maybe<ColumnOrder>;
+    enableGroups: boolean;
+    firstColumnConfig: Maybe<{
+        width: number;
+    }>;
 }
 
 export interface SectionWithSubnationals extends SectionBase {
@@ -131,7 +145,7 @@ export interface SectionWithSubnationals extends SectionBase {
 
 export interface SectionWithIndicatorsCalculated extends SectionBase {
     viewType: "grid-indicators-calculated";
-    periods: string[];
+    periods: Period[];
     rows: GridIndicatorsCalculatedRow[];
     virtualColumns: (VirtualColumnCalculated | VirtualColumnDataElement)[];
     virtualRows: { rowConstantCode: string; dataElementCode: string; rowName: string }[];
@@ -202,14 +216,13 @@ export type ColumnOrder = Record<Code, number>;
 export class DataFormM {
     static viewTypes = viewTypes;
 
-    static getReferencedPeriods(dataForm: DataForm, basePeriod: Period): Period[] {
+    static getReferencedPeriods(dataForm: DataForm, basePeriod: Id): string[] {
         return _(dataForm.sections)
             .flatMap(section => {
                 switch (section.viewType) {
                     case "grid-with-periods":
-                        return section.periods;
                     case "grid-indicators-calculated":
-                        return section.periods;
+                        return section.periods.map(period => period.id);
                     default:
                         return [];
                 }

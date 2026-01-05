@@ -40,7 +40,7 @@ export function getCompositionRoot(api: D2Api) {
 
     return {
         dataForms: getExecute({
-            get: new GetDataFormUseCase(dataFormRepository),
+            get: new GetDataFormUseCase(dataFormRepository, orgUnitsRepository),
             getValues: new GetDataFormValuesUseCase(dataValueRepository),
             saveValue: new SaveDataFormValueUseCase(dataValueRepository),
             applyToAll: new ApplyToAllUseCase(dataValueRepository),

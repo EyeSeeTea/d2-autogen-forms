@@ -22,6 +22,7 @@ export interface DataElementItemProps {
     columnDataElements?: DataElement[];
     rows?: Row[];
     rowName?: string;
+    lockException?: boolean;
 }
 
 export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props => {
@@ -37,6 +38,7 @@ export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props 
         columnDataElements,
         rows,
         rowName,
+        lockException,
     } = props;
 
     const classes = useStyles();
@@ -54,7 +56,8 @@ export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props 
 
     const onDoubleClick = () => {
         if (!isDev) {
-            window.viewHist(dataElement.id, dataElementCocId);
+            const historyPeriod = (window.autogenFormCurrentPeriodId = period || dataFormInfo.period);
+            window.viewHist(dataElement.id, dataElementCocId, historyPeriod);
         }
     };
 
@@ -81,6 +84,7 @@ export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props 
             <div
                 onClick={() => onClick(dataElement, rowName)}
                 onBlur={() => onBlur()}
+                onDoubleClick={() => onDoubleClick()}
                 className={`${classes.valueInput} sourcetype`}
                 id={auditId}
             >
@@ -95,9 +99,14 @@ export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props 
                     columnDataElements={columnDataElements}
                     cocId={dataElementCocId}
                     rows={rows}
+                    lockException={lockException}
                 />
             </div>
-            <CommentIcon dataElementId={dataElement.id} categoryOptionComboId={dataElementCocId} />
+            <CommentIcon
+                dataElementId={dataElement.id}
+                categoryOptionComboId={dataElementCocId}
+                period={period || dataFormInfo.period}
+            />
         </div>
     ) : (
         <div id={elId} className={classes.valueWrapper}>
@@ -118,6 +127,7 @@ export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props 
                     columnTotal={columnTotal}
                     columnDataElements={columnDataElements}
                     cocId={dataElementCocId}
+                    lockException={lockException}
                 />
             </div>
         </div>
@@ -128,3 +138,7 @@ const useStyles = makeStyles({
     valueInput: { flexGrow: 1, border: "0 !important" },
     valueWrapper: { display: "flex" },
 });
+
+export function isDataValueEnabled(dataValue: DataValue): boolean {
+    return dataValue.type === "BOOLEAN" ? Boolean(dataValue.value) : false;
+}

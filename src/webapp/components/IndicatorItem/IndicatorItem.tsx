@@ -51,19 +51,39 @@ export const IndicatorFormulaCell: React.FC<IndicatorFormulaCellProps> = React.m
             const dataElement = dataFormInfo.metadata.dataForm.dataElements.find(
                 dataElement => dataElement.id === dataElementId
             );
+
             if (!dataElement) return undefined;
-            const dataValue = dataFormInfo.data.values.get(dataElement, {
-                categoryOptionComboId: cocId ?? dataElement.cocId ?? dataFormInfo.categoryOptionComboId,
-                orgUnitId: dataFormInfo.orgUnitId,
-                period: period,
-            }) as DataValueNumberSingle;
-            return { match, value: dataValue.value || "0" };
+
+            if (cocId) {
+                const dataValue = dataFormInfo.data.values.get(dataElement, {
+                    categoryOptionComboId: cocId ?? dataElement.cocId ?? dataFormInfo.categoryOptionComboId,
+                    orgUnitId: dataFormInfo.orgUnitId,
+                    period: period,
+                }) as DataValueNumberSingle;
+                return { match, value: [dataValue.value || "0"] };
+            } else {
+                const dataValues = dataElement.categoryOptionCombos.map(coc => {
+                    const dv = dataFormInfo.data.values.get(dataElement, {
+                        categoryOptionComboId: coc.id,
+                        orgUnitId: dataFormInfo.orgUnitId,
+                        period: period,
+                    }) as DataValueNumberSingle;
+                    return dv.value || "0";
+                });
+                return { match, value: dataValues };
+            }
         })
         .compact()
         .value();
 
     const indicatorValue = formulaWithValues.reduce((acum, matchValue) => {
-        const value = acum.replace(matchValue.match, matchValue.value);
+        const value = acum.replace(
+            matchValue.match,
+            _(matchValue.value)
+                .map(mv => Number(mv))
+                .sum()
+                .toString()
+        );
         return value;
     }, formula);
 
@@ -71,6 +91,7 @@ export const IndicatorFormulaCell: React.FC<IndicatorFormulaCellProps> = React.m
     return (
         <DataTableCell key={`${period}-${indicator.id}`}>
             <CustomInput
+                id={`indicator-${indicator.id}`}
                 key={`${indicator.id}-${period}-${inputValue}`}
                 defaultValue={getValue(inputValue)}
                 disabled
@@ -103,13 +124,21 @@ export const RowIndicatorItem: React.FC<IndicatorRowItemProps> = React.memo(prop
     return (
         <DataTableRow>
             <DataTableCell colSpan={colSpan}>
-                <span>{indicator.description}</span>
+                <span>{indicator.description || indicator.name}</span>
             </DataTableCell>
             <IndicatorItem key={indicator.id} indicator={indicator} dataFormInfo={dataFormInfo} periods={periods} />
         </DataTableRow>
     );
 });
 
-type IndicatorFormulaCellProps = { dataFormInfo: DataFormInfo; indicator: Indicator; period: Period };
-type IndicatorItemProps = { dataFormInfo: DataFormInfo; indicator: Indicator; periods: Period[] };
+type IndicatorFormulaCellProps = {
+    dataFormInfo: DataFormInfo;
+    indicator: Indicator;
+    period: Period;
+};
+type IndicatorItemProps = {
+    dataFormInfo: DataFormInfo;
+    indicator: Indicator;
+    periods: Period[];
+};
 type IndicatorRowItemProps = IndicatorItemProps & { colSpan: string };

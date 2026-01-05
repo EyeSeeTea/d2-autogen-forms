@@ -14,6 +14,7 @@ export interface Grid {
     useIndexes: boolean;
     texts: Texts;
     parentColumns: ParentColumn[];
+    hidden: boolean;
 }
 
 interface Column {
@@ -82,6 +83,7 @@ export class GridWithCategoryColumnsViewModel {
             useIndexes: false,
             parentColumns: parentColumns,
             toggleMultiple: section.toggleMultiple,
+            hidden: section.hidden || false,
         };
     }
 

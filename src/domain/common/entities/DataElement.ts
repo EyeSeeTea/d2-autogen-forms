@@ -18,11 +18,7 @@ interface DataElementBase {
     description?: string;
     options?: Options;
     categoryCombos: CategoryCombos;
-    categoryOptionCombos: {
-        id: Id;
-        name: string;
-        shortName: string | undefined;
-    }[];
+    categoryOptionCombos: CategoryOptionCombo[];
     cocId?: string;
     orgUnit?: Id;
     related: { dataElement: DataElement; value: string } | undefined;
@@ -71,6 +67,7 @@ export type CategoryOption = {
     originalName: string;
     name: string;
     code: Code;
+    displayFormName: string;
 };
 
 type CategoryCombos = {
@@ -82,17 +79,16 @@ type CategoryCombos = {
         name: string;
         categoryOptions: CategoryOption[];
     }>;
-    categoryOptionCombos: {
-        id: Id;
-        originalName: string;
-        name: string;
-        formName: string | undefined;
-        shortName: string | undefined;
-        categoryOptions?: {
-            id: Id;
-            code: string;
-        }[];
-    }[];
+    categoryOptionCombos: CategoryOptionCombo[];
+};
+
+export type CategoryOptionCombo = {
+    id: Id;
+    name: string;
+    shortName: Maybe<string>;
+    formName?: string;
+    categoryOptions: CategoryOption[];
+    originalName: string;
 };
 
 type NumberType =

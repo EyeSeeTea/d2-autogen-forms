@@ -2,10 +2,9 @@ import _ from "lodash";
 import { D2Api } from "@eyeseetea/d2-api/2.34";
 import { boolean, Codec, exactly, GetType, oneOf, optional, record, string, number, array } from "purify-ts";
 import { Namespaces } from "./clients/storage/Namespaces";
-import { Maybe, NonPartial } from "../../utils/ts-utils";
+import { assertUnreachable, Maybe, NonPartial } from "../../utils/ts-utils";
 import { Code, getCode, Id, NamedRef } from "../../domain/common/entities/Base";
 import { Option } from "../../domain/common/entities/DataElement";
-import { Period } from "../../domain/common/entities/DataValue";
 import {
     CategoryColumnConfig,
     CategoryOptionFilter,
@@ -20,9 +19,11 @@ import { titleVariant } from "../../domain/common/entities/TitleVariant";
 import { SectionStyle, SectionStyleAttrs } from "../../domain/common/entities/SectionStyle";
 import { DataElementRuleOptions, SectionRuleOptions } from "../../domain/common/entities/DataElementRule";
 import { ToggleMultiple } from "../../domain/common/entities/ToggleMultiple";
+import { Period, PeriodType, validatePeriodType } from "../../domain/common/entities/Period";
 import { FromRulesFormulaCodec, rulesFormulaCodec } from "./RulesFormula";
 
-interface DataSetConfig {
+export interface DataSetConfig {
+    removePrefix: Maybe<string>;
     texts: Texts;
     sections: Record<Id, SectionConfig>;
 }
@@ -53,13 +54,34 @@ type SectionTotals = Totals & {
 
 type TotalsConfig = SectionTotals | Record<string, SectionTotals>;
 
+type DataElementToggle = {
+    type: "dataElement";
+    code: Code;
+    disabled: boolean;
+};
+
+type DataElementExternalToggle = {
+    type: "dataElementExternal";
+    code: Code;
+    condition: string | undefined;
+    disabled: boolean;
+};
+
+export type OrgUnitToggle = {
+    type: "orgUnit";
+    orgUnits: string[];
+    dataElements: string[];
+    condition: "show" | "hide";
+    disabled: boolean;
+};
+
+type Toggle = DataElementToggle | DataElementExternalToggle | OrgUnitToggle | { type: "none" };
+
 interface BaseSectionConfig {
     texts: Texts;
-    toggle:
-        | { type: "none" }
-        | { type: "dataElement"; code: Code }
-        | { type: "dataElementExternal"; code: Code; condition: string | undefined };
+    toggle: Toggle;
     tabs: { active: true; order: string | number; rules?: FromRulesFormulaCodec } | { active: false };
+    showIndex: boolean;
     sortRowsBy: string;
     titleVariant: titleVariant;
     styles: SectionStyleAttrs;
@@ -72,6 +94,7 @@ interface BaseSectionConfig {
     fixedHeaders: boolean;
     fixedRowNames: boolean;
     enableTopScroll: boolean;
+    columnsConfig?: GridColumnsConfig;
 }
 
 const dataElementsToExcludeCodec = Codec.interface({
@@ -84,7 +107,8 @@ const dataElementsToExcludeCodec = Codec.interface({
 });
 
 interface BasicSectionConfig extends BaseSectionConfig {
-    viewType: "grid-with-combos" | "grid-with-cat-option-combos" | "matrix-grid";
+    viewType: "grid-with-combos" | "matrix-grid" | "grid-disaggregated-cocs";
+    columnsConfig?: Record<string, { rules?: FromRulesFormulaCodec }>;
 }
 
 interface GridSectionConfig extends BaseSectionConfig {
@@ -101,11 +125,12 @@ interface GridSectionConfig extends BaseSectionConfig {
     firstColumnConfig?: {
         width: number;
     };
+    periods: Period[];
 }
 
 interface GridWithPeriodsSectionConfig extends BaseSectionConfig {
-    viewType: "grid-with-periods";
-    periods: string[];
+    viewType: "grid-with-cat-option-combos" | "grid-with-periods";
+    periods: Period[];
 }
 
 interface GridWithTotalsSectionConfig extends BaseSectionConfig {
@@ -123,7 +148,7 @@ interface GridWithTotalsSectionConfig extends BaseSectionConfig {
 
 interface GridIndicatorsCalculated extends BaseSectionConfig {
     viewType: "grid-indicators-calculated";
-    periods: string[];
+    periods: Period[];
     rows: GridIndicatorsCalculatedRow[];
     virtualRows: VirtualRow[];
     virtualColumns: (VirtualColumnDataElement | VirtualColumnCalculated)[];
@@ -198,6 +223,7 @@ const viewType = oneOf([
     exactly("grid-with-totals"),
     exactly("grid-with-combos"),
     exactly("grid-with-cat-option-combos"),
+    exactly("grid-disaggregated-cocs"),
     exactly("matrix-grid"),
     exactly("grid-with-periods"),
     exactly("grid-with-subnational-ous"),
@@ -214,9 +240,15 @@ const titleVariantType = oneOf([
     exactly("h6"),
 ]);
 
+const singleConditionDERuleCodec = Codec.interface({ dataElements: array(string), condition: string });
+const multipleConditionDERuleCodec = Codec.interface({
+    type: exactly("option"),
+    conditions: array(singleConditionDERuleCodec),
+});
+
 const dataElementRuleCodec = record(
     oneOf([exactly("visible"), exactly("disabled")]),
-    Codec.interface({ dataElements: array(string), condition: string })
+    oneOf([singleConditionDERuleCodec, multipleConditionDERuleCodec])
 );
 
 const dataElementTotalsRuleCodec = Codec.interface({
@@ -287,9 +319,42 @@ const categoryOptionFilterConfigCodec = Codec.interface({
     ),
 });
 
+const relativeIntervalPeriodType = Codec.interface({
+    type: exactly("relative-interval"),
+    startOffset: number,
+    endOffset: number,
+});
+
+const sectionOffsetPeriodType = Codec.interface({
+    type: exactly("section-offset"),
+    offset: number,
+});
+
+const periodsConfigType = oneOf([relativeIntervalPeriodType, sectionOffsetPeriodType]);
+
+const dataElementToggleCodec = Codec.interface({
+    type: oneOf([exactly("dataElement"), exactly("dataElementExternal")]),
+    code: string,
+    condition: optional(string),
+    disabled: optional(boolean),
+});
+
+const orgUnitToggleCodec = Codec.interface({
+    type: exactly("orgUnit"),
+    orgUnits: array(string),
+    dataElements: optional(array(string)),
+    condition: oneOf([exactly("show"), exactly("hide")]),
+    disabled: optional(boolean),
+});
+
+const toggleCodec = oneOf([dataElementToggleCodec, orgUnitToggleCodec]);
+
 const DataStoreConfigCodec = Codec.interface({
     categoryCombinations: sectionConfig({
         viewType: optional(oneOf([exactly("name"), exactly("shortName"), exactly("formName")])),
+    }),
+    categoryOptions: sectionConfig({
+        visible: optional(boolean),
     }),
     dataElements: sectionConfig({
         disabled: optional(boolean),
@@ -315,8 +380,10 @@ const DataStoreConfigCodec = Codec.interface({
 
     dataSets: sectionConfig({
         disableComments: optional(boolean),
+        removePrefix: optional(string),
         viewType: optional(viewType),
         texts: optional(textsCodec),
+        showIndex: optional(boolean),
         sections: optional(
             sectionConfig({
                 dataElementsToExclude: optional(array(dataElementsToExcludeCodec)),
@@ -341,13 +408,7 @@ const DataStoreConfigCodec = Codec.interface({
                 sortRowsBy: optional(string),
                 viewType: optional(viewType),
                 texts: optional(textsCodec),
-                toggle: optional(
-                    Codec.interface({
-                        type: oneOf([exactly("dataElement"), exactly("dataElementExternal")]),
-                        code: string,
-                        condition: optional(string),
-                    })
-                ),
+                toggle: optional(toggleCodec),
                 titleVariant: optional(titleVariantType),
                 columnsDescriptions: optional(record(string, oneOf([string, selector]))),
                 groupDescriptions: optional(record(string, oneOf([string, selector]))),
@@ -359,13 +420,8 @@ const DataStoreConfigCodec = Codec.interface({
                         rules: optional(rulesFormulaCodec),
                     })
                 ),
-                periods: optional(
-                    Codec.interface({
-                        type: exactly("relative-interval"),
-                        startOffset: number,
-                        endOffset: number,
-                    })
-                ),
+                showIndex: optional(boolean),
+                periods: optional(periodsConfigType),
                 calculateTotals: optional(
                     record(
                         string,
@@ -469,19 +525,176 @@ type Selector = GetType<typeof selector>;
 type DataFormStoreConfigFromCodec = GetType<typeof DataStoreConfigCodec>;
 
 type PeriodInterval = { type: "relative-interval"; startOffset: number; endOffset: number };
+type PeriodSectionOffset = { type: "section-offset"; offset: number };
+type SectionPeriod = PeriodInterval | PeriodSectionOffset;
 
-function getPeriods(dataSetPeriod: string, interval: Maybe<PeriodInterval>): string[] {
-    const dataSetYear = parseInt(dataSetPeriod);
+function getSectionPeriods(
+    viewType: SectionConfig["viewType"],
+    dataSetPeriod: Id,
+    periodConfig: Maybe<SectionPeriod>,
+    periodType: PeriodType
+): Period[] {
+    if (!periodConfig) return [];
 
-    const interval2: PeriodInterval = interval || {
-        type: "relative-interval",
-        startOffset: -2,
-        endOffset: 0,
-    };
+    switch (periodConfig.type) {
+        case "section-offset":
+            return formatSectionOffsetPeriodsByPeriodType(dataSetPeriod, periodConfig.offset, periodType);
+        case "relative-interval":
+            return getRelativeIntervalPeriodsByViewType(viewType, dataSetPeriod, periodConfig, periodType);
+    }
+}
 
-    return _(dataSetYear + interval2.startOffset)
-        .range(dataSetYear + interval2.endOffset + 1)
-        .map(year => year.toString())
+function formatSectionOffsetPeriodsByPeriodType(dataSetPeriod: Id, offset: number, periodType: PeriodType): Period[] {
+    switch (periodType) {
+        case PeriodType.YEARLY: {
+            const year = parseInt(dataSetPeriod) + offset;
+            return [{ id: year.toString(), label: year.toString() }];
+        }
+        // TODO: Implement other period types
+        default: {
+            console.warn(`PeriodType ${periodType} not implemented for section-offset`);
+            const year = parseInt(dataSetPeriod) + offset;
+            return [{ id: year.toString(), label: year.toString() }];
+        }
+    }
+}
+
+function getRelativeIntervalPeriodsByViewType(
+    viewType: SectionConfig["viewType"],
+    dataSetPeriod: Id,
+    interval: PeriodInterval,
+    periodType: PeriodType
+): Period[] {
+    switch (viewType) {
+        case "grid-indicators-calculated":
+        case "grid-with-periods": {
+            const interval2: PeriodInterval = interval || {
+                type: "relative-interval",
+                startOffset: -2,
+                endOffset: 0,
+            };
+
+            return formatRelativeIntervalPeriodsByPeriodType(dataSetPeriod, interval2, periodType);
+        }
+        case "grid-with-cat-option-combos":
+            if (!interval) return [];
+            return formatRelativeIntervalPeriodsByPeriodType(dataSetPeriod, interval, periodType);
+        default:
+            throw new Error(`Unsupported viewType ${viewType} for periods calculation`);
+    }
+}
+
+function formatRelativeIntervalPeriodsByPeriodType(
+    dataSetPeriod: Id,
+    interval: PeriodInterval,
+    periodType: PeriodType
+): Period[] {
+    switch (periodType) {
+        case PeriodType.DAILY:
+            return getDailyPeriods(dataSetPeriod, interval);
+        case PeriodType.WEEKLY:
+            return getWeeklyPeriods(dataSetPeriod, interval);
+        case PeriodType.MONTHLY:
+            return getMonthlyPeriods(dataSetPeriod, interval);
+        case PeriodType.QUARTERLY:
+            return getQuarterlyPeriods(dataSetPeriod, interval);
+        case PeriodType.YEARLY:
+            return getYearlyPeriods(dataSetPeriod, interval);
+        default: {
+            console.warn(`PeriodType ${periodType} not implemented`);
+            return getYearlyPeriods(dataSetPeriod, interval);
+        }
+    }
+}
+
+function getDailyPeriods(dataSetPeriod: Id, interval: PeriodInterval): Period[] {
+    const dateStr = dataSetPeriod;
+    const year = parseInt(dateStr.slice(0, 4));
+    const month = parseInt(dateStr.slice(4, 6));
+    const day = parseInt(dateStr.slice(6, 8));
+
+    const baseDate = new Date(year, month - 1, day);
+    const baseDateValue = baseDate.valueOf();
+    const oneDayMs = 24 * 60 * 60 * 1000;
+    const startDateValue = baseDateValue + interval.startOffset * oneDayMs;
+    const endDateValue = baseDateValue + interval.endOffset * oneDayMs;
+    const dayCount = Math.floor((endDateValue - startDateValue) / oneDayMs) + 1;
+
+    return Array.from({ length: dayCount }, (_, i) => {
+        const currentDate = new Date(startDateValue + i * oneDayMs);
+        const periodYear = currentDate.getFullYear();
+        const periodMonth = (currentDate.getMonth() + 1).toString().padStart(2, "0");
+        const periodDay = currentDate.getDate().toString().padStart(2, "0");
+        const id = `${periodYear}${periodMonth}${periodDay}`;
+        const label = `${periodYear}-${periodMonth}-${periodDay}`;
+
+        return { id: id, label: label };
+    });
+}
+
+function getWeeklyPeriods(dataSetPeriod: Id, interval: PeriodInterval): Period[] {
+    const year = parseInt(dataSetPeriod.slice(0, 4));
+    const week = parseInt(dataSetPeriod.slice(5));
+
+    const startWeekOffset = year * 53 + week - 1 + interval.startOffset;
+    const endWeekOffset = year * 53 + week - 1 + interval.endOffset;
+
+    return _(startWeekOffset)
+        .range(endWeekOffset + 1)
+        .map(weekOffset => {
+            const periodYear = Math.floor(weekOffset / 53);
+            const periodWeek = (weekOffset % 53) + 1;
+            const weekStr = periodWeek.toString();
+            const id = `${periodYear}W${weekStr}`;
+
+            return { id: id, label: `${periodYear}-W${weekStr}` };
+        })
+        .value();
+}
+
+function getMonthlyPeriods(dataSetPeriod: Id, interval: PeriodInterval): Period[] {
+    const year = parseInt(dataSetPeriod.slice(0, 4));
+    const month = parseInt(dataSetPeriod.slice(4, 6));
+
+    const startMonthOffset = year * 12 + month - 1 + interval.startOffset;
+    const endMonthOffset = year * 12 + month - 1 + interval.endOffset;
+
+    return _(startMonthOffset)
+        .range(endMonthOffset + 1)
+        .map(monthOffset => {
+            const periodYear = Math.floor(monthOffset / 12);
+            const periodMonth = (monthOffset % 12) + 1;
+            const monthStr = periodMonth.toString().padStart(2, "0");
+            const id = `${periodYear}${monthStr}`;
+            return { id: id, label: `${periodYear}-${monthStr}` };
+        })
+        .value();
+}
+
+function getQuarterlyPeriods(dataSetPeriod: Id, interval: PeriodInterval): Period[] {
+    const year = parseInt(dataSetPeriod.slice(0, 4));
+    const quarter = parseInt(dataSetPeriod.slice(5, 6));
+
+    const startQuarterOffset = year * 4 + quarter - 1 + interval.startOffset;
+    const endQuarterOffset = year * 4 + quarter - 1 + interval.endOffset;
+
+    return _(startQuarterOffset)
+        .range(endQuarterOffset + 1)
+        .map(quarterOffset => {
+            const periodYear = Math.floor(quarterOffset / 4);
+            const periodQuarter = (quarterOffset % 4) + 1;
+            const id = `${periodYear}Q${periodQuarter}`;
+            return { id: id, label: `${periodYear}-Q${periodQuarter}` };
+        })
+        .value();
+}
+
+function getYearlyPeriods(dataSetPeriod: Id, interval: PeriodInterval): Period[] {
+    const year = parseInt(dataSetPeriod);
+
+    return _(year + interval.startOffset)
+        .range(year + interval.endOffset + 1)
+        .map(year => ({ id: year.toString(), label: year.toString() }))
         .value();
 }
 
@@ -496,27 +709,37 @@ const defaultDataStoreConfig: DataFormStoreConfig["custom"] = {
     dataElements: {},
     dataSets: {},
     categoryCombinations: {},
+    categoryOptions: {},
 };
 
 interface DataSet {
     id: Id;
     code: string;
     sections: Array<{ id: string; code: string }>;
+    periodType: string;
 }
 
 type CategoryCombinationConfig = {
     viewType: "name" | "shortName" | "formName" | undefined;
 };
 
+type CategoryOptionConfig = {
+    visible: Maybe<boolean>;
+};
+
+type ToggleConfig = GetType<typeof toggleCodec>;
+
 export class Dhis2DataStoreDataForm {
     public dataElementsConfig: Record<Code, DataElementConfig>;
     public categoryCombinationsConfig: Record<Code, CategoryCombinationConfig>;
+    public categoryOptionsConfig: Record<Code, CategoryOptionConfig>;
     public subNationals: SubNational[];
     public constants: Constant[];
 
     constructor(private config: DataFormStoreConfig) {
         this.dataElementsConfig = this.getDataElementsConfig();
         this.categoryCombinationsConfig = config.custom.categoryCombinations;
+        this.categoryOptionsConfig = config.custom.categoryOptions;
         this.subNationals = config.subNationals;
         this.constants = config.constants;
     }
@@ -553,6 +776,7 @@ export class Dhis2DataStoreDataForm {
                     dataElements: storeConfigFromDataStore.dataElements || {},
                     dataSets: storeConfigFromDataStore.dataSets || {},
                     categoryCombinations: storeConfigFromDataStore.categoryCombinations || {},
+                    categoryOptions: storeConfigFromDataStore.categoryOptions || {},
                 };
 
                 return {
@@ -630,23 +854,22 @@ export class Dhis2DataStoreDataForm {
             .compact()
             .value();
 
-        const totalsCodes = _(storeConfig.dataSets)
+        const totalsCodes: string[] = _(storeConfig.dataSets)
             .values()
-            .flatMap(dataSet => _.values(dataSet.sections))
-            .flatMap(section => {
-                if (!section.totals) return undefined;
+            .flatMap(dataSet =>
+                _.values(dataSet.sections).flatMap((section: { totals: Maybe<TotalsConfig> }) => {
+                    const totals = section.totals;
+                    if (!totals) return undefined;
 
-                const formulaCodes = _(section.totals.formulas)
-                    .map((_, key) => key)
-                    .compact()
-                    .value();
+                    const formulaCodes = totals.formulas ? Object.keys(totals.formulas) : [];
 
-                return this.isSectionTotals(section.totals)
-                    ? [section.totals.texts?.code, ...formulaCodes]
-                    : _(section.totals)
-                          .map(total => total.texts?.code)
-                          .value();
-            })
+                    return this.isSectionTotals(totals)
+                        ? [totals.texts?.code, ...formulaCodes]
+                        : _(totals)
+                              .map(total => total.texts?.code)
+                              .value();
+                })
+            )
             .compact()
             .value();
 
@@ -756,14 +979,16 @@ export class Dhis2DataStoreDataForm {
         });
     }
 
-    private getCommentsVisibility(dataSetValue: Maybe<boolean>, sectionValue: Maybe<boolean>) {
+    private getEffectiveBooleanValue(dataSetValue: Maybe<boolean>, sectionValue: Maybe<boolean>) {
         return sectionValue ?? dataSetValue ?? false;
     }
 
-    getDataSetConfig(dataSet: DataSet, period: Period): DataSetConfig {
+    getDataSetConfig(dataSet: DataSet, period: Id): DataSetConfig {
         const dataSetConfig = this.config.custom.dataSets?.[dataSet.code];
         const dataSetDefaultViewType = dataSetConfig?.viewType || defaultViewType;
         const constantsByCode = _.keyBy(this.config.constants, getCode);
+        const periodType = validatePeriodType(dataSet.periodType);
+        const removePrefix = dataSetConfig?.removePrefix;
 
         const sections = _(dataSetConfig?.sections)
             .toPairs()
@@ -773,7 +998,7 @@ export class Dhis2DataStoreDataForm {
                 const viewType = sectionConfig.viewType || dataSetDefaultViewType;
 
                 const base: BaseSectionConfig = {
-                    toggle: sectionConfig.toggle || { type: "none" },
+                    toggle: this.getSectionToggle(sectionConfig),
                     texts: {
                         header: this.getTextFromConstants(sectionConfig?.texts?.header, constantsByCode),
                         footer: this.getTextFromConstants(sectionConfig?.texts?.footer, constantsByCode),
@@ -781,10 +1006,11 @@ export class Dhis2DataStoreDataForm {
                         totals: this.getTextFromConstants(sectionConfig?.texts?.totals, constantsByCode),
                         name: this.getTextFromConstants(sectionConfig?.texts?.name, constantsByCode),
                     },
+                    showIndex: this.getEffectiveBooleanValue(dataSetConfig?.showIndex, sectionConfig.showIndex),
                     sortRowsBy: sectionConfig.sortRowsBy || "",
                     tabs: sectionConfig.tabs || { active: false },
                     titleVariant: sectionConfig.titleVariant,
-                    disableComments: this.getCommentsVisibility(
+                    disableComments: this.getEffectiveBooleanValue(
                         dataSetConfig?.disableComments,
                         sectionConfig.disableComments
                     ),
@@ -801,16 +1027,18 @@ export class Dhis2DataStoreDataForm {
                     fixedHeaders: sectionConfig.fixedHeaders || false,
                     fixedRowNames: sectionConfig.fixedRowNames || false,
                     enableTopScroll: sectionConfig.enableTopScroll || false,
+                    columnsConfig: sectionConfig.columnsConfig,
                 };
 
                 const baseConfig = { ...base, viewType };
 
                 switch (viewType) {
+                    case "grid-with-cat-option-combos":
                     case "grid-with-periods": {
                         const config = {
                             ...baseConfig,
                             viewType,
-                            periods: getPeriods(period, sectionConfig.periods),
+                            periods: getSectionPeriods(viewType, period, sectionConfig.periods, periodType),
                         };
                         return [section.id, config] as [typeof section.id, typeof config];
                     }
@@ -825,6 +1053,7 @@ export class Dhis2DataStoreDataForm {
                             enableGroups: sectionConfig.enableGroups || false,
                             columnsConfig: sectionConfig.columnsConfig,
                             firstColumnConfig: sectionConfig.firstColumnConfig,
+                            periods: getSectionPeriods(viewType, period, sectionConfig.periods, periodType),
                         };
                         return [section.id, config] as [typeof section.id, typeof config];
                     }
@@ -841,7 +1070,7 @@ export class Dhis2DataStoreDataForm {
                     case "grid-indicators-calculated": {
                         const config = {
                             ...baseConfig,
-                            periods: getPeriods(period, sectionConfig.periods),
+                            periods: getSectionPeriods(viewType, period, sectionConfig.periods, periodType),
                             virtualColumns: sectionConfig.virtualColumns ?? [],
                             virtualRows: sectionConfig.virtualRows ?? [],
                             viewType,
@@ -878,8 +1107,30 @@ export class Dhis2DataStoreDataForm {
                 totals: this.getTextFromConstants(dataSetConfig?.texts?.totals, constantsByCode),
                 name: this.getTextFromConstants(dataSetConfig?.texts?.name, constantsByCode),
             },
+            removePrefix: removePrefix,
             sections: sections,
         };
+    }
+
+    private getSectionToggle(sectionConfig: { toggle: Maybe<ToggleConfig> }): Toggle {
+        const { toggle } = sectionConfig;
+        if (!toggle) return { type: "none" };
+
+        switch (toggle.type) {
+            case "dataElement":
+                return { type: "dataElement", code: toggle.code, disabled: toggle.disabled ?? false };
+            case "dataElementExternal":
+                return {
+                    type: "dataElementExternal",
+                    code: toggle.code,
+                    condition: toggle.condition,
+                    disabled: toggle.disabled ?? false,
+                };
+            case "orgUnit":
+                return { ...toggle, dataElements: toggle.dataElements ?? [], disabled: toggle.disabled ?? false };
+            default:
+                return assertUnreachable(toggle);
+        }
     }
 
     private getSectionTotals(

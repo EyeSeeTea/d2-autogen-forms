@@ -15,8 +15,8 @@ import DataTableSection from "./DataTableSection";
 import { CustomDataTableCell, CustomDataTableColumnHeader, fixHeaderClasses } from "./datatables/CustomDataTables";
 import { GridWithCategoryColumnsViewModel } from "./GridWithCategoryColumnsViewModel";
 import { useSyncedScroll } from "./hooks/Scroll";
-import { getValueAccordingType } from "./DataEntryItem";
 import { calculateFormula } from "./datatables/InputFormula";
+import { getValueAccordingType } from "./hooks/useApplyRules";
 
 export interface GridWithCategoryColumnsProps {
     dataFormInfo: DataFormInfo;

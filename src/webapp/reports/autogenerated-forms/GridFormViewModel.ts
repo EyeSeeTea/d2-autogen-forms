@@ -1,5 +1,12 @@
 import _ from "lodash";
-import { ColumnOrder, DataElementWidget, Section, SectionGrid, Texts } from "../../../domain/common/entities/DataForm";
+import {
+    ColumnOrder,
+    DataElementWidget,
+    Section,
+    SectionBase,
+    SectionGrid,
+    Texts,
+} from "../../../domain/common/entities/DataForm";
 import { DataElement, DataElementNumber } from "../../../domain/common/entities/DataElement";
 import { titleVariant } from "../../../domain/common/entities/TitleVariant";
 import { Maybe } from "../../../utils/ts-utils";
@@ -9,25 +16,36 @@ import { getDescription } from "../../../utils/viewTypes";
 import { getIndicatorRelatedToDataElement, Indicator } from "../../../domain/common/entities/Indicator";
 import { Code } from "../../../domain/common/entities/Base";
 import { calculateFormula } from "./datatables/InputFormula";
+import { getIndexedLabel } from "./DataTableSection";
+import { Period } from "../../../domain/common/entities/Period";
 
-export interface Grid {
+export type Grid = GridComponents & {
     dataElements: Array<DataElement & { indicator: Maybe<Indicator> }>;
     id: string;
     name: string;
     columns: Column[];
     rows: Row[];
+    showIndex: Section["showIndex"];
+    tabs: Section["tabs"];
     toggle: Section["toggle"];
     toggleMultiple: Section["toggleMultiple"];
     useIndexes: boolean;
     texts: Texts;
     titleVariant: titleVariant;
-    summary: Summary[];
     indicators: Indicator[];
     rowGroups: RowGroup[];
     hasGroups: boolean;
     groupInfo: Record<string, GroupInfo>;
     subGroupInfo: Record<string, GroupInfo>;
-}
+    dataEntryPeriod: Maybe<Period>;
+    hidden: boolean;
+};
+
+type GridComponents = {
+    columns: Column[];
+    rows: Row[];
+    summary: Summary[];
+};
 
 interface SubSectionGrid {
     name: string;
@@ -82,12 +100,55 @@ type RowGroup = {
 };
 
 export class GridViewModel {
-    static get(section: SectionGrid, dataFormInfo: DataFormInfo): Grid {
-        const dataElementsConfig = dataFormInfo.metadata.dataForm.options.dataElements;
+    static get(section: SectionGrid, dataFormInfo: DataFormInfo, viewType: SectionGrid["viewType"]): Grid {
         const dataElements = getDataElementsWithIndexProccessing(section);
+        const { columns, rows, summary } = this.getGridComponents(section, dataFormInfo, dataElements, viewType);
+        const indicators = this.getIndicators(section);
 
-        const groupsByRow = section.enableGroups ? GridViewModel.groupsByRowName(dataElements) : undefined;
+        const useIndexes =
+            _(rows).every(row => Boolean(row.name.match(/\(\d+\)$/))) &&
+            _(rows)
+                .groupBy(row => row.name.replace(/\s*\(\d+\)$/, ""))
+                .size() === 1;
 
+        const rowGroups = GridViewModel.buildRowGroups(rows);
+
+        const groupInfo = this.buildGroupInfo(rows, "group");
+        const subGroupInfo = this.buildGroupInfo(rows, "subGroup");
+
+        return {
+            id: section.id,
+            indicators: indicators,
+            name: section.name,
+            columns: columns,
+            rows: rows,
+            toggle: section.toggle,
+            toggleMultiple: section.toggleMultiple,
+            texts: section.texts,
+            useIndexes: useIndexes,
+            titleVariant: section.titleVariant,
+            summary: section.totals ? summary : [],
+            showIndex: section.showIndex,
+            tabs: section.tabs,
+            dataElements: dataElements.map(dataElement => {
+                const indicator = getIndicatorRelatedToDataElement(section.indicators, dataElement.code);
+                return { ...dataElement, indicator };
+            }),
+            dataEntryPeriod: section.periods[0],
+            hidden: section.hidden || false,
+            rowGroups,
+            hasGroups: section.enableGroups && rowGroups.length > 0,
+            groupInfo: groupInfo,
+            subGroupInfo: subGroupInfo,
+        };
+    }
+
+    private static getGridComponents(
+        section: SectionGrid,
+        dataFormInfo: DataFormInfo,
+        dataElements: DataElement[],
+        viewType: SectionGrid["viewType"]
+    ): GridComponents {
         const subsections = _(dataElements)
             .groupBy(dataElement => getSubsectionName(dataElement))
             .toPairs()
@@ -102,21 +163,7 @@ export class GridViewModel {
             )
             .value();
 
-        const baseColumns = _(subsections)
-            .flatMap(subsection => subsection.dataElements)
-            .uniqBy(de => de.name)
-            .map(({ id, code, name }) => {
-                const columnDescription = getDescription(section.columnsDescriptions, dataFormInfo, name);
-                const config = dataElementsConfig[id];
-                return {
-                    code: code,
-                    isVisible: true,
-                    isSourceType: isSourceTypeColumn(config?.widget),
-                    name: name,
-                    description: columnDescription,
-                };
-            })
-            .value();
+        const baseColumns = GridViewModel.getColumns(subsections, section, dataFormInfo);
 
         const columnsOrders = section.columnsOrder
             ? _(baseColumns)
@@ -132,6 +179,44 @@ export class GridViewModel {
 
         const columns = this.addVisibleToColumns({ columns: columnsOrders, dataFormInfo, section });
 
+        const rows = GridViewModel.getRows(subsections, section, columns, dataElements);
+        const summary = GridViewModel.getSummary(subsections, section, columns, viewType);
+
+        return { columns: columns, rows: rows, summary: summary };
+    }
+
+    private static getColumns(
+        subsections: SubSectionGrid[],
+        section: SectionGrid,
+        dataFormInfo: DataFormInfo
+    ): Column[] {
+        const dataElementsConfig = dataFormInfo.metadata.dataForm.options.dataElements;
+
+        return _(subsections)
+            .flatMap(subsection => subsection.dataElements)
+            .uniqBy(de => de.name)
+            .map(({ id, code, name }) => {
+                const columnDescription = getDescription(section.columnsDescriptions, dataFormInfo, name);
+                const config = dataElementsConfig[id];
+                return {
+                    code: code,
+                    isVisible: true,
+                    isSourceType: isSourceTypeColumn(config?.widget),
+                    name: name,
+                    description: columnDescription,
+                };
+            })
+            .value();
+    }
+
+    private static getRows(
+        subsections: SubSectionGrid[],
+        section: SectionGrid,
+        columns: Column[],
+        dataElements: DataElement[]
+    ) {
+        const groupsByRow = section.enableGroups ? GridViewModel.groupsByRowName(dataElements) : undefined;
+
         const dataElementsByTotal = _(section.calculateTotals)
             .groupBy(item => item?.totalDeCode)
             .map((group, totalColumn) => ({
@@ -140,7 +225,7 @@ export class GridViewModel {
             }))
             .value();
 
-        const rows = subsections.map(subsection => {
+        return subsections.map(subsection => {
             const firstDataElement = _(subsection.dataElements).first();
             const indicator = getIndicatorRelatedToDataElement(section.indicators, firstDataElement?.code || "");
             const items = columns.map(column => {
@@ -191,75 +276,78 @@ export class GridViewModel {
                 subGroup: groupMeta ? groupMeta.subGroup : undefined,
             };
         });
+    }
 
-        const useIndexes =
-            _(rows).every(row => Boolean(row.name.match(/\(\d+\)$/))) &&
-            _(rows)
-                .groupBy(row => row.name.replace(/\s*\(\d+\)$/, ""))
-                .size() === 1;
+    private static getSummary(
+        subsections: SubSectionGrid[],
+        section: SectionGrid,
+        columns: Column[],
+        viewType: SectionGrid["viewType"]
+    ): Summary[] {
+        const allDataElements = subsections.flatMap(subSection => subSection.dataElements);
 
-        const summary = _(section.totals)
-            .map((sectionTotal, key) => {
-                const cellTotals = columns.map(column => {
-                    const allDataElements = subsections.flatMap(subSection => subSection.dataElements);
-                    const selectedDataElements = allDataElements.filter(dataElement =>
-                        sectionTotal.dataElementsCodes.includes(dataElement.code)
-                    );
+        switch (viewType) {
+            case "table":
+                return _(section.totals)
+                    .map((sectionTotal, key) => {
+                        const selectedDataElements = allDataElements.filter(dataElement =>
+                            sectionTotal.dataElementsCodes.includes(dataElement.code)
+                        );
 
-                    const columnWithDataElements = GridViewModel.getColumnWithDataElements(
-                        selectedDataElements,
-                        column.name
-                    );
+                        return {
+                            cellName: key,
+                            cells: [
+                                {
+                                    columnName: key,
+                                    formula: sectionTotal.formula || "",
+                                    items: this.getColumnWithDataElements(selectedDataElements, key),
+                                },
+                            ],
+                        };
+                    })
+                    .value();
+            case "grid":
+                return _(section.totals)
+                    .map((sectionTotal, key) => {
+                        const selectedDataElements = allDataElements.filter(dataElement =>
+                            sectionTotal.dataElementsCodes.includes(dataElement.code)
+                        );
 
-                    return {
-                        columnName: column.name,
-                        formula: getFormulaByColumnName(section, column.name) || sectionTotal.formula || "",
-                        items: columnWithDataElements,
-                    };
-                });
+                        const cellTotals = columns.map(column => {
+                            const columnWithDataElements = GridViewModel.getColumnWithDataElements(
+                                selectedDataElements,
+                                column.name
+                            );
 
-                return {
-                    cellName: key,
-                    cells: cellTotals,
-                };
-            })
-            .filter(summaryRow => summaryRow.cells.every(cell => cell.items.length > 0))
-            .value();
+                            return {
+                                columnName: column.name,
+                                formula: getFormulaByColumnName(section, column.name) || sectionTotal.formula || "",
+                                items: columnWithDataElements,
+                            };
+                        });
 
+                        return {
+                            cellName: key,
+                            cells: cellTotals,
+                        };
+                    })
+                    .filter(summaryRow => summaryRow.cells.every(cell => cell.items.length > 0))
+                    .value();
+            default:
+                console.warn(`Unsupported viewType ${viewType} in GridViewModel.getSummary`);
+                return [];
+        }
+    }
+
+    private static getIndicators(section: SectionGrid): Indicator[] {
         const indicatorsRelatedToDataElements = _(section.indicators)
             .map(indicator => (indicator.dataElement ? indicator.id : undefined))
             .compact()
             .value();
 
-        const rowGroups = GridViewModel.buildRowGroups(rows);
-
-        const groupInfo = this.buildGroupInfo(rows, "group");
-        const subGroupInfo = this.buildGroupInfo(rows, "subGroup");
-
-        return {
-            id: section.id,
-            indicators:
-                indicatorsRelatedToDataElements.length > 0
-                    ? section.indicators.filter(indicator => !indicatorsRelatedToDataElements.includes(indicator.id))
-                    : section.indicators,
-            name: section.name,
-            columns: columns,
-            rows: rows,
-            toggle: section.toggle,
-            toggleMultiple: section.toggleMultiple,
-            texts: section.texts,
-            useIndexes: useIndexes,
-            titleVariant: section.titleVariant,
-            summary: section.totals ? summary : [],
-            dataElements: dataElements.map(dataElement => {
-                const indicator = getIndicatorRelatedToDataElement(section.indicators, dataElement.code);
-                return { ...dataElement, indicator };
-            }),
-            rowGroups,
-            hasGroups: section.enableGroups && rowGroups.length > 0,
-            groupInfo: groupInfo,
-            subGroupInfo: subGroupInfo,
-        };
+        return indicatorsRelatedToDataElements.length > 0
+            ? section.indicators.filter(indicator => !indicatorsRelatedToDataElements.includes(indicator.id))
+            : section.indicators;
     }
 
     private static buildRowGroups(rows: Row[]): RowGroup[] {
@@ -416,6 +504,11 @@ type GroupInfo = {
     rowSpan: number;
     rowName: string;
 };
+
+export function getDataElementLabel(section: SectionBase, dataElement: DataElement): string {
+    const deIndex = section.dataElements.findIndex(de => dataElement.id === de.id) + 1;
+    return getIndexedLabel(section, dataElement.name, deIndex);
+}
 
 /** Move the data element index to the row name, so indexed data elements are automatically grouped 
 
