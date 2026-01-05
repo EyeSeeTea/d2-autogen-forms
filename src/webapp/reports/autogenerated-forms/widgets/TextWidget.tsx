@@ -4,6 +4,7 @@ import { Input, TextArea } from "@dhis2/ui";
 import { WidgetFeedback } from "../WidgetFeedback";
 import { DataValueTextSingle } from "../../../../domain/common/entities/DataValue";
 import { WidgetProps } from "./WidgetBase";
+import i18n from "../../../../locales";
 
 export interface TextWidgetProps extends WidgetProps {
     dataValue: DataValueTextSingle;
@@ -16,24 +17,18 @@ const TextWidget: React.FC<TextWidgetProps> = props => {
     const [emailError, setEmailError] = React.useState<string | undefined>();
     React.useEffect(() => setStateValue(dataValue.value), [dataValue.value]);
 
-    const validateEmail = React.useCallback((email: string) => {
-        if (!email) return true;
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return emailRegex.test(email);
-    }, []);
-
     const updateState = React.useCallback(
         ({ value }: { value: string }) => {
             setStateValue(value);
             if (dataValue.dataElement.isEmail && value) {
                 if (!validateEmail(value)) {
-                    setEmailError("Please enter a valid email address");
+                    setEmailError(i18n.t("Please enter a valid email address"));
                 } else {
                     setEmailError(undefined);
                 }
             }
         },
-        [dataValue.dataElement.isEmail, validateEmail]
+        [dataValue.dataElement.isEmail]
     );
 
     const notifyChange = React.useCallback(
@@ -45,7 +40,7 @@ const TextWidget: React.FC<TextWidgetProps> = props => {
                 onValueChange({ ...dataValue, value: newValue });
             }
         },
-        [onValueChange, dataValue, validateEmail]
+        [onValueChange, dataValue]
     );
 
     return (
@@ -68,3 +63,9 @@ const TextWidget: React.FC<TextWidgetProps> = props => {
 };
 
 export default React.memo(TextWidget);
+
+const validateEmail = (email: string) => {
+    if (!email) return true;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
