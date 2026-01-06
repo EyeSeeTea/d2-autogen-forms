@@ -5,6 +5,7 @@ import { WidgetFeedback } from "../WidgetFeedback";
 import { DataValueTextSingle } from "../../../../domain/common/entities/DataValue";
 import { WidgetProps } from "./WidgetBase";
 import i18n from "../../../../locales";
+import { Maybe } from "../../../../utils/ts-utils";
 
 export interface TextWidgetProps extends WidgetProps {
     dataValue: DataValueTextSingle;
@@ -14,7 +15,7 @@ const TextWidget: React.FC<TextWidgetProps> = props => {
     const { onValueChange, dataValue, disabled } = props;
 
     const [stateValue, setStateValue] = React.useState(dataValue.value);
-    const [emailError, setEmailError] = React.useState<string | undefined>();
+    const [emailError, setEmailError] = React.useState<Maybe<string>>();
     React.useEffect(() => setStateValue(dataValue.value), [dataValue.value]);
 
     const updateState = React.useCallback(
@@ -64,8 +65,11 @@ const TextWidget: React.FC<TextWidgetProps> = props => {
 
 export default React.memo(TextWidget);
 
+// Note: This regex validation is not the same as DHIS2's backend validation.
+// For example, john@doe.coma is valid for this regex but invalid for DHIS2.
+// This is acceptable since we still get the error from DHIS2 backend.
 const validateEmail = (email: string) => {
     if (!email) return true;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
-}
+};
