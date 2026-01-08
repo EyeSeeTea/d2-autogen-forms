@@ -83,6 +83,7 @@ interface BaseSectionConfig {
     toggleMultiple: Maybe<ToggleMultiple>;
     indicators?: Record<Code, IndicatorConfig>;
     columnsConfig?: GridColumnsConfig;
+    disabled: boolean;
 }
 
 interface BasicSectionConfig extends BaseSectionConfig {
@@ -293,6 +294,7 @@ const DataStoreConfigCodec = Codec.interface({
         visible: optional(boolean),
     }),
     dataElements: sectionConfig({
+        disabled: optional(boolean),
         disableComments: optional(boolean),
         rules: optional(dataElementRuleCodec),
         selection: optional(
@@ -320,6 +322,7 @@ const DataStoreConfigCodec = Codec.interface({
         sections: optional(
             sectionConfig({
                 columnsConfig: optional(record(string, Codec.interface({ rules: optional(rulesFormulaCodec) }))),
+                disabled: optional(boolean),
                 disableComments: optional(boolean),
                 subNationalDataset: optional(string),
                 sortRowsBy: optional(string),
@@ -439,6 +442,7 @@ const DataStoreConfigCodec = Codec.interface({
 
 export interface DataElementConfig {
     rules?: DataElementRuleOptions;
+    disabled?: boolean;
     disableComments?: boolean;
     texts?: Texts;
     selection?: {
@@ -941,6 +945,7 @@ export class Dhis2DataStoreDataForm {
                         dataSetConfig?.disableComments,
                         sectionConfig.disableComments
                     ),
+                    disabled: sectionConfig.disabled || false,
                     styles: SectionStyle.buildSectionStyles(sectionConfig.styles),
                     columnsDescriptions: _.mapValues(sectionConfig.columnsDescriptions, columnDescription =>
                         this.getTextFromConstants(columnDescription, constantsByCode)
@@ -1109,6 +1114,7 @@ export class Dhis2DataStoreDataForm {
                 const deToHideValue = config.selection?.visible?.value;
 
                 const dataElementConfig: DataElementConfig = {
+                    disabled: config.disabled,
                     disableComments: config.disableComments,
                     rules: config.rules,
                     texts: {

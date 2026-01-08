@@ -91,6 +91,7 @@ export interface SectionBase {
     columnsDescriptions: DescriptionText;
     groupDescriptions: DescriptionText;
     disableComments: boolean;
+    disabled: boolean;
     totals?: Record<string, Totals>;
     showRowTotals: boolean;
     toggleMultiple?: DataElementToggle;

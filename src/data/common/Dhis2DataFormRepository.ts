@@ -116,6 +116,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                             : { active: false },
                     showIndex: config?.showIndex ?? false,
                     sortRowsBy: config?.sortRowsBy || "",
+                    disabled: config?.disabled || false,
                     disableComments: config?.disableComments ?? false,
                     dataElements: _(section.dataElements)
                         .map(dataElementRef => {
@@ -138,6 +139,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                                 ...dataElement,
                                 name: removePrefixFromName(dataSetConfig, dataElement.name),
                                 disabledComments: deConfig?.disableComments || false,
+                                disabled: deConfig?.disabled || false,
                                 related: deRelated
                                     ? { dataElement: deRelated, value: deHideConfig?.value || "" }
                                     : undefined,
