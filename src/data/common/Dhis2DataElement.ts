@@ -222,6 +222,8 @@ function getDataElement(dataElement: D2DataElement, config: Dhis2DataStoreDataFo
             return { type: "DATE", related: undefined, ...base };
         case "PERCENTAGE":
             return { type: "PERCENTAGE", numberType: "NUMBER", related: undefined, ...base };
+        case "EMAIL":
+            return { type: "TEXT", isLongText: false, isEmail: true, related: undefined, ...base };
         default:
             console.error(
                 `Data element [name=${dataElement.displayName}, id=${dataElement.id}, valueType=${dataElement.valueType}] skipped, valueType not supported`
