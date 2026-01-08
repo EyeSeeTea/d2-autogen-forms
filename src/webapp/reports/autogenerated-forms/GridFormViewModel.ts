@@ -90,7 +90,14 @@ export class GridViewModel {
             tabs: section.tabs,
             dataElements: dataElements.map(dataElement => {
                 const indicator = getIndicatorRelatedToDataElement(section.indicators, dataElement.code);
-                return { ...dataElement, indicator };
+                return {
+                    ...dataElement,
+                    indicator,
+                    name: getDataElementLabel(section, dataElement, dataElement.name),
+                    htmlText: dataElement.htmlText
+                        ? getDataElementLabel(section, dataElement, dataElement.htmlText)
+                        : undefined,
+                };
             }),
             dataEntryPeriod: section.periods[0],
             hidden: section.hidden || false,
@@ -156,7 +163,7 @@ export class GridViewModel {
             }))
             .value();
 
-        return subsections.map(subsection => {
+        return subsections.map((subsection, index) => {
             const firstDataElement = _(subsection.dataElements).first();
             const indicator = getIndicatorRelatedToDataElement(section.indicators, firstDataElement?.code || "");
             const items = columns.map(column => {
@@ -195,8 +202,8 @@ export class GridViewModel {
             return {
                 includePadding: 0,
                 indicator: indicator,
-                name: subsection.name,
-                htmlText: firstItemWithHtmlText,
+                name: getIndexedLabel(section, subsection.name, index + 1),
+                htmlText: firstItemWithHtmlText ? getIndexedLabel(section, firstItemWithHtmlText, index + 1) : "",
                 items: items,
             };
         });
@@ -300,9 +307,9 @@ export class GridViewModel {
     }
 }
 
-export function getDataElementLabel(section: SectionBase, dataElement: DataElement): string {
+export function getDataElementLabel(section: SectionBase, dataElement: DataElement, name: string): string {
     const deIndex = section.dataElements.findIndex(de => dataElement.id === de.id) + 1;
-    return getIndexedLabel(section, dataElement.name, deIndex);
+    return getIndexedLabel(section, name, deIndex);
 }
 
 /** Move the data element index to the row name, so indexed data elements are automatically grouped 
