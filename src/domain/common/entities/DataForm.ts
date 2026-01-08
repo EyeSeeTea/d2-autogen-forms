@@ -15,6 +15,7 @@ import { DataElementToggle } from "./ToggleMultiple";
 import { DataElementRuleOptions, TotalRules } from "./DataElementRule";
 import { Period, PeriodType } from "./Period";
 import { RulesFormula } from "../../../data/common/RulesFormula";
+import { CustomRule } from "./CustomRule";
 
 export interface DataForm {
     id: Id;
@@ -29,6 +30,7 @@ export interface DataForm {
     indicators: Indicator[];
     totalRules: TotalRules;
     periodType: PeriodType;
+    customRules: Maybe<CustomRule[]>;
 }
 
 export interface Texts {
