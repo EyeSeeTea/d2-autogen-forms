@@ -19,6 +19,7 @@ import _ from "lodash";
 import { IndicatorItem, RowIndicatorItem } from "../../components/IndicatorItem/IndicatorItem";
 import { checkIndicatorDirection } from "../../../domain/common/entities/Indicator";
 import { getFilteredIndicators } from "./GridFormViewModel";
+import i18n from "../../../locales";
 
 /*
  * Convert data forms into table, using "-" as a separator. An example for section ITNs:
@@ -72,6 +73,15 @@ const GridForm: React.FC<GridFormProps> = props => {
                             )
                         )}
 
+                        {grid.dataEntryPeriod && (
+                            <CustomDataTableColumnHeader
+                                backgroundColor={props.section.styles.columns.backgroundColor}
+                                width="50px"
+                            >
+                                {i18n.t("Period")}
+                            </CustomDataTableColumnHeader>
+                        )}
+
                         {showIndicatorsBefore && (
                             <CustomDataTableColumnHeader
                                 backgroundColor={section.styles.columns.backgroundColor}
@@ -114,18 +124,23 @@ const GridForm: React.FC<GridFormProps> = props => {
                                 />
                             </CustomDataTableCell>
 
-                            {showIndicatorsBefore &&
-                                getFilteredIndicators(section.indicators, row, "before").map(
-                                    indicator =>
-                                        indicator && (
-                                            <IndicatorItem
-                                                key={`${indicator.id}-${row.name}`}
-                                                indicator={indicator}
-                                                dataFormInfo={dataFormInfo}
-                                                periods={[dataFormInfo.period]}
-                                            />
-                                        )
-                                )}
+                            {grid.dataEntryPeriod && (
+                                <CustomDataTableCell backgroundColor={props.section.styles.rows.backgroundColor}>
+                                    <span>{grid.dataEntryPeriod.label}</span>
+                                </CustomDataTableCell>
+                            )}
+
+                            {getFilteredIndicators(section.indicators, row, "before").map(
+                                indicator =>
+                                    indicator && (
+                                        <IndicatorItem
+                                            key={`${indicator.id}-${row.name}`}
+                                            indicator={indicator}
+                                            dataFormInfo={dataFormInfo}
+                                            periods={[dataFormInfo.period]}
+                                        />
+                                    )
+                            )}
 
                             {row.items.map((item, idx) =>
                                 item.dataElement ? (
@@ -141,6 +156,8 @@ const GridForm: React.FC<GridFormProps> = props => {
                                             dataElement={item.dataElement}
                                             dataFormInfo={dataFormInfo}
                                             rows={grid.rows}
+                                            period={grid.dataEntryPeriod?.id || dataFormInfo.period}
+                                            lockException={grid.dataEntryPeriod !== undefined}
                                         />
                                     </CustomDataTableCell>
                                 ) : (
@@ -192,7 +209,7 @@ const GridForm: React.FC<GridFormProps> = props => {
                             indicator={indicator}
                             colSpan="2"
                             dataFormInfo={dataFormInfo}
-                            periods={[dataFormInfo.period]}
+                            periods={[grid.dataEntryPeriod?.id || dataFormInfo.period]}
                         />
                     ))}
                 </TableBody>
