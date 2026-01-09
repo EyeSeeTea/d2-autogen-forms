@@ -12,13 +12,13 @@ import { DataElementRuleOptions, SectionRuleOptions } from "../../domain/common/
 import { ToggleMultiple } from "../../domain/common/entities/ToggleMultiple";
 import { Period, PeriodType, validatePeriodType } from "../../domain/common/entities/Period";
 import { FromRulesFormulaCodec, rulesFormulaCodec } from "./RulesFormula";
-import { CustomRule } from "../../domain/common/entities/CustomRule";
+import { DataFormRule } from "../../domain/common/entities/DataFormRule";
 
 export interface DataSetConfig {
     removePrefix: Maybe<string>;
     texts: Texts;
     sections: Record<Id, SectionConfig>;
-    customRules: Maybe<CustomRule[]>;
+    rules: Maybe<DataFormRule[]>;
 }
 
 export type SectionConfig =
@@ -287,7 +287,7 @@ const orgUnitToggleCodec = Codec.interface({
 
 const toggleCodec = oneOf([dataElementToggleCodec, orgUnitToggleCodec]);
 
-const customRuleCodec = Codec.interface({
+const dataSetRuleCodec = Codec.interface({
     conditions: Codec.interface({
         periodIn: optional(array(string)),
     }),
@@ -330,7 +330,7 @@ const DataStoreConfigCodec = Codec.interface({
         viewType: optional(viewType),
         texts: optional(textsCodec),
         showIndex: optional(boolean),
-        customRules: optional(array(customRuleCodec)),
+        rules: optional(array(dataSetRuleCodec)),
         sections: optional(
             sectionConfig({
                 columnsConfig: optional(record(string, Codec.interface({ rules: optional(rulesFormulaCodec) }))),
@@ -472,7 +472,7 @@ interface OptionSet extends NamedRef {
 
 type Selector = GetType<typeof selector>;
 type DataFormStoreConfigFromCodec = GetType<typeof DataStoreConfigCodec>;
-type CustomRuleFromCodec = GetType<typeof customRuleCodec>;
+type DataSetRuleFromCodec = GetType<typeof dataSetRuleCodec>;
 
 type PeriodInterval = { type: "relative-interval"; startOffset: number; endOffset: number };
 type PeriodSectionOffset = { type: "section-offset"; offset: number };
@@ -847,9 +847,9 @@ export class Dhis2DataStoreDataForm {
 
         const virtualCodes = virtualColumnsCodes.concat(virtualRowsCodes);
 
-        const customActionsCodes = _(storeConfig.dataSets)
+        const dataSetRulesCodes = _(storeConfig.dataSets)
             .values()
-            .flatMap(dataSet => dataSet.customRules)
+            .flatMap(dataSet => dataSet.rules)
             .compact()
             .flatMap(rule => {
                 const warningText = rule.action.text;
@@ -868,7 +868,7 @@ export class Dhis2DataStoreDataForm {
             ])
             .compact()
             .map(selector => selector.code)
-            .concat([...descriptionCodes, ...totalsCodes, ...customActionsCodes])
+            .concat([...descriptionCodes, ...totalsCodes, ...dataSetRulesCodes])
             .uniq()
             .value();
 
@@ -1043,7 +1043,7 @@ export class Dhis2DataStoreDataForm {
             },
             removePrefix: removePrefix,
             sections: sections,
-            customRules: this.getCustomRules(dataSetConfig?.customRules),
+            rules: this.getDataFormRules(dataSetConfig?.rules),
         };
     }
 
@@ -1170,10 +1170,10 @@ export class Dhis2DataStoreDataForm {
         return typeof value === "string" ? value : value ? constantsByCode[value.code]?.displayDescription : "";
     }
 
-    private getCustomRules(customRulesConfig: Maybe<CustomRuleFromCodec[]>): Maybe<CustomRule[]> {
-        if (!customRulesConfig) return undefined;
+    private getDataFormRules(rulesConfig: Maybe<DataSetRuleFromCodec[]>): Maybe<DataFormRule[]> {
+        if (!rulesConfig) return undefined;
 
-        return customRulesConfig.map(ruleConfig => {
+        return rulesConfig.map(ruleConfig => {
             if (ruleConfig.action.type === "displayWarning") {
                 return {
                     ...ruleConfig,

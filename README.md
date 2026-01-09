@@ -240,14 +240,14 @@ This will create this table:
     Male    |           |           |           |           |         |          |           |           |           |         |
 ```
 
-#### DataSet custom rules
+#### DataSet rules
 
-Each dataset entry in `"dataSets"` can optionally contain custom rules.
+Each dataset entry in `"dataSets"` can optionally contain rules.
 **Only one action type** is supported at a time (i.e. if there are two rules with `displayWarning` action, only the first will execute).
 
 ```
 {
-    "customRules": [
+    "rules": [
         {
             "conditions": {
                 "periodIn": ["2025", "2024"]
