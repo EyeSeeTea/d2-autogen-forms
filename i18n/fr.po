@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: i18next-conv\n"
-"POT-Creation-Date: 2025-10-27T21:31:40.460Z\n"
+"POT-Creation-Date: 2026-01-05T19:37:59.446Z\n"
 "PO-Revision-Date: 2018-10-25T09:02:35.143Z\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -55,6 +55,9 @@ msgstr "Téléverser fichier"
 
 msgid "Apply to all"
 msgstr "Appliquer à tous"
+
+msgid "Please enter a valid email address"
+msgstr ""
 
 msgid "Save"
 msgstr ""
