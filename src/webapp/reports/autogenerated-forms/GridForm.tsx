@@ -137,7 +137,7 @@ const GridForm: React.FC<GridFormProps> = props => {
                                             key={`${indicator.id}-${row.name}`}
                                             indicator={indicator}
                                             dataFormInfo={dataFormInfo}
-                                            periods={[dataFormInfo.period]}
+                                            periods={[grid.dataEntryPeriod?.id || dataFormInfo.period]}
                                         />
                                     )
                             )}
@@ -175,7 +175,7 @@ const GridForm: React.FC<GridFormProps> = props => {
                                             key={`${indicator.id}-${row.name}`}
                                             indicator={indicator}
                                             dataFormInfo={dataFormInfo}
-                                            periods={[dataFormInfo.period]}
+                                            periods={[grid.dataEntryPeriod?.id || dataFormInfo.period]}
                                         />
                                     )
                             )}
