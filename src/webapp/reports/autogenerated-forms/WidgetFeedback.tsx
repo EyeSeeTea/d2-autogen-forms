@@ -1,7 +1,7 @@
 import React from "react";
 import { CSSProperties } from "react";
 
-export type WidgetState = "original" | "saving" | "saveSuccessful" | "saveError";
+export type WidgetState = "original" | "saving" | "saveSuccessful" | "saveError" | "required";
 
 const baseStyles: CSSProperties = {
     transition: "background-color 0.5s",
@@ -13,6 +13,7 @@ export const widgetFeedbackStylesByState: Record<WidgetState, CSSProperties> = {
     saving: { ...baseStyles, backgroundColor: "yellow" },
     saveSuccessful: { ...baseStyles, backgroundColor: "rgb(185, 255, 185)" },
     saveError: { ...baseStyles, backgroundColor: "red" },
+    required: { ...baseStyles, backgroundColor: "red" },
 };
 
 export const WidgetFeedback: React.FC<{ state: WidgetState }> = React.memo(props => {
