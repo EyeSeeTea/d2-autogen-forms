@@ -55,7 +55,7 @@ export class DisaggregatedCOCsGridViewModel {
 
             return {
                 columnItems: sortItems(columnItems),
-                dataElement: { ...dataElement, name: getDataElementLabel(section, dataElement) },
+                dataElement: { ...dataElement, name: getDataElementLabel(section, dataElement, dataElement.name) },
             };
         });
 

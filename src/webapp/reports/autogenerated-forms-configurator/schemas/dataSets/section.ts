@@ -85,6 +85,45 @@ export const sectionSchema = (
                 },
             },
         },
+        columnsConfig: {
+            type: "object",
+        },
+        columnsOrder: {
+            type: "object",
+            additionalProperties: {
+                type: "object",
+            },
+        },
+        virtualRows: {
+            type: "array",
+            items: {
+                type: "object",
+                additionalProperties: {
+                    type: "string",
+                },
+            },
+        },
+        virtualColumns: {
+            type: "array",
+            items: {
+                type: "object",
+                additionalProperties: {
+                    type: "string",
+                },
+            },
+        },
+        fixedHeaders: {
+            type: "boolean",
+        },
+        fixedRowNames: {
+            type: "boolean",
+        },
+        enableGroups: {
+            type: "boolean",
+        },
+        enableTopScroll: {
+            type: "boolean",
+        },
         disableComments: {
             type: "boolean",
         },
