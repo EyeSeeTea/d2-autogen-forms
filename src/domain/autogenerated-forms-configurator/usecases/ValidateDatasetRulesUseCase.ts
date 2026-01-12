@@ -55,7 +55,7 @@ export class ValidateDatasetRulesUseCase {
      * Removes the specified prefix from all words in the description.
      */
     private removePrefixFromDescription(description: string, removePrefix: Maybe<string>): string {
-        if (!removePrefix || !description) return description || "";
+        if (!removePrefix) return description;
         const escapedPrefix = removePrefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
         const regex = new RegExp(`\\b${escapedPrefix}`, "g");
         return description.replace(regex, "").trim();
