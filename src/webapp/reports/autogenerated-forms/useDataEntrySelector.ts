@@ -72,6 +72,7 @@ declare global {
                 getSelectedPeriod(): Maybe<Period>;
                 addEventListeners(): void;
                 event: { dataValuesLoaded: string };
+                displayValidationDialog: (html: string, width: number) => void;
             };
             util: {
                 on: (event: string, action: () => void) => void;

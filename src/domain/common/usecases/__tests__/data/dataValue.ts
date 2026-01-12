@@ -13,6 +13,7 @@ export const dataElement: Omit<DataElement, "type"> = {
     categoryCombos: {
         id: "1",
         name: "Combo",
+        categories: [],
         categoryOptionCombos: [
             {
                 id: "1",
@@ -26,6 +27,7 @@ export const dataElement: Omit<DataElement, "type"> = {
     rules: [],
     htmlText: undefined,
     related: undefined,
+    disabled: false,
 };
 
 export const dataValueText: DataValueTextSingle = {
@@ -36,6 +38,7 @@ export const dataValueText: DataValueTextSingle = {
     isMultiple: false,
     type: "TEXT",
     value: "10",
+    isRequired: false,
 };
 
 export const dataValueTextMultiple: DataValueTextMultiple = {
@@ -63,6 +66,7 @@ export const dataValueNumberSingle: DataValueNumberSingle = {
     value: "10",
     type: "NUMBER",
     isMultiple: false,
+    isRequired: false,
 };
 
 export const dataValueFile: DataValueFile = {
@@ -78,4 +82,5 @@ export const dataValueFile: DataValueFile = {
         size: 1024,
         url: "/path/to/file",
     },
+    isRequired: false,
 };

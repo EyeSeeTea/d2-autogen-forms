@@ -8,7 +8,8 @@ export type DataElement =
     | DataElementText
     | DataElementPercentage
     | DataElementFile
-    | DataElementDate;
+    | DataElementDate
+    | DataElementMultiText;
 
 interface DataElementBase {
     id: Id;
@@ -24,7 +25,7 @@ interface DataElementBase {
     disabledComments?: boolean;
     rules: Rule[];
     htmlText: Maybe<string>;
-    disabled?: boolean;
+    disabled: boolean;
 }
 
 export interface DataElementBoolean extends DataElementBase {
@@ -48,6 +49,10 @@ export interface DataElementText extends DataElementBase {
     isEmail?: boolean;
 }
 
+export interface DataElementMultiText extends DataElementBase {
+    type: "MULTI_TEXT";
+}
+
 export interface DataElementFile extends DataElementBase {
     type: "FILE";
 }
@@ -58,16 +63,23 @@ export interface DataElementDate extends DataElementBase {
 
 type Options = Maybe<{ isMultiple: boolean; items: Option<string>[] }>;
 
-type CategoryOption = {
+export type CategoryOption = {
     id: Id;
-    code: string;
+    originalName: string;
     name: string;
+    code: Code;
     displayFormName: string;
 };
 
 type CategoryCombos = {
     id: Id;
     name: string;
+    categories: Array<{
+        id: Id;
+        code: Code;
+        name: string;
+        categoryOptions: CategoryOption[];
+    }>;
     categoryOptionCombos: CategoryOptionCombo[];
 };
 
@@ -77,6 +89,7 @@ export type CategoryOptionCombo = {
     shortName: Maybe<string>;
     formName?: string;
     categoryOptions: CategoryOption[];
+    originalName: string;
 };
 
 type NumberType =

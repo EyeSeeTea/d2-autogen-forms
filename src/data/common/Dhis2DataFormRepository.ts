@@ -1,6 +1,7 @@
 import _ from "lodash";
 
 import { Code, getId, Id } from "../../domain/common/entities/Base";
+import { CompulsoryDataValue } from "../../domain/common/entities/CompulsoryDataValue";
 import { DataElement } from "../../domain/common/entities/DataElement";
 import {
     ConditionRule,
@@ -11,7 +12,7 @@ import {
     SectionTotalRule,
     TotalRules,
 } from "../../domain/common/entities/DataElementRule";
-import { DataForm, defaultTexts, Section, SectionBase } from "../../domain/common/entities/DataForm";
+import { DataForm, defaultTexts, RowConfigDetails, Section, SectionBase } from "../../domain/common/entities/DataForm";
 import { Indicator } from "../../domain/common/entities/Indicator";
 import { SectionStyle } from "../../domain/common/entities/SectionStyle";
 import { buildToggleMultiple } from "../../domain/common/entities/ToggleMultiple";
@@ -57,6 +58,10 @@ export class Dhis2DataFormRepository implements DataFormRepository {
             texts: dataSetConfig.texts,
             options: { dataElements: dataElementsOptions },
             totalRules: totalRules,
+            compulsoryDataValues: dataSet.compulsoryDataElementOperands.map(
+                operand => new CompulsoryDataValue(operand.dataElement.id, operand.categoryOptionCombo.id)
+            ),
+            showErrorOnCompulsory: dataSet.compulsoryFieldsCompleteOnly,
             periodType: validatePeriodType(dataSet.periodType),
             rules: getApplicableDataFormRules(dataSetConfig.rules, { period: options.period }),
         };
@@ -114,7 +119,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                     texts: config?.texts || defaultTexts,
                     tabs:
                         config?.tabs && config.tabs.active
-                            ? { active: true, order: config.tabs.order.toString() }
+                            ? { active: true, order: config.tabs.order.toString(), rules: config.tabs.rules }
                             : { active: false },
                     showIndex: config?.showIndex ?? false,
                     sortRowsBy: config?.sortRowsBy || "",
@@ -158,10 +163,26 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                     toggleMultiple: config?.toggleMultiple
                         ? buildToggleMultiple(config.toggleMultiple, dataElements)
                         : undefined,
+                    fixedHeaders: config?.fixedHeaders || false,
+                    enableTopScroll: config?.enableTopScroll || false,
+                    fixedRowNames: config?.fixedRowNames || false,
                     columnsConfig: config?.columnsConfig,
                 };
 
-                if (!config) return { viewType: "table", calculateTotals: undefined, periods: [], ...base };
+                if (!config)
+                    return {
+                        viewType: "table",
+                        calculateTotals: undefined,
+                        periods: [],
+                        ...base,
+                        fixedHeaders: false,
+                        columnsOrder: undefined,
+                        enableGroups: false,
+                        fixedRowNames: false,
+                        enableTopScroll: false,
+                        columnsConfig: undefined,
+                        firstColumnConfig: undefined,
+                    };
 
                 const base2 = getSectionBaseWithToggle(config, base, dataElements);
 
@@ -175,12 +196,20 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                             viewType: config.viewType,
                             calculateTotals: config.calculateTotals,
                             periods: config.periods,
+                            columnsOrder: config.columnsOrder,
+                            enableGroups: config.enableGroups || false,
+                            columnsConfig: config.columnsConfig,
+                            firstColumnConfig: config.firstColumnConfig,
                             ...base2,
                         };
                     case "grid-with-totals":
                         return {
                             viewType: config.viewType,
                             calculateTotals: config.calculateTotals,
+                            columnsOrder: config.columnsOrder,
+                            enableGroups: config.enableGroups || false,
+                            columnsConfig: config.columnsConfig,
+                            firstColumnConfig: config.firstColumnConfig,
                             ...base2,
                         };
                     case "grid-with-subnational-ous":
@@ -212,6 +241,34 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                             }),
                             ...base2,
                         };
+                    case "grid-category-columns": {
+                        const rowsConfigWithTexts = _(config.rowsConfig)
+                            .map((rowConfig, key): [string, RowConfigDetails] => {
+                                const constant = configDataForm.constants.find(
+                                    c => c.code === rowConfig.rowNameConstant
+                                );
+
+                                return [
+                                    key,
+                                    {
+                                        cellsVisible: rowConfig.cellsVisible ?? true,
+                                        rowName: constant?.displayDescription,
+                                    },
+                                ];
+                            })
+                            .fromPairs()
+                            .value();
+
+                        return {
+                            ...base2,
+                            viewType: config.viewType,
+                            categoriesColumns: config.categoriesColumns,
+                            rowsConfig: rowsConfigWithTexts ?? undefined,
+                            singleCategoryInColumns: config.singleCategoryInColumns ?? false,
+                            categoryOptionFilter: config.categoryOptionFilter,
+                            dataElementsToExclude: config.dataElementsToExclude || [],
+                        };
+                    }
                     default:
                         return { viewType: config.viewType, ...base2 };
                 }
@@ -572,6 +629,8 @@ function getMetadataQuery(options: { dataSetId: Id }) {
                 id: true,
                 code: true,
                 expiryDays: true,
+                compulsoryFieldsCompleteOnly: true,
+                compulsoryDataElementOperands: { dataElement: { id: true }, categoryOptionCombo: { id: true } },
                 periodType: true,
                 dataInputPeriods: {
                     closingDate: true,
