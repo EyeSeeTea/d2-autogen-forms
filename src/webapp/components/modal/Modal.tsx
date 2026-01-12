@@ -46,6 +46,7 @@ export interface ModalProps {
 export const Modal: React.FC<ModalProps> = ({ dismissable, text, title }) => {
     const classes = useStyles();
     const [isOpen, setIsOpen] = React.useState(true);
+    const containerRef = React.useRef<HTMLDivElement>(null);
     const containerStyle = useDataEntryContentBoundingRectStyle();
 
     const className = !title && !dismissable ? classes.onlyContent : undefined;
@@ -57,23 +58,26 @@ export const Modal: React.FC<ModalProps> = ({ dismissable, text, title }) => {
     };
 
     return (
-        <ConfirmationDialog
-            isOpen={isOpen}
-            title={title}
-            onCancel={dismissable ? handleClose : undefined}
-            cancelText={dismissable ? i18n.t("Accept") : undefined}
-            maxWidth="sm"
-            fullWidth
-            disableEnforceFocus
-            disableBackdropClick={!dismissable}
-            disableEscapeKeyDown={!dismissable}
-            className={className}
-            style={containerStyle}
-            BackdropProps={{
-                style: containerStyle,
-            }}
-        >
-            <p>{text}</p>
-        </ConfirmationDialog>
+        <div ref={containerRef}>
+            <ConfirmationDialog
+                isOpen={isOpen}
+                title={title}
+                onCancel={dismissable ? handleClose : undefined}
+                cancelText={dismissable ? i18n.t("Accept") : undefined}
+                maxWidth="sm"
+                fullWidth
+                disableEnforceFocus
+                disableBackdropClick={!dismissable}
+                disableEscapeKeyDown={!dismissable}
+                className={className}
+                container={containerRef.current ?? undefined}
+                style={containerStyle}
+                BackdropProps={{
+                    style: containerStyle,
+                }}
+            >
+                <p>{text}</p>
+            </ConfirmationDialog>
+        </div>
     );
 };
