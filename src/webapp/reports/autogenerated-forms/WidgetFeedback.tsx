@@ -16,6 +16,11 @@ export const widgetFeedbackStylesByState: Record<WidgetState, CSSProperties> = {
     required: { ...baseStyles, backgroundColor: "red" },
 };
 
-export const WidgetFeedback: React.FC<{ state: WidgetState }> = React.memo(props => {
-    return <div style={widgetFeedbackStylesByState[props.state]}>{props.children}</div>;
+type WidgetFeedbackProps = {
+    state: WidgetState;
+    style?: CSSProperties;
+};
+
+export const WidgetFeedback: React.FC<WidgetFeedbackProps> = React.memo(props => {
+    return <div style={{ ...props.style, ...widgetFeedbackStylesByState[props.state] }}>{props.children}</div>;
 });

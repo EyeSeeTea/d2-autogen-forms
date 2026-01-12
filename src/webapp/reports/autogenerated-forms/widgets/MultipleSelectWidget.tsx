@@ -34,7 +34,7 @@ const MultipleSelectWidget: React.FC<MultipleSelectWidgetProps> = props => {
     );
 
     return (
-        <WidgetFeedback state={props.state}>
+        <WidgetFeedback state={props.state} style={{ minWidth: "120px" }}>
             <MultiSelect onChange={notifyChange} selected={selectedValues} disabled={disabled}>
                 {options.map(option => (
                     <MultiSelectOption key={option.value} label={option.name} value={option.value} />
