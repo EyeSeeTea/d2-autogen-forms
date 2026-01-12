@@ -30,9 +30,9 @@ describe("buildToggleMultiple", () => {
     const toggleMultiple: ToggleMultiple = {
         logicalOperator: "AND",
         conditions: [
-            { dataElement: "DE_1", condition: "condition1" },
-            { dataElement: "DE_2", condition: "condition2" },
-            { dataElement: "DE_3", condition: "condition3" }, // DE_3 does not exist in dataElements
+            { type: "dataElement", dataElement: "DE_1", condition: "condition1" },
+            { type: "dataElement", dataElement: "DE_2", condition: "condition2" },
+            { type: "dataElement", dataElement: "DE_3", condition: "condition3" }, // DE_3 does not exist in dataElements
         ],
     };
 
@@ -40,17 +40,25 @@ describe("buildToggleMultiple", () => {
         const expected: DataElementToggle = {
             logicalOperator: "AND",
             toggleDataElements: [
-                { dataElement: dataElement1, condition: "condition1" },
-                { dataElement: dataElement2, condition: "condition2" },
+                { type: "dataElement", dataElement: dataElement1, condition: "condition1" },
+                { type: "dataElement", dataElement: dataElement2, condition: "condition2" },
             ],
         };
 
-        const result = buildToggleMultiple(toggleMultiple, dataElements);
+        const result = buildToggleMultiple(
+            toggleMultiple,
+            { dataElements: [{ code: dataElement1.code }, { code: dataElement2.code }] },
+            dataElements
+        );
         expect(result).toEqual(expected);
     });
 
     it("should log a warning for missing data elements", () => {
-        buildToggleMultiple(toggleMultiple, dataElements);
+        buildToggleMultiple(
+            toggleMultiple,
+            { dataElements: [{ code: dataElement1.code }, { code: dataElement2.code }] },
+            dataElements
+        );
         expect(console.warn).toHaveBeenCalledWith("Cannot found DE_3 in toggleMultiple config.");
     });
 
@@ -58,11 +66,15 @@ describe("buildToggleMultiple", () => {
         const toggleMultipleNone: ToggleMultiple = {
             logicalOperator: "AND",
             conditions: [
-                { dataElement: "DE_4", condition: "condition4" },
-                { dataElement: "DE_5", condition: "condition5" },
+                { type: "dataElement", dataElement: "DE_4", condition: "condition4" },
+                { type: "dataElement", dataElement: "DE_5", condition: "condition5" },
             ],
         };
-        const result = buildToggleMultiple(toggleMultipleNone, dataElements);
+        const result = buildToggleMultiple(
+            toggleMultipleNone,
+            { dataElements: [{ code: dataElement1.code }, { code: dataElement2.code }] },
+            dataElements
+        );
         expect(result).toEqual({ logicalOperator: "AND", toggleDataElements: [] });
     });
 });
