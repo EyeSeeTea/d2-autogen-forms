@@ -1,3 +1,4 @@
+import _ from "lodash";
 import React, { useCallback, useEffect, useState } from "react";
 import { Tabs, Tab, Box, makeStyles } from "@material-ui/core";
 import {
@@ -9,6 +10,7 @@ import {
     SectionSimple,
     SectionGrid,
     SectionWithIndicatorsCalculated,
+    SectionWithCategoryColumns,
 } from "../../../domain/common/entities/DataForm";
 import TableForm from "./TableForm";
 import GridForm from "./GridForm";
@@ -26,6 +28,8 @@ import { IconButton } from "material-ui";
 import { ChevronLeft, ChevronRight } from "@material-ui/icons";
 import DisaggregatedCOCsGrid from "./DisaggregatedCOCsGrid";
 import GridIndicatorsCalculated from "./GridIndicatorsCalculated";
+import { calculateFormula } from "./datatables/InputFormula";
+import GridWithCategoryColumns from "./GridWithCategoryColumns";
 
 export interface TabPanelProps {
     sections: Section[];
@@ -118,6 +122,14 @@ function TypeSwitch(props: TypeSwitchProps) {
                     key={`${section.id}+tab`}
                     dataFormInfo={dataFormInfo}
                     section={section as SectionWithIndicatorsCalculated}
+                />
+            );
+        case "grid-category-columns":
+            return (
+                <GridWithCategoryColumns
+                    key={`${section.id}+tab`}
+                    dataFormInfo={dataFormInfo}
+                    section={section as SectionWithCategoryColumns}
                 />
             );
         default:
@@ -255,12 +267,32 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
                 >
                     {sections.flatMap(section => {
                         const order = section.tabs.order;
+
                         if (isTabHeader(order)) {
-                            const [primaryTabIndex, _] = getTabIndices(order);
+                            const [primaryTabIndex] = getTabIndices(order);
                             const tabLabel =
                                 section.showIndex && primaryTabIndex !== -1
                                     ? `${primaryTabIndex + 1} - ${section.name}`
                                     : section.name;
+
+                            const visibleRule = section.tabs.rules?.visible;
+                            const dataElementCodes = visibleRule?.dataElements.map(de => de.code) || [];
+                            const value =
+                                visibleRule && dataElementCodes.length > 0
+                                    ? calculateFormula({
+                                          dataElementCodes: dataElementCodes,
+                                          dataFormInfo: dataFormInfo,
+                                          formula: visibleRule.formula.value,
+                                      })
+                                    : undefined;
+
+                            const isConditionMet = value === visibleRule?.formula.condition;
+
+                            if (visibleRule && !isConditionMet) {
+                                return null;
+                            }
+
+                            const primaryValue = _(order).split(".").first() ?? "0";
 
                             return (
                                 <Tab
@@ -268,6 +300,7 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
                                     label={tabLabel}
                                     id={`tab-${order}`}
                                     aria-controls={`tabpanel-${order}`}
+                                    value={Number(primaryValue)}
                                 />
                             );
                         } else {
@@ -302,7 +335,6 @@ const useStyles = makeStyles({
 });
 
 const StyledAppBar = styled(AppBar)`
-    top: 48px !important;
     z-index: 100 !important;
 `;
 
