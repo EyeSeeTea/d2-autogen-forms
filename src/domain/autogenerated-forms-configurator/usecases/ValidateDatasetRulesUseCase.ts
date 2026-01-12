@@ -14,7 +14,7 @@ export class ValidateDatasetRulesUseCase {
         const rules = await this.getRules(dataSetId, options.cacheKey);
         if (rules.length === 0) return [];
         const results = await this.ruleRepository.validate(dataSetId, options);
-        return this.buildValidationRuleMessages(rules, results);
+        return this.buildValidationRuleMessages(rules, results, options.removePrefix);
     }
 
     private async getRules(dataSetId: Id, cacheKey: number): Promise<ValidationRule[]> {
@@ -27,7 +27,11 @@ export class ValidateDatasetRulesUseCase {
         }
     }
 
-    private buildValidationRuleMessages(rules: ValidationRule[], results: ValidationResult[]): ValidationResult[] {
+    private buildValidationRuleMessages(
+        rules: ValidationRule[],
+        results: ValidationResult[],
+        removePrefix: Maybe<string>
+    ): ValidationResult[] {
         const rulesByKey = _.keyBy(rules, "id");
         return _(results)
             .map((validationResult): Maybe<ValidationResult> => {
@@ -37,17 +41,28 @@ export class ValidateDatasetRulesUseCase {
                     return undefined;
                 }
 
-                return { ...validationResult, message: this.buildRuleMessage(ruleDetails) };
+                return { ...validationResult, message: this.buildRuleMessage(ruleDetails, removePrefix) };
             })
             .compact()
             .value();
     }
 
-    private buildRuleMessage(rule: ValidationRule): string {
-        return rule.message;
+    private buildRuleMessage(rule: ValidationRule, removePrefix: Maybe<string>): string {
+        return this.removePrefixFromDescription(rule.message, removePrefix);
+    }
+
+    /**
+     * Removes the specified prefix from all words in the description.
+     */
+    private removePrefixFromDescription(description: string, removePrefix: Maybe<string>): string {
+        if (!removePrefix || !description) return description || "";
+        const escapedPrefix = removePrefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const regex = new RegExp(`\\b${escapedPrefix}`, "g");
+        return description.replace(regex, "").trim();
     }
 }
 
 export interface ValidateUseCaseOptions extends ValidateDataSetOptions {
     cacheKey: number;
+    removePrefix?: Maybe<string>;
 }
