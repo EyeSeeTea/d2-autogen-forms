@@ -373,6 +373,7 @@ const DataTableDataElementCell: React.FC<DataTableDataElementCellProps> = props 
                         dataFormInfo={dataFormInfo}
                         period={period.id}
                         lockException={lockException}
+                        manualyDisabled={dataElement.disabled || section.disabled}
                     />
                 </CustomDataTableCell>
             ))}
