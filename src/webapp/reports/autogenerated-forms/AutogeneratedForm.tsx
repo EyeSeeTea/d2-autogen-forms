@@ -510,6 +510,7 @@ function checkValidationRules(options: {
             cacheKey: key,
             period: dataValue.period,
             orgUnitId: dataValue.orgUnitId,
+            removePrefix: dataForm.removePrefix,
         })
         .then(results => {
             const oldIgnoredRules = removeRulesHasChanged(ignoreRules, results);

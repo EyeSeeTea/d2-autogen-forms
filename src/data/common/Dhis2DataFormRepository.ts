@@ -64,6 +64,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
             showErrorOnCompulsory: dataSet.compulsoryFieldsCompleteOnly,
             periodType: validatePeriodType(dataSet.periodType),
             rules: getApplicableDataFormRules(dataSetConfig.rules, { period: options.period }),
+            removePrefix: dataSetConfig.removePrefix,
         };
     }
 

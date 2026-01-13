@@ -34,6 +34,7 @@ export interface DataForm {
     showErrorOnCompulsory: boolean;
     periodType: PeriodType;
     rules: Maybe<DataFormRule[]>;
+    removePrefix: Maybe<string>;
 }
 
 export interface Texts {
