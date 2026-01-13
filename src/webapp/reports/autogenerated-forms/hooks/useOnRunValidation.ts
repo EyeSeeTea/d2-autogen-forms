@@ -76,5 +76,6 @@ export function useRemovePrefixOnRunValidations(prefix: string) {
         },
         [prefix]
     );
-    useOnRunValidation(removePrefixCallback);
+
+    useOnRunValidation(prefix ? removePrefixCallback : undefined);
 }
