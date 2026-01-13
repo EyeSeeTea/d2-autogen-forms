@@ -32,6 +32,7 @@ export interface DataForm {
     compulsoryDataValues: CompulsoryDataValue[];
     showErrorOnCompulsory: boolean;
     periodType: PeriodType;
+    removePrefix: Maybe<string>;
 }
 
 export interface Texts {
