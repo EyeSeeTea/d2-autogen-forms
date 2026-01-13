@@ -30,6 +30,7 @@ import {
 } from "./Dhis2DataStoreDataForm";
 import { validatePeriodType } from "../../domain/common/entities/Period";
 import { Period } from "../../domain/common/entities/DataValue";
+import { getApplicableDataFormRules } from "../../domain/common/entities/DataFormRule";
 
 export class Dhis2DataFormRepository implements DataFormRepository {
     constructor(private api: D2Api) {}
@@ -62,6 +63,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
             ),
             showErrorOnCompulsory: dataSet.compulsoryFieldsCompleteOnly,
             periodType: validatePeriodType(dataSet.periodType),
+            rules: getApplicableDataFormRules(dataSetConfig.rules, { period: options.period }),
         };
     }
 

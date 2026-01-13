@@ -14,6 +14,7 @@ import { titleVariant } from "./TitleVariant";
 import { DataElementToggle } from "./ToggleMultiple";
 import { DataElementRuleOptions, TotalRules } from "./DataElementRule";
 import { RulesFormula } from "../../../data/common/RulesFormula";
+import { DataFormRule } from "./DataFormRule";
 import { CompulsoryDataValue } from "./CompulsoryDataValue";
 import { Period, PeriodType } from "./Period";
 
@@ -32,6 +33,7 @@ export interface DataForm {
     compulsoryDataValues: CompulsoryDataValue[];
     showErrorOnCompulsory: boolean;
     periodType: PeriodType;
+    rules: Maybe<DataFormRule[]>;
 }
 
 export interface Texts {

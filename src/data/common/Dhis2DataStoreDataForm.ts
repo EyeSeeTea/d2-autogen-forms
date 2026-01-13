@@ -21,11 +21,13 @@ import { DataElementRuleOptions, SectionRuleOptions } from "../../domain/common/
 import { ToggleMultiple } from "../../domain/common/entities/ToggleMultiple";
 import { Period, PeriodType, validatePeriodType } from "../../domain/common/entities/Period";
 import { FromRulesFormulaCodec, rulesFormulaCodec } from "./RulesFormula";
+import { DataFormRule } from "../../domain/common/entities/DataFormRule";
 
 export interface DataSetConfig {
     removePrefix: Maybe<string>;
     texts: Texts;
     sections: Record<Id, SectionConfig>;
+    rules: Maybe<DataFormRule[]>;
 }
 
 export type SectionConfig =
@@ -350,6 +352,17 @@ const orgUnitToggleCodec = Codec.interface({
 
 const toggleCodec = oneOf([dataElementToggleCodec, orgUnitToggleCodec]);
 
+const dataSetRuleCodec = Codec.interface({
+    conditions: Codec.interface({
+        periodIn: optional(array(string)),
+    }),
+    action: Codec.interface({
+        type: exactly("displayWarning"),
+        text: oneOf([string, selector]),
+        blockEntry: boolean,
+    }),
+});
+
 const DataStoreConfigCodec = Codec.interface({
     categoryCombinations: sectionConfig({
         viewType: optional(oneOf([exactly("name"), exactly("shortName"), exactly("formName")])),
@@ -385,6 +398,7 @@ const DataStoreConfigCodec = Codec.interface({
         viewType: optional(viewType),
         texts: optional(textsCodec),
         showIndex: optional(boolean),
+        rules: optional(array(dataSetRuleCodec)),
         sections: optional(
             sectionConfig({
                 dataElementsToExclude: optional(array(dataElementsToExcludeCodec)),
@@ -525,6 +539,7 @@ interface OptionSet extends NamedRef {
 
 type Selector = GetType<typeof selector>;
 type DataFormStoreConfigFromCodec = GetType<typeof DataStoreConfigCodec>;
+type DataSetRuleFromCodec = GetType<typeof dataSetRuleCodec>;
 
 type PeriodInterval = { type: "relative-interval"; startOffset: number; endOffset: number };
 type PeriodSectionOffset = { type: "section-offset"; offset: number };
@@ -907,6 +922,17 @@ export class Dhis2DataStoreDataForm {
 
         const virtualCodes = virtualColumnsCodes.concat(virtualRowsCodes).concat(rowNamesKeys);
 
+        const dataSetRulesCodes = _(storeConfig.dataSets)
+            .values()
+            .flatMap(dataSet => dataSet.rules)
+            .compact()
+            .flatMap(rule => {
+                const warningText = rule.action.text;
+                return typeof warningText !== "string" ? warningText.code : undefined;
+            })
+            .compact()
+            .value();
+
         const codes = _([...dataSetTexts, ...dataElementTexts, ...sectionTexts])
             .flatMap(t => [
                 typeof t.header !== "string" ? t.header : undefined,
@@ -917,7 +943,7 @@ export class Dhis2DataStoreDataForm {
             ])
             .compact()
             .map(selector => selector.code)
-            .concat([...descriptionCodes, ...totalsCodes])
+            .concat([...descriptionCodes, ...totalsCodes, ...dataSetRulesCodes])
             .uniq()
             .value();
 
@@ -1112,6 +1138,7 @@ export class Dhis2DataStoreDataForm {
             },
             removePrefix: removePrefix,
             sections: sections,
+            rules: this.getDataFormRules(dataSetConfig?.rules),
         };
     }
 
@@ -1237,6 +1264,29 @@ export class Dhis2DataStoreDataForm {
         constantsByCode: Record<string, Constant>
     ): Maybe<string> {
         return typeof value === "string" ? value : value ? constantsByCode[value.code]?.displayDescription : "";
+    }
+
+    private getDataFormRules(rulesConfig: Maybe<DataSetRuleFromCodec[]>): Maybe<DataFormRule[]> {
+        if (!rulesConfig) return undefined;
+
+        return rulesConfig.map(ruleConfig => {
+            if (ruleConfig.action.type === "displayWarning") {
+                return {
+                    ...ruleConfig,
+                    action: {
+                        ...ruleConfig.action,
+                        text:
+                            typeof ruleConfig.action.text === "string"
+                                ? ruleConfig.action.text
+                                : this.getTextFromConstants(
+                                      ruleConfig.action.text,
+                                      _.keyBy(this.config.constants, getCode)
+                                  ) || "",
+                    },
+                };
+            }
+            throw new Error(`Unsupported custom rule action type: ${ruleConfig.action.type}`);
+        });
     }
 }
 
