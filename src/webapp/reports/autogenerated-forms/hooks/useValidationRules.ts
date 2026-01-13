@@ -6,9 +6,23 @@ import { DataForm } from "../../../../domain/common/entities/DataForm";
 import { DataValue } from "../../../../domain/common/entities/DataValue";
 import { Maybe } from "../../../../utils/ts-utils";
 import { useAppContext } from "../../../contexts/app-context";
+import { useLocalStorage } from "../../../hooks/useLocalStorage";
 
 interface UseValidationRulesOptions {
     dataForm: Maybe<DataForm>;
+}
+
+interface ValidationContext {
+    orgUnitId: string;
+    period: string;
+}
+
+function buildIgnoreRulesKey(
+    dataFormId: string | undefined,
+    context: ValidationContext | undefined
+): string | undefined {
+    if (!dataFormId || !context) return undefined;
+    return `autogen-ignorerules-${dataFormId}-${context.orgUnitId}-${context.period}`;
 }
 
 export function useValidationRules(options: UseValidationRulesOptions) {
@@ -16,19 +30,27 @@ export function useValidationRules(options: UseValidationRulesOptions) {
     const { compositionRoot } = useAppContext();
     const snackbar = useSnackbar();
     const [key] = React.useState(0);
-    const [ignoreRules, setIgnoreRules] = React.useState<IgnoreValidationRule[]>([]);
+    const [validationContext, setValidationContext] = React.useState<ValidationContext>();
     const [rules, setRules] = React.useState<ValidationResult[]>([]);
 
-    const onCloseAlert = React.useCallback((rule: ValidationResult) => {
-        setIgnoreRules(prev => {
-            const newIgnoreRules = [...prev, { validationRuleId: rule.validationRuleId, message: rule.message }];
-            return newIgnoreRules;
-        });
-    }, []);
+    const ignoreRulesKey = buildIgnoreRulesKey(dataForm?.id, validationContext);
+    const [ignoreRules, setIgnoreRules] = useLocalStorage<IgnoreValidationRule[]>(ignoreRulesKey, []);
+
+    const onCloseAlert = React.useCallback(
+        (rule: ValidationResult) => {
+            setIgnoreRules(prev => {
+                const newIgnoreRules = [...prev, { validationRuleId: rule.validationRuleId, message: rule.message }];
+                return newIgnoreRules;
+            });
+        },
+        [setIgnoreRules]
+    );
 
     const checkValidationRules = React.useCallback(
         (dataValue: DataValue) => {
             if (!dataForm) return;
+
+            setValidationContext({ orgUnitId: dataValue.orgUnitId, period: dataValue.period });
 
             compositionRoot.dataSet
                 .validate(dataForm.id, {
@@ -38,20 +60,19 @@ export function useValidationRules(options: UseValidationRulesOptions) {
                     removePrefix: dataForm.removePrefix,
                 })
                 .then(results => {
-                    const oldIgnoredRules = removeRulesHasChanged(ignoreRules, results);
-                    setIgnoreRules(oldIgnoredRules);
+                    setIgnoreRules(prev => removeRulesHasChanged(prev, results));
                     setRules(results);
                 })
                 .catch(err => {
                     snackbar.error(err);
                 });
         },
-        [compositionRoot, dataForm, key, ignoreRules, snackbar]
+        [compositionRoot, dataForm, key, setIgnoreRules, snackbar]
     );
 
     const resetRules = React.useCallback(() => {
         setRules([]);
-        setIgnoreRules([]);
+        setValidationContext(undefined);
     }, []);
 
     return {
