@@ -6,6 +6,7 @@ import {
     DataElementBoolean,
     DataElementDate,
     DataElementFile,
+    DataElementMultiText,
     DataElementNumber,
     DataElementPercentage,
     DataElementText,
@@ -15,6 +16,7 @@ export interface DataValueBase {
     orgUnitId: Id;
     period: Period;
     categoryOptionComboId: Id;
+    isRequired?: boolean;
 }
 
 export interface DataValueBoolean extends DataValueBase {
@@ -59,6 +61,13 @@ export interface DataValueTextMultiple extends DataValueBase {
     values: string[];
 }
 
+export interface DataValueMultiText extends DataValueBase {
+    type: "MULTI_TEXT";
+    isMultiple: true;
+    dataElement: DataElementMultiText;
+    values: string[];
+}
+
 export interface DataValueFile extends DataValueBase {
     type: "FILE";
     isMultiple: false;
@@ -95,7 +104,8 @@ export type DataValue =
     | DataValueTextSingle
     | DataValueTextMultiple
     | DataValueFile
-    | DataValueDate;
+    | DataValueDate
+    | DataValueMultiText;
 
 export type Period = string;
 
@@ -157,6 +167,8 @@ function getEmpty(dataElement: DataElement, base: DataValueBase): DataValue {
             return dataElement.options?.isMultiple
                 ? { ...base, dataElement, type: "TEXT", isMultiple: true, values: [] }
                 : { ...base, dataElement, type: "TEXT", isMultiple: false, value: "" };
+        case "MULTI_TEXT":
+            return { ...base, dataElement, type: "MULTI_TEXT", isMultiple: true, values: [] };
         case "PERCENTAGE":
             return { ...base, dataElement, type: "PERCENTAGE", isMultiple: false, value: "" };
         case "FILE":
@@ -179,3 +191,5 @@ function getStoreKey(options: {
         .compact()
         .join(".");
 }
+
+export const MULTI_TEXT_SEPARATOR = ",";

@@ -31,7 +31,7 @@ const SingleSelectWidget: React.FC<SingleSelectWidgetProps> = props => {
     );
 
     return (
-        <WidgetFeedback state={props.state}>
+        <WidgetFeedback state={props.state} style={{ minWidth: "120px" }}>
             <SingleSelect
                 onChange={notifyChange}
                 selected={selectedValue}

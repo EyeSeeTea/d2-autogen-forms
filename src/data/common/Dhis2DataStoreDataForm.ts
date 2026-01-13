@@ -5,7 +5,16 @@ import { Namespaces } from "./clients/storage/Namespaces";
 import { assertUnreachable, Maybe, NonPartial } from "../../utils/ts-utils";
 import { Code, getCode, Id, NamedRef } from "../../domain/common/entities/Base";
 import { Option } from "../../domain/common/entities/DataElement";
-import { DescriptionText, Texts, Totals } from "../../domain/common/entities/DataForm";
+import {
+    CategoryColumnConfig,
+    CategoryOptionFilter,
+    ColumnOrder,
+    DataElementsToExclude,
+    DataElementWidget,
+    DescriptionText,
+    Texts,
+    Totals,
+} from "../../domain/common/entities/DataForm";
 import { titleVariant } from "../../domain/common/entities/TitleVariant";
 import { SectionStyle, SectionStyleAttrs } from "../../domain/common/entities/SectionStyle";
 import { DataElementRuleOptions, SectionRuleOptions } from "../../domain/common/entities/DataElementRule";
@@ -29,7 +38,8 @@ export type SectionConfig =
     | GridWithPeriodsSectionConfig
     | GridWithTotalsSectionConfig
     | GridWithSubnationalSectionConfig
-    | GridIndicatorsCalculated;
+    | GridIndicatorsCalculated
+    | GridCategoryColumnsConfig;
 
 export type TotalsRule = (
     | {
@@ -70,12 +80,11 @@ export type OrgUnitToggle = {
 };
 
 type Toggle = DataElementToggle | DataElementExternalToggle | OrgUnitToggle | { type: "none" };
-type GridColumnsConfig = Record<string, { rules?: FromRulesFormulaCodec }>;
 
 interface BaseSectionConfig {
     texts: Texts;
     toggle: Toggle;
-    tabs: { active: true; order: string | number } | { active: false };
+    tabs: { active: true; order: string | number; rules?: FromRulesFormulaCodec } | { active: false };
     showIndex: boolean;
     sortRowsBy: string;
     titleVariant: titleVariant;
@@ -86,8 +95,21 @@ interface BaseSectionConfig {
     totals?: Record<string, SectionTotals>;
     toggleMultiple: Maybe<ToggleMultiple>;
     indicators?: Record<Code, IndicatorConfig>;
+    fixedHeaders: boolean;
+    fixedRowNames: boolean;
+    enableTopScroll: boolean;
     columnsConfig?: GridColumnsConfig;
+    disabled: boolean;
 }
+
+const dataElementsToExcludeCodec = Codec.interface({
+    codesToExclude: array(Codec.interface({ code: string })),
+    formula: Codec.interface({
+        condition: string,
+        value: string,
+    }),
+    dataElements: array(Codec.interface({ code: string })),
+});
 
 interface BasicSectionConfig extends BaseSectionConfig {
     viewType: "grid-with-combos" | "matrix-grid" | "grid-disaggregated-cocs";
@@ -97,6 +119,17 @@ interface BasicSectionConfig extends BaseSectionConfig {
 interface GridSectionConfig extends BaseSectionConfig {
     viewType: "table" | "grid";
     calculateTotals: CalculateTotalType;
+    columnsOrder: Maybe<ColumnOrder>;
+    enableGroups: boolean;
+    columnsConfig?: Record<
+        string,
+        {
+            rules?: FromRulesFormulaCodec;
+        }
+    >;
+    firstColumnConfig?: {
+        width: number;
+    };
     periods: Period[];
 }
 
@@ -108,6 +141,14 @@ interface GridWithPeriodsSectionConfig extends BaseSectionConfig {
 interface GridWithTotalsSectionConfig extends BaseSectionConfig {
     viewType: "grid-with-totals";
     calculateTotals: CalculateTotalType;
+    columnsOrder: Maybe<ColumnOrder>;
+    fixedRowNames: boolean;
+    enableGroups: boolean;
+    enableTopScroll: boolean;
+    columnsConfig?: GridColumnsConfig;
+    firstColumnConfig?: {
+        width: number;
+    };
 }
 
 interface GridIndicatorsCalculated extends BaseSectionConfig {
@@ -131,6 +172,17 @@ export type GridIndicatorsCalculatedRow = {
         formula: { value: string };
     }>;
 };
+
+type GridColumnsConfig = Record<string, { rules?: FromRulesFormulaCodec }>;
+
+interface GridCategoryColumnsConfig extends BaseSectionConfig {
+    viewType: "grid-category-columns";
+    categoriesColumns: CategoryColumnConfig[];
+    rowsConfig: Maybe<Record<string, { cellsVisible?: boolean; rowNameConstant?: string }>>;
+    singleCategoryInColumns: boolean;
+    categoryOptionFilter: Maybe<CategoryOptionFilter>;
+    dataElementsToExclude: Maybe<DataElementsToExclude[]>;
+}
 
 interface GridWithSubnationalSectionConfig extends BaseSectionConfig {
     viewType: "grid-with-subnational-ous";
@@ -181,6 +233,7 @@ const viewType = oneOf([
     exactly("grid-with-periods"),
     exactly("grid-with-subnational-ous"),
     exactly("grid-indicators-calculated"),
+    exactly("grid-category-columns"),
 ]);
 
 const titleVariantType = oneOf([
@@ -259,6 +312,18 @@ const textsCodec = Codec.interface({
     name: optional(oneOf([string, selector])),
 });
 
+const categoryOptionFilterConfigCodec = Codec.interface({
+    dataElementCode: string,
+    config: array(
+        Codec.interface({
+            code: string,
+            disabled: optional(boolean),
+            showWhenValue: optional(array(oneOf([string, exactly("null")]))),
+            children: array(Codec.interface({ categoryOptionCode: string })),
+        })
+    ),
+});
+
 const relativeIntervalPeriodType = Codec.interface({
     type: exactly("relative-interval"),
     startOffset: number,
@@ -317,13 +382,16 @@ const DataStoreConfigCodec = Codec.interface({
         visible: optional(boolean),
     }),
     dataElements: sectionConfig({
+        disabled: optional(boolean),
         disableComments: optional(boolean),
         rules: optional(dataElementRuleCodec),
         selection: optional(
             Codec.interface({
                 optionSet: optional(selector),
                 isMultiple: optional(boolean),
-                widget: optional(oneOf([exactly("dropdown"), exactly("radio"), exactly("sourceType")])),
+                widget: optional(
+                    oneOf([exactly("dropdown"), exactly("radio"), exactly("sourceType"), exactly("checkbox")])
+                ),
                 visible: optional(
                     Codec.interface({
                         dataElementCode: optional(string),
@@ -343,7 +411,24 @@ const DataStoreConfigCodec = Codec.interface({
         showIndex: optional(boolean),
         sections: optional(
             sectionConfig({
+                dataElementsToExclude: optional(array(dataElementsToExcludeCodec)),
+                categoryOptionFilter: optional(categoryOptionFilterConfigCodec),
+                firstColumnConfig: optional(Codec.interface({ width: number })),
+                singleCategoryInColumns: optional(boolean),
+                rowsConfig: optional(
+                    record(
+                        string,
+                        Codec.interface({ cellsVisible: optional(boolean), rowNameConstant: optional(string) })
+                    )
+                ),
+                categoriesColumns: optional(array(Codec.interface({ dataElementCode: string, categoryCode: string }))),
                 columnsConfig: optional(record(string, Codec.interface({ rules: optional(rulesFormulaCodec) }))),
+                disabled: optional(boolean),
+                columnsOrder: optional(record(string, number)),
+                fixedHeaders: optional(boolean),
+                fixedRowNames: optional(boolean),
+                enableGroups: optional(boolean),
+                enableTopScroll: optional(boolean),
                 disableComments: optional(boolean),
                 subNationalDataset: optional(string),
                 sortRowsBy: optional(string),
@@ -358,6 +443,7 @@ const DataStoreConfigCodec = Codec.interface({
                     Codec.interface({
                         active: exactly(true),
                         order: oneOf([string, number]),
+                        rules: optional(rulesFormulaCodec),
                     })
                 ),
                 showIndex: optional(boolean),
@@ -426,26 +512,6 @@ const DataStoreConfigCodec = Codec.interface({
                         })
                     )
                 ),
-                rows: optional(
-                    array(
-                        Codec.interface({
-                            code: string,
-                            denominator: optional(
-                                Codec.interface({
-                                    dataElementCode: string,
-                                })
-                            ),
-                            value: optional(
-                                Codec.interface({
-                                    dataElementCodes: array(string),
-                                    formula: Codec.interface({
-                                        value: string,
-                                    }),
-                                })
-                            ),
-                        })
-                    )
-                ),
             })
         ),
     }),
@@ -453,12 +519,13 @@ const DataStoreConfigCodec = Codec.interface({
 
 export interface DataElementConfig {
     rules?: DataElementRuleOptions;
+    disabled?: boolean;
     disableComments?: boolean;
     texts?: Texts;
     selection?: {
         optionSet?: OptionSet;
         isMultiple: boolean;
-        widget: Maybe<"dropdown" | "radio" | "sourceType">;
+        widget: Maybe<DataElementWidget>;
         visible: { dataElementCode: string; value: string } | undefined;
     };
 }
@@ -844,7 +911,15 @@ export class Dhis2DataStoreDataForm {
             .compact()
             .value();
 
-        const virtualCodes = virtualColumnsCodes.concat(virtualRowsCodes);
+        const rowNamesKeys = _(storeConfig.dataSets)
+            .values()
+            .flatMap(dataSet => _.values(dataSet.sections))
+            .flatMap(section => _.values(section.rowsConfig))
+            .map(rowConfig => rowConfig.rowNameConstant)
+            .compact()
+            .value();
+
+        const virtualCodes = virtualColumnsCodes.concat(virtualRowsCodes).concat(rowNamesKeys);
 
         const codes = _([...dataSetTexts, ...dataElementTexts, ...sectionTexts])
             .flatMap(t => [
@@ -955,6 +1030,7 @@ export class Dhis2DataStoreDataForm {
                         dataSetConfig?.disableComments,
                         sectionConfig.disableComments
                     ),
+                    disabled: sectionConfig.disabled || false,
                     styles: SectionStyle.buildSectionStyles(sectionConfig.styles),
                     columnsDescriptions: _.mapValues(sectionConfig.columnsDescriptions, columnDescription =>
                         this.getTextFromConstants(columnDescription, constantsByCode)
@@ -965,6 +1041,9 @@ export class Dhis2DataStoreDataForm {
                     totals: this.getSectionTotals(sectionConfig, constantsByCode),
                     toggleMultiple: this.getToggleMultipleConfig(sectionConfig),
                     indicators: sectionConfig.indicators,
+                    fixedHeaders: sectionConfig.fixedHeaders || false,
+                    fixedRowNames: sectionConfig.fixedRowNames || false,
+                    enableTopScroll: sectionConfig.enableTopScroll || false,
                     columnsConfig: sectionConfig.columnsConfig,
                 };
 
@@ -987,6 +1066,10 @@ export class Dhis2DataStoreDataForm {
                             ...baseConfig,
                             viewType,
                             calculateTotals: sectionConfig.calculateTotals,
+                            columnsOrder: sectionConfig.columnsOrder,
+                            enableGroups: sectionConfig.enableGroups || false,
+                            columnsConfig: sectionConfig.columnsConfig,
+                            firstColumnConfig: sectionConfig.firstColumnConfig,
                             periods: getSectionPeriods(viewType, period, sectionConfig.periods, periodType),
                         };
                         return [section.id, config] as [typeof section.id, typeof config];
@@ -997,6 +1080,7 @@ export class Dhis2DataStoreDataForm {
                             viewType,
                             calculateTotals: sectionConfig.calculateTotals,
                             subNationalDataset: sectionConfig.subNationalDataset || "",
+                            columns: undefined,
                         };
                         return [section.id, config] as [typeof section.id, typeof config];
                     }
@@ -1004,12 +1088,23 @@ export class Dhis2DataStoreDataForm {
                         const config = {
                             ...baseConfig,
                             periods: getSectionPeriods(viewType, period, sectionConfig.periods, periodType),
-                            rows: sectionConfig.rows ?? [],
                             virtualColumns: sectionConfig.virtualColumns ?? [],
                             virtualRows: sectionConfig.virtualRows ?? [],
                             viewType,
                         };
                         return [section.id, config];
+                    }
+                    case "grid-category-columns": {
+                        const config = {
+                            ...baseConfig,
+                            viewType,
+                            categoriesColumns: sectionConfig.categoriesColumns || [],
+                            rowsConfig: sectionConfig.rowsConfig,
+                            singleCategoryInColumns: sectionConfig.singleCategoryInColumns || false,
+                            categoryOptionFilter: sectionConfig.categoryOptionFilter,
+                            dataElementsToExclude: sectionConfig.dataElementsToExclude ?? [],
+                        };
+                        return [section.id, config] as [typeof section.id, typeof config];
                     }
                     default: {
                         const config = { ...baseConfig, viewType };
@@ -1160,6 +1255,7 @@ export class Dhis2DataStoreDataForm {
                 const deToHideValue = config.selection?.visible?.value;
 
                 const dataElementConfig: DataElementConfig = {
+                    disabled: config.disabled,
                     disableComments: config.disableComments,
                     rules: config.rules,
                     texts: {
