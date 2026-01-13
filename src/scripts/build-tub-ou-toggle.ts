@@ -5,62 +5,21 @@ import { Code } from "../domain/common/entities/Base";
 import _ from "lodash";
 import { readFile, writeFile } from "fs/promises";
 
-// Take autogen config json as input
-// Take excel sheet as input and parse for org unit toggles
-// Add config to each section
-// config format:
-// {
-//   "SECTION_CODE": {
-//     "toggle": {
-//       "type": "orgUnit",
-//       "orgUnits": ["TOGGLE_OU_CODE_1", "TOGGLE_OU_CODE_2"],
-//       "condition": "show", // or "hide",
-//       "disabled": true, // or false or undefined
-//     }
-//   }
-// }
-
-// Code                                 Rule                                                    Section Codes                                       Condition (show/hide)
-// dc_compact_form                      show only these sections, hide all other sections       TUB_TB_NOTIFICATIONS_HISTORY_SITE_DIAGNOSTIC        hide ??
-//                                                                                              TUB_TB_NOTIF_HISTORY_SITE_DIAGNOSTIC_METHOD
-//                                                                                              TUB_PREVIOUSLY_TREATED_PATIENTS
-//                                                                                              TUB_CASES_AMONG_FOREIGN_BORN_INDIVIDUALS
-//                                                                                              TUB_NEW_RELAPSE_TB_CASES_NEW
-//                                                                                              TUB_AGE_GROUP
-//                                                                                              TUB_RECOMMENDED_RAPID_DIAGNOSTIC_TESTS
-// dc_universal_access_dx_display       show sections for ous, hide for others                  TUB_UNIVERSAL_ACCESS_RAPID_TB_DIAGNOSTICS           show
-//                                                                                              TUB_BENCHMARK_DISTRICTS_CHEST_X_RAY
-//                                                                                              TUB_STEP_ACCESSING_TESTING
-//                                                                                              TUB_BENCHMARK_PRIMARY_HEALTH_CARE_FACILITIES
-//                                                                                              TUB_BENCHMARK_RECOMMENDED_RAPID_DIAGNOSTIC_TESTING
-//                                                                                              TUB_STEP_TESTED
-//                                                                                              TUB_BENCHMARK_INDIVIDUALS_PRESUMPTIVE_TB_TESTED
-//                                                                                              TUB_STEP_RECEIVING_DIAGNOSIS
-//                                                                                              TUB_BENCHMARK_TB_TESTING_LABORATORIES_ACHIEVE
-// dc_ppm_display                       show section for ous, hide for others                   TUB_MULTISECTORAL_ENGAGEMENT_PUBLIC_PRIVATE_MIX      show
-// dc_engage_community_display          show section for ous, hide for others                   TUB_MULTISECTORAL_ENGAGEMENT_COMMUNITY_ENGAGEMENT    show
-//                                                                                              TUB_REFERRALS_COMMUNITY_HEALTH_WORKERS_COMMUNITY
-//                                                                                              TUB_TREATMENT_ADHERENCE_SUPPORT_COMMUNITY_HEALTH
-//                                                                                              TUB_COMM_REPRESENTATION_NATIONAL_DECISION_MAKING
-//                                                                                              TUB_LEVEL_COMMITTED_FUNDING_COMMUNITY_ENGAGEMENT
-// dc_finance_display                   if 0, 4.1 and 4.2 are shown for ous, hidden for others  TUB_BUDGETS_EXPENDITURE                             show
-//                                                                                              TUB_BUDGET_TB_PREVENTION
-//                                      if 1, 4.1 to 4.41 are shown for ous, hidden for others  TUB_BUDGET_FISCAL_YEAR
-//                                                                                              TUB_TOTAL_EXPECTED_FUNDING
-//                                                                                              TUB_EXPENDITURE_FISCAL_YEAR
-//                                                                                              TUB_TOTAL_RECEIVED_FUNDING
-// dc_ecdc                              disable the questions for ous
-
-type OrgUnitToggle = {
+type OrgUnitToggleCondition = {
     type: "orgUnit";
     orgUnits: Code[];
-    dataElements?: Code[];
     condition: "show" | "hide";
     disabled?: boolean;
+    dataElements?: Code[];
+};
+
+type ToggleMultiple = {
+    logicalOperator: "OR" | "AND";
+    conditions: OrgUnitToggleCondition[];
 };
 
 type SectionConfig = {
-    toggle: OrgUnitToggle;
+    toggleMultiple?: ToggleMultiple;
 };
 
 type Config = Record<"dataSets", Record<Code, { sections: Record<Code, SectionConfig> }>>;
@@ -108,7 +67,7 @@ const metadata: {
         compactForm: [
             "TUB_TB_NOTIFICATIONS_HISTORY_SITE_DIAGNOSTIC",
             "TUB_TB_NOTIF_HISTORY_SITE_DIAGNOSTIC_METHOD",
-            "TUB_PREVIOUSLY_TREATED_PATIENTS",
+            "TUB_TOTAL_NEW_AND_NOTIFIED_CASES",
             "TUB_CASES_AMONG_FOREIGN_BORN_INDIVIDUALS",
             "TUB_NEW_RELAPSE_TB_CASES_NEW",
             "TUB_AGE_GROUP",
@@ -117,7 +76,7 @@ const metadata: {
         ecdc: [
             "TUB_TB_NOTIFICATIONS_HISTORY_SITE_DIAGNOSTIC",
             "TUB_TB_NOTIF_HISTORY_SITE_DIAGNOSTIC_METHOD",
-            "TUB_PREVIOUSLY_TREATED_PATIENTS",
+            "TUB_TOTAL_NEW_AND_NOTIFIED_CASES",
             "TUB_CASES_AMONG_FOREIGN_BORN_INDIVIDUALS",
             "TUB_NEW_RELAPSE_TB_CASES_NEW",
             "TUB_AGE_GROUP",
@@ -126,9 +85,6 @@ const metadata: {
             "TUB_COHORT_SIZES_TREATMENT_OUTCOME_MONITORING",
             "TUB_ANTI_TB_DRUG_RESISTANCE_SURVEILLANCE",
             "TUB_TREATMENT_OUTCOMES_TB_PATIENTS_REGISTERED",
-            "TUB_TREATMENT_OUTCOMES_PEOPLE_AGED_YEARS",
-            "TUB_TREATMENT_OUTCOMES_DISAGGREGATED_SEX_TB",
-            "TUB_TREATMENT_OUTCOMES_PATIENTS_STARTED_TREATMENT",
             "TUB_TB_HIV",
         ],
         engageCommunityDisplay: [
@@ -142,7 +98,7 @@ const metadata: {
         financeDisplay2: [
             "TUB_BUDGET_FISCAL_YEAR",
             "TUB_TOTAL_EXPECTED_FUNDING",
-            "TUB_EXPENDITURE_FISCAL_YEAR",
+            "TUB_EXPENDITURE",
             "TUB_TOTAL_RECEIVED_FUNDING",
         ],
         ppmDisplay: ["TUB_MULTISECTORAL_ENGAGEMENT_PUBLIC_PRIVATE_MIX"],
@@ -242,48 +198,83 @@ function buildSectionsConfigFromSheetRules(config: Config, sheetRules: SheetRule
         return config;
     }
 
-    const ruleConfigs: Array<{
-        ruleType: RuleType;
-        condition: "show" | "hide";
-        disabled?: boolean;
-    }> = [
-        // { ruleType: "compactForm", condition: "hide", disabled: true },
-        { ruleType: "ecdc", condition: "show", disabled: true },
-        { ruleType: "engageCommunityDisplay", condition: "show", disabled: true },
-        { ruleType: "ppmDisplay", condition: "show", disabled: true },
-        { ruleType: "universalAccessDxDisplay", condition: "show", disabled: true },
-        // { ruleType: "financeDisplay1", condition: "show", disabled: true },
-        // { ruleType: "financeDisplay2", condition: "show", disabled: true },
-    ];
+    const countryRulesMap = mapSheetRulesToCountryCodes(sheetRules);
 
     const updatedSectionsConfig = _(sectionsConfig)
-        .map((sectionConfig, key) => {
-            const result = ruleConfigs.reduce<Record<string, SectionConfig>>(
-                (acc, { ruleType, condition, disabled }) => {
-                    if (
-                        (ruleType === "compactForm" && !sections["compactForm"].includes(key)) ||
-                        (ruleType !== "compactForm" && sections[ruleType].includes(key))
-                    ) {
-                        const dataElements = metadata.dataElements?.[ruleType]?.[key];
+        .map((sectionConfig, sectionCode) => {
+            const applicableRules = ruleConfigs.filter(({ ruleType, invertSectionMatch }) => {
+                const sectionInList = sections[ruleType].includes(sectionCode);
+                return invertSectionMatch ? !sectionInList : sectionInList;
+            });
 
-                        const toggle = buildOuToggle({
-                            sheetRules: sheetRules,
-                            sectionConfig: sectionConfig,
-                            sectionCode: key,
-                            ruleType: ruleType,
-                            condition: condition,
-                            disabled: disabled,
-                            dataElements: dataElements,
-                        });
+            if (applicableRules.length === 0) {
+                return { [sectionCode]: sectionConfig };
+            }
 
-                        return { ...acc, ...toggle };
-                    }
-                    return acc;
-                },
-                { [key]: sectionConfig }
+            const rulesWithDataElements = applicableRules.filter(rule => {
+                const ruleDataElements = metadata.dataElements[rule.ruleType]?.[sectionCode];
+                return ruleDataElements && ruleDataElements.length > 0;
+            });
+
+            const rulesWithoutDataElements = applicableRules.filter(rule => {
+                const ruleDataElements = metadata.dataElements[rule.ruleType]?.[sectionCode];
+                return !ruleDataElements || ruleDataElements.length === 0;
+            });
+
+            const dataElementConditions = rulesWithDataElements.map(rule => {
+                const ruleDataElements = metadata.dataElements[rule.ruleType]?.[sectionCode] ?? [];
+                return {
+                    type: "orgUnit" as const,
+                    orgUnits: countryRulesMap[rule.ruleType],
+                    condition: rule.condition,
+                    disabled: rule.disabled ?? false,
+                    dataElements: ruleDataElements,
+                };
+            });
+
+            const sectionConditionGroups = _(rulesWithoutDataElements)
+                .groupBy(rule => rule.condition)
+                .mapValues((rules, condition) => {
+                    const allOrgUnits = _(rules)
+                        .flatMap(rule => countryRulesMap[rule.ruleType])
+                        .uniq()
+                        .value();
+
+                    const disabled = rules.some(rule => rule.disabled);
+
+                    return {
+                        type: "orgUnit" as const,
+                        orgUnits: allOrgUnits,
+                        condition: condition as "show" | "hide",
+                        disabled: disabled,
+                    };
+                })
+                .value();
+
+            const sectionConditions = _(sectionConditionGroups)
+                .values()
+                .filter(condition => condition.orgUnits.length > 0)
+                .value();
+
+            const allConditions = [...sectionConditions, ...dataElementConditions].filter(
+                condition => condition.orgUnits.length > 0
             );
 
-            return result;
+            if (allConditions.length === 0) {
+                return { [sectionCode]: sectionConfig };
+            }
+
+            const toggleMultiple: ToggleMultiple = {
+                logicalOperator: "OR",
+                conditions: allConditions,
+            };
+
+            return {
+                [sectionCode]: {
+                    ...sectionConfig,
+                    toggleMultiple: toggleMultiple,
+                },
+            };
         })
         .value();
 
@@ -306,21 +297,12 @@ function buildSectionsConfigFromSheetRules(config: Config, sheetRules: SheetRule
     };
 }
 
-type OuToggleProps = {
-    sheetRules: SheetRule[];
-    sectionConfig: SectionConfig;
-    sectionCode: string;
-    ruleType: RuleType;
-    condition: "show" | "hide";
-    disabled?: boolean;
-    dataElements?: Code[];
-};
-
 function mapSheetRulesToCountryCodes(sheetRules: SheetRule[]) {
     return sheetRules.reduce<Record<RuleType, Code[]>>(
         (acc, sheetRule) => {
             const {
                 countryCode,
+                compactForm,
                 ecdc,
                 universalAccessDxDisplay,
                 ppmDisplay,
@@ -329,16 +311,9 @@ function mapSheetRulesToCountryCodes(sheetRules: SheetRule[]) {
                 financeDisplay2,
             } = sheetRule;
 
-            // // If compactForm is true, only add to compactForm and skip all others
-            // if (compactForm) {
-            //     return {
-            //         ...acc,
-            //         compactForm: [...acc.compactForm, countryCode],
-            //     };
-            // }
-
             return {
                 ...acc,
+                compactForm: compactForm ? [...acc.compactForm, countryCode] : acc.compactForm,
                 ecdc: ecdc ? [...acc.ecdc, countryCode] : acc.ecdc,
                 universalAccessDxDisplay: universalAccessDxDisplay
                     ? [...acc.universalAccessDxDisplay, countryCode]
@@ -363,28 +338,7 @@ function mapSheetRulesToCountryCodes(sheetRules: SheetRule[]) {
     );
 }
 
-function buildOuToggle(props: OuToggleProps) {
-    const { dataElements, sheetRules, sectionConfig, ruleType, condition, disabled, sectionCode } = props;
-    const countryRulesMap = mapSheetRulesToCountryCodes(sheetRules);
-    const countryCodes = countryRulesMap[ruleType];
-
-    return {
-        [sectionCode]: {
-            ...sectionConfig,
-            toggle: {
-                type: "orgUnit" as const,
-                orgUnits: countryCodes,
-                condition: condition,
-                disabled: disabled,
-                dataElements: dataElements,
-            },
-        },
-    };
-}
-
 function parseRulesFromExcel(rulesSheetPath: string): SheetRule[] {
-    const currentYear = new Date().getFullYear();
-
     const rulesWorkbook = XLSX.readFile(rulesSheetPath);
     const rulesSheetName = rulesWorkbook.SheetNames[0];
     if (!rulesSheetName) {
@@ -395,7 +349,7 @@ function parseRulesFromExcel(rulesSheetPath: string): SheetRule[] {
     const rulesData = rulesSheet ? XLSX.utils.sheet_to_json<XLSXSheetRule>(rulesSheet) : [];
 
     return rulesData
-        .filter(row => row.dcyear === currentYear)
+        .filter(row => row.dcyear === REPORTING_YEAR)
         .map(row => ({
             country: row.country,
             countryCode: row.iso3,
@@ -408,3 +362,21 @@ function parseRulesFromExcel(rulesSheetPath: string): SheetRule[] {
             financeDisplay2: row.dc_finance_display === 1,
         }));
 }
+
+const ruleConfigs: {
+    ruleType: RuleType;
+    condition: "show" | "hide";
+    disabled?: boolean;
+    invertSectionMatch?: boolean;
+}[] = [
+    { ruleType: "compactForm", condition: "hide", disabled: true, invertSectionMatch: true },
+    { ruleType: "compactForm", condition: "show", disabled: false, invertSectionMatch: false },
+    { ruleType: "ecdc", condition: "hide", disabled: true },
+    { ruleType: "engageCommunityDisplay", condition: "show", disabled: true },
+    { ruleType: "ppmDisplay", condition: "show", disabled: true },
+    { ruleType: "universalAccessDxDisplay", condition: "show", disabled: true },
+    { ruleType: "financeDisplay1", condition: "show", disabled: true },
+    { ruleType: "financeDisplay2", condition: "show", disabled: true },
+];
+
+const REPORTING_YEAR = 2025;

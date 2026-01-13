@@ -1,6 +1,8 @@
 import _ from "lodash";
 import { Code } from "./Base";
 import { DataElement } from "./DataElement";
+import { SectionBase } from "./DataForm";
+import { Maybe } from "../../../utils/ts-utils";
 
 export type ToggleLogicalOperator = "AND" | "OR";
 type DataElementToggleMultiple = {
@@ -52,11 +54,15 @@ export function buildToggleMultiple(
                     const sectionDataElementCodes = section.dataElements.map(de => de.code);
                     const sectionDataElements = allDataElements.filter(de => sectionDataElementCodes.includes(de.code));
 
-                    return sectionDataElements.map(dataElement => ({
+                    const selectedDataElements = toggle.dataElements
+                        ? sectionDataElements.filter(de => toggle.dataElements?.includes(de.code))
+                        : sectionDataElements;
+
+                    return selectedDataElements.map(dataElement => ({
                         type: toggle.type,
                         orgUnitCodes: toggle.orgUnits,
                         condition: toggle.condition,
-                        dataElement: { ...dataElement, disabled: toggle.disabled },
+                        dataElement: { ...dataElement, disabled: Boolean(toggle.disabled) },
                     }));
                 }
                 case "dataElement": {
@@ -69,7 +75,7 @@ export function buildToggleMultiple(
                     return {
                         type: toggle.type,
                         condition: toggle.condition,
-                        dataElement: { ...dataElement, disabled: toggle.disabled },
+                        dataElement: { ...dataElement, disabled: Boolean(toggle.disabled) },
                     };
                 }
             }
@@ -79,4 +85,33 @@ export function buildToggleMultiple(
         .value();
 
     return { toggleDataElements: toggleDataElements, logicalOperator: toggleMultiple.logicalOperator };
+}
+
+export function isToggleMultipleDeDisabled(
+    section: SectionBase,
+    dataElement: Maybe<DataElement>,
+    orgUnitCode: string
+): boolean {
+    if (!dataElement || !section.toggleMultiple) return false;
+
+    return section.toggleMultiple.toggleDataElements
+        .filter(
+            (toggle): toggle is OrgUnitToggle =>
+                toggle.type === "orgUnit" && toggle.dataElement.code === dataElement.code
+        )
+        .some(toggle => {
+            const { orgUnitCodes, condition, dataElement: toggleDe } = toggle;
+            if (!toggleDe.disabled) return false;
+
+            const isOrgUnitInToggleList = orgUnitCodes.includes(orgUnitCode);
+
+            switch (condition) {
+                case "show":
+                    return !isOrgUnitInToggleList;
+                case "hide":
+                    return isOrgUnitInToggleList;
+                default:
+                    return false;
+            }
+        });
 }

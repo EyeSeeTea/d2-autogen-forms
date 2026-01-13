@@ -58,17 +58,13 @@ export function useSectionVisibility(section: DataTableSectionObj, dataFormInfo:
         }
 
         return true;
-    }, [
-        section.hidden,
-        toggle.type,
-        isOpen,
-        sectionTotalRules.length,
-        isVisibleFromTotals,
-        toggleMultiple,
-        dataFormInfo,
-    ]);
+    }, [section, toggle.type, isOpen, sectionTotalRules.length, isVisibleFromTotals, toggleMultiple, dataFormInfo]);
 
-    return { isDisabled: isDisabled, isOpen: isOpen, isVisible: isVisible };
+    return {
+        isDisabled: isDisabled,
+        isOpen: isOpen,
+        isVisible: isVisible,
+    };
 }
 
 function evaluateSectionOpenState(toggle: Section["toggle"], dataFormInfo: DataFormInfo): boolean {

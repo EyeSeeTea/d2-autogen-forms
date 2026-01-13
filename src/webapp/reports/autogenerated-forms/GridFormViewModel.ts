@@ -18,6 +18,7 @@ import { Code } from "../../../domain/common/entities/Base";
 import { calculateFormula } from "./datatables/InputFormula";
 import { getIndexedLabel } from "./DataTableSection";
 import { Period } from "../../../domain/common/entities/Period";
+import { isToggleMultipleDeDisabled } from "../../../domain/common/entities/ToggleMultiple";
 
 export type Grid = GridComponents & {
     dataElements: Array<DataElement & { indicator: Maybe<Indicator> }>;
@@ -132,6 +133,7 @@ export class GridViewModel {
             tabs: section.tabs,
             dataElements: dataElements.map(dataElement => {
                 const indicator = getIndicatorRelatedToDataElement(section.indicators, dataElement.code);
+                const orgUnitCode = dataFormInfo.orgUnit.code;
                 return {
                     ...dataElement,
                     indicator,
@@ -139,6 +141,7 @@ export class GridViewModel {
                     htmlText: dataElement.htmlText
                         ? getDataElementLabel(section, dataElement, dataElement.htmlText)
                         : undefined,
+                    disabled: dataElement.disabled || isToggleMultipleDeDisabled(section, dataElement, orgUnitCode),
                 };
             }),
             dataEntryPeriod: section.periods[0],
@@ -186,7 +189,7 @@ export class GridViewModel {
 
         const columns = this.addVisibleToColumns({ columns: columnsOrders, dataFormInfo, section });
 
-        const rows = GridViewModel.getRows(subsections, section, columns, dataElements);
+        const rows = GridViewModel.getRows(subsections, section, columns, dataElements, dataFormInfo);
         const summary = GridViewModel.getSummary(subsections, section, columns, viewType);
 
         return { columns: columns, rows: rows, summary: summary };
@@ -220,7 +223,8 @@ export class GridViewModel {
         subsections: SubSectionGrid[],
         section: SectionGrid,
         columns: Column[],
-        dataElements: DataElement[]
+        dataElements: DataElement[],
+        dataFormInfo: DataFormInfo
     ) {
         const groupsByRow = section.enableGroups ? GridViewModel.groupsByRowName(dataElements) : undefined;
 
@@ -251,13 +255,17 @@ export class GridViewModel {
                     dataElementsInTotalColumn?.dataElements.includes(de.code)
                 );
 
+                const orgUnitCode = dataFormInfo.orgUnit.code;
+                const isDEDisabledFromToggleMultiple = isToggleMultipleDeDisabled(section, dataElement, orgUnitCode);
+
                 return {
                     isVisible: column.isVisible,
                     column: column,
                     columnTotal: parentTotal,
                     columnDataElements: columnDataElements,
                     dataElement: dataElement,
-                    disabled: deCalculateTotal?.disabled || dataElement?.disabled || false,
+                    disabled:
+                        deCalculateTotal?.disabled || dataElement?.disabled || isDEDisabledFromToggleMultiple || false,
                     disableComments: section.disableComments || dataElement?.disabledComments || false,
                 };
             });

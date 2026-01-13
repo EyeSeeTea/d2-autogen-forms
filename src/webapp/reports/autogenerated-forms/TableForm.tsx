@@ -101,6 +101,7 @@ const TableForm: React.FC<TableFormProps> = React.memo(props => {
                                             noComment={dataElement.disabledComments}
                                             period={section.dataEntryPeriod?.id}
                                             lockException={section.dataEntryPeriod !== undefined}
+                                            manualyDisabled={dataElement.disabled}
                                         />
                                     </CustomDataTableCell>
                                 </DataTableRow>

@@ -7,11 +7,12 @@ import { getDescription } from "../../../utils/viewTypes";
 import { Maybe } from "../../../utils/ts-utils";
 import { getDataElementLabel } from "./GridFormViewModel";
 import { calculateFormula } from "./datatables/InputFormula";
+import { isToggleMultipleDeDisabled } from "../../../domain/common/entities/ToggleMultiple";
 
 export class DisaggregatedCOCsGridViewModel {
     static get(section: Section, dataFormInfo: DataFormInfo): Grid {
         const columns = DisaggregatedCOCsGridViewModel.getGridColumns(section, dataFormInfo);
-        const rows = DisaggregatedCOCsGridViewModel.getGridRows(section, columns);
+        const rows = DisaggregatedCOCsGridViewModel.getGridRows(section, columns, dataFormInfo);
 
         const summary = DisaggregatedCOCsGridViewModel.getSummary(section, dataFormInfo, columns, rows);
 
@@ -62,7 +63,7 @@ export class DisaggregatedCOCsGridViewModel {
         return columns;
     }
 
-    private static getGridRows(section: Section, columns: Column[]): Row[] {
+    private static getGridRows(section: Section, columns: Column[], dataFormInfo: DataFormInfo): Row[] {
         const rows = _(section.dataElements)
             .flatMap(dataElement => dataElement.categoryOptionCombos)
             .groupBy(coc => getRowNameFromCoc(coc))
@@ -88,6 +89,7 @@ export class DisaggregatedCOCsGridViewModel {
 
                                 if (!columnName) return undefined;
 
+                                const orgUnitCode = dataFormInfo.orgUnit.code;
                                 return {
                                     ...dataElement,
                                     cocId: coc.id,
@@ -97,6 +99,7 @@ export class DisaggregatedCOCsGridViewModel {
                                         categoryOptionCombos: [{ ...coc, formName: coc.formName }],
                                     },
                                     columnName: columnName,
+                                    disabled: isToggleMultipleDeDisabled(section, dataElement, orgUnitCode),
                                 };
                             })
                             .compact()
