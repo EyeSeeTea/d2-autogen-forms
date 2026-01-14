@@ -71,9 +71,10 @@ const GridWithCategoryColumns: React.FC<GridWithCategoryColumnsProps> = props =>
                 section,
                 filterValue,
                 section.categoryOptionFilter?.config ?? [],
-                dataElementCodesToExclude
+                dataElementCodesToExclude,
+                dataFormInfo
             ),
-        [section, filterValue, dataElementCodesToExclude]
+        [section, filterValue, dataElementCodesToExclude, dataFormInfo]
     );
 
     const { wrapper1Ref, wrapper2Ref, wrapper2Width } = useSyncedScroll({ enable: section.enableTopScroll });

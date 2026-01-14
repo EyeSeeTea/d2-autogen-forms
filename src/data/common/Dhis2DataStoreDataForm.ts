@@ -18,7 +18,11 @@ import {
 import { titleVariant } from "../../domain/common/entities/TitleVariant";
 import { SectionStyle, SectionStyleAttrs } from "../../domain/common/entities/SectionStyle";
 import { DataElementRuleOptions, SectionRuleOptions } from "../../domain/common/entities/DataElementRule";
-import { ToggleMultiple } from "../../domain/common/entities/ToggleMultiple";
+import {
+    ToggleLogicalOperator,
+    ToggleMultiple,
+    ToggleMultipleCondition,
+} from "../../domain/common/entities/ToggleMultiple";
 import { Period, PeriodType, validatePeriodType } from "../../domain/common/entities/Period";
 import { FromRulesFormulaCodec, rulesFormulaCodec } from "./RulesFormula";
 import { DataFormRule } from "../../domain/common/entities/DataFormRule";
@@ -352,6 +356,26 @@ const orgUnitToggleCodec = Codec.interface({
 
 const toggleCodec = oneOf([dataElementToggleCodec, orgUnitToggleCodec]);
 
+const dataElementToggleMultipleCodec = Codec.interface({
+    type: optional(exactly("dataElement")),
+    dataElement: string,
+    condition: string,
+    disabled: optional(boolean),
+});
+
+const orgUnitToggleMultipleCodec = Codec.interface({
+    type: exactly("orgUnit"),
+    orgUnits: array(string),
+    condition: oneOf([exactly("show"), exactly("hide")]),
+    dataElements: optional(array(string)),
+    disabled: optional(boolean),
+});
+
+const toggleMultipleCodec = Codec.interface({
+    logicalOperator: oneOf([exactly("AND"), exactly("OR")]),
+    conditions: array(oneOf([dataElementToggleMultipleCodec, orgUnitToggleMultipleCodec])),
+});
+
 const dataSetRuleCodec = Codec.interface({
     conditions: Codec.interface({
         periodIn: optional(array(string)),
@@ -450,17 +474,7 @@ const DataStoreConfigCodec = Codec.interface({
                     )
                 ),
                 totals: optional(oneOf([totalsType, record(string, totalsType)])),
-                toggleMultiple: optional(
-                    Codec.interface({
-                        logicalOperator: oneOf([exactly("AND"), exactly("OR")]),
-                        conditions: array(
-                            Codec.interface({
-                                dataElement: string,
-                                condition: string,
-                            })
-                        ),
-                    })
-                ),
+                toggleMultiple: optional(toggleMultipleCodec),
                 indicators: optional(
                     sectionConfig({
                         position: optional(
@@ -1051,7 +1065,7 @@ export class Dhis2DataStoreDataForm {
                         this.getTextFromConstants(groupDescription, constantsByCode)
                     ),
                     totals: this.getSectionTotals(sectionConfig, constantsByCode),
-                    toggleMultiple: sectionConfig.toggleMultiple,
+                    toggleMultiple: this.getToggleMultipleConfig(sectionConfig),
                     indicators: sectionConfig.indicators,
                     fixedHeaders: sectionConfig.fixedHeaders || false,
                     fixedRowNames: sectionConfig.fixedRowNames || false,
@@ -1139,6 +1153,43 @@ export class Dhis2DataStoreDataForm {
             removePrefix: removePrefix,
             sections: sections,
             rules: this.getDataFormRules(dataSetConfig?.rules),
+        };
+    }
+
+    private getToggleMultipleConfig(sectionConfig: {
+        toggleMultiple: Maybe<{
+            logicalOperator: ToggleLogicalOperator;
+            conditions: Array<
+                | { type?: "dataElement"; dataElement: Code; condition: string }
+                | { type: "orgUnit"; orgUnits: Code[]; condition: string }
+            >;
+        }>;
+    }): Maybe<ToggleMultiple> {
+        const { toggleMultiple } = sectionConfig;
+        if (!toggleMultiple) return undefined;
+
+        const conditions: ToggleMultipleCondition[] = toggleMultiple.conditions.map(condition => {
+            switch (condition.type) {
+                case "orgUnit":
+                    return {
+                        ...condition,
+                        type: "orgUnit",
+                        orgUnits: condition.orgUnits,
+                        condition: condition.condition,
+                    };
+                default:
+                    return {
+                        ...condition,
+                        type: "dataElement",
+                        dataElement: condition.dataElement,
+                        condition: condition.condition,
+                    };
+            }
+        });
+
+        return {
+            ...toggleMultiple,
+            conditions: conditions,
         };
     }
 

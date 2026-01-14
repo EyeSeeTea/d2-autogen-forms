@@ -43,6 +43,7 @@ import DisaggregatedCOCsGrid from "./DisaggregatedCOCsGrid";
 import GridIndicatorsCalculated from "./GridIndicatorsCalculated";
 import GridWithCategoryColumns from "./GridWithCategoryColumns";
 import { CompositionRoot } from "../../../compositionRoot";
+import { OrgUnit } from "../../../domain/common/entities/OrgUnit";
 import { useDataFormRuleActions } from "./hooks/useDataFormRuleActions";
 import { Modal } from "../../components/modal/Modal";
 
@@ -197,11 +198,14 @@ function useDataFormInfo(): [
     const [key] = React.useState(0);
     const { compositionRoot, config } = useAppContext();
     const { orgUnitId, period, dataSetId, reloadKey, initForm } = useDataEntrySelector();
+
     const [dataForm, setDataForm] = useState<DataForm>();
     const [dataValues, setDataValues] = useState<DataValueStore>();
     const [isLoading, loadingActions] = useBooleanState(false);
-    const [ignoreRules, setIgnoreRules] = React.useState<IgnoreValidationRule[]>([]);
-    const [rules, setRules] = React.useState<ValidationResult[]>([]);
+    const [ignoreRules, setIgnoreRules] = useState<IgnoreValidationRule[]>([]);
+    const [rules, setRules] = useState<ValidationResult[]>([]);
+    const [orgUnit, setOrgUnit] = useState<OrgUnit>();
+
     const [loadingCompulsory, setLoadingCompulsory] = React.useState(false);
     const snackbar = useSnackbar();
 
@@ -282,7 +286,10 @@ function useDataFormInfo(): [
     }, []);
 
     useEffect(() => {
-        compositionRoot.dataForms.get({ dataSetId, period, orgUnitId }).then(setDataForm);
+        compositionRoot.dataForms.get({ dataSetId, period, orgUnitId }).then(({ dataForm, orgUnit }) => {
+            setDataForm(dataForm);
+            setOrgUnit(orgUnit);
+        });
     }, [compositionRoot, dataSetId, period, orgUnitId]);
 
     useEffect(() => {
@@ -407,7 +414,7 @@ function useDataFormInfo(): [
     );
 
     const dataFormInfo: Maybe<DataFormInfo> =
-        dataForm && dataValues
+        dataForm && dataValues && orgUnit
             ? {
                   metadata: { dataForm },
                   data: {
@@ -418,6 +425,7 @@ function useDataFormInfo(): [
                   },
                   initForm,
                   orgUnitId,
+                  orgUnit,
                   period,
                   categoryOptionComboId: defaultCategoryOptionComboId,
               }
@@ -446,6 +454,7 @@ export interface DataFormInfo {
     initForm: () => void;
     categoryOptionComboId: Id;
     orgUnitId: Id;
+    orgUnit: OrgUnit;
     period: Period;
 }
 

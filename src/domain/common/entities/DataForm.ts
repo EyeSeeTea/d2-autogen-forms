@@ -224,6 +224,8 @@ export class DataFormM {
         return _(dataForm.sections)
             .flatMap(section => {
                 switch (section.viewType) {
+                    case "table":
+                    case "grid":
                     case "grid-with-periods":
                     case "grid-indicators-calculated":
                         return section.periods.map(period => period.id);
@@ -231,8 +233,8 @@ export class DataFormM {
                         return [];
                 }
             })
-            .uniq()
             .concat([basePeriod])
+            .uniq()
             .sortBy()
             .value();
     }

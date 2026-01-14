@@ -178,6 +178,7 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                                                 noComment={dataElement.disabledComments}
                                                 period={row.period?.id || dataFormInfo.period}
                                                 lockException={row.period ? true : false}
+                                                manualyDisabled={dataElement.disabled}
                                             />
                                         </CustomDataTableCell>
                                     ) : (
