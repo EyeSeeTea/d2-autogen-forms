@@ -14,6 +14,7 @@ import { getIndicatorRelatedToDataElement, Indicator } from "../../../domain/com
 import { GridViewModel } from "./GridFormViewModel";
 import { getIndexedLabel } from "./DataTableSection";
 import { Period, PeriodType } from "../../../domain/common/entities/Period";
+import { isToggleMultipleDeDisabled } from "../../../domain/common/entities/ToggleMultiple";
 
 export interface GridWithPeriodsI {
     id: string;
@@ -102,13 +103,18 @@ export class GridWithPeriodsViewModel {
             .toPairs()
             .map(([groupName, dataElementsForGroup]): Row => {
                 if (dataElementsForGroup.length === 1) {
-                    const code = dataElementsForGroup[0].code;
+                    const firstDataElement = dataElementsForGroup[0];
+                    const code = firstDataElement.code;
                     const indicator = getIndicatorRelatedToDataElement(section.indicators, code);
+                    const orgUnitCode = dataFormInfo.orgUnit.code;
                     return {
-                        type: dataElementsForGroup[0].type === "FILE" ? "dataElementFile" : "dataElement",
+                        type: firstDataElement.type === "FILE" ? "dataElementFile" : "dataElement",
                         dataElement: {
-                            ...dataElementsForGroup[0],
-                            name: getDataElementLabel(dataElementsForGroup[0], section),
+                            ...firstDataElement,
+                            name: getDataElementLabel(firstDataElement, section),
+                            disabled:
+                                firstDataElement.disabled ??
+                                isToggleMultipleDeDisabled(section, firstDataElement, orgUnitCode),
                         },
                         indicator: indicator,
                     };
@@ -138,6 +144,7 @@ export class GridWithPeriodsViewModel {
                             const subGroup = uniqueSubGroups.find(subGroup => subGroup.position === index);
 
                             const indicator = getIndicatorRelatedToDataElement(section.indicators, dataElement.code);
+                            const orgUnitCode = dataFormInfo.orgUnit.code;
 
                             return {
                                 groupName: index === 0 ? groupName : undefined,
@@ -146,6 +153,9 @@ export class GridWithPeriodsViewModel {
                                 dataElement: {
                                     ...dataElement,
                                     name: getDataElementLabel(dataElement, section),
+                                    disabled:
+                                        dataElement.disabled ??
+                                        isToggleMultipleDeDisabled(section, dataElement, orgUnitCode),
                                 },
                                 indicator: indicator,
                                 dataElementsPerSubGroup: subGroup
@@ -156,12 +166,13 @@ export class GridWithPeriodsViewModel {
 
                         return { type: "subGroup", rows: rows };
                     } else {
-                        const firstDeInGroup = _(dataElementsForGroup).first()?.code || "";
-                        const groupDescription = getDescription(
-                            section.groupDescriptions,
-                            dataFormInfo,
-                            firstDeInGroup
-                        );
+                        const firstDeInGroup = dataElementsForGroup[0];
+                        if (!firstDeInGroup) {
+                            throw new Error("Data element group is empty");
+                        }
+
+                        const firstDeCode = firstDeInGroup.code;
+                        const groupDescription = getDescription(section.groupDescriptions, dataFormInfo, firstDeCode);
 
                         return {
                             type: "group",
@@ -172,11 +183,16 @@ export class GridWithPeriodsViewModel {
                                     section.indicators,
                                     dataElement.code
                                 );
+                                const orgUnitCode = dataFormInfo.orgUnit.code;
+
                                 return {
                                     type: "dataElement",
                                     dataElement: {
                                         ...dataElement,
                                         name: getDataElementLabel(dataElement, section),
+                                        disabled:
+                                            dataElement.disabled ??
+                                            isToggleMultipleDeDisabled(section, dataElement, orgUnitCode),
                                     },
                                     indicator: indicator,
                                 };

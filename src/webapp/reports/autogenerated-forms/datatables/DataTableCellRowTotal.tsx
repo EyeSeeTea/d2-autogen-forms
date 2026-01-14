@@ -13,12 +13,18 @@ export type DataTableCellRowTotalProps = {
     dataFormInfo: DataFormInfo;
     dataElement: DataElement;
     colSpan?: number;
+    onlyCocIds?: string[];
 };
 
 export const DataTableCellRowTotal: React.FC<DataTableCellRowTotalProps> = props => {
-    const { dataFormInfo, dataElement, styles, colSpan } = props;
+    const { dataFormInfo, dataElement, styles, colSpan, onlyCocIds } = props;
 
-    const totalValue = _(dataElement.categoryOptionCombos)
+    const combinationsToCalculate =
+        onlyCocIds && onlyCocIds.length > 0
+            ? dataElement.categoryOptionCombos.filter(coc => onlyCocIds?.includes(coc.id))
+            : dataElement.categoryOptionCombos;
+
+    const totalValue = _(combinationsToCalculate)
         .map(coc => {
             const deValue = dataFormInfo.data.values.get(
                 {

@@ -1,7 +1,7 @@
 import { Maybe } from "../../../utils/ts-utils";
 
 export const DEFAULT_SECTION_STYLES = {
-    title: { backgroundColor: "transparent", color: "#ffffff" },
+    title: { backgroundColor: "transparent", color: "#000000" },
     columns: { backgroundColor: "#f3f5f7", color: "#404b5a" },
     rows: { backgroundColor: "#ffffff", color: "#404b5a" },
     totals: { backgroundColor: "#ffffff", color: "#000000" },

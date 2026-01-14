@@ -6,12 +6,15 @@ import { Indicator } from "../../../domain/common/entities/Indicator";
 import { getDescription } from "../../../utils/viewTypes";
 import { Maybe } from "../../../utils/ts-utils";
 import { getDataElementLabel } from "./GridFormViewModel";
+import { calculateFormula } from "./datatables/InputFormula";
+import { isToggleMultipleDeDisabled } from "../../../domain/common/entities/ToggleMultiple";
 
 export class DisaggregatedCOCsGridViewModel {
     static get(section: Section, dataFormInfo: DataFormInfo): Grid {
         const columns = DisaggregatedCOCsGridViewModel.getGridColumns(section, dataFormInfo);
-        const rows = DisaggregatedCOCsGridViewModel.getGridRows(section, columns);
-        const summary = DisaggregatedCOCsGridViewModel.getSummary(section, dataFormInfo, columns);
+        const rows = DisaggregatedCOCsGridViewModel.getGridRows(section, columns, dataFormInfo);
+
+        const summary = DisaggregatedCOCsGridViewModel.getSummary(section, dataFormInfo, columns, rows);
 
         return {
             id: section.id,
@@ -32,27 +35,35 @@ export class DisaggregatedCOCsGridViewModel {
     private static getGridColumns(section: Section, dataFormInfo: DataFormInfo): Column[] {
         const columns = section.dataElements.map(dataElement => {
             const columnItems = _(dataElement.categoryOptionCombos)
-                .map(coc => {
-                    const columnName = getColumnNameFromCoc(coc) || "";
+                .map((coc): ColumnItem => {
+                    const categoryOption = getCocOption(coc);
+                    const columnName = categoryOption.formName;
 
-                    return {
+                    const columnItem: ColumnItem = {
                         name: _(columnName).capitalize(),
+                        code: `${dataElement.code}${COLUMNS_CONFIG_SEPARATOR}${categoryOption.code}`,
                         description: getDescription(section.columnsDescriptions, dataFormInfo, columnName),
+                        isVisible: true,
                     };
+
+                    if (!section.columnsConfig) return columnItem;
+
+                    return this.isColumnItemVisible({ section, column: columnItem, dataFormInfo });
                 })
+                .filter(column => column.isVisible)
                 .uniqBy(column => column.name)
                 .value();
 
             return {
                 columnItems: sortItems(columnItems),
-                dataElement: { ...dataElement, name: getDataElementLabel(section, dataElement) },
+                dataElement: { ...dataElement, name: getDataElementLabel(section, dataElement, dataElement.name) },
             };
         });
 
         return columns;
     }
 
-    private static getGridRows(section: Section, columns: Column[]): Row[] {
+    private static getGridRows(section: Section, columns: Column[], dataFormInfo: DataFormInfo): Row[] {
         const rows = _(section.dataElements)
             .flatMap(dataElement => dataElement.categoryOptionCombos)
             .groupBy(coc => getRowNameFromCoc(coc))
@@ -67,7 +78,7 @@ export class DisaggregatedCOCsGridViewModel {
                         dataElement.categoryOptionCombos.some(coc => getRowNameFromCoc(coc) === rowName)
                     )
                     .map(dataElement => {
-                        const rowItems = dataElement.categoryOptionCombos
+                        const rowItems = _(dataElement.categoryOptionCombos)
                             .filter(item => getRowNameFromCoc(item) === rowName)
                             .map(coc => {
                                 const columnName =
@@ -76,6 +87,9 @@ export class DisaggregatedCOCsGridViewModel {
                                         ?.columnItems.find(columnItem => columnItem.name === getColumnNameFromCoc(coc))
                                         ?.name || "";
 
+                                if (!columnName) return undefined;
+
+                                const orgUnitCode = dataFormInfo.orgUnit.code;
                                 return {
                                     ...dataElement,
                                     cocId: coc.id,
@@ -85,8 +99,11 @@ export class DisaggregatedCOCsGridViewModel {
                                         categoryOptionCombos: [{ ...coc, formName: coc.formName }],
                                     },
                                     columnName: columnName,
+                                    disabled: isToggleMultipleDeDisabled(section, dataElement, orgUnitCode),
                                 };
-                            });
+                            })
+                            .compact()
+                            .value();
 
                         const disaggregatedDataElement = {
                             ...dataElement,
@@ -103,6 +120,7 @@ export class DisaggregatedCOCsGridViewModel {
 
                         return {
                             dataElement: disaggregatedDataElement,
+                            cocIdsToSum: rowItems.map(ri => ri.cocId),
                             rowItems: rowItems,
                         };
                     });
@@ -118,7 +136,7 @@ export class DisaggregatedCOCsGridViewModel {
         return sortItems(rows);
     }
 
-    private static getSummary(section: Section, dataFormInfo: DataFormInfo, columns: Column[]): Summary[] {
+    private static getSummary(section: Section, dataFormInfo: DataFormInfo, columns: Column[], rows: Row[]): Summary[] {
         const allDataElements = dataFormInfo.metadata.dataForm.dataElements;
 
         const summary = _(section.totals)
@@ -130,10 +148,15 @@ export class DisaggregatedCOCsGridViewModel {
                 const cells = selectedDataElements.map(dataElement => {
                     const columnDE = columns.find(column => column.dataElement.id === dataElement.id);
                     const columnItems = columnDE ? columnDE.columnItems : [];
+                    const allRowsInDe = rows.flatMap(row =>
+                        row.items.filter(item => item.dataElement.id === dataElement.id)
+                    );
+                    const allowedCocIds = allRowsInDe.flatMap(item => item.cocIdsToSum);
 
                     return {
                         ...dataElement,
                         columnItems: columnItems,
+                        cocIdsToSum: allowedCocIds,
                     };
                 });
 
@@ -145,6 +168,31 @@ export class DisaggregatedCOCsGridViewModel {
             .value();
 
         return summary;
+    }
+
+    private static isColumnItemVisible(options: {
+        section: Section;
+        column: ColumnItem;
+        dataFormInfo: DataFormInfo;
+    }): ColumnItem {
+        const { section, column, dataFormInfo } = options;
+
+        const config = section.columnsConfig ? section.columnsConfig[column.code] : undefined;
+        if (!config) return { ...column, isVisible: true };
+
+        const dataElementCodes = _(config.rules?.visible?.dataElements)
+            .map(dataElement => dataElement.code)
+            .compact()
+            .value();
+
+        const value = calculateFormula({
+            dataElementCodes: dataElementCodes,
+            dataFormInfo,
+            formula: config.rules?.visible?.formula.value ?? "",
+            period: dataFormInfo.period,
+        });
+
+        return { ...column, isVisible: value === config.rules?.visible?.formula.condition };
     }
 }
 
@@ -166,6 +214,8 @@ export type Grid = {
 export type ColumnItem = {
     name: string;
     description?: string;
+    isVisible: boolean;
+    code: string;
 };
 
 type Column = {
@@ -175,31 +225,43 @@ type Column = {
 
 type Row = {
     name: string;
-    items: { dataElement: DataElement; rowItems: Array<DataElement & { columnName: string }> }[];
+    items: { cocIdsToSum: string[]; dataElement: DataElement; rowItems: Array<DataElement & { columnName: string }> }[];
 };
 
 type Summary = {
     cellName: string;
-    cells: Array<DataElement & { columnItems: ColumnItem[] }>;
+    cells: Array<DataElement & { columnItems: ColumnItem[]; cocIdsToSum: string[] }>;
 };
 
 const separator = ", ";
 
+// Unknown patterns: "Other/unknown" will always be at the end. This logic is specific for TUB_ANNUAL_DATA dataSet
+// TO-DO: Move patterns into datastore config when rules vary per dataset.
 const sortItems = <T extends { name: string }>(items: T[], unknownPatterns: string[] = ["unknown", "other"]): T[] => {
     const itemsWithSortKeys = items.map(item => {
         const raw = item.name;
         const lower = raw.toLowerCase();
         const isUnknown = _.some(unknownPatterns, p => lower.includes(p.toLowerCase()));
-        const match = raw.match(/\d+/);
-        const hasNumber = !!match && !isUnknown;
-        const num = hasNumber && match[0] ? parseInt(match[0], 10) : Number.POSITIVE_INFINITY;
+
+        const matches = raw.match(/\d+/g) ?? [];
+        const hasNumber = matches.length > 0 && !isUnknown;
+
+        const start = hasNumber && matches[0] ? parseInt(matches[0], 10) : Number.POSITIVE_INFINITY;
+
+        const end =
+            hasNumber && matches[1]
+                ? parseInt(matches[1], 10)
+                : hasNumber && raw.includes("+")
+                ? Number.POSITIVE_INFINITY
+                : start;
 
         return {
             item,
             sortKey: {
-                isUnknown: isUnknown,
-                hasNumber: hasNumber,
-                num: num,
+                isUnknown,
+                hasNumber,
+                start,
+                end,
                 alpha: lower,
             },
         };
@@ -208,7 +270,10 @@ const sortItems = <T extends { name: string }>(items: T[], unknownPatterns: stri
     const sortedItems = _.sortBy(itemsWithSortKeys, [
         x => (x.sortKey.isUnknown ? 1 : 0),
         x => (x.sortKey.hasNumber ? 0 : 1),
-        x => (x.sortKey.hasNumber ? x.sortKey.num : Number.POSITIVE_INFINITY),
+
+        x => x.sortKey.start,
+        x => x.sortKey.end,
+
         x => x.sortKey.alpha,
     ]);
 
@@ -230,3 +295,16 @@ function getCocFormName(categoryOptionCombo: CategoryOptionCombo, cocName: Maybe
 
     return cocFormName || cocName;
 }
+
+function getCocOption(categoryOptionCombo: CategoryOptionCombo): { code: string; name: string; formName: string } {
+    const cocName = categoryOptionCombo.name.split(separator)[0];
+    const cocFormName = categoryOptionCombo.categoryOptions.find(co => cocName?.includes(co.name));
+
+    if (!cocFormName) {
+        return { code: "", name: "", formName: "" };
+    }
+
+    return { code: cocFormName.code, name: cocFormName.name, formName: cocFormName.displayFormName };
+}
+
+const COLUMNS_CONFIG_SEPARATOR = "||";

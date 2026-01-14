@@ -16,6 +16,8 @@ import YearPickerWidget from "./widgets/YearPickerWidget";
 import SourceTypeWidget from "./widgets/SourceTypeWidget";
 import { Row } from "./GridWithTotalsViewModel";
 import PercentageWidget from "./widgets/PercentageWidget";
+import { DataForm } from "../../../domain/common/entities/DataForm";
+import CheckboxWidget from "./widgets/CheckboxWidget";
 import { useUpdatableDataValueWithFeedback } from "./hooks/useUpdatableDataValueWithFeedback";
 import { useDataEntryItem } from "./hooks/useDataEntryItem";
 
@@ -39,11 +41,13 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
     const [dataValue, state, notifyChange] = useUpdatableDataValueWithFeedback(props);
     const { isDataEntryItemVisible, isDataEntryItemDisabled } = useDataEntryItem(props);
 
+    const hasCompulsoryError = dataValue.isRequired ? "required" : state;
+
     const { type } = dataValue;
     const { options } = dataElement;
     const config = dataFormInfo.metadata.dataForm.options.dataElements[dataElement.id];
     const SingleComponent = config?.widget === "radio" ? SingleSelectRadioWidget : SingleSelectWidget;
-    const BooleanComponent = config?.widget === "dropdown" ? BooleanDropdownWidget : YesNoWidget;
+    const BooleanComponent = getBooleanComponent(dataFormInfo.metadata.dataForm, dataElement.id);
 
     if (!isDataEntryItemVisible) return null;
 
@@ -59,7 +63,17 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                         dataValue={dataValue}
                         options={options.items}
                         onValueChange={notifyChange}
-                        state={state}
+                        state={hasCompulsoryError}
+                        disabled={isDataEntryItemDisabled}
+                    />
+                );
+            case "MULTI_TEXT":
+                return (
+                    <MultipleSelectWidget
+                        dataValue={dataValue}
+                        options={options.items}
+                        onValueChange={notifyChange}
+                        state={hasCompulsoryError}
                         disabled={isDataEntryItemDisabled}
                     />
                 );
@@ -71,7 +85,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                             dataFormInfo={dataFormInfo}
                             options={options.items}
                             onValueChange={notifyChange}
-                            state={state}
+                            state={hasCompulsoryError}
                             disabled={isDataEntryItemDisabled}
                             sourceTypeDEs={[]}
                             rows={rows}
@@ -83,7 +97,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                             dataValue={dataValue}
                             options={options.items}
                             onValueChange={notifyChange}
-                            state={state}
+                            state={hasCompulsoryError}
                             disabled={isDataEntryItemDisabled}
                         />
                     ) : (
@@ -91,7 +105,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                             dataValue={dataValue}
                             options={options.items}
                             onValueChange={notifyChange}
-                            state={state}
+                            state={hasCompulsoryError}
                             disabled={isDataEntryItemDisabled}
                         />
                     );
@@ -102,7 +116,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                         dataValue={dataValue}
                         options={options.items}
                         onValueChange={notifyChange}
-                        state={state}
+                        state={hasCompulsoryError}
                         disabled={isDataEntryItemDisabled}
                     />
                 ) : (
@@ -110,7 +124,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                         dataValue={dataValue}
                         options={options.items}
                         onValueChange={notifyChange}
-                        state={state}
+                        state={hasCompulsoryError}
                         disabled={isDataEntryItemDisabled}
                     />
                 );
@@ -124,7 +138,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                     <BooleanComponent
                         dataValue={dataValue}
                         onValueChange={notifyChange}
-                        state={state}
+                        state={hasCompulsoryError}
                         disabled={isDataEntryItemDisabled}
                     />
                 );
@@ -133,7 +147,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                     <NumberWidget
                         dataValue={dataValue}
                         onValueChange={notifyChange}
-                        state={state}
+                        state={hasCompulsoryError}
                         disabled={isDataEntryItemDisabled}
                     />
                 );
@@ -142,7 +156,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                     <PercentageWidget
                         dataValue={dataValue}
                         onValueChange={notifyChange}
-                        state={state}
+                        state={hasCompulsoryError}
                         disabled={isDataEntryItemDisabled}
                     />
                 );
@@ -151,7 +165,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                     <TextWidget
                         dataValue={dataValue}
                         onValueChange={notifyChange}
-                        state={state}
+                        state={hasCompulsoryError}
                         disabled={isDataEntryItemDisabled}
                     />
                 );
@@ -160,7 +174,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                     <FileWidget
                         dataValue={dataValue}
                         onValueChange={notifyChange}
-                        state={state}
+                        state={hasCompulsoryError}
                         disabled={isDataEntryItemDisabled}
                     />
                 );
@@ -169,10 +183,12 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                     <DateWidget
                         dataValue={dataValue}
                         onValueChange={notifyChange}
-                        state={state}
+                        state={hasCompulsoryError}
                         disabled={isDataEntryItemDisabled}
                     />
                 );
+            case "MULTI_TEXT":
+                return null;
 
             default:
                 return assertUnreachable(type);
@@ -183,3 +199,15 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
 };
 
 export default React.memo(DataEntryItem);
+
+function getBooleanComponent(dataForm: DataForm, dataElementId: string) {
+    const config = dataForm.options.dataElements[dataElementId];
+    switch (config?.widget) {
+        case "dropdown":
+            return BooleanDropdownWidget;
+        case "checkbox":
+            return CheckboxWidget;
+        default:
+            return YesNoWidget;
+    }
+}

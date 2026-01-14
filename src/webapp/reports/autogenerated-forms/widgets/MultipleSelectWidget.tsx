@@ -4,10 +4,14 @@ import React from "react";
 import { MultiSelect, MultiSelectOption } from "@dhis2/ui";
 import { Option } from "../../../../domain/common/entities/DataElement";
 import { WidgetFeedback } from "../WidgetFeedback";
-import { DataValueNumberMultiple, DataValueTextMultiple } from "../../../../domain/common/entities/DataValue";
+import {
+    DataValueMultiText,
+    DataValueNumberMultiple,
+    DataValueTextMultiple,
+} from "../../../../domain/common/entities/DataValue";
 import { WidgetProps } from "./WidgetBase";
 
-type DataValueMultiple = DataValueNumberMultiple | DataValueTextMultiple;
+type DataValueMultiple = DataValueNumberMultiple | DataValueTextMultiple | DataValueMultiText;
 
 export interface MultipleSelectWidgetProps extends WidgetProps {
     dataValue: DataValueMultiple;
@@ -30,7 +34,7 @@ const MultipleSelectWidget: React.FC<MultipleSelectWidgetProps> = props => {
     );
 
     return (
-        <WidgetFeedback state={props.state}>
+        <WidgetFeedback state={props.state} style={{ minWidth: "120px" }}>
             <MultiSelect onChange={notifyChange} selected={selectedValues} disabled={disabled}>
                 {options.map(option => (
                     <MultiSelectOption key={option.value} label={option.name} value={option.value} />

@@ -11,7 +11,7 @@ export class SaveGridWithTotalsValueUseCase {
         dataValue: DataValueNumberSingle,
         columnTotal: DataElement,
         columnDataElements: DataElement[],
-        cocId: string
+        _cocId: string
     ): Promise<DataValueStore> {
         const existingDataValue = store.get(dataValue.dataElement, dataValue);
 
@@ -21,7 +21,7 @@ export class SaveGridWithTotalsValueUseCase {
             // SAVE FIELD
             const currentDataValue = {
                 ...dataValue,
-                categoryOptionComboId: cocId,
+                categoryOptionComboId: dataValue.dataElement.cocId || dataValue.categoryOptionComboId,
             };
             let storeUpdated = store.set(currentDataValue);
             // await this.dataValueRepository.save(dataValue);
@@ -36,32 +36,18 @@ export class SaveGridWithTotalsValueUseCase {
             // SAVE COLUMN TOTAL
             const newColTotalValue = columnDataElements
                 .map(de => {
-                    const dv = storeUpdated.get(
-                        {
-                            ...de,
-                            cocId,
-                        },
-                        {
-                            ...selector,
-                            categoryOptionComboId: dataValue.categoryOptionComboId,
-                        }
-                    ) as DataValueNumberSingle;
-                    const isCurrentDataElement = dataValue.dataElement.id === dv.dataElement.id;
-                    const value = isCurrentDataElement ? dataValue.value : dv.value ?? "0";
-                    return value;
+                    const dv = storeUpdated.get(de, {
+                        ...selector,
+                        categoryOptionComboId: dataValue.categoryOptionComboId,
+                    }) as DataValueNumberSingle;
+                    return dv.value ?? "0";
                 })
                 .reduce((partialSum, i) => partialSum + Number(i), 0);
 
-            const colTotalDataValue = storeUpdated.get(
-                {
-                    ...columnTotal,
-                    cocId,
-                },
-                {
-                    ...selector,
-                    categoryOptionComboId: cocId || dataValue.categoryOptionComboId,
-                }
-            ) as DataValueNumberSingle;
+            const colTotalDataValue = storeUpdated.get(columnTotal, {
+                ...selector,
+                categoryOptionComboId: columnTotal.cocId || dataValue.categoryOptionComboId,
+            }) as DataValueNumberSingle;
 
             colTotalDataValue.value = newColTotalValue.toString();
 

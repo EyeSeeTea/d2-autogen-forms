@@ -17,6 +17,7 @@ export const dataElementText: DataElementText = {
                 name: "Option Combo",
                 shortName: "OC",
                 formName: undefined,
+                categoryOptions: [],
             },
         ],
     },
@@ -37,6 +38,8 @@ export const sectionBase: Omit<SectionBase, "id" | "name" | "viewType"> = {
     columnsDescriptions: undefined,
     groupDescriptions: undefined,
     disableComments: false,
+    disabled: false,
+    showIndex: false,
     showRowTotals: false,
     toggleMultiple: {
         logicalOperator: "AND",

@@ -1,4 +1,5 @@
 import { DataForm } from "../../../entities/DataForm";
+import { PeriodType } from "../../../entities/Period";
 
 export const dataForm: Omit<DataForm, "id"> = {
     expiryDays: 30,
@@ -22,4 +23,9 @@ export const dataForm: Omit<DataForm, "id"> = {
         dataElementTotalRules: [],
         sectionTotalRules: [],
     },
+    rules: undefined,
+    compulsoryDataValues: [],
+    showErrorOnCompulsory: false,
+    periodType: PeriodType.DAILY,
+    removePrefix: undefined,
 };
