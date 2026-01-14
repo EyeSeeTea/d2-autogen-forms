@@ -12,6 +12,7 @@ describe("buildToggleMultiple", () => {
         code: "DE_1",
         name: "Text Data Element 1",
         type: "TEXT",
+        disabled: false,
     };
 
     const dataElement2: DataElement = {
@@ -20,6 +21,7 @@ describe("buildToggleMultiple", () => {
         code: "DE_2",
         name: "Text Data Element 2",
         type: "TEXT",
+        disabled: false,
     };
 
     const dataElements: Record<string, DataElement> = {
