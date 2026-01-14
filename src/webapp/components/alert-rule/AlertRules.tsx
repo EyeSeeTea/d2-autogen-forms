@@ -1,7 +1,11 @@
 import React from "react";
 import styled from "styled-components";
 import { AlertRule } from "./AlertRule";
-import { IgnoreValidationRule, ValidationResult } from "../../../domain/common/entities/ValidationResult";
+import {
+    IgnoreValidationRule,
+    isSameValidationRule,
+    ValidationResult,
+} from "../../../domain/common/entities/ValidationResult";
 import i18n from "../../../locales";
 
 interface AlertRulesProps {
@@ -11,12 +15,9 @@ interface AlertRulesProps {
 }
 
 export const AlertRules: React.FC<AlertRulesProps> = ({ rules, ignoreRules, onCloseAlert }) => {
-    const visibleRules = rules.filter(
-        rule =>
-            !ignoreRules.find(
-                ignoreRule =>
-                    ignoreRule.validationRuleId === rule.validationRuleId && ignoreRule.message === rule.message
-            )
+    const visibleRules = React.useMemo(
+        () => rules.filter(rule => !ignoreRules.some(ignoreRule => isSameValidationRule(rule, ignoreRule))),
+        [rules, ignoreRules]
     );
 
     const handleMarkAllAsRead = () => {

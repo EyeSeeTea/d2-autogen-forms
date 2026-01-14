@@ -1,6 +1,5 @@
 import React from "react";
 import { useSnackbar } from "@eyeseetea/d2-ui-components";
-import _ from "lodash";
 import { IgnoreValidationRule, ValidationResult } from "../../../../domain/common/entities/ValidationResult";
 import { DataForm } from "../../../../domain/common/entities/DataForm";
 import { DataValue } from "../../../../domain/common/entities/DataValue";
@@ -38,10 +37,7 @@ export function useValidationRules(options: UseValidationRulesOptions) {
 
     const onCloseAlert = React.useCallback(
         (rule: ValidationResult) => {
-            setIgnoreRules(prev => {
-                const newIgnoreRules = [...prev, { validationRuleId: rule.validationRuleId, message: rule.message }];
-                return newIgnoreRules;
-            });
+            setIgnoreRules(prev => addIgnoreRule(prev, rule));
         },
         [setIgnoreRules]
     );
@@ -60,14 +56,13 @@ export function useValidationRules(options: UseValidationRulesOptions) {
                     removePrefix: dataForm.removePrefix,
                 })
                 .then(results => {
-                    setIgnoreRules(prev => removeRulesHasChanged(prev, results));
                     setRules(results);
                 })
                 .catch(err => {
                     snackbar.error(err);
                 });
         },
-        [compositionRoot, dataForm, key, setIgnoreRules, snackbar]
+        [compositionRoot, dataForm, key, snackbar]
     );
 
     const resetRules = React.useCallback(() => {
@@ -84,18 +79,19 @@ export function useValidationRules(options: UseValidationRulesOptions) {
     };
 }
 
-function removeRulesHasChanged(
-    ignoreRules: IgnoreValidationRule[],
-    results: ValidationResult[]
-): IgnoreValidationRule[] {
-    return _(ignoreRules)
-        .map(ignoreRule => {
-            const rule = results.find(
-                result =>
-                    result.message === ignoreRule.message && result.validationRuleId === ignoreRule.validationRuleId
-            );
-            return rule ? { validationRuleId: rule.validationRuleId, message: rule.message } : undefined;
-        })
-        .compact()
-        .value();
+/**
+ * Returns a new array including the new ignore rule.
+ * If an ignore rule with the same validationRuleId exists, replaces it with the updated rule
+ */
+function addIgnoreRule(ignoreRules: IgnoreValidationRule[], rule: ValidationResult): IgnoreValidationRule[] {
+    const newIgnoreRule: IgnoreValidationRule = {
+        ...rule,
+    };
+    const existing = ignoreRules.some(previousItem => previousItem.validationRuleId === newIgnoreRule.validationRuleId);
+    if (existing) {
+        return ignoreRules.map(previousItem =>
+            previousItem.validationRuleId === newIgnoreRule.validationRuleId ? newIgnoreRule : previousItem
+        );
+    }
+    return [...ignoreRules, newIgnoreRule];
 }
