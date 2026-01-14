@@ -11,7 +11,11 @@ import { OrgUnitToggle } from "../../../data/common/Dhis2DataStoreDataForm";
 export class GetDataFormUseCase {
     constructor(private dataFormRepository: DataFormRepository, private orgUnitsRepository: OrgUnitsRepository) {}
 
-    async execute(options: { dataSetId: Id; period: Period; orgUnitId: Id }): Promise<DataForm> {
+    async execute(options: {
+        dataSetId: Id;
+        period: Period;
+        orgUnitId: Id;
+    }): Promise<{ dataForm: DataForm; orgUnit: OrgUnit }> {
         const orgUnit = await this.orgUnitsRepository.getById(options.orgUnitId);
         const dataForm = await this.dataFormRepository.get({
             id: options.dataSetId,
@@ -22,8 +26,11 @@ export class GetDataFormUseCase {
         const sections = this.getSections(dataForm, orgUnit);
 
         return {
-            ...dataForm,
-            sections: sections,
+            dataForm: {
+                ...dataForm,
+                sections: sections,
+            },
+            orgUnit: orgUnit,
         };
     }
 
@@ -40,7 +47,7 @@ export class GetDataFormUseCase {
         }
 
         return _(sections)
-            .map(section => {
+            .flatMap(section => {
                 const { dataElements, toggle } = section;
 
                 if (toggle.type === "orgUnit") {
@@ -49,20 +56,28 @@ export class GetDataFormUseCase {
                     if (toggle.dataElements.length === 0) {
                         switch (toggle.condition) {
                             case "hide": {
-                                if (toggle.disabled)
-                                    return {
-                                        ...section,
-                                        dataElements: dataElements.map(de => ({ ...de, disabled: true })),
-                                    };
-                                return { ...section, hidden: isOrgUnitInToggleList };
+                                if (isOrgUnitInToggleList) {
+                                    if (toggle.disabled) {
+                                        return {
+                                            ...section,
+                                            dataElements: dataElements.map(de => ({ ...de, disabled: true })),
+                                        };
+                                    }
+                                    return { ...section, hidden: true };
+                                }
+                                return section;
                             }
                             case "show": {
-                                if (toggle.disabled && !isOrgUnitInToggleList)
+                                if (isOrgUnitInToggleList) {
+                                    return section;
+                                }
+                                if (toggle.disabled) {
                                     return {
                                         ...section,
                                         dataElements: dataElements.map(de => ({ ...de, disabled: true })),
                                     };
-                                return { ...section, hidden: !isOrgUnitInToggleList };
+                                }
+                                return { ...section, hidden: true };
                             }
                             default:
                                 console.error(`Unknown orgUnit toggle condition`);
@@ -99,28 +114,28 @@ export class GetDataFormUseCase {
             .map(dataElement => {
                 const dataElementExistsInToggle = toggleDataElements.includes(dataElement.code);
 
+                if (!dataElementExistsInToggle) {
+                    return dataElement;
+                }
+
                 switch (condition) {
                     case "hide": {
-                        if (isOrgUnitInToggleList && dataElementExistsInToggle) {
-                            if (disabled)
-                                return {
-                                    ...dataElement,
-                                    disabled: true,
-                                };
+                        if (isOrgUnitInToggleList) {
+                            if (disabled) {
+                                return { ...dataElement, disabled: true };
+                            }
                             return undefined;
                         }
                         return dataElement;
                     }
                     case "show": {
-                        if (!isOrgUnitInToggleList && dataElementExistsInToggle) {
-                            if (disabled)
-                                return {
-                                    ...dataElement,
-                                    disabled: true,
-                                };
-                            return undefined;
+                        if (isOrgUnitInToggleList) {
+                            return dataElement;
                         }
-                        return dataElement;
+                        if (disabled) {
+                            return { ...dataElement, disabled: true };
+                        }
+                        return undefined;
                     }
                 }
             })
