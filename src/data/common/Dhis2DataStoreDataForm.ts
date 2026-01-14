@@ -97,6 +97,7 @@ interface BaseSectionConfig {
     fixedRowNames: boolean;
     enableTopScroll: boolean;
     columnsConfig?: GridColumnsConfig;
+    disabled: boolean;
 }
 
 const dataElementsToExcludeCodec = Codec.interface({
@@ -412,6 +413,7 @@ const DataStoreConfigCodec = Codec.interface({
                 ),
                 categoriesColumns: optional(array(Codec.interface({ dataElementCode: string, categoryCode: string }))),
                 columnsConfig: optional(record(string, Codec.interface({ rules: optional(rulesFormulaCodec) }))),
+                disabled: optional(boolean),
                 columnsOrder: optional(record(string, number)),
                 fixedHeaders: optional(boolean),
                 fixedRowNames: optional(boolean),
@@ -1040,6 +1042,7 @@ export class Dhis2DataStoreDataForm {
                         dataSetConfig?.disableComments,
                         sectionConfig.disableComments
                     ),
+                    disabled: sectionConfig.disabled || false,
                     styles: SectionStyle.buildSectionStyles(sectionConfig.styles),
                     columnsDescriptions: _.mapValues(sectionConfig.columnsDescriptions, columnDescription =>
                         this.getTextFromConstants(columnDescription, constantsByCode)
@@ -1228,6 +1231,7 @@ export class Dhis2DataStoreDataForm {
                 const deToHideValue = config.selection?.visible?.value;
 
                 const dataElementConfig: DataElementConfig = {
+                    disabled: config.disabled,
                     disableComments: config.disableComments,
                     rules: config.rules,
                     texts: {
