@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { DataElementWidget, Section, SectionWithTotals, Texts } from "../../../domain/common/entities/DataForm";
+import { DataElementWidget, Section, SectionWithTotals } from "../../../domain/common/entities/DataForm";
 import { DataElement } from "../../../domain/common/entities/DataElement";
 import { isSourceTypeColumn } from "./GridFormViewModel";
 
@@ -11,7 +11,7 @@ export interface Grid {
     toggle: Section["toggle"];
     toggleMultiple: Section["toggleMultiple"];
     useIndexes: boolean;
-    texts: Texts;
+    texts: Section["texts"];
     parentColumns: ParentColumn[];
     hidden: boolean;
 }

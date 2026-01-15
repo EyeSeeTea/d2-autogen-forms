@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { Section, SectionWithSubnationals, Texts } from "../../../domain/common/entities/DataForm";
+import { Section, SectionWithSubnationals } from "../../../domain/common/entities/DataForm";
 import { DataElement } from "../../../domain/common/entities/DataElement";
 import { Maybe } from "../../../utils/ts-utils";
 
@@ -11,7 +11,7 @@ export interface Grid {
     toggle: Section["toggle"];
     toggleMultiple: Section["toggleMultiple"];
     useIndexes: boolean;
-    texts: Texts;
+    texts: Section["texts"];
     parentColumns: ParentColumn[];
     hidden: boolean;
 }

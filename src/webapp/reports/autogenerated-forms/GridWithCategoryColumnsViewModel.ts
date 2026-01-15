@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { Section, SectionWithCategoryColumns, Texts } from "../../../domain/common/entities/DataForm";
+import { Section, SectionWithCategoryColumns } from "../../../domain/common/entities/DataForm";
 import { DataElement } from "../../../domain/common/entities/DataElement";
 import { makeCocOrderArray } from "../../../data/common/Dhis2DataElement";
 import { Maybe } from "../../../utils/ts-utils";
@@ -12,7 +12,7 @@ export interface Grid {
     toggle: Section["toggle"];
     toggleMultiple: Section["toggleMultiple"];
     useIndexes: boolean;
-    texts: Texts;
+    texts: Section["texts"];
     parentColumns: ParentColumn[];
     hidden: boolean;
 }
