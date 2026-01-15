@@ -240,6 +240,10 @@ This will create this table:
     Male    |           |           |           |           |         |          |           |           |           |         |
 ```
 
+#### DataElement rules
+
+See [dataelement rules readme](./docs/dataelement_rules.md)
+
 #### DataSet rules
 
 Each dataset entry in `"dataSets"` can optionally contain rules.
