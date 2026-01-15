@@ -8,6 +8,7 @@ import { getDescription } from "../../../utils/viewTypes";
 import { checkIndicatorDirection, Indicator, IndicatorDirection } from "../../../domain/common/entities/Indicator";
 import { getIndexedLabel } from "./DataTableSection";
 import { Period } from "../../../domain/common/entities/Period";
+import { isToggleMultipleDeDisabled } from "../../../domain/common/entities/ToggleMultiple";
 
 export interface Grid {
     id: string;
@@ -162,9 +163,10 @@ export class GridWithCatOptionCombosViewModel {
     ): Column[] {
         const subsectionColumns = subsections.map(subsection => {
             const columnDescription = getDescription(section.columnsDescriptions, dataFormInfo, subsection.code || "");
-            const columnDataElements = rows.flatMap(row => {
-                return subsection.dataElements.filter(de => row.rows.map(r => r.name).includes(de.name));
-            });
+            const orgUnitCode = dataFormInfo.orgUnit.code;
+            const columnDataElements = rows
+                .flatMap(({ rows }) => subsection.dataElements.filter(de => rows.some(row => row.name === de.name)))
+                .map(de => ({ ...de, disabled: isToggleMultipleDeDisabled(section, de, orgUnitCode) }));
 
             return {
                 name: subsection.name,

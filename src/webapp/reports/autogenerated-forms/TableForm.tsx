@@ -74,7 +74,7 @@ const TableForm: React.FC<TableFormProps> = React.memo(props => {
                                         indicator={dataElement.indicator}
                                         colSpan="0"
                                         dataFormInfo={dataFormInfo}
-                                        periods={[dataFormInfo.period]}
+                                        periods={[section.dataEntryPeriod?.id || dataFormInfo.period]}
                                     />
                                 )}
 
@@ -87,7 +87,7 @@ const TableForm: React.FC<TableFormProps> = React.memo(props => {
                                         <CustomDataTableCell
                                             backgroundColor={props.section.styles.rows.backgroundColor}
                                         >
-                                            <span>{section.dataEntryPeriod.id}</span>
+                                            <span>{section.dataEntryPeriod.label}</span>
                                         </CustomDataTableCell>
                                     )}
 
@@ -101,6 +101,7 @@ const TableForm: React.FC<TableFormProps> = React.memo(props => {
                                             noComment={dataElement.disabledComments}
                                             period={section.dataEntryPeriod?.id}
                                             lockException={section.dataEntryPeriod !== undefined}
+                                            manualyDisabled={dataElement.disabled}
                                         />
                                     </CustomDataTableCell>
                                 </DataTableRow>
@@ -110,7 +111,7 @@ const TableForm: React.FC<TableFormProps> = React.memo(props => {
                                         indicator={dataElement.indicator}
                                         colSpan="0"
                                         dataFormInfo={dataFormInfo}
-                                        periods={[dataFormInfo.period]}
+                                        periods={[section.dataEntryPeriod?.id || dataFormInfo.period]}
                                     />
                                 )}
                             </React.Fragment>
@@ -146,7 +147,7 @@ const TableForm: React.FC<TableFormProps> = React.memo(props => {
                                 indicator={indicator}
                                 colSpan="0"
                                 dataFormInfo={dataFormInfo}
-                                periods={[dataFormInfo.period]}
+                                periods={[section.dataEntryPeriod?.id || dataFormInfo.period]}
                             />
                         );
                     })}

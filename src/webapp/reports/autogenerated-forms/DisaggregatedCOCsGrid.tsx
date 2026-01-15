@@ -158,6 +158,7 @@ const DisaggregatedCOCsGrid: React.FC<DisaggregatedCOCsGridProps> = props => {
                                                             dataElement={rowItem}
                                                             dataFormInfo={dataFormInfo}
                                                             noComment={rowItem.disabledComments}
+                                                            manualyDisabled={rowItem.disabled}
                                                         />
                                                     </CustomDataTableCell>
                                                 ) : (

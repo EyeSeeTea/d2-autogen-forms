@@ -14,6 +14,7 @@ import { titleVariant } from "./TitleVariant";
 import { DataElementToggle } from "./ToggleMultiple";
 import { DataElementRuleOptions, TotalRules } from "./DataElementRule";
 import { RulesFormula } from "../../../data/common/RulesFormula";
+import { DataFormRule } from "./DataFormRule";
 import { CompulsoryDataValue } from "./CompulsoryDataValue";
 import { Period, PeriodType } from "./Period";
 
@@ -32,6 +33,7 @@ export interface DataForm {
     compulsoryDataValues: CompulsoryDataValue[];
     showErrorOnCompulsory: boolean;
     periodType: PeriodType;
+    rules: Maybe<DataFormRule[]>;
     removePrefix: Maybe<string>;
 }
 
@@ -227,6 +229,8 @@ export class DataFormM {
         return _(dataForm.sections)
             .flatMap(section => {
                 switch (section.viewType) {
+                    case "table":
+                    case "grid":
                     case "grid-with-periods":
                     case "grid-indicators-calculated":
                         return section.periods.map(period => period.id);
@@ -234,8 +238,8 @@ export class DataFormM {
                         return [];
                 }
             })
-            .uniq()
             .concat([basePeriod])
+            .uniq()
             .sortBy()
             .value();
     }
