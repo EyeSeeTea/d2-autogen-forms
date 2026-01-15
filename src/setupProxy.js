@@ -1,5 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { createProxyMiddleware } = require("http-proxy-middleware");
+const path = require("path");
 
 /* react-script automatically executes src/setupProxy.js on init. Tasks:
 
@@ -42,6 +43,12 @@ module.exports = function (app) {
                 res.sendStatus(302);
             }
         },
+    });
+
+    // Serve comment.png from local public directory instead of proxying
+    app.get("/dhis2/images/comment.png", (req, res) => {
+        const imagePath = path.join(__dirname, "..", "public", "images", "comment.png");
+        res.sendFile(imagePath);
     });
 
     app.use(["/dhis2"], proxy);
