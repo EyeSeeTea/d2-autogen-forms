@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { Section, Texts } from "../../../domain/common/entities/DataForm";
+import { Section } from "../../../domain/common/entities/DataForm";
 import { DataElement } from "../../../domain/common/entities/DataElement";
 import { Maybe } from "../../../utils/ts-utils";
 
@@ -11,7 +11,7 @@ export interface MatrixGrid {
     styles: Section["styles"];
     toggle: Section["toggle"];
     toggleMultiple: Section["toggleMultiple"];
-    texts: Texts;
+    texts: Section["texts"];
     hidden: boolean;
 }
 

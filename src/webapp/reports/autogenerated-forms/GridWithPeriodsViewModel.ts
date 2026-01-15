@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { Section, SectionWithPeriods, Texts } from "../../../domain/common/entities/DataForm";
+import { Section, SectionWithPeriods } from "../../../domain/common/entities/DataForm";
 import { DataElement } from "../../../domain/common/entities/DataElement";
 import { Id } from "../../../domain/common/entities/Base";
 import {
@@ -25,7 +25,7 @@ export interface GridWithPeriodsI {
     tabs: Section["tabs"];
     toggle: Section["toggle"];
     toggleMultiple: Section["toggleMultiple"];
-    texts: Texts;
+    texts: Section["texts"];
     periodTabs: PeriodTab[];
     summary: Summary[];
     indicators: Indicator[];

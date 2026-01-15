@@ -37,7 +37,7 @@ export interface DataForm {
     removePrefix: Maybe<string>;
 }
 
-export interface Texts {
+export type Texts = {
     header: Maybe<string>;
     footer: Maybe<string>;
     name: Maybe<string>;
@@ -45,12 +45,17 @@ export interface Texts {
     totals: Maybe<string>;
 }
 
-export const defaultTexts: Texts = {
+export type SectionTexts = Texts & {
+    tabLabel: Maybe<string>;
+}
+
+export const defaultTexts: SectionTexts = {
     header: undefined,
     footer: undefined,
     rowTotals: undefined,
     totals: undefined,
     name: undefined,
+    tabLabel: undefined
 };
 
 const viewTypes = [
@@ -89,7 +94,7 @@ export interface SectionBase {
         | { type: "dataElement"; dataElement: DataElement; disabled: boolean }
         | { type: "dataElementExternal"; dataElement: DataElement; condition: string; disabled: boolean }
         | { type: "orgUnit"; orgUnits: Code[]; condition: "show" | "hide"; dataElements: Code[]; disabled: boolean };
-    texts: Texts;
+    texts: SectionTexts;
     tabs: { active: boolean; order?: string; rules?: RulesFormula };
     showIndex: boolean;
     sortRowsBy: string;

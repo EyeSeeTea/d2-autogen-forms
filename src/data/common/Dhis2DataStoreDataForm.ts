@@ -12,6 +12,7 @@ import {
     DataElementsToExclude,
     DataElementWidget,
     DescriptionText,
+    SectionTexts,
     Texts,
     Totals,
 } from "../../domain/common/entities/DataForm";
@@ -84,7 +85,7 @@ export type OrgUnitToggle = {
 type Toggle = DataElementToggle | DataElementExternalToggle | OrgUnitToggle | { type: "none" };
 
 interface BaseSectionConfig {
-    texts: Texts;
+    texts: SectionTexts;
     toggle: Toggle;
     tabs: { active: true; order: string | number; rules?: FromRulesFormulaCodec } | { active: false };
     showIndex: boolean;
@@ -306,12 +307,19 @@ const stylesType = Codec.interface({
     ),
 });
 
-const textsCodec = Codec.interface({
+const textCodecModel = {
     header: optional(oneOf([string, selector])),
     footer: optional(oneOf([string, selector])),
     rowTotals: optional(oneOf([string, selector])),
     totals: optional(oneOf([string, selector])),
     name: optional(oneOf([string, selector])),
+};
+
+const textsCodec = Codec.interface(textCodecModel);
+
+const sectionTextCodec = Codec.interface({
+    ...textCodecModel,
+    tabLabel: optional(oneOf([string, selector])),
 });
 
 const categoryOptionFilterConfigCodec = Codec.interface({
@@ -447,7 +455,7 @@ const DataStoreConfigCodec = Codec.interface({
                 subNationalDataset: optional(string),
                 sortRowsBy: optional(string),
                 viewType: optional(viewType),
-                texts: optional(textsCodec),
+                texts: optional(sectionTextCodec),
                 toggle: optional(toggleCodec),
                 titleVariant: optional(titleVariantType),
                 columnsDescriptions: optional(record(string, oneOf([string, selector]))),
@@ -934,7 +942,7 @@ export class Dhis2DataStoreDataForm {
             .compact()
             .value();
 
-        const virtualCodes = virtualColumnsCodes.concat(virtualRowsCodes).concat(rowNamesKeys);
+        const virtualCodes = virtualColumnsCodes.concat(virtualRowsCodes).concat(rowNamesKeys)
 
         const dataSetRulesCodes = _(storeConfig.dataSets)
             .values()
@@ -947,16 +955,9 @@ export class Dhis2DataStoreDataForm {
             .compact()
             .value();
 
-        const codes = _([...dataSetTexts, ...dataElementTexts, ...sectionTexts])
-            .flatMap(t => [
-                typeof t.header !== "string" ? t.header : undefined,
-                typeof t.footer !== "string" ? t.footer : undefined,
-                typeof t.rowTotals !== "string" ? t.rowTotals : undefined,
-                typeof t.totals !== "string" && !Array.isArray(t.totals) ? t.totals : undefined,
-                typeof t.name !== "string" ? t.name : undefined,
-            ])
+        const codes = _([...extractTextCodes(dataSetTexts), ...extractTextCodes(dataElementTexts), ...extractTextCodes(sectionTexts)])
+            .map(v => typeof v !== "string" && !Array.isArray(v) ? v?.code : undefined)
             .compact()
-            .map(selector => selector.code)
             .concat([...descriptionCodes, ...totalsCodes, ...dataSetRulesCodes])
             .uniq()
             .value();
@@ -1047,6 +1048,7 @@ export class Dhis2DataStoreDataForm {
                         rowTotals: this.getTextFromConstants(sectionConfig?.texts?.rowTotals, constantsByCode),
                         totals: this.getTextFromConstants(sectionConfig?.texts?.totals, constantsByCode),
                         name: this.getTextFromConstants(sectionConfig?.texts?.name, constantsByCode),
+                        tabLabel: this.getTextFromConstants(sectionConfig?.texts?.tabLabel, constantsByCode)
                     },
                     showIndex: this.getEffectiveBooleanValue(dataSetConfig?.showIndex, sectionConfig.showIndex),
                     sortRowsBy: sectionConfig.sortRowsBy || "",
@@ -1344,6 +1346,10 @@ export class Dhis2DataStoreDataForm {
 function selectorMatches<T extends { code: string }>(obj: T, selector: Selector): boolean {
     return obj.code === selector.code;
 }
+
+function extractTextCodes<T extends Record<string, string | { code: string } | undefined>>(
+    texts: T[]
+){ return texts.flatMap(t => Object.values(t))}
 
 interface Constant {
     id: Id;

@@ -140,6 +140,7 @@ export const sectionSchema = (
                 rowTotals: textSchema(constantCodes),
                 totals: textSchema(constantCodes),
                 name: textSchema(constantCodes),
+                tabLabel: textSchema(constantCodes),
             },
         }),
         toggle: defaultObjectProperties({

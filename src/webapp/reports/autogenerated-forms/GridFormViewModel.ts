@@ -5,7 +5,6 @@ import {
     Section,
     SectionBase,
     SectionGrid,
-    Texts,
 } from "../../../domain/common/entities/DataForm";
 import { DataElement, DataElementNumber } from "../../../domain/common/entities/DataElement";
 import { titleVariant } from "../../../domain/common/entities/TitleVariant";
@@ -36,7 +35,7 @@ export type Grid = GridComponents & {
     toggle: Section["toggle"];
     toggleMultiple: Section["toggleMultiple"];
     useIndexes: boolean;
-    texts: Texts;
+    texts: Section["texts"];
     titleVariant: titleVariant;
     indicators: Indicator[];
     rowGroups: RowGroup[];
