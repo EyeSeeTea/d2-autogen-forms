@@ -1,4 +1,5 @@
 import _ from "lodash";
+import { removePrefixFromWords } from "../../../utils/string";
 
 import { Maybe } from "../../../utils/ts-utils";
 import { Id } from "../../common/entities/Base";
@@ -51,14 +52,9 @@ export class ValidateDatasetRulesUseCase {
         return this.removePrefixFromDescription(rule.message, removePrefix);
     }
 
-    /**
-     * Removes the specified prefix from all words in the description.
-     */
     private removePrefixFromDescription(description: string, removePrefix: Maybe<string>): string {
         if (!removePrefix) return description;
-        const escapedPrefix = removePrefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        const regex = new RegExp(`\\b${escapedPrefix}`, "g");
-        return description.replace(regex, "").trim();
+        return removePrefixFromWords(description, removePrefix);
     }
 }
 
