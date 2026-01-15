@@ -1,7 +1,7 @@
 import { Code } from "./Base";
 import { DataElement } from "./DataElement";
 
-export type RuleType = "visible" | "disabled";
+export type RuleType = "visible" | "disabled" | "enabled";
 
 export type SingleConditionRule = {
     type?: "single";

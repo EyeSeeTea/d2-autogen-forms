@@ -25,10 +25,19 @@ export function useApplyRules(props: UseApplyRulesProps): UseApplyRulesReturn {
     if (dataElement.rules.length === 0 && dataElementTotalRules.length === 0)
         return { isDisabled: false, isVisible: true };
 
+    // disabled rules take precedence over enabled rules
     const disabledValue = checkDisabledRule({ dataElement, dataFormInfo, period });
+    if (disabledValue) {
+        const visibleValue = checkVisibleRule({ dataElement, dataFormInfo, period, dataElementTotalRules });
+        return { isDisabled: true, isVisible: visibleValue };
+    }
+
+    const enabledValue = checkEnabledRule({ dataElement, dataFormInfo, period });
+    const isDisabled = enabledValue !== undefined ? !enabledValue : false;
+
     const visibleValue = checkVisibleRule({ dataElement, dataFormInfo, period, dataElementTotalRules });
 
-    return { isDisabled: disabledValue, isVisible: visibleValue };
+    return { isDisabled, isVisible: visibleValue };
 }
 
 export function checkVisibleRule(options: UseApplyRulesProps): boolean {
@@ -45,6 +54,15 @@ function checkDisabledRule(options: UseApplyRulesProps): boolean {
     const disabledDataElementTotalRule = totalRules?.find(rule => rule.type === "disabled");
 
     return getValueAndVerifyCondition(disabledRules, dataFormInfo, period, disabledDataElementTotalRule) ?? false;
+}
+
+function checkEnabledRule(options: UseApplyRulesProps): Maybe<boolean> {
+    const { dataElement, dataFormInfo, period, dataElementTotalRules: totalRules } = options;
+    const enabledRules = dataElement.rules.filter(rule => rule.type === "enabled");
+    const enabledDataElementTotalRule = totalRules?.find(rule => rule.type === "enabled");
+
+    if (enabledRules.length === 0 && !enabledDataElementTotalRule) return undefined;
+    return getValueAndVerifyCondition(enabledRules, dataFormInfo, period, enabledDataElementTotalRule) ?? false;
 }
 
 function getValueAndVerifyCondition(
