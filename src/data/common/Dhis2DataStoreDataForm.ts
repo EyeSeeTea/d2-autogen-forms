@@ -942,7 +942,7 @@ export class Dhis2DataStoreDataForm {
             .compact()
             .value();
 
-        const virtualCodes = virtualColumnsCodes.concat(virtualRowsCodes).concat(rowNamesKeys)
+        const virtualCodes = virtualColumnsCodes.concat(virtualRowsCodes).concat(rowNamesKeys);
 
         const dataSetRulesCodes = _(storeConfig.dataSets)
             .values()
@@ -955,8 +955,12 @@ export class Dhis2DataStoreDataForm {
             .compact()
             .value();
 
-        const codes = _([...extractTextCodes(dataSetTexts), ...extractTextCodes(dataElementTexts), ...extractTextCodes(sectionTexts)])
-            .map(v => typeof v !== "string" && !Array.isArray(v) ? v?.code : undefined)
+        const codes = _([
+            ...extractTextCodes(dataSetTexts),
+            ...extractTextCodes(dataElementTexts),
+            ...extractTextCodes(sectionTexts),
+        ])
+            .map(v => (typeof v !== "string" && !Array.isArray(v) ? v?.code : undefined))
             .compact()
             .concat([...descriptionCodes, ...totalsCodes, ...dataSetRulesCodes])
             .uniq()
@@ -1048,7 +1052,7 @@ export class Dhis2DataStoreDataForm {
                         rowTotals: this.getTextFromConstants(sectionConfig?.texts?.rowTotals, constantsByCode),
                         totals: this.getTextFromConstants(sectionConfig?.texts?.totals, constantsByCode),
                         name: this.getTextFromConstants(sectionConfig?.texts?.name, constantsByCode),
-                        tabLabel: this.getTextFromConstants(sectionConfig?.texts?.tabLabel, constantsByCode)
+                        tabLabel: this.getTextFromConstants(sectionConfig?.texts?.tabLabel, constantsByCode),
                     },
                     showIndex: this.getEffectiveBooleanValue(dataSetConfig?.showIndex, sectionConfig.showIndex),
                     sortRowsBy: sectionConfig.sortRowsBy || "",
@@ -1347,9 +1351,9 @@ function selectorMatches<T extends { code: string }>(obj: T, selector: Selector)
     return obj.code === selector.code;
 }
 
-function extractTextCodes<T extends Record<string, string | { code: string } | undefined>>(
-    texts: T[]
-){ return texts.flatMap(t => Object.values(t))}
+function extractTextCodes<T extends Record<string, string | { code: string } | undefined>>(texts: T[]) {
+    return texts.flatMap(t => Object.values(t));
+}
 
 interface Constant {
     id: Id;

@@ -43,11 +43,11 @@ export type Texts = {
     name: Maybe<string>;
     rowTotals: Maybe<string>;
     totals: Maybe<string>;
-}
+};
 
 export type SectionTexts = Texts & {
     tabLabel: Maybe<string>;
-}
+};
 
 export const defaultTexts: SectionTexts = {
     header: undefined,
@@ -55,7 +55,7 @@ export const defaultTexts: SectionTexts = {
     rowTotals: undefined,
     totals: undefined,
     name: undefined,
-    tabLabel: undefined
+    tabLabel: undefined,
 };
 
 const viewTypes = [
