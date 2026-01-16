@@ -138,15 +138,47 @@ function TypeSwitch(props: TypeSwitchProps) {
 }
 
 // Default tab indices: -1 means no primary tab, 0 means first secondary tab
-const DEFAULT_PRIMARY_TAB_INDEX = -1;
-const DEFAULT_SECONDARY_TAB_INDEX = 0;
+const DEFAULT_PRIMARY_TAB_INDEX = "-1";
+const DEFAULT_SECONDARY_TAB_INDEX = "0";
 
-export function getTabIndices(order: Maybe<string>): [number, number] {
+export function getTabIndices(
+    order: Maybe<string>,
+    allSections?: {
+        tabs: { order?: string };
+        showIndex: boolean;
+    }[],
+    showIndex = false
+): [number, number] {
     const [primaryTabIndex, secondaryTabIndex] = order ? order.split(".") : ["", ""];
-    return [
-        parseInt(primaryTabIndex ?? `${DEFAULT_PRIMARY_TAB_INDEX}`),
-        parseInt(secondaryTabIndex ?? `${DEFAULT_SECONDARY_TAB_INDEX}`),
-    ];
+    const currentPrimary = parseInt(primaryTabIndex ?? DEFAULT_PRIMARY_TAB_INDEX);
+    const currentSecondary = parseInt(secondaryTabIndex ?? DEFAULT_SECONDARY_TAB_INDEX);
+
+    if (!allSections || !showIndex) {
+        return [currentPrimary, currentSecondary];
+    }
+
+    if (currentPrimary === -1) {
+        return [-1, currentSecondary];
+    }
+
+    const visibleSections = allSections.filter(
+        (s): s is typeof s & { tabs: { order: string } } => s.showIndex && !!s.tabs.order
+    );
+
+    const adjustedPrimary = _(visibleSections)
+        .map(s => parseInt(s.tabs.order.split(".")[0] ?? "-1"))
+        .filter(primary => primary !== -1 && primary < currentPrimary)
+        .uniq()
+        .value().length;
+
+    const adjustedSecondary = visibleSections
+        .map(s => {
+            const [p, sec] = s.tabs.order.split(".");
+            return [parseInt(p ?? "-1"), parseInt(sec ?? "0")] as const;
+        })
+        .filter(([primary, secondary]) => primary === currentPrimary && secondary < currentSecondary).length;
+
+    return [adjustedPrimary, adjustedSecondary];
 }
 
 function isTabHeader(order: Maybe<string>) {
@@ -269,7 +301,7 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
                         const order = section.tabs.order;
 
                         if (isTabHeader(order)) {
-                            const [primaryTabIndex] = getTabIndices(order);
+                            const [primaryTabIndex] = getTabIndices(section.tabs.order, sections, section.showIndex);
                             const tabLabel =
                                 section.showIndex && primaryTabIndex !== -1
                                     ? `${primaryTabIndex + 1} - ${section.name}`

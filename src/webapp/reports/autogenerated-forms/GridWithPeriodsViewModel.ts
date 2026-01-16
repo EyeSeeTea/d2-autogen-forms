@@ -111,7 +111,7 @@ export class GridWithPeriodsViewModel {
                         type: firstDataElement.type === "FILE" ? "dataElementFile" : "dataElement",
                         dataElement: {
                             ...firstDataElement,
-                            name: getDataElementLabel(firstDataElement, section),
+                            name: getDataElementLabel(firstDataElement, section, dataFormInfo),
                             disabled:
                                 firstDataElement.disabled ??
                                 isToggleMultipleDeDisabled(section, firstDataElement, orgUnitCode),
@@ -152,7 +152,7 @@ export class GridWithPeriodsViewModel {
                                 colSpan: hasSubGroup ? "0" : "2",
                                 dataElement: {
                                     ...dataElement,
-                                    name: getDataElementLabel(dataElement, section),
+                                    name: getDataElementLabel(dataElement, section, dataFormInfo),
                                     disabled:
                                         dataElement.disabled ??
                                         isToggleMultipleDeDisabled(section, dataElement, orgUnitCode),
@@ -189,7 +189,7 @@ export class GridWithPeriodsViewModel {
                                     type: "dataElement",
                                     dataElement: {
                                         ...dataElement,
-                                        name: getDataElementLabel(dataElement, section),
+                                        name: getDataElementLabel(dataElement, section, dataFormInfo),
                                         disabled:
                                             dataElement.disabled ??
                                             isToggleMultipleDeDisabled(section, dataElement, orgUnitCode),
@@ -274,11 +274,11 @@ function isRowSubGroup(dataElement: DataElement): boolean {
     return dataElement.name.split(separator).length === 3;
 }
 
-function getDataElementLabel(dataElement: DataElement, section: SectionWithPeriods) {
+function getDataElementLabel(dataElement: DataElement, section: SectionWithPeriods, dataFormInfo: DataFormInfo) {
     const deName = _(dataElement.name).split(separator).last() || "-";
     const deIndex = section.dataElements.findIndex(de => de.id === dataElement.id) + 1;
 
-    return getIndexedLabel(section, deName, deIndex);
+    return getIndexedLabel(section, dataFormInfo, deName, deIndex);
 }
 
 type PeriodTab = { id: Id | undefined; name: string };

@@ -145,7 +145,7 @@ export class GridWithCatOptionCombosViewModel {
                     groupName: group.length > 1 ? groupName : "",
                     groupDescription: groupDescription,
                     rows: group.flatMap(de => {
-                        const deLabel = getDataElementLabel(de, section);
+                        const deLabel = getDataElementLabel(de, section, dataFormInfo);
                         const row = { dataElement: de, deName: deLabel, name: de.name };
 
                         return section.periods.length > 0 ? section.periods.map(period => ({ ...row, period })) : [row];
@@ -236,11 +236,11 @@ export type Summary = { cells: CellTotal[]; cellName: string };
 export type CellTotal = { formula: string; columnName: string; items: TotalItem[] };
 export type TotalItem = { dataElement: DataElement; categoryOptionCombo: CategoryOptionCombo };
 
-function getDataElementLabel(dataElement: DataElement, section: SectionWithPeriods) {
+function getDataElementLabel(dataElement: DataElement, section: SectionWithPeriods, dataFormInfo: DataFormInfo) {
     const deName = _.last(dataElement.name.split(separator)) ?? "";
     const deIndex = section.dataElements.findIndex(de => de.id === dataElement.id) + 1;
 
-    return getIndexedLabel(section, deName, deIndex);
+    return getIndexedLabel(section, dataFormInfo, deName, deIndex);
 }
 
 function getCategoryOptionComboByColumnName(dataElement: DataElement, column: Column): Maybe<CategoryOptionCombo> {
