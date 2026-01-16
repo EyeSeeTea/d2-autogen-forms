@@ -88,7 +88,14 @@ export interface SectionBase {
         | { type: "none" }
         | { type: "dataElement"; dataElement: DataElement; disabled: boolean }
         | { type: "dataElementExternal"; dataElement: DataElement; condition: string; disabled: boolean }
-        | { type: "orgUnit"; orgUnits: Code[]; condition: "show" | "hide"; dataElements: Code[]; disabled: boolean };
+        | {
+              type: "orgUnit";
+              orgUnits: Code[];
+              condition: "show" | "hide";
+              dataElements: Code[];
+              hidden?: boolean;
+              visible?: boolean;
+          };
     texts: Texts;
     tabs: { active: boolean; order?: string; rules?: RulesFormula };
     showIndex: boolean;

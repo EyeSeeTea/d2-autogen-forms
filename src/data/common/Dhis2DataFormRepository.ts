@@ -719,7 +719,8 @@ function getSectionBaseWithToggle(
                     orgUnits: toggle.orgUnits,
                     condition: toggle.condition,
                     dataElements: toggle.dataElements ?? [],
-                    disabled: toggle.disabled,
+                    hidden: toggle.hidden,
+                    visible: toggle.visible,
                 },
             };
         }

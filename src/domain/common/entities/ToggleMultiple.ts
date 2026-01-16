@@ -15,7 +15,8 @@ type OrgUnitToggleMultiple = {
     type: "orgUnit";
     orgUnits: string[];
     condition: string;
-    disabled?: boolean;
+    hidden?: boolean;
+    visible?: boolean;
     dataElements?: string[];
 };
 export type ToggleMultipleCondition = DataElementToggleMultiple | OrgUnitToggleMultiple;
@@ -28,6 +29,8 @@ export type ToggleMultiple = {
 export type ToggleDataElement = {
     dataElement: DataElement;
     condition: string;
+    hidden?: boolean;
+    visible?: boolean;
 };
 
 type DEToggle = { type: "dataElement" } & ToggleDataElement;
@@ -62,7 +65,9 @@ export function buildToggleMultiple(
                         type: toggle.type,
                         orgUnitCodes: toggle.orgUnits,
                         condition: toggle.condition,
-                        dataElement: { ...dataElement, disabled: Boolean(toggle.disabled) },
+                        hidden: toggle.hidden,
+                        visible: toggle.visible,
+                        dataElement: dataElement,
                     }));
                 }
                 case "dataElement": {

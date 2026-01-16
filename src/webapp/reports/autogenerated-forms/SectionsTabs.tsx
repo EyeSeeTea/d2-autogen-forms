@@ -1,5 +1,5 @@
 import _ from "lodash";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Tabs, Tab, Box, makeStyles } from "@material-ui/core";
 import {
     Section,
@@ -30,6 +30,7 @@ import DisaggregatedCOCsGrid from "./DisaggregatedCOCsGrid";
 import GridIndicatorsCalculated from "./GridIndicatorsCalculated";
 import { calculateFormula } from "./datatables/InputFormula";
 import GridWithCategoryColumns from "./GridWithCategoryColumns";
+import { getSectionVisibilityState } from "./hooks/useSectionVisibility";
 
 export interface TabPanelProps {
     sections: Section[];
@@ -193,6 +194,32 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
     const [showLeftFade, setShowLeftFade] = useState(false);
     const [showRightFade, setShowRightFade] = useState(true);
 
+    const visibleTabIndices = useMemo(() => {
+        return sections.reduce((acc, section) => {
+            const { isVisible } = getSectionVisibilityState(section, dataFormInfo);
+            if (!isVisible) return acc;
+            const [primaryTabIndex] = getTabIndices(section.tabs.order);
+            if (Number.isNaN(primaryTabIndex)) return acc;
+            acc.add(primaryTabIndex);
+            return acc;
+        }, new Set<number>());
+    }, [sections, dataFormInfo]);
+
+    const orderedVisibleTabIndices = useMemo(() => {
+        return sections
+            .map(section => getTabIndices(section.tabs.order)[0])
+            .filter(index => !Number.isNaN(index))
+            .filter(index => visibleTabIndices.has(index))
+            .filter((value, index, array) => array.indexOf(value) === index);
+    }, [sections, visibleTabIndices]);
+
+    useEffect(() => {
+        if (visibleTabIndices.size === 0) return;
+        if (!visibleTabIndices.has(activeTab)) {
+            setActiveTab(orderedVisibleTabIndices[0] ?? 0);
+        }
+    }, [activeTab, orderedVisibleTabIndices, visibleTabIndices]);
+
     const handleChange = (_event: React.ChangeEvent<{}>, value: number) => {
         setActiveTab(value);
     };
@@ -241,6 +268,8 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
         };
     }, [tabContainer]);
 
+    if (visibleTabIndices.size === 0) return null;
+
     return (
         <Box sx={{ width: "100%" }}>
             <StyledAppBar position="sticky" color="default">
@@ -270,6 +299,8 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
 
                         if (isTabHeader(order)) {
                             const [primaryTabIndex] = getTabIndices(order);
+                            if (Number.isNaN(primaryTabIndex)) return null;
+                            if (!visibleTabIndices.has(primaryTabIndex)) return null;
                             const tabLabel =
                                 section.showIndex && primaryTabIndex !== -1
                                     ? `${primaryTabIndex + 1} - ${section.name}`
@@ -312,16 +343,18 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
                 <FadedOverlay hidden={!showLeftFade} style={{ left: 0, transform: "rotate(180deg)" }} />
                 <FadedOverlay hidden={!showRightFade} style={{ right: 0 }} />
             </StyledAppBar>
-            {sections.map(section => {
-                return (
-                    <TabPanel
-                        key={section.id + "TabPanel"}
-                        value={activeTab}
-                        dataFormInfo={dataFormInfo}
-                        section={section}
-                    />
-                );
-            })}
+            {sections
+                .filter(section => visibleTabIndices.has(getTabIndices(section.tabs.order)[0]))
+                .map(section => {
+                    return (
+                        <TabPanel
+                            key={section.id + "TabPanel"}
+                            value={activeTab}
+                            dataFormInfo={dataFormInfo}
+                            section={section}
+                        />
+                    );
+                })}
         </Box>
     );
 });

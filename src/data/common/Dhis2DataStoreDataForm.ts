@@ -78,7 +78,8 @@ export type OrgUnitToggle = {
     orgUnits: string[];
     dataElements: string[];
     condition: "show" | "hide";
-    disabled: boolean;
+    hidden?: boolean;
+    visible?: boolean;
 };
 
 type Toggle = DataElementToggle | DataElementExternalToggle | OrgUnitToggle | { type: "none" };
@@ -351,7 +352,8 @@ const orgUnitToggleCodec = Codec.interface({
     orgUnits: array(string),
     dataElements: optional(array(string)),
     condition: oneOf([exactly("show"), exactly("hide")]),
-    disabled: optional(boolean),
+    hidden: optional(boolean),
+    visible: optional(boolean),
 });
 
 const toggleCodec = oneOf([dataElementToggleCodec, orgUnitToggleCodec]);
@@ -368,7 +370,8 @@ const orgUnitToggleMultipleCodec = Codec.interface({
     orgUnits: array(string),
     condition: oneOf([exactly("show"), exactly("hide")]),
     dataElements: optional(array(string)),
-    disabled: optional(boolean),
+    hidden: optional(boolean),
+    visible: optional(boolean),
 });
 
 const toggleMultipleCodec = Codec.interface({
@@ -1161,7 +1164,7 @@ export class Dhis2DataStoreDataForm {
             logicalOperator: ToggleLogicalOperator;
             conditions: Array<
                 | { type?: "dataElement"; dataElement: Code; condition: string }
-                | { type: "orgUnit"; orgUnits: Code[]; condition: string }
+                | { type: "orgUnit"; orgUnits: Code[]; condition: string; hidden?: boolean; visible?: boolean }
             >;
         }>;
     }): Maybe<ToggleMultiple> {
@@ -1176,6 +1179,8 @@ export class Dhis2DataStoreDataForm {
                         type: "orgUnit",
                         orgUnits: condition.orgUnits,
                         condition: condition.condition,
+                        hidden: condition.hidden,
+                        visible: condition.visible,
                     };
                 default:
                     return {
@@ -1208,7 +1213,7 @@ export class Dhis2DataStoreDataForm {
                     disabled: toggle.disabled ?? false,
                 };
             case "orgUnit":
-                return { ...toggle, dataElements: toggle.dataElements ?? [], disabled: toggle.disabled ?? false };
+                return { ...toggle, dataElements: toggle.dataElements ?? [] };
             default:
                 return assertUnreachable(toggle);
         }

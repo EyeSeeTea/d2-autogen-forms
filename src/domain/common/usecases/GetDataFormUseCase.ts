@@ -52,42 +52,21 @@ export class GetDataFormUseCase {
 
                 if (toggle.type === "orgUnit") {
                     const isOrgUnitInToggleList = toggle.orgUnits.includes(orgUnitCode);
+                    const keepVisibleWhenNotMatched = Boolean(toggle.visible) && !toggle.hidden;
+                    const shouldShow =
+                        toggle.condition === "show" ? isOrgUnitInToggleList : !isOrgUnitInToggleList;
 
                     if (toggle.dataElements.length === 0) {
-                        switch (toggle.condition) {
-                            case "hide": {
-                                if (isOrgUnitInToggleList) {
-                                    if (toggle.disabled) {
-                                        return {
-                                            ...section,
-                                            dataElements: dataElements.map(de => ({ ...de, disabled: true })),
-                                        };
-                                    }
-                                    return { ...section, hidden: true };
-                                }
-                                return section;
-                            }
-                            case "show": {
-                                if (isOrgUnitInToggleList) {
-                                    return section;
-                                }
-                                if (toggle.disabled) {
-                                    return {
-                                        ...section,
-                                        dataElements: dataElements.map(de => ({ ...de, disabled: true })),
-                                    };
-                                }
-                                return { ...section, hidden: true };
-                            }
-                            default:
-                                console.error(`Unknown orgUnit toggle condition`);
-                                return section;
+                        if (shouldShow || keepVisibleWhenNotMatched) {
+                            return section;
                         }
+                        return { ...section, hidden: true };
                     } else if (toggle.dataElements.length > 0) {
                         const ouToggledDataElements = this.applyOrgUnitToggleFilter(
                             dataElements,
                             toggle,
-                            isOrgUnitInToggleList
+                            isOrgUnitInToggleList,
+                            keepVisibleWhenNotMatched
                         );
 
                         return {
@@ -106,9 +85,11 @@ export class GetDataFormUseCase {
     private applyOrgUnitToggleFilter(
         dataElements: DataElement[],
         toggle: OrgUnitToggle,
-        isOrgUnitInToggleList: boolean
+        isOrgUnitInToggleList: boolean,
+        keepVisibleWhenNotMatched: boolean
     ): DataElement[] {
-        const { condition, dataElements: toggleDataElements, disabled } = toggle;
+        const { condition, dataElements: toggleDataElements } = toggle;
+        const shouldShow = condition === "show" ? isOrgUnitInToggleList : !isOrgUnitInToggleList;
 
         return _(dataElements)
             .map(dataElement => {
@@ -118,26 +99,10 @@ export class GetDataFormUseCase {
                     return dataElement;
                 }
 
-                switch (condition) {
-                    case "hide": {
-                        if (isOrgUnitInToggleList) {
-                            if (disabled) {
-                                return { ...dataElement, disabled: true };
-                            }
-                            return undefined;
-                        }
-                        return dataElement;
-                    }
-                    case "show": {
-                        if (isOrgUnitInToggleList) {
-                            return dataElement;
-                        }
-                        if (disabled) {
-                            return { ...dataElement, disabled: true };
-                        }
-                        return undefined;
-                    }
+                if (shouldShow || keepVisibleWhenNotMatched) {
+                    return dataElement;
                 }
+                return undefined;
             })
             .compact()
             .value();

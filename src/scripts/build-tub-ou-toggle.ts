@@ -9,7 +9,8 @@ type OrgUnitToggleCondition = {
     type: "orgUnit";
     orgUnits: Code[];
     condition: "show" | "hide";
-    disabled?: boolean;
+    hidden?: boolean;
+    visible?: boolean;
     dataElements?: Code[];
 };
 
@@ -221,16 +222,17 @@ function buildSectionsConfigFromSheetRules(config: Config, sheetRules: SheetRule
                 return !ruleDataElements || ruleDataElements.length === 0;
             });
 
-            const dataElementConditions = rulesWithDataElements.map(rule => {
-                const ruleDataElements = metadata.dataElements[rule.ruleType]?.[sectionCode] ?? [];
-                return {
-                    type: "orgUnit" as const,
-                    orgUnits: countryRulesMap[rule.ruleType],
-                    condition: rule.condition,
-                    disabled: rule.disabled ?? false,
-                    dataElements: ruleDataElements,
-                };
-            });
+    const dataElementConditions = rulesWithDataElements.map(rule => {
+        const ruleDataElements = metadata.dataElements[rule.ruleType]?.[sectionCode] ?? [];
+        return {
+            type: "orgUnit" as const,
+            orgUnits: countryRulesMap[rule.ruleType],
+            condition: rule.condition,
+            hidden: rule.hidden ?? false,
+            visible: !rule.hidden && Boolean(rule.visible),
+            dataElements: ruleDataElements,
+        };
+    });
 
             const sectionConditionGroups = _(rulesWithoutDataElements)
                 .groupBy(rule => rule.condition)
@@ -240,13 +242,15 @@ function buildSectionsConfigFromSheetRules(config: Config, sheetRules: SheetRule
                         .uniq()
                         .value();
 
-                    const disabled = rules.some(rule => rule.disabled);
+                    const hasHidden = rules.some(rule => rule.hidden);
+                    const hasVisible = rules.some(rule => rule.visible);
 
                     return {
                         type: "orgUnit" as const,
                         orgUnits: allOrgUnits,
                         condition: condition as "show" | "hide",
-                        disabled: disabled,
+                        hidden: hasHidden,
+                        visible: !hasHidden && hasVisible,
                     };
                 })
                 .value();
@@ -366,17 +370,18 @@ function parseRulesFromExcel(rulesSheetPath: string): SheetRule[] {
 const ruleConfigs: {
     ruleType: RuleType;
     condition: "show" | "hide";
-    disabled?: boolean;
+    hidden?: boolean;
+    visible?: boolean;
     invertSectionMatch?: boolean;
 }[] = [
-    { ruleType: "compactForm", condition: "hide", disabled: true, invertSectionMatch: true },
-    { ruleType: "compactForm", condition: "show", disabled: false, invertSectionMatch: false },
-    { ruleType: "ecdc", condition: "hide", disabled: true },
-    { ruleType: "engageCommunityDisplay", condition: "show", disabled: true },
-    { ruleType: "ppmDisplay", condition: "show", disabled: true },
-    { ruleType: "universalAccessDxDisplay", condition: "show", disabled: true },
-    { ruleType: "financeDisplay1", condition: "show", disabled: true },
-    { ruleType: "financeDisplay2", condition: "show", disabled: true },
+    { ruleType: "compactForm", condition: "hide", hidden: true, invertSectionMatch: true },
+    { ruleType: "compactForm", condition: "show", visible: true, invertSectionMatch: false },
+    { ruleType: "ecdc", condition: "hide", hidden: true },
+    { ruleType: "engageCommunityDisplay", condition: "show", hidden: true },
+    { ruleType: "ppmDisplay", condition: "show", hidden: true },
+    { ruleType: "universalAccessDxDisplay", condition: "show", hidden: true },
+    { ruleType: "financeDisplay1", condition: "show", hidden: true },
+    { ruleType: "financeDisplay2", condition: "show", hidden: true },
 ];
 
 const REPORTING_YEAR = 2025;
