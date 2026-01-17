@@ -119,7 +119,7 @@ export function getIndexedLabel(
         : [-1, -1];
 
     if (adjustedPrimaryIdx !== -1) {
-        return `${adjustedPrimaryIdx + 1}.${adjustedSecondaryIdx}${
+        return `${adjustedPrimaryIdx + 1}.${adjustedSecondaryIdx + 1}${
             dataElementIndex ? `.${dataElementIndex}` : ""
         } - ${name}`;
     }
