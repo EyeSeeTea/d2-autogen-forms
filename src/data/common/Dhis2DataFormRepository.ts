@@ -328,8 +328,15 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                             dataElementsByCode,
                             formula
                         );
+                        const enabledTotalRule = this.getTotalRuleByRuleType(
+                            "enabled",
+                            rules,
+                            section,
+                            dataElementsByCode,
+                            formula
+                        );
 
-                        return visibleTotalRule || disabledTotalRule;
+                        return visibleTotalRule || disabledTotalRule || enabledTotalRule;
                     }
                 })
                 .compact()
@@ -520,8 +527,14 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                     allDataElements: allDataElements,
                     dataElement: dataElement,
                 });
+                const enabledDataElements = this.getRuleConfigByType({
+                    ruleType: "enabled",
+                    dataElementConfig: dataElementConfig,
+                    allDataElements: allDataElements,
+                    dataElement: dataElement,
+                });
 
-                return [...disabledDataElements, ...visibleDataElements];
+                return [...disabledDataElements, ...visibleDataElements, ...enabledDataElements];
             })
             .compact()
             .value();
@@ -599,6 +612,8 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                 return dataElementConfigRules.rules?.disabled;
             case "visible":
                 return dataElementConfigRules.rules?.visible;
+            case "enabled":
+                return dataElementConfigRules.rules?.enabled;
             default:
                 return undefined;
         }
