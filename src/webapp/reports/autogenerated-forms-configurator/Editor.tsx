@@ -27,9 +27,12 @@ export const Editor: React.FC<EditorProps> = React.memo(props => {
         loader
             .init()
             .then((monaco: Monaco) => {
+                const schema = getAutogenConfigSchema({ ...autogenConfigSchema, dataSetCode });
+                const safeSchema = JSON.parse(JSON.stringify(schema));
+
                 monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
                     validate: true,
-                    schemas: [getAutogenConfigSchema({ ...autogenConfigSchema, dataSetCode: dataSetCode })],
+                    schemas: [safeSchema],
                 });
             })
             .catch(error => console.error("An error occurred during initialization of the editor: ", error));
@@ -78,5 +81,4 @@ const StyledEditor = styled(MonacoEditor)`
     border: 1px solid rgb(160, 173, 186);
     border-radius: 3px;
     box-shadow: rgba(48, 54, 60, 0.1) 0px 1px 2px 0px inset;
-}
 `;
