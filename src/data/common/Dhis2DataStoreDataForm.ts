@@ -17,7 +17,12 @@ import {
 } from "../../domain/common/entities/DataForm";
 import { titleVariant } from "../../domain/common/entities/TitleVariant";
 import { SectionStyle, SectionStyleAttrs } from "../../domain/common/entities/SectionStyle";
-import { DataElementRuleOptions, SectionRuleOptions } from "../../domain/common/entities/DataElementRule";
+import {
+    ConditionRule,
+    DataElementRuleOptions,
+    RuleType,
+    SectionRuleOptions,
+} from "../../domain/common/entities/DataElementRule";
 import {
     ToggleLogicalOperator,
     ToggleMultiple,
@@ -254,7 +259,7 @@ const multipleConditionDERuleCodec = Codec.interface({
 });
 
 const dataElementRuleCodec = record(
-    oneOf([exactly("visible"), exactly("disabled")]),
+    oneOf([exactly("visible"), exactly("disabled"), exactly("delete")]),
     oneOf([singleConditionDERuleCodec, multipleConditionDERuleCodec])
 );
 
@@ -531,8 +536,9 @@ const DataStoreConfigCodec = Codec.interface({
     }),
 });
 
+type DataElementRule = Record<RuleType | "delete", ConditionRule>;
 export interface DataElementConfig {
-    rules?: DataElementRuleOptions;
+    rules?: DataElementRule;
     disabled?: boolean;
     disableComments?: boolean;
     texts?: Texts;
