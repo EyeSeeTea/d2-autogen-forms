@@ -30,6 +30,7 @@ import DisaggregatedCOCsGrid from "./DisaggregatedCOCsGrid";
 import GridIndicatorsCalculated from "./GridIndicatorsCalculated";
 import { calculateFormula } from "./datatables/InputFormula";
 import GridWithCategoryColumns from "./GridWithCategoryColumns";
+import { useTabVisibility } from "./hooks/useTabVisibility";
 
 export interface TabPanelProps {
     sections: Section[];
@@ -192,9 +193,16 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
     const [activeTab, setActiveTab] = useState(0);
     const [showLeftFade, setShowLeftFade] = useState(false);
     const [showRightFade, setShowRightFade] = useState(true);
+    const { tabVisibilityByIndex, firstVisibleTabIndex } = useTabVisibility(sections, dataFormInfo);
 
     const handleChange = (_event: React.ChangeEvent<{}>, value: number) => {
-        setActiveTab(value);
+        if (tabVisibilityByIndex[value]) {
+            setActiveTab(value);
+            return;
+        }
+        if (firstVisibleTabIndex !== undefined) {
+            setActiveTab(firstVisibleTabIndex);
+        }
     };
 
     const tabContainer = document.querySelector(".MuiTabs-scroller.MuiTabs-scrollable");
@@ -209,6 +217,13 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
         },
         [tabContainer]
     );
+
+    useEffect(() => {
+        if (firstVisibleTabIndex === undefined) return;
+        if (!tabVisibilityByIndex[activeTab]) {
+            setActiveTab(firstVisibleTabIndex);
+        }
+    }, [activeTab, tabVisibilityByIndex, firstVisibleTabIndex]);
 
     useEffect(() => {
         const scrollButtons = document.querySelectorAll(".MuiTabs-scrollButtons");
@@ -294,6 +309,10 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
                             }
 
                             const primaryValue = _(order).split(".").first() ?? "0";
+                            const primaryIndex = Number(primaryValue);
+                            if (!Number.isFinite(primaryIndex) || !tabVisibilityByIndex[primaryIndex]) {
+                                return null;
+                            }
 
                             return (
                                 <Tab
@@ -301,7 +320,7 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
                                     label={tabLabel}
                                     id={`tab-${order}`}
                                     aria-controls={`tabpanel-${order}`}
-                                    value={Number(primaryValue)}
+                                    value={primaryIndex}
                                 />
                             );
                         } else {

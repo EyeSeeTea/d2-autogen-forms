@@ -13,16 +13,33 @@ export type SectionVisibilityState = {
 };
 
 export function useSectionVisibility(section: DataTableSectionObj, dataFormInfo: DataFormInfo): SectionVisibilityState {
+    return useMemo(() => getSectionVisibilityState(section, dataFormInfo), [section, dataFormInfo]);
+}
+
+type SectionVisibilityInput = {
+    id: DataTableSectionObj["id"];
+    hidden?: DataTableSectionObj["hidden"];
+    toggle: DataTableSectionObj["toggle"];
+    toggleMultiple?: DataTableSectionObj["toggleMultiple"];
+};
+
+export function getSectionVisibilityState(
+    section: SectionVisibilityInput,
+    dataFormInfo: DataFormInfo
+): SectionVisibilityState {
     const { toggle, toggleMultiple } = section;
-    const sectionTotalRules = useMemo(
-        () =>
-            dataFormInfo.metadata.dataForm.totalRules.sectionTotalRules.filter(sectionTotalRule =>
-                sectionTotalRule.sections.includes(section.id)
-            ),
-        [dataFormInfo, section.id]
+    const sectionTotalRules = dataFormInfo.metadata.dataForm.totalRules.sectionTotalRules.filter(sectionTotalRule =>
+        sectionTotalRule.sections.includes(section.id)
     );
 
-    const isDisabled = useMemo(() => {
+    const isOpen = evaluateSectionOpenState(toggle, dataFormInfo);
+
+    const isVisibleFromTotals =
+        sectionTotalRules.length === 0
+            ? true
+            : sectionTotalRules.map(rule => evaluateTotalRule(rule, dataFormInfo)).some(value => value);
+
+    const isDisabled = (() => {
         if (toggle.type === "none" && !toggleMultiple) return false;
         if (toggleMultiple) {
             const isVisibleFromToggleMultiple = evaluateToggleMultiple(dataFormInfo, toggleMultiple);
@@ -33,18 +50,9 @@ export function useSectionVisibility(section: DataTableSectionObj, dataFormInfo:
             return false;
         }
         return toggle.type !== "none" ? toggle.disabled : false;
-    }, [toggle, toggleMultiple, dataFormInfo]);
+    })();
 
-    const isOpen = useMemo(() => {
-        return evaluateSectionOpenState(toggle, dataFormInfo);
-    }, [toggle, dataFormInfo]);
-
-    const isVisibleFromTotals = useMemo(() => {
-        if (sectionTotalRules.length === 0) return true;
-        return sectionTotalRules.map(rule => evaluateTotalRule(rule, dataFormInfo)).some(value => value);
-    }, [dataFormInfo, sectionTotalRules]);
-
-    const isVisible = useMemo(() => {
+    const isVisible = (() => {
         if (section.hidden) return !section.hidden;
         if (toggle.type === "dataElementExternal" && !isOpen) return false;
         if (sectionTotalRules.length > 0 && !isVisibleFromTotals) return false;
@@ -58,13 +66,9 @@ export function useSectionVisibility(section: DataTableSectionObj, dataFormInfo:
         }
 
         return true;
-    }, [section, toggle.type, isOpen, sectionTotalRules.length, isVisibleFromTotals, toggleMultiple, dataFormInfo]);
+    })();
 
-    return {
-        isDisabled: isDisabled,
-        isOpen: isOpen,
-        isVisible: isVisible,
-    };
+    return { isDisabled, isOpen, isVisible };
 }
 
 function evaluateSectionOpenState(toggle: Section["toggle"], dataFormInfo: DataFormInfo): boolean {
