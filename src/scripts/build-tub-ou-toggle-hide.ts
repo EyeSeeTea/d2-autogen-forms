@@ -176,6 +176,56 @@ async function parseConfigFromFile(configPath: string): Promise<Config> {
     return autogenConfig;
 }
 
+/**
+ * modifies dataSetConfig in place
+ */
+function updateSectionToggleCondition(
+    dataSetConfig: Config["dataSets"][Code],
+    sectionCode: Code,
+    conditionObj: OrgUnitToggleCondition,
+    needsCondition: boolean
+): void {
+    const sectionConfig = dataSetConfig.sections[sectionCode];
+
+    if (!needsCondition) {
+        if (!sectionConfig?.toggleMultiple) return;
+
+        const nonOrgUnitConditions = sectionConfig.toggleMultiple.conditions.filter(c => c.type !== "orgUnit");
+        if (nonOrgUnitConditions.length === 0) {
+            delete sectionConfig.toggleMultiple;
+        } else {
+            sectionConfig.toggleMultiple.conditions = nonOrgUnitConditions;
+        }
+        return;
+    }
+
+    // Ensure section config exists
+    if (!sectionConfig) {
+        console.warn("Warning: Section config not found for section code", sectionCode, "creating one");
+        dataSetConfig.sections[sectionCode] = {
+            toggleMultiple: {
+                logicalOperator: "OR",
+                conditions: [conditionObj],
+            },
+        };
+        return;
+    }
+
+    // Ensure toggleMultiple exists
+    if (!sectionConfig.toggleMultiple) {
+        console.warn("Warning: toggleMultiple config not found for section code", sectionCode, "creating one");
+        sectionConfig.toggleMultiple = {
+            logicalOperator: "OR",
+            conditions: [conditionObj],
+        };
+        return;
+    }
+
+    // Update conditions: keep non-orgUnit conditions and add the new orgUnit condition
+    const nonOrgUnitConditions = sectionConfig.toggleMultiple.conditions.filter(c => c.type !== "orgUnit");
+    sectionConfig.toggleMultiple.conditions = [...nonOrgUnitConditions, conditionObj];
+}
+
 function buildSectionsConfigFromSheetRules(config: Config, sheetRules: CsvRow[]): Config {
     const hideBySection = Object.keys(CsvSectionToDatasetSections).map(sectionTitleInCsv => {
         const hide = sheetRules.filter(row => row[sectionTitleInCsv as CsvSectionColumn] === 0).map(row => row.iso3);
@@ -200,51 +250,7 @@ function buildSectionsConfigFromSheetRules(config: Config, sheetRules: CsvRow[])
                 };
                 const needsCondition = condition === "show" || orgUnits.length > 0;
 
-                const sectionConfig = dataSetConfig.sections[datasetSectionCode];
-                if (!sectionConfig) {
-                    if (!needsCondition) {
-                        return;
-                    }
-                    console.warn(
-                        "Warning: Section config not found for section code",
-                        datasetSectionCode,
-                        "creating one"
-                    );
-                    dataSetConfig.sections[datasetSectionCode] = {
-                        toggleMultiple: {
-                            logicalOperator: "OR",
-                            conditions: [conditionObj],
-                        },
-                    };
-                } else {
-                    if (!sectionConfig.toggleMultiple) {
-                        if (!needsCondition) {
-                            return;
-                        }
-                        console.warn(
-                            "Warning: toggleMultiple config not found for section code",
-                            datasetSectionCode,
-                            "creating one"
-                        );
-                        sectionConfig.toggleMultiple = {
-                            logicalOperator: "OR",
-                            conditions: [conditionObj],
-                        };
-                    } else {
-                        const nonOrgUnitConditions = sectionConfig.toggleMultiple.conditions.filter(c => {
-                            return c.type !== "orgUnit";
-                        });
-                        // we only clear existing orgUnit conditions
-                        if (needsCondition) {
-                            sectionConfig.toggleMultiple.conditions = [...nonOrgUnitConditions, conditionObj];
-                        } else {
-                            sectionConfig.toggleMultiple.conditions = nonOrgUnitConditions;
-                        }
-                        if (sectionConfig.toggleMultiple.conditions.length === 0) {
-                            delete sectionConfig.toggleMultiple;
-                        }
-                    }
-                }
+                updateSectionToggleCondition(dataSetConfig, datasetSectionCode, conditionObj, needsCondition);
             });
         });
     });
