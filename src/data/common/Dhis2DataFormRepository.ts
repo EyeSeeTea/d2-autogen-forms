@@ -557,6 +557,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                 return deleteRulesConfig.conditions.map((rule: any) => ({
                     condition: rule.condition,
                     dataElements: rule.dataElements,
+                    type: "delete",
                 }));
             case "single":
             case undefined:
@@ -564,6 +565,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                     {
                         condition: deleteRulesConfig.condition,
                         dataElements: deleteRulesConfig.dataElements,
+                        type: "delete",
                     },
                 ];
             default:

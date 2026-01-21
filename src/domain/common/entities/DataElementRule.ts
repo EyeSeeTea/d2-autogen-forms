@@ -24,6 +24,7 @@ export type Rule = { relatedDataElement: DataElement; type: RuleType; condition:
 
 export type DeleteRule = {
     condition: string;
+    type: "delete";
     dataElements: Code[];
 };
 
