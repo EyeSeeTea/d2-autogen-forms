@@ -332,16 +332,19 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
                 <FadedOverlay hidden={!showLeftFade} style={{ left: 0, transform: "rotate(180deg)" }} />
                 <FadedOverlay hidden={!showRightFade} style={{ right: 0 }} />
             </StyledAppBar>
-            {sections.map(section => {
-                return (
+            {sections
+                .filter(section => {
+                    const [primaryTabIndex] = getTabIndices(section.tabs.order);
+                    return tabVisibilityByIndex[primaryTabIndex];
+                })
+                .map(section => (
                     <TabPanel
                         key={section.id + "TabPanel"}
                         value={activeTab}
                         dataFormInfo={dataFormInfo}
                         section={section}
                     />
-                );
-            })}
+                ))}
         </Box>
     );
 });
