@@ -30,6 +30,7 @@ import DisaggregatedCOCsGrid from "./DisaggregatedCOCsGrid";
 import GridIndicatorsCalculated from "./GridIndicatorsCalculated";
 import { calculateFormula } from "./datatables/InputFormula";
 import GridWithCategoryColumns from "./GridWithCategoryColumns";
+import { DebugLabel } from "../../components/debug/DebugLabel";
 
 export interface TabPanelProps {
     sections: Section[];
@@ -195,6 +196,7 @@ const TabPanel: React.FC<TabProps> = React.memo(props => {
 
     return (
         <div role="tabpanel" hidden={value !== index} id={`tabpanel-${index}`} aria-labelledby={`tab-${index}`}>
+            <DebugLabel>{section.code}</DebugLabel>
             <AutoFormComponent dataFormInfo={dataFormInfo} section={section} viewType={viewType} />
         </div>
     );
