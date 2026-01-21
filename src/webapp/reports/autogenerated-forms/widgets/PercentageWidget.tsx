@@ -3,6 +3,7 @@ import styled from "styled-components";
 import { WidgetFeedback } from "../WidgetFeedback";
 import { DataValuePercentage } from "../../../../domain/common/entities/DataValue";
 import { WidgetProps } from "./WidgetBase";
+import { useInputState } from "../hooks/useInputState";
 
 export interface PercentageWidgetProps extends WidgetProps {
     dataValue: DataValuePercentage;
@@ -10,6 +11,8 @@ export interface PercentageWidgetProps extends WidgetProps {
 
 const PercentageWidget: React.FC<PercentageWidgetProps> = props => {
     const { onValueChange, dataValue, disabled } = props;
+
+    const { value, onChange } = useInputState(dataValue.value);
 
     const notifyChange = React.useCallback(
         ({ value: newValue }: { value: string }) => {
@@ -39,7 +42,8 @@ const PercentageWidget: React.FC<PercentageWidgetProps> = props => {
                 <CustomInput
                     type="number"
                     onBlur={e => notifyChange({ value: e.target.value })}
-                    defaultValue={dataValue.value}
+                    value={value}
+                    onChange={onChange}
                 />
             )}
         </WidgetFeedback>
