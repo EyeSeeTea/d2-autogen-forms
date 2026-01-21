@@ -355,6 +355,22 @@ function useDataFormInfo(): [
         [compositionRoot, dataValues, dataForm, snackbar, key, ignoreRules]
     );
 
+    const deleteDataValues = useCallback<DataFormInfo["data"]["delete"]>(
+        async (dataValuesToDelete: DataValue[]) => {
+            if (!dataValues) return dataValues;
+            await compositionRoot.dataForms.deleteValues(dataValues, dataValuesToDelete).then(newStore => {
+                setDataValues(prev => {
+                    if (!prev) return undefined;
+                    return new DataValueStore({
+                        ...prev.store,
+                        ...newStore.store,
+                    });
+                });
+            });
+        },
+        [compositionRoot, dataValues]
+    );
+
     const SourceTypeApplyToAll = useCallback<DataFormInfo["data"]["stApplyToAll"]>(
         async (dataValue: DataValueTextMultiple, sourceTypeDEs: DataElementRefType[], rows: Row[]) => {
             if (!dataValues) return undefined;
@@ -423,6 +439,7 @@ function useDataFormInfo(): [
                   data: {
                       values: dataValues,
                       save: saveDataValue,
+                      delete: deleteDataValues,
                       stApplyToAll: SourceTypeApplyToAll,
                       saveWithTotals: saveWithTotals,
                   },
@@ -442,6 +459,7 @@ export interface DataFormInfo {
     data: {
         values: DataValueStore;
         save: (dataValue: DataValue) => Promise<void>;
+        delete: (dataValues: DataValue[]) => Promise<void>;
         stApplyToAll: (
             dataValue: DataValueTextMultiple,
             sourceTypeDEs: DataElementRefType[],

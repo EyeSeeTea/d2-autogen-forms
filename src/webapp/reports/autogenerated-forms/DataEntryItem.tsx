@@ -20,6 +20,7 @@ import { DataForm } from "../../../domain/common/entities/DataForm";
 import CheckboxWidget from "./widgets/CheckboxWidget";
 import { useUpdatableDataValueWithFeedback } from "./hooks/useUpdatableDataValueWithFeedback";
 import { useDataEntryItem } from "./hooks/useDataEntryItem";
+import { useDeleteRule } from "./hooks/useDeleteRule";
 
 export interface DataEntryItemProps {
     dataElement: DataElement;
@@ -38,8 +39,24 @@ export interface DataEntryItemProps {
 const DataEntryItem: React.FC<DataEntryItemProps> = props => {
     const { dataElement, dataFormInfo, rows } = props;
 
-    const [dataValue, state, notifyChange] = useUpdatableDataValueWithFeedback(props);
+    const [dataValue, updateState, notifyChangeWithFeedback] = useUpdatableDataValueWithFeedback(props);
     const { isDataEntryItemVisible, isDataEntryItemDisabled } = useDataEntryItem(props);
+    const { applyDeleteRule, deleteRuleInProgress } = useDeleteRule(props);
+
+    const state = React.useMemo(() => {
+        if (updateState === "saveSuccessful" && deleteRuleInProgress) {
+            return "saving";
+        } else {
+            return updateState;
+        }
+    }, [updateState, deleteRuleInProgress]);
+
+    const notifyChange = React.useCallback(
+        dataValueCb => {
+            notifyChangeWithFeedback(dataValueCb).then(() => applyDeleteRule(dataValueCb));
+        },
+        [notifyChangeWithFeedback, applyDeleteRule]
+    );
 
     const hasCompulsoryError = dataValue.isRequired ? "required" : state;
 

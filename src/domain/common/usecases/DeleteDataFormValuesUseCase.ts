@@ -16,7 +16,7 @@ export class DeleteDataFormValuesUseCase {
             });
             return {
                 ...acc,
-                [DataValueStore.getStoreKey({
+                [DataValueStore.getKey({
                     dataElementId: updatedDataValue.dataElement.id,
                     period: updatedDataValue.period,
                     categoryOptionComboId: updatedDataValue.categoryOptionComboId,
