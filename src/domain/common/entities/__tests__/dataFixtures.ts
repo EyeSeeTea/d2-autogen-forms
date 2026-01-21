@@ -44,6 +44,7 @@ export const sectionBase: Omit<SectionBase, "id" | "name" | "viewType"> = {
     toggleMultiple: {
         logicalOperator: "AND",
         toggleDataElements: [],
+        orgUnitConditions: [],
     },
     indicators: [],
     dataElements: [dataElementText],
