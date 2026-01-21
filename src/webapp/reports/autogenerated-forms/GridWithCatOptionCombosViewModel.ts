@@ -145,8 +145,12 @@ export class GridWithCatOptionCombosViewModel {
                     groupName: group.length > 1 ? groupName : "",
                     groupDescription: groupDescription,
                     rows: group.flatMap(de => {
-                        const deLabel = getDataElementLabel(de, section, dataFormInfo);
-                        const row = { dataElement: de, deName: deLabel, name: de.name };
+                        const deLabel = getDataElementLabel(de, section, dataFormInfo, de.name);
+                        const row = {
+                            dataElement: { ...de, htmlText: getDataElementHtmlText(de, section, dataFormInfo) },
+                            deName: deLabel,
+                            name: de.name,
+                        };
 
                         return section.periods.length > 0 ? section.periods.map(period => ({ ...row, period })) : [row];
                     }),
@@ -236,11 +240,25 @@ export type Summary = { cells: CellTotal[]; cellName: string };
 export type CellTotal = { formula: string; columnName: string; items: TotalItem[] };
 export type TotalItem = { dataElement: DataElement; categoryOptionCombo: CategoryOptionCombo };
 
-function getDataElementLabel(dataElement: DataElement, section: SectionWithPeriods, dataFormInfo: DataFormInfo) {
-    const deName = _.last(dataElement.name.split(separator)) ?? "";
+function getDataElementLabel(
+    dataElement: DataElement,
+    section: SectionWithPeriods,
+    dataFormInfo: DataFormInfo,
+    label: string
+) {
+    const deName = _.last(label.split(separator)) ?? "";
     const deIndex = section.dataElements.findIndex(de => de.id === dataElement.id) + 1;
 
     return getIndexedLabel(section, dataFormInfo, deName, deIndex);
+}
+
+function getDataElementHtmlText(
+    dataElement: DataElement,
+    section: SectionWithPeriods,
+    dataFormInfo: DataFormInfo
+) {
+    if (!dataElement.htmlText) return undefined;
+    return getDataElementLabel(dataElement, section, dataFormInfo, dataElement.htmlText);
 }
 
 function getCategoryOptionComboByColumnName(dataElement: DataElement, column: Column): Maybe<CategoryOptionCombo> {
