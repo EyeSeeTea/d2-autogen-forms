@@ -44,7 +44,9 @@ export function getSectionVisibilityState(
         if (toggleMultiple) {
             const isVisibleFromToggleMultiple = evaluateToggleMultiple(dataFormInfo, toggleMultiple);
             if (!isVisibleFromToggleMultiple) {
-                const hasDisabledFlag = toggleMultiple.toggleDataElements.some(t => t.dataElement.disabled);
+                const hasDisabledFlag =
+                    toggleMultiple.toggleDataElements.some(t => t.dataElement.disabled) ||
+                    toggleMultiple.orgUnitConditions.some(condition => condition.disabled);
                 return hasDisabledFlag;
             }
             return false;
@@ -59,7 +61,9 @@ export function getSectionVisibilityState(
         if (toggleMultiple) {
             const isVisibleFromToggleMultiple = evaluateToggleMultiple(dataFormInfo, toggleMultiple);
             if (!isVisibleFromToggleMultiple) {
-                const hasDisabledFlag = toggleMultiple.toggleDataElements.some(t => t.dataElement.disabled);
+                const hasDisabledFlag =
+                    toggleMultiple.toggleDataElements.some(t => t.dataElement.disabled) ||
+                    toggleMultiple.orgUnitConditions.some(condition => condition.disabled);
                 return hasDisabledFlag;
             }
             return true;
@@ -87,29 +91,41 @@ function evaluateSectionOpenState(toggle: Section["toggle"], dataFormInfo: DataF
 }
 
 function evaluateToggleMultiple(dataFormInfo: DataFormInfo, toggleMultiple: DataElementToggle): boolean {
-    const hasToggleDataElements = toggleMultiple.toggleDataElements.length > 0;
-    if (!hasToggleDataElements) return true;
-
     const currentOrgUnitCode = dataFormInfo.orgUnit.code;
-    const { logicalOperator, toggleDataElements } = toggleMultiple;
-
-    const evaluateToggleCondition = (toggle: DataElementToggle["toggleDataElements"][number]): boolean => {
-        switch (toggle.type) {
-            case "orgUnit": {
-                const isOrgUnitInToggleList = toggle.orgUnitCodes.includes(currentOrgUnitCode);
-                return toggle.condition === "show" ? isOrgUnitInToggleList : !isOrgUnitInToggleList;
-            }
-            case "dataElement": {
-                const dataValue = dataFormInfo.data.values.getOrEmpty(toggle.dataElement, dataFormInfo);
-                return verifyConditionByDataValueType(dataValue, toggle);
-            }
-        }
-    };
+    const { logicalOperator, toggleDataElements, orgUnitConditions } = toggleMultiple;
+    const toggleConditions = [
+        ...toggleDataElements.map(toggle => () => evaluateToggleCondition(toggle, dataFormInfo, currentOrgUnitCode)),
+        ...orgUnitConditions.map(condition => () =>
+            evaluateOrgUnitCondition(condition.orgUnitCodes, condition.condition, currentOrgUnitCode)
+        ),
+    ];
+    if (toggleConditions.length === 0) return true;
 
     switch (logicalOperator) {
         case "AND":
-            return toggleDataElements.every(evaluateToggleCondition);
+            return toggleConditions.every(evaluateCondition => evaluateCondition());
         case "OR":
-            return toggleDataElements.some(evaluateToggleCondition);
+            return toggleConditions.some(evaluateCondition => evaluateCondition());
     }
+}
+
+function evaluateToggleCondition(
+    toggle: DataElementToggle["toggleDataElements"][number],
+    dataFormInfo: DataFormInfo,
+    currentOrgUnitCode: string
+): boolean {
+    switch (toggle.type) {
+        case "orgUnit": {
+            return evaluateOrgUnitCondition(toggle.orgUnitCodes, toggle.condition, currentOrgUnitCode);
+        }
+        case "dataElement": {
+            const dataValue = dataFormInfo.data.values.getOrEmpty(toggle.dataElement, dataFormInfo);
+            return verifyConditionByDataValueType(dataValue, toggle);
+        }
+    }
+}
+
+function evaluateOrgUnitCondition(orgUnitCodes: string[], condition: string, currentOrgUnitCode: string): boolean {
+    const isOrgUnitInToggleList = orgUnitCodes.includes(currentOrgUnitCode);
+    return condition === "show" ? isOrgUnitInToggleList : !isOrgUnitInToggleList;
 }

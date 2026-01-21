@@ -32,7 +32,7 @@ const DataTableSection: React.FC<DataTableProps> = React.memo(props => {
     const { section, children, dataFormInfo, sectionStyles } = props;
     const classes = useStyles();
     const { name: sectionName, toggle } = section;
-    const sectionLabel = getIndexedLabel(section, sectionName, undefined);
+    const sectionLabel = getIndexedLabel(section, dataFormInfo, sectionName, undefined);
 
     const {
         isVisible: isSectionVisible,
@@ -105,14 +105,26 @@ const useStyles = makeStyles({
 
 export function getIndexedLabel(
     section: { tabs?: { active: boolean; order?: string }; showIndex?: boolean },
+    dataFormInfo: DataFormInfo,
     name: string,
     dataElementIndex: Maybe<number>
 ): string {
-    const [primaryTabIndex, secondaryTabIndex] = getTabIndices(section.tabs?.order);
+    if (!section.showIndex) {
+        return name;
+    }
 
-    return section.showIndex && primaryTabIndex !== -1
-        ? `${primaryTabIndex + 1}.${secondaryTabIndex}${dataElementIndex ? `.${dataElementIndex}` : ""} - ${name}`
-        : name;
+    const allSections = dataFormInfo.metadata.dataForm.sections;
+    const [adjustedPrimaryIdx, adjustedSecondaryIdx] = allSections
+        ? getTabIndices(section.tabs?.order, allSections, section.showIndex ?? false)
+        : [-1, -1];
+
+    if (adjustedPrimaryIdx !== -1) {
+        return `${adjustedPrimaryIdx + 1}.${adjustedSecondaryIdx + 1}${
+            dataElementIndex ? `.${dataElementIndex}` : ""
+        } - ${name}`;
+    }
+
+    return name;
 }
 
 export default React.memo(DataTableSection);

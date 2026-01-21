@@ -45,6 +45,7 @@ describe("buildToggleMultiple", () => {
                 { type: "dataElement", dataElement: dataElement1, condition: "condition1" },
                 { type: "dataElement", dataElement: dataElement2, condition: "condition2" },
             ],
+            orgUnitConditions: [],
         };
 
         const result = buildToggleMultiple(
@@ -77,6 +78,45 @@ describe("buildToggleMultiple", () => {
             { dataElements: [{ code: dataElement1.code }, { code: dataElement2.code }] },
             dataElements
         );
-        expect(result).toEqual({ logicalOperator: "AND", toggleDataElements: [] });
+        expect(result).toEqual({ logicalOperator: "AND", toggleDataElements: [], orgUnitConditions: [] });
+    });
+
+    it("should keep orgUnit conditions when the section has no data elements", () => {
+        const toggleMultipleOrgUnitOnly: ToggleMultiple = {
+            logicalOperator: "AND",
+            conditions: [{ type: "orgUnit", orgUnits: ["AND"], condition: "hide", disabled: true }],
+        };
+        const result = buildToggleMultiple(toggleMultipleOrgUnitOnly, { dataElements: [] }, dataElements);
+
+        expect(result).toEqual({
+            logicalOperator: "AND",
+            toggleDataElements: [],
+            orgUnitConditions: [{ orgUnitCodes: ["AND"], condition: "hide", disabled: true }],
+        });
+    });
+
+    it("should not add orgUnitConditions when the section has data elements", () => {
+        const toggleMultipleWithOrgUnit: ToggleMultiple = {
+            logicalOperator: "AND",
+            conditions: [{ type: "orgUnit", orgUnits: ["AND"], condition: "hide", disabled: true }],
+        };
+        const result = buildToggleMultiple(
+            toggleMultipleWithOrgUnit,
+            { dataElements: [{ code: dataElement1.code }] },
+            dataElements
+        );
+
+        expect(result).toEqual({
+            logicalOperator: "AND",
+            toggleDataElements: [
+                {
+                    type: "orgUnit",
+                    orgUnitCodes: ["AND"],
+                    condition: "hide",
+                    dataElement: { ...dataElement1, disabled: true },
+                },
+            ],
+            orgUnitConditions: [],
+        });
     });
 });

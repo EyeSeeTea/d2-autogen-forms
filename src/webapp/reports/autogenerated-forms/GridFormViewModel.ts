@@ -141,9 +141,9 @@ export class GridViewModel {
                 return {
                     ...dataElement,
                     indicator,
-                    name: getDataElementLabel(section, dataElement, dataElement.name),
+                    name: getDataElementLabel(section, dataFormInfo, dataElement, dataElement.name),
                     htmlText: dataElement.htmlText
-                        ? getDataElementLabel(section, dataElement, dataElement.htmlText)
+                        ? getDataElementLabel(section, dataFormInfo, dataElement, dataElement.htmlText)
                         : undefined,
                     disabled: dataElement.disabled || isToggleMultipleDeDisabled(section, dataElement, orgUnitCode),
                 };
@@ -288,8 +288,10 @@ export class GridViewModel {
             return {
                 includePadding: 0,
                 indicator: indicator,
-                name: getIndexedLabel(section, rowName, index + 1),
-                htmlText: firstItemWithHtmlText ? getIndexedLabel(section, firstItemWithHtmlText, index + 1) : "",
+                name: getIndexedLabel(section, dataFormInfo, rowName, index + 1),
+                htmlText: firstItemWithHtmlText
+                    ? getIndexedLabel(section, dataFormInfo, firstItemWithHtmlText, index + 1)
+                    : "",
                 items: items,
                 group: groupMeta ? groupMeta.group : undefined,
                 subGroup: groupMeta ? groupMeta.subGroup : undefined,
@@ -524,9 +526,14 @@ type GroupInfo = {
     rowName: string;
 };
 
-export function getDataElementLabel(section: SectionBase, dataElement: DataElement, name: string): string {
+export function getDataElementLabel(
+    section: SectionBase,
+    dataFormInfo: DataFormInfo,
+    dataElement: DataElement,
+    name: string
+): string {
     const deIndex = section.dataElements.findIndex(de => dataElement.id === de.id) + 1;
-    return getIndexedLabel(section, name, deIndex);
+    return getIndexedLabel(section, dataFormInfo, name, deIndex);
 }
 
 /** Move the data element index to the row name, so indexed data elements are automatically grouped 
