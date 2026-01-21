@@ -197,11 +197,14 @@ function buildSectionsConfigFromSheetRules(config: Config, sheetRules: CsvRow[])
                     type: "orgUnit",
                     orgUnits: orgUnits,
                     condition: condition,
-                    disabled: false,
                 };
+                const needsCondition = condition === "show" || orgUnits.length > 0;
 
                 const sectionConfig = dataSetConfig.sections[datasetSectionCode];
                 if (!sectionConfig) {
+                    if (!needsCondition) {
+                        return;
+                    }
                     console.warn(
                         "Warning: Section config not found for section code",
                         datasetSectionCode,
@@ -215,6 +218,9 @@ function buildSectionsConfigFromSheetRules(config: Config, sheetRules: CsvRow[])
                     };
                 } else {
                     if (!sectionConfig.toggleMultiple) {
+                        if (!needsCondition) {
+                            return;
+                        }
                         console.warn(
                             "Warning: toggleMultiple config not found for section code",
                             datasetSectionCode,
@@ -228,7 +234,15 @@ function buildSectionsConfigFromSheetRules(config: Config, sheetRules: CsvRow[])
                         const nonOrgUnitConditions = sectionConfig.toggleMultiple.conditions.filter(c => {
                             return c.type !== "orgUnit";
                         });
-                        sectionConfig.toggleMultiple.conditions = [...nonOrgUnitConditions, conditionObj];
+                        // we only clear existing orgUnit conditions
+                        if (needsCondition) {
+                            sectionConfig.toggleMultiple.conditions = [...nonOrgUnitConditions, conditionObj];
+                        } else {
+                            sectionConfig.toggleMultiple.conditions = nonOrgUnitConditions;
+                        }
+                        if (sectionConfig.toggleMultiple.conditions.length === 0) {
+                            delete sectionConfig.toggleMultiple;
+                        }
                     }
                 }
             });
