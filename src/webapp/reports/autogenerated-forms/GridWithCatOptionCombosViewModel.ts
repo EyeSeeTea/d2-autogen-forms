@@ -9,6 +9,7 @@ import { checkIndicatorDirection, Indicator, IndicatorDirection } from "../../..
 import { getIndexedLabel } from "./DataTableSection";
 import { Period } from "../../../domain/common/entities/Period";
 import { isToggleMultipleDeDisabled } from "../../../domain/common/entities/ToggleMultiple";
+import { getIndexedIndicator } from "./indicatorIndexing";
 
 export interface Grid {
     id: string;
@@ -111,9 +112,15 @@ export class GridWithCatOptionCombosViewModel {
         const columns = GridWithCatOptionCombosViewModel.getColumns(subsections, section, dataFormInfo, rows);
         const summary = GridWithCatOptionCombosViewModel.getSummary(section, columns, dataFormInfo);
 
+        let nonDataElementIndex = 0;
+        const indicators = section.indicators.map(indicator => {
+            const indexOverride = indicator.dataElement ? undefined : ++nonDataElementIndex;
+            return getIndexedIndicator(section, dataFormInfo, indicator, indexOverride);
+        });
+
         return {
             id: section.id,
-            indicators: section.indicators,
+            indicators: indicators,
             name: section.name,
             columns: columns,
             periods: section.periods,

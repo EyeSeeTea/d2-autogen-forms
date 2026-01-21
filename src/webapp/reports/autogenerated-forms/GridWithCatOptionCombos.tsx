@@ -57,9 +57,9 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
     );
 
     const showRowTotals = section.showRowTotals;
-    const showIndicatorsAfter = section.indicators.some(indicator => checkIndicatorDirection(indicator, "after"));
-    const showIndicatorsBefore = section.indicators.some(indicator => checkIndicatorDirection(indicator, "before"));
-    const nonDirectionalIndicators = section.indicators.filter(
+    const showIndicatorsAfter = grid.indicators.some(indicator => checkIndicatorDirection(indicator, "after"));
+    const showIndicatorsBefore = grid.indicators.some(indicator => checkIndicatorDirection(indicator, "before"));
+    const nonDirectionalIndicators = grid.indicators.filter(
         indicator => !checkIndicatorDirection(indicator, "before") && !checkIndicatorDirection(indicator, "after")
     );
 
@@ -147,7 +147,7 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                                     </CustomDataTableCell>
                                 )}
 
-                                {getFilteredIndicators(section.indicators, row, "before").map(
+                                {getFilteredIndicators(grid.indicators, row, "before").map(
                                     indicator =>
                                         indicator && (
                                             <IndicatorItem
@@ -189,7 +189,7 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                                     );
                                 })}
 
-                                {getFilteredIndicators(section.indicators, row, "after").map(
+                                {getFilteredIndicators(grid.indicators, row, "after").map(
                                     indicator =>
                                         indicator && (
                                             <IndicatorItem

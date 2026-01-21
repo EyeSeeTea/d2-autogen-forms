@@ -15,6 +15,7 @@ import { GridViewModel } from "./GridFormViewModel";
 import { getIndexedLabel } from "./DataTableSection";
 import { Period, PeriodType } from "../../../domain/common/entities/Period";
 import { isToggleMultipleDeDisabled } from "../../../domain/common/entities/ToggleMultiple";
+import { getIndexedIndicator } from "./indicatorIndexing";
 
 export interface GridWithPeriodsI {
     id: string;
@@ -68,7 +69,9 @@ export class GridWithPeriodsViewModel {
     static get(section: SectionWithPeriods, dataFormInfo: DataFormInfo): GridWithPeriodsI {
         const rows = GridWithPeriodsViewModel.getRows(section, dataFormInfo);
         const summary = GridWithPeriodsViewModel.getSummary(section);
-        const indicators = GridWithPeriodsViewModel.getIndicators(rows, section);
+        const indicators = GridWithPeriodsViewModel.getIndicators(rows, section).map((indicator, index) =>
+            getIndexedIndicator(section, dataFormInfo, indicator, index + 1)
+        );
         const lockException = dataFormInfo.metadata.dataForm.periodType !== PeriodType.YEARLY;
 
         return {
@@ -105,7 +108,8 @@ export class GridWithPeriodsViewModel {
                 if (dataElementsForGroup.length === 1) {
                     const firstDataElement = dataElementsForGroup[0];
                     const code = firstDataElement.code;
-                    const indicator = getIndicatorRelatedToDataElement(section.indicators, code);
+                    const indicatorBase = getIndicatorRelatedToDataElement(section.indicators, code);
+                    const indicator = indicatorBase ? getIndexedIndicator(section, dataFormInfo, indicatorBase) : undefined;
                     const orgUnitCode = dataFormInfo.orgUnit.code;
                     return {
                         type: firstDataElement.type === "FILE" ? "dataElementFile" : "dataElement",
@@ -144,7 +148,10 @@ export class GridWithPeriodsViewModel {
                             const hasSubGroup = isRowSubGroup(dataElement);
                             const subGroup = uniqueSubGroups.find(subGroup => subGroup.position === index);
 
-                            const indicator = getIndicatorRelatedToDataElement(section.indicators, dataElement.code);
+                            const indicatorBase = getIndicatorRelatedToDataElement(section.indicators, dataElement.code);
+                            const indicator = indicatorBase
+                                ? getIndexedIndicator(section, dataFormInfo, indicatorBase)
+                                : undefined;
                             const orgUnitCode = dataFormInfo.orgUnit.code;
 
                             return {
@@ -181,10 +188,13 @@ export class GridWithPeriodsViewModel {
                             name: groupName,
                             groupDescription: groupDescription,
                             rows: dataElementsForGroup.map(dataElement => {
-                                const indicator = getIndicatorRelatedToDataElement(
+                                const indicatorBase = getIndicatorRelatedToDataElement(
                                     section.indicators,
                                     dataElement.code
                                 );
+                                const indicator = indicatorBase
+                                    ? getIndexedIndicator(section, dataFormInfo, indicatorBase)
+                                    : undefined;
                                 const orgUnitCode = dataFormInfo.orgUnit.code;
 
                                 return {

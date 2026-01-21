@@ -23,6 +23,7 @@ import { calculateFormula } from "./datatables/InputFormula";
 import { getIndexedLabel } from "./DataTableSection";
 import { Period } from "../../../domain/common/entities/Period";
 import { isToggleMultipleDeDisabled } from "../../../domain/common/entities/ToggleMultiple";
+import { getIndexedIndicator } from "./indicatorIndexing";
 
 export type Grid = GridComponents & {
     dataElements: Array<DataElement & { indicator: Maybe<Indicator> }>;
@@ -108,7 +109,9 @@ export class GridViewModel {
     static get(section: SectionGrid, dataFormInfo: DataFormInfo, viewType: SectionGrid["viewType"]): Grid {
         const dataElements = getDataElementsWithIndexProccessing(section);
         const { columns, rows, summary } = this.getGridComponents(section, dataFormInfo, dataElements, viewType);
-        const indicators = this.getIndicators(section);
+        const indicators = this.getIndicators(section).map((indicator, index) =>
+            getIndexedIndicator(section, dataFormInfo, indicator, index + 1)
+        );
 
         const useIndexes =
             _(rows).every(row => Boolean(row.name.match(/\(\d+\)$/))) &&
@@ -136,7 +139,8 @@ export class GridViewModel {
             showIndex: section.showIndex,
             tabs: section.tabs,
             dataElements: dataElements.map(dataElement => {
-                const indicator = getIndicatorRelatedToDataElement(section.indicators, dataElement.code);
+                const indicatorBase = getIndicatorRelatedToDataElement(section.indicators, dataElement.code);
+                const indicator = indicatorBase ? getIndexedIndicator(section, dataFormInfo, indicatorBase) : undefined;
                 const orgUnitCode = dataFormInfo.orgUnit.code;
                 return {
                     ...dataElement,
