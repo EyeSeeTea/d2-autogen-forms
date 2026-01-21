@@ -178,22 +178,25 @@ async function parseConfigFromFile(configPath: string): Promise<Config> {
 
 function buildSectionsConfigFromSheetRules(config: Config, sheetRules: CsvRow[]): Config {
     const hideBySection = Object.keys(CsvSectionToDatasetSections).map(sectionTitleInCsv => {
+        const hide = sheetRules.filter(row => row[sectionTitleInCsv as CsvSectionColumn] === 0).map(row => row.iso3);
+        const show = sheetRules.filter(row => row[sectionTitleInCsv as CsvSectionColumn] === 1).map(row => row.iso3);
+        const showHide = hide.length <= show.length;
         return [
             sectionTitleInCsv,
-            sheetRules.filter(row => row[sectionTitleInCsv as CsvSectionColumn] === 0).map(row => row.iso3),
+            { orgUnits: showHide ? hide : show, condition: (showHide ? "hide" : "show") as "show" | "hide" },
         ] as const;
     });
 
     const updatedConfig: Config = _.cloneDeep(config);
 
-    hideBySection.forEach(([sectionTitleInCsv, iso3List]) => {
+    hideBySection.forEach(([sectionTitleInCsv, { orgUnits, condition }]) => {
         const datasetSections = CsvSectionToDatasetSections[sectionTitleInCsv as CsvSectionColumn];
         datasetSections.forEach(datasetSectionCode => {
             Object.values(updatedConfig.dataSets).forEach(dataSetConfig => {
-                const condition: OrgUnitToggleCondition = {
+                const conditionObj: OrgUnitToggleCondition = {
                     type: "orgUnit",
-                    orgUnits: iso3List,
-                    condition: "hide",
+                    orgUnits: orgUnits,
+                    condition: condition,
                     disabled: false,
                 };
 
@@ -207,7 +210,7 @@ function buildSectionsConfigFromSheetRules(config: Config, sheetRules: CsvRow[])
                     dataSetConfig.sections[datasetSectionCode] = {
                         toggleMultiple: {
                             logicalOperator: "OR",
-                            conditions: [condition],
+                            conditions: [conditionObj],
                         },
                     };
                 } else {
@@ -219,13 +222,13 @@ function buildSectionsConfigFromSheetRules(config: Config, sheetRules: CsvRow[])
                         );
                         sectionConfig.toggleMultiple = {
                             logicalOperator: "OR",
-                            conditions: [condition],
+                            conditions: [conditionObj],
                         };
                     } else {
                         const nonOrgUnitConditions = sectionConfig.toggleMultiple.conditions.filter(c => {
                             return c.type !== "orgUnit";
                         });
-                        sectionConfig.toggleMultiple.conditions = [...nonOrgUnitConditions, condition];
+                        sectionConfig.toggleMultiple.conditions = [...nonOrgUnitConditions, conditionObj];
                     }
                 }
             });
