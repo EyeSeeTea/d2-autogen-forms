@@ -255,7 +255,7 @@ const multipleConditionDERuleCodec = Codec.interface({
 });
 
 const dataElementRuleCodec = record(
-    oneOf([exactly("visible"), exactly("disabled")]),
+    oneOf([exactly("visible"), exactly("disabled"), exactly("enabled")]),
     oneOf([singleConditionDERuleCodec, multipleConditionDERuleCodec])
 );
 

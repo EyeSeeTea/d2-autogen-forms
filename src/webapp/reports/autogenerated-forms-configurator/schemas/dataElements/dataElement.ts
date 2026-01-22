@@ -27,6 +27,18 @@ export const dataElementRulesSchema = (
                     dataElements: { type: "array" },
                 },
             }),
+            enabled: defaultObjectProperties({
+                properties: {
+                    condition: { type: "string" },
+                    dataElements: {
+                        items: {
+                            type: "string",
+                            enum: dataElements.map(dataElement => dataElement.dataElementCode),
+                        },
+                        type: "array",
+                    },
+                },
+            }),
         },
     });
 
