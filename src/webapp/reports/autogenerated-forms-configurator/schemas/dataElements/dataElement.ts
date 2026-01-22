@@ -1,6 +1,8 @@
 import _ from "lodash";
 import { defaultObjectProperties, textSchema } from "..";
 
+
+
 type DataElementsSchemaProp = {
     dataElementCode: string;
     optionSetCode?: string | undefined;
@@ -44,6 +46,7 @@ export const dataElementRulesSchema = (dataElements: DataElementsSchemaProp[], h
         properties: {
             visible: singleOrMultipleCondition(dataElements),
             disabled: singleOrMultipleCondition(dataElements, true),
+            enabled: singleOrMultipleCondition(dataElements, true),
             ...(hasDelete ? { delete: singleOrMultipleCondition(dataElements, true) } : {}),
         },
     });
