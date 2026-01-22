@@ -110,7 +110,7 @@ export function verifyConditionByDataValueType(dataValue: DataValue, rule: Verif
             }
 
             const booleanFromTextValue = value !== "Not sure";
-            return rule.condition === String(booleanFromTextValue);
+            return rule.condition === String(booleanFromTextValue) || rule.condition === String(value);
         }
         default:
             return rule.condition === String(value);
