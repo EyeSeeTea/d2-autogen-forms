@@ -10,10 +10,14 @@ export class DeleteDataFormValuesUseCase {
         }
 
         const updatedDataValues = dataValues.map(dataValue => {
-            return getEmpty(dataValue.dataElement, {
+            const emptyDataValue = getEmpty(dataValue.dataElement, {
                 ...dataValue,
                 categoryOptionComboId: dataValue.dataElement.cocId || dataValue.categoryOptionComboId,
             });
+            return {
+                ...emptyDataValue,
+                ...(emptyDataValue.type === "FILE" ? { fileToSave: undefined } : {}),
+            };
         });
 
         await this.dataValueRepository.delete(dataValues);
