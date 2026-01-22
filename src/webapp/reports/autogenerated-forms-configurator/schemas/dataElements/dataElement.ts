@@ -50,7 +50,7 @@ export const dataElementSchema = (
                             name: textSchema(constantCodes),
                         },
                     }),
-                    rules: dataElementRulesSchema,
+                    rules: dataElementRulesSchema(dataElements),
                     selection: defaultObjectProperties({
                         properties: {
                             optionSet: defaultObjectProperties({

@@ -272,10 +272,11 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
 
                         if (isTabHeader(order)) {
                             const [primaryTabIndex] = getTabIndices(order);
+                            const sectionTabLabel = section.texts.tabLabel || section.name;
                             const tabLabel =
                                 section.showIndex && primaryTabIndex !== -1
-                                    ? `${primaryTabIndex + 1} - ${section.name}`
-                                    : section.name;
+                                    ? `${primaryTabIndex + 1} - ${sectionTabLabel}`
+                                    : sectionTabLabel;
 
                             const visibleRule = section.tabs.rules?.visible;
                             const dataElementCodes = visibleRule?.dataElements.map(de => de.code) || [];
