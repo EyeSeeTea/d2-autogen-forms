@@ -15,6 +15,7 @@ import { GridViewModel } from "./GridFormViewModel";
 import { getIndexedLabel } from "./DataTableSection";
 import { Period, PeriodType } from "../../../domain/common/entities/Period";
 import { isToggleMultipleDeDisabled } from "../../../domain/common/entities/ToggleMultiple";
+import { getIndexedIndicator } from "./indicatorIndexing";
 
 export interface GridWithPeriodsI {
     id: string;
@@ -68,7 +69,9 @@ export class GridWithPeriodsViewModel {
     static get(section: SectionWithPeriods, dataFormInfo: DataFormInfo): GridWithPeriodsI {
         const rows = GridWithPeriodsViewModel.getRows(section, dataFormInfo);
         const summary = GridWithPeriodsViewModel.getSummary(section);
-        const indicators = GridWithPeriodsViewModel.getIndicators(rows, section);
+        const indicators = GridWithPeriodsViewModel.getIndicators(rows, section).map((indicator, index) =>
+            getIndexedIndicator(section, dataFormInfo, indicator, index + 1)
+        );
         const lockException = dataFormInfo.metadata.dataForm.periodType !== PeriodType.YEARLY;
 
         return {
@@ -105,13 +108,15 @@ export class GridWithPeriodsViewModel {
                 if (dataElementsForGroup.length === 1) {
                     const firstDataElement = dataElementsForGroup[0];
                     const code = firstDataElement.code;
-                    const indicator = getIndicatorRelatedToDataElement(section.indicators, code);
+                    const indicatorBase = getIndicatorRelatedToDataElement(section.indicators, code);
+                    const indicator = indicatorBase ? getIndexedIndicator(section, dataFormInfo, indicatorBase) : undefined;
                     const orgUnitCode = dataFormInfo.orgUnit.code;
                     return {
                         type: firstDataElement.type === "FILE" ? "dataElementFile" : "dataElement",
                         dataElement: {
                             ...firstDataElement,
-                            name: getDataElementLabel(firstDataElement, section, dataFormInfo),
+                            name: getDataElementLabel(firstDataElement, section, dataFormInfo, firstDataElement.name),
+                            htmlText: getDataElementHtmlText(firstDataElement, section, dataFormInfo),
                             disabled:
                                 firstDataElement.disabled ??
                                 isToggleMultipleDeDisabled(section, firstDataElement, orgUnitCode),
@@ -143,7 +148,10 @@ export class GridWithPeriodsViewModel {
                             const hasSubGroup = isRowSubGroup(dataElement);
                             const subGroup = uniqueSubGroups.find(subGroup => subGroup.position === index);
 
-                            const indicator = getIndicatorRelatedToDataElement(section.indicators, dataElement.code);
+                            const indicatorBase = getIndicatorRelatedToDataElement(section.indicators, dataElement.code);
+                            const indicator = indicatorBase
+                                ? getIndexedIndicator(section, dataFormInfo, indicatorBase)
+                                : undefined;
                             const orgUnitCode = dataFormInfo.orgUnit.code;
 
                             return {
@@ -152,7 +160,8 @@ export class GridWithPeriodsViewModel {
                                 colSpan: hasSubGroup ? "0" : "2",
                                 dataElement: {
                                     ...dataElement,
-                                    name: getDataElementLabel(dataElement, section, dataFormInfo),
+                                    name: getDataElementLabel(dataElement, section, dataFormInfo, dataElement.name),
+                                    htmlText: getDataElementHtmlText(dataElement, section, dataFormInfo),
                                     disabled:
                                         dataElement.disabled ??
                                         isToggleMultipleDeDisabled(section, dataElement, orgUnitCode),
@@ -179,17 +188,21 @@ export class GridWithPeriodsViewModel {
                             name: groupName,
                             groupDescription: groupDescription,
                             rows: dataElementsForGroup.map(dataElement => {
-                                const indicator = getIndicatorRelatedToDataElement(
+                                const indicatorBase = getIndicatorRelatedToDataElement(
                                     section.indicators,
                                     dataElement.code
                                 );
+                                const indicator = indicatorBase
+                                    ? getIndexedIndicator(section, dataFormInfo, indicatorBase)
+                                    : undefined;
                                 const orgUnitCode = dataFormInfo.orgUnit.code;
 
                                 return {
                                     type: "dataElement",
                                     dataElement: {
                                         ...dataElement,
-                                        name: getDataElementLabel(dataElement, section, dataFormInfo),
+                                        name: getDataElementLabel(dataElement, section, dataFormInfo, dataElement.name),
+                                        htmlText: getDataElementHtmlText(dataElement, section, dataFormInfo),
                                         disabled:
                                             dataElement.disabled ??
                                             isToggleMultipleDeDisabled(section, dataElement, orgUnitCode),
@@ -274,11 +287,25 @@ function isRowSubGroup(dataElement: DataElement): boolean {
     return dataElement.name.split(separator).length === 3;
 }
 
-function getDataElementLabel(dataElement: DataElement, section: SectionWithPeriods, dataFormInfo: DataFormInfo) {
-    const deName = _(dataElement.name).split(separator).last() || "-";
+function getDataElementLabel(
+    dataElement: DataElement,
+    section: SectionWithPeriods,
+    dataFormInfo: DataFormInfo,
+    label: string
+) {
+    const deName = _(label).split(separator).last() || "-";
     const deIndex = section.dataElements.findIndex(de => de.id === dataElement.id) + 1;
 
     return getIndexedLabel(section, dataFormInfo, deName, deIndex);
+}
+
+function getDataElementHtmlText(
+    dataElement: DataElement,
+    section: SectionWithPeriods,
+    dataFormInfo: DataFormInfo
+) {
+    if (!dataElement.htmlText) return undefined;
+    return getDataElementLabel(dataElement, section, dataFormInfo, dataElement.htmlText);
 }
 
 type PeriodTab = { id: Id | undefined; name: string };
