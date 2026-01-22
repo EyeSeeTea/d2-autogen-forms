@@ -48,9 +48,9 @@ const GridForm: React.FC<GridFormProps> = props => {
     const grid = React.useMemo(() => GridViewModel.get(section, dataFormInfo, "grid"), [section, dataFormInfo]);
     const classes = useStyles();
 
-    const showIndicatorsAfter = grid.indicators.some(indicator => checkIndicatorDirection(indicator, "after"));
-    const showIndicatorsBefore = grid.indicators.some(indicator => checkIndicatorDirection(indicator, "before"));
-    const nonDirectionalIndicators = grid.indicators.filter(
+    const showIndicatorsAfter = section.indicators.some(indicator => checkIndicatorDirection(indicator, "after"));
+    const showIndicatorsBefore = section.indicators.some(indicator => checkIndicatorDirection(indicator, "before"));
+    const nonDirectionalIndicators = section.indicators.filter(
         indicator => !checkIndicatorDirection(indicator, "before") && !checkIndicatorDirection(indicator, "after")
     );
 
@@ -189,7 +189,7 @@ const GridForm: React.FC<GridFormProps> = props => {
                                         </CustomDataTableCell>
                                     )}
 
-                                    {getFilteredIndicators(grid.indicators, row, "before").map(
+                                    {getFilteredIndicators(section.indicators, row, "before").map(
                                         indicator =>
                                             indicator && (
                                                 <IndicatorItem
@@ -227,7 +227,7 @@ const GridForm: React.FC<GridFormProps> = props => {
                                         )
                                     )}
 
-                                    {getFilteredIndicators(grid.indicators, row, "after").map(
+                                    {getFilteredIndicators(section.indicators, row, "after").map(
                                         indicator =>
                                             indicator && (
                                                 <IndicatorItem
