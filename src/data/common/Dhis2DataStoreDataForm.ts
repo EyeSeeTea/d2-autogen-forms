@@ -400,7 +400,7 @@ const dataSetRuleCodec = Codec.interface({
     }),
 });
 
-const DataStoreConfigCodec = Codec.interface({
+export const DataStoreConfigCodec = Codec.interface({
     categoryCombinations: sectionConfig({
         viewType: optional(oneOf([exactly("name"), exactly("shortName"), exactly("formName")])),
     }),
