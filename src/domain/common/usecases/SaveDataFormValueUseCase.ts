@@ -11,10 +11,10 @@ export class SaveDataFormValueUseCase {
         store: DataValueStore,
         dataValue: DataValue,
         compulsoryDataValues: CompulsoryDataValue[]
-    ): Promise<DataValueStore> {
+    ): Promise<DataValue> {
         const existingDataValue = store.get(dataValue.dataElement, dataValue);
         if (_.isEqual(existingDataValue, dataValue) && dataValue.type !== "FILE") {
-            return store;
+            return dataValue;
         } else {
             const isCompulsory = compulsoryDataValues.find(
                 cdv =>
@@ -26,20 +26,22 @@ export class SaveDataFormValueUseCase {
 
             const isEmpty = _.isNil(value) || value.toString().trim() === "";
 
-            let storeUpdated = store.set({
+            const updatedValue = {
                 ...dataValue,
                 categoryOptionComboId: dataValue.dataElement.cocId || dataValue.categoryOptionComboId,
                 isRequired: isCompulsory ? isEmpty : false,
-            });
+            };
 
             const dataValueWithUpdate = await this.dataValueRepository.save(dataValue);
+
             if (dataValueWithUpdate.type === "FILE") {
-                storeUpdated = store.set({
+                return {
                     ...dataValueWithUpdate,
                     categoryOptionComboId: dataValue.dataElement.cocId || dataValue.categoryOptionComboId,
-                });
+                };
             }
-            return storeUpdated;
+
+            return updatedValue;
         }
     }
 }

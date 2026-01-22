@@ -27,12 +27,9 @@ export const Editor: React.FC<EditorProps> = React.memo(props => {
         loader
             .init()
             .then((monaco: Monaco) => {
-                const schema = getAutogenConfigSchema({ ...autogenConfigSchema, dataSetCode });
-                const safeSchema = JSON.parse(JSON.stringify(schema));
-
                 monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
                     validate: true,
-                    schemas: [safeSchema],
+                    schemas: [getAutogenConfigSchema({ ...autogenConfigSchema, dataSetCode })],
                 });
             })
             .catch(error => console.error("An error occurred during initialization of the editor: ", error));

@@ -1,6 +1,6 @@
 import { Maybe } from "../../../utils/ts-utils";
 import { Code, Id } from "./Base";
-import { Rule } from "./DataElementRule";
+import { DeleteRule, Rule } from "./DataElementRule";
 
 export type DataElement =
     | DataElementBoolean
@@ -24,6 +24,7 @@ interface DataElementBase {
     related: { dataElement: DataElement; value: string } | undefined;
     disabledComments?: boolean;
     rules: Rule[];
+    deleteRules: DeleteRule[];
     htmlText: Maybe<string>;
     disabled: boolean;
 }

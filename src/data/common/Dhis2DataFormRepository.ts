@@ -7,6 +7,7 @@ import {
     ConditionRule,
     DataElementRuleOptions,
     DataElementTotalRule,
+    DeleteRule,
     Rule,
     RuleType,
     SectionTotalRule,
@@ -53,7 +54,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
             id: dataSet.id,
             expiryDays: dataSet.expiryDays,
             dataInputPeriods: dataSet.dataInputPeriods,
-            dataElements: _.flatMap(sections, section => section.dataElements),
+            dataElements: dataElements,
             sections: sections,
             texts: dataSetConfig.texts,
             options: { dataElements: dataElementsOptions },
@@ -105,6 +106,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
         const dataElements = await new Dhis2DataElement(this.api).get(dataElementIds, dataSet.code);
 
         const dataElementsRulesConfig = this.buildRulesFromConfig(dataElements, configDataForm, allDataElements);
+        const deleteRulesByDataElement = this.buildDeleteRulesFromConfig(dataElements, configDataForm);
 
         return _(dataSet.sections)
             .map((section): Section => {
@@ -137,6 +139,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                                 dataElement,
                                 dataElements
                             );
+                            const deleteRules = deleteRulesByDataElement[dataElementRef.code] ?? [];
 
                             const deHideConfig = deConfig?.selection?.visible;
                             const d2DataElement = deHideConfig
@@ -152,6 +155,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                                     ? { dataElement: deRelated, value: deHideConfig?.value || "" }
                                     : undefined,
                                 rules: dataElementRules,
+                                deleteRules: deleteRules,
                                 htmlText: deConfig?.texts?.name,
                             };
                         })
@@ -538,6 +542,48 @@ export class Dhis2DataFormRepository implements DataFormRepository {
             })
             .compact()
             .value();
+    }
+
+    private buildDeleteRulesFromConfig(
+        dataElements: Record<string, DataElement>,
+        configDataForm: Dhis2DataStoreDataForm
+    ): Record<string, DeleteRule[]> {
+        return _(dataElements)
+            .map(dataElement => {
+                const dataElementConfig = configDataForm.dataElementsConfig[dataElement.code];
+                if (!dataElementConfig) return undefined;
+
+                const deleteRulesConfig = dataElementConfig.rules?.delete;
+                if (!deleteRulesConfig) return undefined;
+
+                const rules: DeleteRule[] = this.buildDeleteRules(deleteRulesConfig);
+                return [dataElement.code, rules] as const;
+            })
+            .compact()
+            .fromPairs()
+            .value();
+    }
+
+    private buildDeleteRules(deleteRulesConfig: ConditionRule): DeleteRule[] {
+        switch (deleteRulesConfig.type) {
+            case "option":
+                return deleteRulesConfig.conditions.map((rule: any) => ({
+                    condition: rule.condition,
+                    dataElements: rule.dataElements,
+                    type: "delete",
+                }));
+            case "single":
+            case undefined:
+                return [
+                    {
+                        condition: deleteRulesConfig.condition,
+                        dataElements: deleteRulesConfig.dataElements,
+                        type: "delete",
+                    },
+                ];
+            default:
+                return [];
+        }
     }
 
     private getRuleConfigByType(options: RuleConfigParams): RuleConfig[] {

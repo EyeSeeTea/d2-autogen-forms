@@ -1,44 +1,53 @@
 import _ from "lodash";
 import { defaultObjectProperties, textSchema } from "..";
 
-export const dataElementRulesSchema = (
-    dataElements: {
-        dataElementCode: string;
-        optionSetCode?: string | undefined;
-    }[]
-) =>
+
+
+type DataElementsSchemaProp = {
+    dataElementCode: string;
+    optionSetCode?: string | undefined;
+};
+function singleOrMultipleCondition(dataElements: DataElementsSchemaProp[], multipleAllowed = false) {
+    const singleOnly = defaultObjectProperties({
+        properties: {
+            condition: { type: "string" },
+            dataElements: {
+                items: {
+                    type: "string",
+                    enum: dataElements.map(dataElement => dataElement.dataElementCode),
+                },
+                type: "array",
+            },
+        },
+    });
+    if (multipleAllowed) {
+        return {
+            oneOf: [
+                singleOnly,
+                defaultObjectProperties({
+                    type: "object",
+                    properties: {
+                        type: { type: "string", enum: ["option"] },
+                        conditions: {
+                            type: "array",
+                            items: singleOnly,
+                        },
+                    },
+                }),
+            ],
+        };
+    } else {
+        return singleOnly;
+    }
+}
+
+export const dataElementRulesSchema = (dataElements: DataElementsSchemaProp[], hasDelete = false) =>
     defaultObjectProperties({
         properties: {
-            visible: defaultObjectProperties({
-                properties: {
-                    condition: { type: "string" },
-                    dataElements: {
-                        items: {
-                            type: "string",
-                            enum: dataElements.map(dataElement => dataElement.dataElementCode),
-                        },
-                        type: "array",
-                    },
-                },
-            }),
-            disabled: defaultObjectProperties({
-                properties: {
-                    condition: { type: "string" },
-                    dataElements: { type: "array" },
-                },
-            }),
-            enabled: defaultObjectProperties({
-                properties: {
-                    condition: { type: "string" },
-                    dataElements: {
-                        items: {
-                            type: "string",
-                            enum: dataElements.map(dataElement => dataElement.dataElementCode),
-                        },
-                        type: "array",
-                    },
-                },
-            }),
+            visible: singleOrMultipleCondition(dataElements),
+            disabled: singleOrMultipleCondition(dataElements, true),
+            enabled: singleOrMultipleCondition(dataElements, true),
+            ...(hasDelete ? { delete: singleOrMultipleCondition(dataElements, true) } : {}),
         },
     });
 
@@ -62,7 +71,7 @@ export const dataElementSchema = (
                             name: textSchema(constantCodes),
                         },
                     }),
-                    rules: dataElementRulesSchema,
+                    rules: dataElementRulesSchema(dataElements, true),
                     selection: defaultObjectProperties({
                         properties: {
                             optionSet: defaultObjectProperties({

@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { DataValueNumberSingle, DataValueStore } from "../entities/DataValue";
+import { DataValue, DataValueNumberSingle, DataValueStore } from "../entities/DataValue";
 import { DataValueRepository } from "../repositories/DataValueRepository";
 import { DataElement } from "../entities/DataElement";
 
@@ -12,28 +12,27 @@ export class SaveGridWithTotalsValueUseCase {
         columnTotal: DataElement,
         columnDataElements: DataElement[],
         _cocId: string
-    ): Promise<DataValueStore> {
+    ): Promise<DataValue[]> {
         const existingDataValue = store.get(dataValue.dataElement, dataValue);
 
         if (_.isEqual(existingDataValue, dataValue)) {
-            return store;
+            return [];
         } else {
             // SAVE FIELD
             const currentDataValue = {
                 ...dataValue,
                 categoryOptionComboId: dataValue.dataElement.cocId || dataValue.categoryOptionComboId,
             };
-            let storeUpdated = store.set(currentDataValue);
-            // await this.dataValueRepository.save(dataValue);
 
-            // SAVE ROW TOTAL
+            const storeUpdated = store.set(currentDataValue);
+
+            // SAVE COLUMN TOTAL
             const selector = {
                 orgUnitId: dataValue.orgUnitId,
                 period: dataValue.period,
                 categoryOptionComboId: dataValue.categoryOptionComboId,
             };
 
-            // SAVE COLUMN TOTAL
             const newColTotalValue = columnDataElements
                 .map(de => {
                     const dv = storeUpdated.get(de, {
@@ -49,15 +48,17 @@ export class SaveGridWithTotalsValueUseCase {
                 categoryOptionComboId: columnTotal.cocId || dataValue.categoryOptionComboId,
             }) as DataValueNumberSingle;
 
-            colTotalDataValue.value = newColTotalValue.toString();
+            const updatedColTotalDataValue = {
+                ...colTotalDataValue,
+                value: newColTotalValue.toString(),
+            };
 
-            storeUpdated = storeUpdated.set(colTotalDataValue);
             await Promise.all([
                 this.dataValueRepository.save(dataValue),
-                this.dataValueRepository.save(colTotalDataValue),
+                this.dataValueRepository.save(updatedColTotalDataValue),
             ]);
 
-            return storeUpdated;
+            return [currentDataValue, updatedColTotalDataValue];
         }
     }
 }

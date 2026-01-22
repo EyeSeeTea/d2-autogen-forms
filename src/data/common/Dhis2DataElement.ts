@@ -250,6 +250,7 @@ function getDataElement(dataElement: D2DataElementNewType, config: Dhis2DataStor
             ? { isMultiple: Boolean(deConfig?.selection?.isMultiple), items: optionSet.options }
             : undefined,
         rules: [],
+        deleteRules: [],
         htmlText: undefined,
         disabled: deConfig?.disabled || false,
     };

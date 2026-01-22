@@ -22,6 +22,12 @@ export type SectionRuleOptions = { condition: string; sectionCodes: Code[] };
 
 export type Rule = { relatedDataElement: DataElement; type: RuleType; condition: string };
 
+export type DeleteRule = {
+    condition: string;
+    type: "delete";
+    dataElements: Code[];
+};
+
 type BaseTotalRule = {
     conditions: string[];
     formula: string;
