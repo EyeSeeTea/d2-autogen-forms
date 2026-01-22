@@ -24,6 +24,10 @@ async function main() {
         required: false,
     });
 
+    parser.add_argument("dataSetCode", {
+        help: "The dataSet code to reorder",
+    });
+
     parser.add_argument("sectionCode", {
         help: "The section code to reorder",
     });
@@ -32,11 +36,11 @@ async function main() {
         help: "The new order for the section",
     });
 
-    const { input, output, sectionCode, newSection } = parser.parse_args();
+    const { input, output, dataSetCode, sectionCode, newSection } = parser.parse_args();
     const config = await parseConfigFromFile(input);
-    const sections = config.dataSets?.["TUB_ANNUAL_DATA"]?.sections;
+    const sections = config.dataSets?.[dataSetCode]?.sections;
     if (!sections) {
-        throw new Error("No sections found in the config for dataSet TUB_ANNUAL_DATA");
+        throw new Error(`No sections found in the config for dataSet ${dataSetCode}`);
     }
     debug(sections);
 
