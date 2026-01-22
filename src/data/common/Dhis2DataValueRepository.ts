@@ -376,9 +376,7 @@ export class Dhis2DataValueRepository implements DataValueRepository {
             value: this.getStrValue(dataValue),
         }));
 
-        await this.api.dataValues
-            .postSet({ importStrategy: "DELETE", skipAudit: true }, { dataValues: dataValuesToDelete })
-            .getData();
+        await this.api.dataValues.postSet({ importStrategy: "DELETE" }, { dataValues: dataValuesToDelete }).getData();
     }
 
     async applyToAll(
