@@ -152,6 +152,18 @@ export class DataValueStore {
         return this.get(dataElement, base) || getEmpty(dataElement, base);
     }
 
+    merge(dataValues: DataValue[]): DataValueStore {
+        const store = _.keyBy(dataValues, dv =>
+            DataValueStore.getKey({
+                dataElementId: dv.dataElement.id,
+                period: dv.period,
+                categoryOptionComboId: dv.categoryOptionComboId,
+                orgUnit: dv.orgUnitId,
+            })
+        );
+        return new DataValueStore({ ...this.store, ...store });
+    }
+
     static getKey(options: {
         dataElementId: Id;
         period: Period;

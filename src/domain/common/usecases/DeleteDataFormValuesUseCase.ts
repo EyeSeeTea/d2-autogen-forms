@@ -1,32 +1,23 @@
-import { DataValue, DataValueStore, DataValueStoreD, getEmpty } from "../entities/DataValue";
+import { DataValue, getEmpty } from "../entities/DataValue";
 import { DataValueRepository } from "../repositories/DataValueRepository";
 
 export class DeleteDataFormValuesUseCase {
     constructor(private dataValueRepository: DataValueRepository) {}
 
-    async execute(store: DataValueStore, dataValues: DataValue[]): Promise<DataValueStore> {
+    async execute(dataValues: DataValue[]): Promise<DataValue[]> {
         if (dataValues.length === 0) {
-            return store;
+            return [];
         }
 
-        const storeUpdated = dataValues.reduce((acc, dataValue) => {
-            const updatedDataValue = getEmpty(dataValue.dataElement, {
+        const updatedDataValues = dataValues.map(dataValue => {
+            return getEmpty(dataValue.dataElement, {
                 ...dataValue,
                 categoryOptionComboId: dataValue.dataElement.cocId || dataValue.categoryOptionComboId,
             });
-            return {
-                ...acc,
-                [DataValueStore.getKey({
-                    dataElementId: updatedDataValue.dataElement.id,
-                    period: updatedDataValue.period,
-                    categoryOptionComboId: updatedDataValue.categoryOptionComboId,
-                    orgUnit: updatedDataValue.orgUnitId,
-                })]: updatedDataValue,
-            };
-        }, {} as DataValueStoreD);
+        });
 
         await this.dataValueRepository.delete(dataValues);
 
-        return new DataValueStore(storeUpdated);
+        return updatedDataValues;
     }
 }
