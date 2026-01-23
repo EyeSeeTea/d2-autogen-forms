@@ -66,6 +66,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
             periodType: validatePeriodType(dataSet.periodType),
             rules: getApplicableDataFormRules(dataSetConfig.rules, { period: options.period }),
             removePrefix: dataSetConfig.removePrefix,
+            customCss: dataSetConfig.customCss,
         };
     }
 
