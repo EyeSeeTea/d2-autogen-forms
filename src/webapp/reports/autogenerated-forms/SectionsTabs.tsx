@@ -188,6 +188,21 @@ function isTabHeader(order: Maybe<string>) {
     return isNaN(secondaryTabIndex) || secondaryTabIndex === 0 || secondaryTabIndex === 1;
 }
 
+function tabHeaderShouldShowIndex(section: Section, sections: Section[]): boolean {
+    if (section.showIndex) return true;
+    if (!section.tabs.order) return false;
+
+    const [rawPrimaryIndex] = getTabIndices(section.tabs.order);
+    const hasSiblingsWithShowIndex = sections.some(s => {
+        const siblingOrder = s.tabs.order;
+        if (!siblingOrder) return false;
+        const [siblingPrimaryIndex] = getTabIndices(siblingOrder);
+        return siblingPrimaryIndex === rawPrimaryIndex && s.showIndex;
+    });
+
+    return hasSiblingsWithShowIndex;
+}
+
 const AutoFormComponent = React.memo(TypeSwitch);
 
 const TabPanel: React.FC<TabProps> = React.memo(props => {
@@ -320,8 +335,10 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
                         if (isTabHeader(order)) {
                             const sectionTabLabel = section.texts.tabLabel || section.name;
                             const [primaryTabIndex] = getTabIndices(section.tabs.order, sections, section.showIndex);
+                            const shouldShowIndex = tabHeaderShouldShowIndex(section, sections);
+
                             const tabLabel =
-                                section.showIndex && primaryTabIndex !== -1
+                                shouldShowIndex && primaryTabIndex !== -1
                                     ? `${primaryTabIndex + 1} - ${sectionTabLabel}`
                                     : sectionTabLabel;
 
