@@ -622,6 +622,7 @@ function getRelativeIntervalPeriodsByViewType(
             return formatRelativeIntervalPeriodsByPeriodType(dataSetPeriod, interval2, periodType);
         }
         case "grid-with-cat-option-combos":
+        case "table":
             if (!interval) return [];
             return formatRelativeIntervalPeriodsByPeriodType(dataSetPeriod, interval, periodType);
         default:
