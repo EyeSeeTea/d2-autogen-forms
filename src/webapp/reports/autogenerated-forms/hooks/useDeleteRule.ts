@@ -18,7 +18,7 @@ type UseDeleteRuleReturn = {
 };
 
 export function useDeleteRule(props: UseDeleteRulesProps): UseDeleteRuleReturn {
-    const { dataElement, dataFormInfo, period } = props;
+    const { dataElement, dataFormInfo } = props;
     const [deleteRuleInProgress, setDeleteRuleInProgress] = React.useState(false);
 
     const applyDeleteRule = React.useCallback(
@@ -46,7 +46,7 @@ export function useDeleteRule(props: UseDeleteRulesProps): UseDeleteRuleReturn {
             await runDelete(allDataValuesToDelete);
             setDeleteRuleInProgress(false);
         },
-        [dataElement, dataFormInfo, period]
+        [dataElement, dataFormInfo]
     );
 
     return {
