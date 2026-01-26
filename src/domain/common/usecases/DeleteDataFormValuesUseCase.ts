@@ -1,3 +1,5 @@
+import _ from "lodash";
+
 import { DataValue, getEmpty } from "../entities/DataValue";
 import { DataValueRepository } from "../repositories/DataValueRepository";
 
@@ -19,6 +21,11 @@ export class DeleteDataFormValuesUseCase {
                 ...(emptyDataValue.type === "FILE" ? { fileToSave: undefined } : {}),
             };
         });
+
+        const isSame = _.isEqual(updatedDataValues, dataValues);
+        if (isSame) {
+            return dataValues;
+        }
 
         await this.dataValueRepository.delete(dataValues);
 
