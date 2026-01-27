@@ -556,8 +556,8 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                 const deleteRulesConfig = dataElementConfig.rules?.delete;
                 if (!deleteRulesConfig) return undefined;
 
-                const rules: DeleteRule[] = this.buildDeleteRules(deleteRulesConfig);
-                return [dataElement.code, rules] as const;
+                const rules = this.buildDeleteRules(deleteRulesConfig);
+                return [dataElement.code, rules];
             })
             .compact()
             .fromPairs()
@@ -567,7 +567,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
     private buildDeleteRules(deleteRulesConfig: ConditionRule): DeleteRule[] {
         switch (deleteRulesConfig.type) {
             case "option":
-                return deleteRulesConfig.conditions.map((rule: any) => ({
+                return deleteRulesConfig.conditions.map(rule => ({
                     condition: rule.condition,
                     dataElements: rule.dataElements,
                     type: "delete",

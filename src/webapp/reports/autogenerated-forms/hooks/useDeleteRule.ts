@@ -30,21 +30,24 @@ export function useDeleteRule(props: UseDeleteRulesProps): UseDeleteRuleReturn {
 
             const allDataValuesToDelete = dataElement.deleteRules.flatMap(rule => {
                 const shouldDelete = verifyConditionByDataValueType(dataValueCb, rule);
-                if (shouldDelete) {
-                    return rule.dataElements.flatMap(deId =>
-                        _(dataFormInfo.data.values.store)
-                            .filter(
-                                dataValue =>
-                                    dataValue.dataElement.code === deId &&
-                                    dataValue.orgUnitId === dataFormInfo.orgUnitId
-                            )
-                            .compact()
-                            .value()
-                    );
-                } else return [];
+                if (!shouldDelete) return [];
+                return rule.dataElements.flatMap(deId =>
+                    _(dataFormInfo.data.values.store)
+                        .filter(
+                            dataValue =>
+                                dataValue.dataElement.code === deId && dataValue.orgUnitId === dataFormInfo.orgUnitId
+                        )
+                        .compact()
+                        .value()
+                );
             });
-            await runDelete(allDataValuesToDelete);
-            setDeleteRuleInProgress(false);
+            await runDelete(allDataValuesToDelete)
+                .catch(err => {
+                    console.error("Error applying delete rules", err);
+                })
+                .finally(() => {
+                    setDeleteRuleInProgress(false);
+                });
         },
         [dataElement, dataFormInfo]
     );
