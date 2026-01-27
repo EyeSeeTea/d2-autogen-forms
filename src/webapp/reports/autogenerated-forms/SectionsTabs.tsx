@@ -197,7 +197,9 @@ const TabPanel: React.FC<TabProps> = React.memo(props => {
 
     return (
         <div role="tabpanel" hidden={value !== index} id={`tabpanel-${index}`} aria-labelledby={`tab-${index}`}>
-            <DebugLabel>{section.code}</DebugLabel>
+            <DebugLabel>
+                {section.code} - {section.viewType}
+            </DebugLabel>
             <AutoFormComponent dataFormInfo={dataFormInfo} section={section} viewType={viewType} />
         </div>
     );
