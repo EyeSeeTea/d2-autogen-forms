@@ -132,7 +132,6 @@ export class GridViewModel {
         const groupInfo = this.buildGroupInfo(rows, "group");
         const subGroupInfo = this.buildGroupInfo(rows, "subGroup");
 
-        // Compute grid-level indicator flags
         const hasIndicatorsBefore = rows.some(row => row.indicators.before.length > 0);
         const hasIndicatorsAfter = rows.some(row => row.indicators.after.length > 0);
         const nonDirectionalIndicators = indicators.filter(
