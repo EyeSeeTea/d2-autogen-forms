@@ -20,7 +20,7 @@ import { DataForm } from "../../../domain/common/entities/DataForm";
 import CheckboxWidget from "./widgets/CheckboxWidget";
 import { useUpdatableDataValueWithFeedback } from "./hooks/useUpdatableDataValueWithFeedback";
 import { useDataEntryItem } from "./hooks/useDataEntryItem";
-import { useDeleteRule } from "./hooks/useDeleteRule";
+import { useDeleteDataValues } from "./hooks/useDeleteDataValues";
 
 export interface DataEntryItemProps {
     dataElement: DataElement;
@@ -40,8 +40,11 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
     const { dataElement, dataFormInfo, rows } = props;
 
     const [dataValue, updateState, notifyChangeWithFeedback] = useUpdatableDataValueWithFeedback(props);
-    const { isDataEntryItemVisible, isDataEntryItemDisabled } = useDataEntryItem(props);
-    const { applyDeleteRule, deleteRuleInProgress } = useDeleteRule(props);
+    const { applyDeleteRule, deleteDataValues, deleteRuleInProgress } = useDeleteDataValues(props);
+    const { isDataEntryItemVisible, isDataEntryItemDisabled } = useDataEntryItem({
+        ...props,
+        deleteDataValues,
+    });
 
     const state = React.useMemo(() => {
         if (updateState === "saveSuccessful" && deleteRuleInProgress) {

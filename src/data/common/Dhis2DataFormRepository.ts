@@ -5,13 +5,15 @@ import { CompulsoryDataValue } from "../../domain/common/entities/CompulsoryData
 import { DataElement } from "../../domain/common/entities/DataElement";
 import {
     ConditionRule,
-    DataElementRuleOptions,
     DataElementTotalRule,
     DeleteRule,
     Rule,
     RuleType,
     SectionTotalRule,
+    TotalConditionRule,
+    TotalDataElementRuleOptions,
     TotalRules,
+    TotalRuleType,
 } from "../../domain/common/entities/DataElementRule";
 import { DataForm, defaultTexts, RowConfigDetails, Section, SectionBase } from "../../domain/common/entities/DataForm";
 import { Indicator } from "../../domain/common/entities/Indicator";
@@ -385,8 +387,8 @@ export class Dhis2DataFormRepository implements DataFormRepository {
     }
 
     private getTotalRuleByRuleType(
-        ruleType: RuleType,
-        rules: DataElementRuleOptions,
+        ruleType: TotalRuleType,
+        rules: TotalDataElementRuleOptions,
         section: Section,
         dataElements: Record<Code, DataElement>,
         formula: string
@@ -405,7 +407,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
         };
     }
 
-    private getTotalDataElements(rule: ConditionRule, dataElements: Record<string, DataElement>): Id[] {
+    private getTotalDataElements(rule: TotalConditionRule, dataElements: Record<string, DataElement>): Id[] {
         const extractedDataElements =
             rule.type === "option" ? rule.conditions.flatMap(condition => condition.dataElements) : rule.dataElements;
 
@@ -537,8 +539,14 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                     allDataElements: allDataElements,
                     dataElement: dataElement,
                 });
+                const clearDataElements = this.getRuleConfigByType({
+                    ruleType: "clear",
+                    dataElementConfig: dataElementConfig,
+                    allDataElements: allDataElements,
+                    dataElement: dataElement,
+                });
 
-                return [...disabledDataElements, ...visibleDataElements, ...enabledDataElements];
+                return [...disabledDataElements, ...visibleDataElements, ...enabledDataElements, ...clearDataElements];
             })
             .compact()
             .value();
@@ -556,8 +564,8 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                 const deleteRulesConfig = dataElementConfig.rules?.delete;
                 if (!deleteRulesConfig) return undefined;
 
-                const rules: DeleteRule[] = this.buildDeleteRules(deleteRulesConfig);
-                return [dataElement.code, rules] as const;
+                const rules = this.buildDeleteRules(deleteRulesConfig);
+                return [dataElement.code, rules];
             })
             .compact()
             .fromPairs()
@@ -567,7 +575,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
     private buildDeleteRules(deleteRulesConfig: ConditionRule): DeleteRule[] {
         switch (deleteRulesConfig.type) {
             case "option":
-                return deleteRulesConfig.conditions.map((rule: any) => ({
+                return deleteRulesConfig.conditions.map(rule => ({
                     condition: rule.condition,
                     dataElements: rule.dataElements,
                     type: "delete",
@@ -609,6 +617,14 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                         .value();
                 });
             }
+            case "state":
+                return this.buildRuleConfigList({
+                    dataElements: [dataElement.code],
+                    ruleType: ruleType,
+                    dataElementConfig: dataElementConfig,
+                    allDataElements: allDataElements,
+                    dataElement: dataElement,
+                });
             default:
                 return this.buildRuleConfigList({
                     dataElements: currentConfig?.dataElements || [],
@@ -660,6 +676,9 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                 return dataElementConfigRules.rules?.visible;
             case "enabled":
                 return dataElementConfigRules.rules?.enabled;
+            case "clear": {
+                return dataElementConfigRules.rules?.clear;
+            }
             default:
                 return undefined;
         }

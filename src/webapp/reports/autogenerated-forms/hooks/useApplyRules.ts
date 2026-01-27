@@ -97,13 +97,13 @@ type VerifyConditionRule = { condition: string; type?: RuleType | DeleteRule["ty
 export function verifyConditionByDataValueType(dataValue: DataValue, rule: VerifyConditionRule): boolean {
     const value = getValueAccordingType(dataValue);
 
+    if (isDeleteRuleWildcard(rule)) return true;
+
     switch (dataValue.type) {
         case "NUMBER": {
             return applyNumericComparison(rule, value);
         }
         case "TEXT": {
-            if (isDeleteRuleWildcard(rule)) return true;
-
             const parsedValue = value && typeof value === "string" ? parseInt(value) : undefined;
             if (parsedValue !== undefined && !isNaN(parsedValue)) {
                 return rule.condition === String(value);

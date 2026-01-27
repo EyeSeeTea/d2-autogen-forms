@@ -26,22 +26,13 @@ export class SaveDataFormValueUseCase {
 
             const isEmpty = _.isNil(value) || value.toString().trim() === "";
 
-            const updatedValue = {
-                ...dataValue,
+            const dataValueWithUpdate = await this.dataValueRepository.save(dataValue);
+
+            return {
+                ...dataValueWithUpdate,
                 categoryOptionComboId: dataValue.dataElement.cocId || dataValue.categoryOptionComboId,
                 isRequired: isCompulsory ? isEmpty : false,
             };
-
-            const dataValueWithUpdate = await this.dataValueRepository.save(dataValue);
-
-            if (dataValueWithUpdate.type === "FILE") {
-                return {
-                    ...dataValueWithUpdate,
-                    categoryOptionComboId: dataValue.dataElement.cocId || dataValue.categoryOptionComboId,
-                };
-            }
-
-            return updatedValue;
         }
     }
 }
