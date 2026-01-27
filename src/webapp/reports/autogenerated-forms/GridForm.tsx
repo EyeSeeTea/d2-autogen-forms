@@ -17,8 +17,6 @@ import { DataTableCellFormula } from "./datatables/DataTableCellFormula";
 import { DataTableCellRowName } from "./datatables/DataTableCellRowName";
 import _ from "lodash";
 import { IndicatorItem, RowIndicatorItem } from "../../components/IndicatorItem/IndicatorItem";
-import { checkIndicatorDirection } from "../../../domain/common/entities/Indicator";
-import { getFilteredIndicators } from "./GridFormViewModel";
 import i18n from "../../../locales";
 import { Maybe } from "../../../utils/ts-utils";
 import { useSyncedScroll } from "./hooks/Scroll";
@@ -47,12 +45,6 @@ const GridForm: React.FC<GridFormProps> = props => {
     const { dataFormInfo, section } = props;
     const grid = React.useMemo(() => GridViewModel.get(section, dataFormInfo, "grid"), [section, dataFormInfo]);
     const classes = useStyles();
-
-    const showIndicatorsAfter = section.indicators.some(indicator => checkIndicatorDirection(indicator, "after"));
-    const showIndicatorsBefore = section.indicators.some(indicator => checkIndicatorDirection(indicator, "before"));
-    const nonDirectionalIndicators = section.indicators.filter(
-        indicator => !checkIndicatorDirection(indicator, "before") && !checkIndicatorDirection(indicator, "after")
-    );
 
     const { wrapper1Ref, wrapper2Ref, wrapper2Width } = useSyncedScroll({ enable: section.enableTopScroll });
 
@@ -114,7 +106,7 @@ const GridForm: React.FC<GridFormProps> = props => {
                                 </CustomDataTableColumnHeader>
                             )}
 
-                            {showIndicatorsBefore && (
+                            {grid.hasIndicatorsBefore && (
                                 <CustomDataTableColumnHeader
                                     backgroundColor={section.styles.columns.backgroundColor}
                                     key="column-indicators-before"
@@ -142,7 +134,7 @@ const GridForm: React.FC<GridFormProps> = props => {
                                 );
                             })}
 
-                            {showIndicatorsAfter && (
+                            {grid.hasIndicatorsAfter && (
                                 <CustomDataTableColumnHeader
                                     backgroundColor={section.styles.columns.backgroundColor}
                                     key="column-indicators-after"
@@ -189,17 +181,14 @@ const GridForm: React.FC<GridFormProps> = props => {
                                         </CustomDataTableCell>
                                     )}
 
-                                    {getFilteredIndicators(section.indicators, row, "before").map(
-                                        indicator =>
-                                            indicator && (
-                                                <IndicatorItem
-                                                    key={`${indicator.id}-${row.name}`}
-                                                    indicator={indicator}
-                                                    dataFormInfo={dataFormInfo}
-                                                    periods={[grid.dataEntryPeriod?.id || dataFormInfo.period]}
-                                                />
-                                            )
-                                    )}
+                                    {row.indicators.before.map(indicator => (
+                                        <IndicatorItem
+                                            key={`${indicator.id}-${row.name}`}
+                                            indicator={indicator}
+                                            dataFormInfo={dataFormInfo}
+                                            periods={[grid.dataEntryPeriod?.id || dataFormInfo.period]}
+                                        />
+                                    ))}
 
                                     {row.items.map((item, idx) =>
                                         item.dataElement ? (
@@ -227,17 +216,14 @@ const GridForm: React.FC<GridFormProps> = props => {
                                         )
                                     )}
 
-                                    {getFilteredIndicators(section.indicators, row, "after").map(
-                                        indicator =>
-                                            indicator && (
-                                                <IndicatorItem
-                                                    key={`${indicator.id}-${row.name}`}
-                                                    indicator={indicator}
-                                                    dataFormInfo={dataFormInfo}
-                                                    periods={[grid.dataEntryPeriod?.id || dataFormInfo.period]}
-                                                />
-                                            )
-                                    )}
+                                    {row.indicators.after.map(indicator => (
+                                        <IndicatorItem
+                                            key={`${indicator.id}-${row.name}`}
+                                            indicator={indicator}
+                                            dataFormInfo={dataFormInfo}
+                                            periods={[grid.dataEntryPeriod?.id || dataFormInfo.period]}
+                                        />
+                                    ))}
                                 </DataTableRow>
                             );
                         })}
@@ -263,7 +249,7 @@ const GridForm: React.FC<GridFormProps> = props => {
                             </DataTableRow>
                         ))}
 
-                        {nonDirectionalIndicators.map(indicator => (
+                        {grid.nonDirectionalIndicators.map(indicator => (
                             <RowIndicatorItem
                                 key={`parent_${indicator.id}`}
                                 indicator={indicator}

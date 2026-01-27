@@ -45,6 +45,9 @@ export type Grid = GridComponents & {
     subGroupInfo: Record<string, GroupInfo>;
     dataEntryPeriod: Maybe<Period>;
     hidden: boolean;
+    hasIndicatorsBefore: boolean;
+    hasIndicatorsAfter: boolean;
+    nonDirectionalIndicators: Indicator[];
 };
 
 type GridComponents = {
@@ -82,6 +85,10 @@ export interface Row {
         disabled: boolean;
         disableComments: boolean;
     }>;
+    indicators: {
+        before: Indicator[];
+        after: Indicator[];
+    };
 }
 
 const separator = " - ";
@@ -125,6 +132,13 @@ export class GridViewModel {
         const groupInfo = this.buildGroupInfo(rows, "group");
         const subGroupInfo = this.buildGroupInfo(rows, "subGroup");
 
+        // Compute grid-level indicator flags
+        const hasIndicatorsBefore = rows.some(row => row.indicators.before.length > 0);
+        const hasIndicatorsAfter = rows.some(row => row.indicators.after.length > 0);
+        const nonDirectionalIndicators = indicators.filter(
+            indicator => !checkIndicatorDirection(indicator, "before") && !checkIndicatorDirection(indicator, "after")
+        );
+
         return {
             id: section.id,
             indicators: indicators,
@@ -159,6 +173,9 @@ export class GridViewModel {
             hasGroups: section.enableGroups && rowGroups.length > 0,
             groupInfo: groupInfo,
             subGroupInfo: subGroupInfo,
+            hasIndicatorsBefore,
+            hasIndicatorsAfter,
+            nonDirectionalIndicators,
         };
     }
 
@@ -300,6 +317,10 @@ export class GridViewModel {
                 items: items,
                 group: groupMeta ? groupMeta.group : undefined,
                 subGroup: groupMeta ? groupMeta.subGroup : undefined,
+                indicators: {
+                    before: getFilteredIndicators(section.indicators, items, "before"),
+                    after: getFilteredIndicators(section.indicators, items, "after"),
+                },
             };
         });
     }
@@ -589,15 +610,15 @@ export function getCategoryOptionComboByColumnName(dataElement: DataElementNumbe
     return dataElement.categoryOptionCombos[0];
 }
 
-export function getFilteredIndicators(
+function getFilteredIndicators(
     indicators: Indicator[],
-    row: Row,
+    items: Row["items"],
     direction: IndicatorDirection
-): Maybe<Indicator>[] {
-    return indicators.map(indicator => {
-        return row.items.map(item => item.dataElement?.code).includes(indicator.dataElement?.code) &&
+): Indicator[] {
+    return indicators.filter(indicator => {
+        return (
+            items.map(item => item.dataElement?.code).includes(indicator.dataElement?.code) &&
             checkIndicatorDirection(indicator, direction)
-            ? indicator
-            : undefined;
+        );
     });
 }

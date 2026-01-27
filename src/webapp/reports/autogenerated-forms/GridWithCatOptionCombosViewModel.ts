@@ -25,6 +25,9 @@ export interface Grid {
     summary: Summary[];
     indicators: Indicator[];
     hidden: boolean;
+    hasIndicatorsBefore: boolean;
+    hasIndicatorsAfter: boolean;
+    nonDirectionalIndicators: Indicator[];
 }
 
 interface SubSectionGrid {
@@ -50,6 +53,10 @@ type SubRow = {
     deName: string;
     name: string;
     period?: Period;
+    indicators: {
+        before: Indicator[];
+        after: Indicator[];
+    };
 };
 
 const separator = " - ";
@@ -119,6 +126,13 @@ export class GridWithCatOptionCombosViewModel {
             return getIndexedIndicator(section, dataFormInfo, indicator, indexOverride);
         });
 
+        const allSubRows = rows.flatMap(row => row.rows);
+        const hasIndicatorsBefore = allSubRows.some(subRow => subRow.indicators.before.length > 0);
+        const hasIndicatorsAfter = allSubRows.some(subRow => subRow.indicators.after.length > 0);
+        const nonDirectionalIndicators = indicators.filter(
+            indicator => !checkIndicatorDirection(indicator, "before") && !checkIndicatorDirection(indicator, "after")
+        );
+
         return {
             id: section.id,
             indicators: indicators,
@@ -133,6 +147,9 @@ export class GridWithCatOptionCombosViewModel {
             texts: section.texts,
             summary: section.totals ? summary : [],
             hidden: section.hidden || false,
+            hasIndicatorsBefore,
+            hasIndicatorsAfter,
+            nonDirectionalIndicators,
         };
     }
 
@@ -148,18 +165,21 @@ export class GridWithCatOptionCombosViewModel {
             .map((group, groupName) => {
                 const firstDeInGroup = _(group).first()?.code || "";
                 const groupDescription = getDescription(section.groupDescriptions, dataFormInfo, firstDeInGroup);
-
                 return {
                     groupName: group.length > 1 ? groupName : "",
                     groupDescription: groupDescription,
                     rows: group.flatMap(de => {
                         const deLabel = getDataElementLabel(de, section, dataFormInfo, de.name);
-                        const row = {
-                            dataElement: { ...de, htmlText: getDataElementHtmlText(de, section, dataFormInfo) },
+                        const dataElement = { ...de, htmlText: getDataElementHtmlText(de, section, dataFormInfo) };
+                        const row: SubRow = {
+                            dataElement: dataElement,
                             deName: deLabel,
                             name: de.name,
+                            indicators: {
+                                before: getFilteredIndicators(section.indicators, dataElement, "before"),
+                                after: getFilteredIndicators(section.indicators, dataElement, "after"),
+                            },
                         };
-
                         return section.periods.length > 0 ? section.periods.map(period => ({ ...row, period })) : [row];
                     }),
                 };
@@ -272,14 +292,12 @@ function getCategoryOptionComboByColumnName(dataElement: DataElement, column: Co
     });
 }
 
-export function getFilteredIndicators(
+function getFilteredIndicators(
     indicators: Indicator[],
-    row: SubRow,
+    dataElement: DataElement,
     direction: IndicatorDirection
-): Maybe<Indicator>[] {
-    return indicators.map(indicator =>
-        indicator.dataElement?.code === row.dataElement.code && checkIndicatorDirection(indicator, direction)
-            ? indicator
-            : undefined
+): Indicator[] {
+    return indicators.filter(
+        indicator => indicator.dataElement?.code === dataElement.code && checkIndicatorDirection(indicator, direction)
     );
 }
