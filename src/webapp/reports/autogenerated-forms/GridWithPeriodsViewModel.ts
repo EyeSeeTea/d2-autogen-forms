@@ -69,8 +69,9 @@ export class GridWithPeriodsViewModel {
     static get(section: SectionWithPeriods, dataFormInfo: DataFormInfo): GridWithPeriodsI {
         const rows = GridWithPeriodsViewModel.getRows(section, dataFormInfo);
         const summary = GridWithPeriodsViewModel.getSummary(section);
+        const indicatorIndexOffset = section.dataElements.length;
         const indicators = GridWithPeriodsViewModel.getIndicators(rows, section).map((indicator, index) =>
-            getIndexedIndicator(section, dataFormInfo, indicator, index + 1)
+            getIndexedIndicator(section, dataFormInfo, indicator, indicatorIndexOffset + index + 1)
         );
         const lockException = dataFormInfo.metadata.dataForm.periodType !== PeriodType.YEARLY;
 
@@ -109,7 +110,9 @@ export class GridWithPeriodsViewModel {
                     const firstDataElement = dataElementsForGroup[0];
                     const code = firstDataElement.code;
                     const indicatorBase = getIndicatorRelatedToDataElement(section.indicators, code);
-                    const indicator = indicatorBase ? getIndexedIndicator(section, dataFormInfo, indicatorBase) : undefined;
+                    const indicator = indicatorBase
+                        ? getIndexedIndicator(section, dataFormInfo, indicatorBase)
+                        : undefined;
                     const orgUnitCode = dataFormInfo.orgUnit.code;
                     return {
                         type: firstDataElement.type === "FILE" ? "dataElementFile" : "dataElement",
@@ -148,7 +151,10 @@ export class GridWithPeriodsViewModel {
                             const hasSubGroup = isRowSubGroup(dataElement);
                             const subGroup = uniqueSubGroups.find(subGroup => subGroup.position === index);
 
-                            const indicatorBase = getIndicatorRelatedToDataElement(section.indicators, dataElement.code);
+                            const indicatorBase = getIndicatorRelatedToDataElement(
+                                section.indicators,
+                                dataElement.code
+                            );
                             const indicator = indicatorBase
                                 ? getIndexedIndicator(section, dataFormInfo, indicatorBase)
                                 : undefined;
@@ -299,11 +305,7 @@ function getDataElementLabel(
     return getIndexedLabel(section, dataFormInfo, deName, deIndex);
 }
 
-function getDataElementHtmlText(
-    dataElement: DataElement,
-    section: SectionWithPeriods,
-    dataFormInfo: DataFormInfo
-) {
+function getDataElementHtmlText(dataElement: DataElement, section: SectionWithPeriods, dataFormInfo: DataFormInfo) {
     if (!dataElement.htmlText) return undefined;
     return getDataElementLabel(dataElement, section, dataFormInfo, dataElement.htmlText);
 }

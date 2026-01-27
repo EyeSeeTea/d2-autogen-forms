@@ -109,8 +109,9 @@ export class GridViewModel {
     static get(section: SectionGrid, dataFormInfo: DataFormInfo, viewType: SectionGrid["viewType"]): Grid {
         const dataElements = getDataElementsWithIndexProccessing(section);
         const { columns, rows, summary } = this.getGridComponents(section, dataFormInfo, dataElements, viewType);
+        const indicatorIndexOffset = viewType === "grid" ? rows.length : dataElements.length;
         const indicators = this.getIndicators(section).map((indicator, index) =>
-            getIndexedIndicator(section, dataFormInfo, indicator, index + 1)
+            getIndexedIndicator(section, dataFormInfo, indicator, indicatorIndexOffset + index + 1)
         );
 
         const useIndexes =

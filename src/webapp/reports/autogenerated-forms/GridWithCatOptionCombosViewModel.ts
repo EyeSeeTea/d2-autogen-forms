@@ -112,9 +112,10 @@ export class GridWithCatOptionCombosViewModel {
         const columns = GridWithCatOptionCombosViewModel.getColumns(subsections, section, dataFormInfo, rows);
         const summary = GridWithCatOptionCombosViewModel.getSummary(section, columns, dataFormInfo);
 
+        const indicatorIndexOffset = section.dataElements.length;
         let nonDataElementIndex = 0;
         const indicators = section.indicators.map(indicator => {
-            const indexOverride = indicator.dataElement ? undefined : ++nonDataElementIndex;
+            const indexOverride = indicator.dataElement ? undefined : indicatorIndexOffset + ++nonDataElementIndex;
             return getIndexedIndicator(section, dataFormInfo, indicator, indexOverride);
         });
 
@@ -259,11 +260,7 @@ function getDataElementLabel(
     return getIndexedLabel(section, dataFormInfo, deName, deIndex);
 }
 
-function getDataElementHtmlText(
-    dataElement: DataElement,
-    section: SectionWithPeriods,
-    dataFormInfo: DataFormInfo
-) {
+function getDataElementHtmlText(dataElement: DataElement, section: SectionWithPeriods, dataFormInfo: DataFormInfo) {
     if (!dataElement.htmlText) return undefined;
     return getDataElementLabel(dataElement, section, dataFormInfo, dataElement.htmlText);
 }
