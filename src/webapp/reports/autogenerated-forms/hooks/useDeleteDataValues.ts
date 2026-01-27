@@ -12,21 +12,31 @@ type UseDeleteRulesProps = {
     period?: string;
 };
 
-type UseDeleteRuleReturn = {
+export type UseDeleteRuleReturn = {
     applyDeleteRule: (dataValue: DataValue) => Promise<void>;
+    deleteDataValues: (dataValues: DataValue[]) => Promise<void>;
     deleteRuleInProgress: boolean;
 };
 
-export function useDeleteRule(props: UseDeleteRulesProps): UseDeleteRuleReturn {
+export function useDeleteDataValues(props: UseDeleteRulesProps): UseDeleteRuleReturn {
     const { dataElement, dataFormInfo } = props;
     const [deleteRuleInProgress, setDeleteRuleInProgress] = React.useState(false);
+
+    const deleteDataValues = React.useCallback(
+        async (dataValuesToDelete: DataValue[]) => {
+            const runDelete = dataFormInfo.data.delete;
+
+            await runDelete(dataValuesToDelete).catch(err => {
+                console.error("Error applying delete rules", err);
+            });
+        },
+        [dataFormInfo]
+    );
 
     const applyDeleteRule = React.useCallback(
         async (dataValueCb: DataValue) => {
             if (dataElement.deleteRules.length === 0) return;
             setDeleteRuleInProgress(true);
-
-            const runDelete = dataFormInfo.data.delete;
 
             const allDataValuesToDelete = dataElement.deleteRules.flatMap(rule => {
                 const shouldDelete = verifyConditionByDataValueType(dataValueCb, rule);
@@ -41,19 +51,16 @@ export function useDeleteRule(props: UseDeleteRulesProps): UseDeleteRuleReturn {
                         .value()
                 );
             });
-            await runDelete(allDataValuesToDelete)
-                .catch(err => {
-                    console.error("Error applying delete rules", err);
-                })
-                .finally(() => {
-                    setDeleteRuleInProgress(false);
-                });
+            await deleteDataValues(allDataValuesToDelete).finally(() => {
+                setDeleteRuleInProgress(false);
+            });
         },
-        [dataElement, dataFormInfo]
+        [dataElement, dataFormInfo, deleteDataValues]
     );
 
     return {
         applyDeleteRule,
         deleteRuleInProgress,
+        deleteDataValues,
     };
 }

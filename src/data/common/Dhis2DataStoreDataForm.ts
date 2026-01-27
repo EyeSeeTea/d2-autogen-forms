@@ -20,9 +20,9 @@ import { titleVariant } from "../../domain/common/entities/TitleVariant";
 import { SectionStyle, SectionStyleAttrs } from "../../domain/common/entities/SectionStyle";
 import {
     ConditionRule,
-    DataElementRuleOptions,
     RuleType,
     SectionRuleOptions,
+    TotalDataElementRuleOptions,
 } from "../../domain/common/entities/DataElementRule";
 import {
     ToggleLogicalOperator,
@@ -56,7 +56,7 @@ export type TotalsRule = (
       }
     | {
           type: "dataElements";
-          rules?: DataElementRuleOptions;
+          rules?: TotalDataElementRuleOptions;
       }
 ) & { formula: string };
 
@@ -258,8 +258,17 @@ const multipleConditionDERuleCodec = Codec.interface({
     type: exactly("option"),
     conditions: array(singleConditionDERuleCodec),
 });
+const stateConditionDERuleCodec = Codec.interface({
+    type: exactly("state"),
+    condition: oneOf([exactly("disabled")]),
+});
 
 const dataElementRuleCodec = record(
+    oneOf([exactly("visible"), exactly("disabled"), exactly("enabled"), exactly("delete"), exactly("clear")]),
+    oneOf([singleConditionDERuleCodec, multipleConditionDERuleCodec, stateConditionDERuleCodec])
+);
+
+const totalDataElementRuleCodec = record(
     oneOf([exactly("visible"), exactly("disabled"), exactly("enabled"), exactly("delete")]),
     oneOf([singleConditionDERuleCodec, multipleConditionDERuleCodec])
 );
@@ -267,7 +276,7 @@ const dataElementRuleCodec = record(
 const dataElementTotalsRuleCodec = Codec.interface({
     type: exactly("dataElements"),
     formula: string,
-    rules: optional(dataElementRuleCodec),
+    rules: optional(totalDataElementRuleCodec),
 });
 
 const sectionTotalsRuleCodec = Codec.interface({
