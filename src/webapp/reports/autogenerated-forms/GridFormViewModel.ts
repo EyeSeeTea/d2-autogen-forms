@@ -17,6 +17,7 @@ import {
     getIndicatorRelatedToDataElement,
     Indicator,
     IndicatorDirection,
+    isNonDirectionalIndicator,
 } from "../../../domain/common/entities/Indicator";
 import { Code } from "../../../domain/common/entities/Base";
 import { calculateFormula } from "./datatables/InputFormula";
@@ -117,7 +118,8 @@ export class GridViewModel {
     static get(section: SectionGrid, dataFormInfo: DataFormInfo, viewType: SectionGrid["viewType"]): Grid {
         const dataElements = getDataElementsWithIndexProccessing(section);
         const { columns, rows, summary } = this.getGridComponents(section, dataFormInfo, dataElements, viewType);
-        const indicatorIndexOffset = viewType === "grid" ? rows.length : dataElements.length;
+        const indicatorIndexOffset =
+            section.indicatorsPosition === "start" ? 0 : viewType === "grid" ? rows.length : dataElements.length;
         const indicators = this.getIndicators(section).map((indicator, index) =>
             getIndexedIndicator(section, dataFormInfo, indicator, indicatorIndexOffset + index + 1)
         );
@@ -135,9 +137,7 @@ export class GridViewModel {
 
         const hasIndicatorsBefore = rows.some(row => row.indicators.before.length > 0);
         const hasIndicatorsAfter = rows.some(row => row.indicators.after.length > 0);
-        const nonDirectionalIndicators = indicators.filter(
-            indicator => !checkIndicatorDirection(indicator, "before") && !checkIndicatorDirection(indicator, "after")
-        );
+        const nonDirectionalIndicators = indicators.filter(indicator => isNonDirectionalIndicator(indicator));
 
         return {
             id: section.id,
@@ -308,12 +308,18 @@ export class GridViewModel {
             const groupMeta = lastPartSubSection && groupsByRow ? groupsByRow[lastPartSubSection] : undefined;
             const rowName = groupsByRow ? lastPartSubSection ?? "" : subsection.name;
 
+            const nonDirectionalIndicatorsCount =
+                section.indicatorsPosition === "start"
+                    ? section.indicators.filter(indicator => isNonDirectionalIndicator(indicator)).length
+                    : 0;
+            const rowIndex = index + 1 + nonDirectionalIndicatorsCount;
+
             return {
                 includePadding: 0,
                 indicator: indicator,
-                name: getIndexedLabel(section, dataFormInfo, rowName, index + 1),
+                name: getIndexedLabel(section, dataFormInfo, rowName, rowIndex),
                 htmlText: firstItemWithHtmlText
-                    ? getIndexedLabel(section, dataFormInfo, firstItemWithHtmlText, index + 1)
+                    ? getIndexedLabel(section, dataFormInfo, firstItemWithHtmlText, rowIndex)
                     : "",
                 items: items,
                 group: groupMeta ? groupMeta.group : undefined,
@@ -560,7 +566,11 @@ export function getDataElementLabel(
     name: string
 ): string {
     const deIndex = section.dataElements.findIndex(de => dataElement.id === de.id) + 1;
-    return getIndexedLabel(section, dataFormInfo, name, deIndex);
+    const nonDirectionalIndicatorsCount =
+        section.indicatorsPosition === "start"
+            ? section.indicators.filter(indicator => isNonDirectionalIndicator(indicator)).length
+            : 0;
+    return getIndexedLabel(section, dataFormInfo, name, deIndex + nonDirectionalIndicatorsCount);
 }
 
 /** Move the data element index to the row name, so indexed data elements are automatically grouped 

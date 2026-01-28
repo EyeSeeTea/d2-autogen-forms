@@ -14,6 +14,10 @@ export function checkIndicatorDirection(indicator: Indicator, direction: Indicat
     return indicator.dataElement?.direction === direction;
 }
 
+export function isNonDirectionalIndicator(indicator: Indicator): boolean {
+    return !checkIndicatorDirection(indicator, "before") && !checkIndicatorDirection(indicator, "after");
+}
+
 export function getIndicatorRelatedToDataElement(indicators: Indicator[], code: Code): Maybe<Indicator> {
     return indicators.find(indicator => indicator.dataElement?.code === code);
 }

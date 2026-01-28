@@ -119,6 +119,19 @@ const PeriodTable: React.FC<PeriodTableProps> = props => {
             </TableHead>
 
             <TableBody>
+                {grid.indicatorsPosition === "start" &&
+                    grid.indicators.map(indicator => {
+                        return (
+                            <RowIndicatorItem
+                                key={`parent_${indicator.id}`}
+                                indicator={indicator}
+                                colSpan={hasRowsWithSubGroups ? "3" : "2"}
+                                dataFormInfo={dataFormInfo}
+                                periods={periodIds}
+                            />
+                        );
+                    })}
+
                 {grid.rows.map(row => {
                     switch (row.type) {
                         case "dataElement":
@@ -326,17 +339,18 @@ const PeriodTable: React.FC<PeriodTableProps> = props => {
                     </DataTableRow>
                 ))}
 
-                {grid.indicators.map(indicator => {
-                    return (
-                        <RowIndicatorItem
-                            key={`parent_${indicator.id}`}
-                            indicator={indicator}
-                            colSpan={hasRowsWithSubGroups ? "3" : "2"}
-                            dataFormInfo={dataFormInfo}
-                            periods={periodIds}
-                        />
-                    );
-                })}
+                {grid.indicatorsPosition === "end" &&
+                    grid.indicators.map(indicator => {
+                        return (
+                            <RowIndicatorItem
+                                key={`parent_${indicator.id}`}
+                                indicator={indicator}
+                                colSpan={hasRowsWithSubGroups ? "3" : "2"}
+                                dataFormInfo={dataFormInfo}
+                                periods={periodIds}
+                            />
+                        );
+                    })}
             </TableBody>
         </DataTable>
     );
