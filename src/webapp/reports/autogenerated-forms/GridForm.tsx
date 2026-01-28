@@ -144,6 +144,17 @@ const GridForm: React.FC<GridFormProps> = props => {
                     </TableHead>
 
                     <TableBody>
+                        {grid.indicatorsPosition === "start" &&
+                            grid.nonDirectionalIndicators.map(indicator => (
+                                <RowIndicatorItem
+                                    key={`parent_${indicator.id}`}
+                                    indicator={indicator}
+                                    colSpan="2"
+                                    dataFormInfo={dataFormInfo}
+                                    periods={[grid.dataEntryPeriod?.id || dataFormInfo.period]}
+                                />
+                            ))}
+
                         {grid.rows.map((row, idx) => {
                             return (
                                 <DataTableRow key={`row.name-${row.name}`}>
@@ -249,15 +260,16 @@ const GridForm: React.FC<GridFormProps> = props => {
                             </DataTableRow>
                         ))}
 
-                        {grid.nonDirectionalIndicators.map(indicator => (
-                            <RowIndicatorItem
-                                key={`parent_${indicator.id}`}
-                                indicator={indicator}
-                                colSpan="2"
-                                dataFormInfo={dataFormInfo}
-                                periods={[grid.dataEntryPeriod?.id || dataFormInfo.period]}
-                            />
-                        ))}
+                        {grid.indicatorsPosition === "end" &&
+                            grid.nonDirectionalIndicators.map(indicator => (
+                                <RowIndicatorItem
+                                    key={`parent_${indicator.id}`}
+                                    indicator={indicator}
+                                    colSpan="2"
+                                    dataFormInfo={dataFormInfo}
+                                    periods={[grid.dataEntryPeriod?.id || dataFormInfo.period]}
+                                />
+                            ))}
                     </TableBody>
                 </DataTable>
             </div>

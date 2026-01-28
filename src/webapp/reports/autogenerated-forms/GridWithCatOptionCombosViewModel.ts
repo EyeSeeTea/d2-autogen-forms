@@ -28,6 +28,7 @@ export interface Grid {
     hasIndicatorsBefore: boolean;
     hasIndicatorsAfter: boolean;
     nonDirectionalIndicators: Indicator[];
+    indicatorsPosition: "start" | "end";
 }
 
 interface SubSectionGrid {
@@ -150,6 +151,7 @@ export class GridWithCatOptionCombosViewModel {
             hasIndicatorsBefore,
             hasIndicatorsAfter,
             nonDirectionalIndicators,
+            indicatorsPosition: section.indicatorsPosition,
         };
     }
 

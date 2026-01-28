@@ -111,6 +111,17 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                 </TableHead>
 
                 <TableBody>
+                    {grid.indicatorsPosition === "start" &&
+                        grid.nonDirectionalIndicators.map(indicator => (
+                            <RowIndicatorItem
+                                key={`parent_${indicator.id}`}
+                                indicator={indicator}
+                                colSpan="2"
+                                dataFormInfo={dataFormInfo}
+                                periods={[dataFormInfo.period]}
+                            />
+                        ))}
+
                     {grid.rows.map(row => {
                         const { groupDescription, groupName, rows } = row;
 
@@ -200,15 +211,16 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                         ));
                     })}
 
-                    {grid.nonDirectionalIndicators.map(indicator => (
-                        <RowIndicatorItem
-                            key={`parent_${indicator.id}`}
-                            indicator={indicator}
-                            colSpan="2"
-                            dataFormInfo={dataFormInfo}
-                            periods={[dataFormInfo.period]}
-                        />
-                    ))}
+                    {grid.indicatorsPosition === "end" &&
+                        grid.nonDirectionalIndicators.map(indicator => (
+                            <RowIndicatorItem
+                                key={`parent_${indicator.id}`}
+                                indicator={indicator}
+                                colSpan="2"
+                                dataFormInfo={dataFormInfo}
+                                periods={[dataFormInfo.period]}
+                            />
+                        ))}
 
                     {grid.summary.map(summary => (
                         <DataTableRow key={`${summary.cellName}-totals`}>

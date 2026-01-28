@@ -108,6 +108,7 @@ export interface SectionBase {
     showRowTotals: boolean;
     toggleMultiple?: DataElementToggle;
     indicators: Indicator[];
+    indicatorsPosition: "start" | "end";
     fixedHeaders: boolean;
     enableTopScroll: boolean;
     fixedRowNames: boolean;

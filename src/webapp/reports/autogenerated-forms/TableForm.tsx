@@ -66,6 +66,19 @@ const TableForm: React.FC<TableFormProps> = React.memo(props => {
                 </TableHead>
 
                 <TableBody>
+                    {section.indicatorsPosition === "start" &&
+                        section.indicators.map(indicator => {
+                            return (
+                                <RowIndicatorItem
+                                    key={`parent_${indicator.id}`}
+                                    indicator={indicator}
+                                    colSpan="0"
+                                    dataFormInfo={dataFormInfo}
+                                    periods={[section.dataEntryPeriod?.id || dataFormInfo.period]}
+                                />
+                            );
+                        })}
+
                     {section.dataElements.map(dataElement => {
                         return (
                             <React.Fragment key={dataElement.id}>
@@ -140,17 +153,18 @@ const TableForm: React.FC<TableFormProps> = React.memo(props => {
                         </DataTableRow>
                     ))}
 
-                    {section.indicators.map(indicator => {
-                        return (
-                            <RowIndicatorItem
-                                key={`parent_${indicator.id}`}
-                                indicator={indicator}
-                                colSpan="0"
-                                dataFormInfo={dataFormInfo}
-                                periods={[section.dataEntryPeriod?.id || dataFormInfo.period]}
-                            />
-                        );
-                    })}
+                    {section.indicatorsPosition === "end" &&
+                        section.indicators.map(indicator => {
+                            return (
+                                <RowIndicatorItem
+                                    key={`parent_${indicator.id}`}
+                                    indicator={indicator}
+                                    colSpan="0"
+                                    dataFormInfo={dataFormInfo}
+                                    periods={[section.dataEntryPeriod?.id || dataFormInfo.period]}
+                                />
+                            );
+                        })}
                 </TableBody>
             </DataTable>
         </DataTableSection>

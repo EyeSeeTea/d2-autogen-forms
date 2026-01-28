@@ -172,6 +172,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                     toggleMultiple: config?.toggleMultiple
                         ? buildToggleMultiple(config.toggleMultiple, section, dataElements)
                         : undefined,
+                    indicatorsPosition: config?.indicatorsPosition || "end",
                     fixedHeaders: config?.fixedHeaders || false,
                     enableTopScroll: config?.enableTopScroll || false,
                     fixedRowNames: config?.fixedRowNames || false,
@@ -184,6 +185,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                         calculateTotals: undefined,
                         periods: [],
                         ...base,
+                        indicatorsPosition: "end",
                         fixedHeaders: false,
                         columnsOrder: undefined,
                         enableGroups: false,

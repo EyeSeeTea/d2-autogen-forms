@@ -48,6 +48,7 @@ export type Grid = GridComponents & {
     hasIndicatorsBefore: boolean;
     hasIndicatorsAfter: boolean;
     nonDirectionalIndicators: Indicator[];
+    indicatorsPosition: "start" | "end";
 };
 
 type GridComponents = {
@@ -175,6 +176,7 @@ export class GridViewModel {
             hasIndicatorsBefore,
             hasIndicatorsAfter,
             nonDirectionalIndicators,
+            indicatorsPosition: section.indicatorsPosition,
         };
     }
 

@@ -103,6 +103,7 @@ interface BaseSectionConfig {
     totals?: Record<string, SectionTotals>;
     toggleMultiple: Maybe<ToggleMultiple>;
     indicators?: Record<Code, IndicatorConfig>;
+    indicatorsPosition: "start" | "end";
     fixedHeaders: boolean;
     fixedRowNames: boolean;
     enableTopScroll: boolean;
@@ -507,6 +508,7 @@ const DataStoreConfigCodec = Codec.interface({
                         ),
                     })
                 ),
+                indicatorsPosition: optional(oneOf([exactly("start"), exactly("end")])),
                 virtualColumns: optional(
                     array(
                         oneOf([
@@ -1089,6 +1091,7 @@ export class Dhis2DataStoreDataForm {
                     totals: this.getSectionTotals(sectionConfig, constantsByCode),
                     toggleMultiple: this.getToggleMultipleConfig(sectionConfig),
                     indicators: sectionConfig.indicators,
+                    indicatorsPosition: sectionConfig.indicatorsPosition || "end",
                     fixedHeaders: sectionConfig.fixedHeaders || false,
                     fixedRowNames: sectionConfig.fixedRowNames || false,
                     enableTopScroll: sectionConfig.enableTopScroll || false,
