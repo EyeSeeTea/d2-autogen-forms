@@ -53,6 +53,15 @@ const GridForm: React.FC<GridFormProps> = props => {
     const mainContentStyles = fixColumns ? fixHeaderClasses.fixedHeaders : {};
     const firstColumnWidth = section.firstColumnConfig?.width || 800;
 
+    const NonDirectionalIndicators = grid.nonDirectionalIndicators.map(indicator => (
+        <RowIndicatorItem
+            key={`parent_${indicator.id}`}
+            indicator={indicator}
+            colSpan="2"
+            dataFormInfo={dataFormInfo}
+            periods={[grid.dataEntryPeriod?.id || dataFormInfo.period]}
+        />
+    ));
     return (
         <DataTableSection section={grid} sectionStyles={props.section.styles} dataFormInfo={dataFormInfo}>
             {section.enableTopScroll && (
@@ -144,16 +153,7 @@ const GridForm: React.FC<GridFormProps> = props => {
                     </TableHead>
 
                     <TableBody>
-                        {grid.indicatorsPosition === "start" &&
-                            grid.nonDirectionalIndicators.map(indicator => (
-                                <RowIndicatorItem
-                                    key={`parent_${indicator.id}`}
-                                    indicator={indicator}
-                                    colSpan="2"
-                                    dataFormInfo={dataFormInfo}
-                                    periods={[grid.dataEntryPeriod?.id || dataFormInfo.period]}
-                                />
-                            ))}
+                        {grid.indicatorsPosition === "start" && NonDirectionalIndicators}
 
                         {grid.rows.map((row, idx) => {
                             return (
@@ -260,16 +260,7 @@ const GridForm: React.FC<GridFormProps> = props => {
                             </DataTableRow>
                         ))}
 
-                        {grid.indicatorsPosition === "end" &&
-                            grid.nonDirectionalIndicators.map(indicator => (
-                                <RowIndicatorItem
-                                    key={`parent_${indicator.id}`}
-                                    indicator={indicator}
-                                    colSpan="2"
-                                    dataFormInfo={dataFormInfo}
-                                    periods={[grid.dataEntryPeriod?.id || dataFormInfo.period]}
-                                />
-                            ))}
+                        {grid.indicatorsPosition === "end" && NonDirectionalIndicators}
                     </TableBody>
                 </DataTable>
             </div>

@@ -98,6 +98,18 @@ const PeriodTable: React.FC<PeriodTableProps> = props => {
     const hasRowsWithSubGroups = grid.rows.some(row => row.type === "subGroup");
     const periodIds = grid.periods.map(period => period.id);
 
+    const Indicators = grid.indicators.map(indicator => {
+        return (
+            <RowIndicatorItem
+                key={`parent_${indicator.id}`}
+                indicator={indicator}
+                colSpan={hasRowsWithSubGroups ? "3" : "2"}
+                dataFormInfo={dataFormInfo}
+                periods={periodIds}
+            />
+        );
+    });
+
     return (
         <DataTable className={classes.table}>
             <TableHead>
@@ -119,18 +131,7 @@ const PeriodTable: React.FC<PeriodTableProps> = props => {
             </TableHead>
 
             <TableBody>
-                {grid.indicatorsPosition === "start" &&
-                    grid.indicators.map(indicator => {
-                        return (
-                            <RowIndicatorItem
-                                key={`parent_${indicator.id}`}
-                                indicator={indicator}
-                                colSpan={hasRowsWithSubGroups ? "3" : "2"}
-                                dataFormInfo={dataFormInfo}
-                                periods={periodIds}
-                            />
-                        );
-                    })}
+                {grid.indicatorsPosition === "start" && Indicators}
 
                 {grid.rows.map(row => {
                     switch (row.type) {
@@ -339,18 +340,7 @@ const PeriodTable: React.FC<PeriodTableProps> = props => {
                     </DataTableRow>
                 ))}
 
-                {grid.indicatorsPosition === "end" &&
-                    grid.indicators.map(indicator => {
-                        return (
-                            <RowIndicatorItem
-                                key={`parent_${indicator.id}`}
-                                indicator={indicator}
-                                colSpan={hasRowsWithSubGroups ? "3" : "2"}
-                                dataFormInfo={dataFormInfo}
-                                periods={periodIds}
-                            />
-                        );
-                    })}
+                {grid.indicatorsPosition === "end" && Indicators}
             </TableBody>
         </DataTable>
     );
