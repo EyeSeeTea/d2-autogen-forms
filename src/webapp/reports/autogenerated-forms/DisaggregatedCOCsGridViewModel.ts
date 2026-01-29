@@ -76,6 +76,9 @@ export class DisaggregatedCOCsGridViewModel {
                     return undefined;
                 }
 
+                const rowConfig = section.rowsConfig?.[rowName];
+                if (rowConfig?.hide) return undefined;
+
                 const items = section.dataElements
                     .filter(dataElement =>
                         dataElement.categoryOptionCombos.some(coc => getRowNameFromCoc(coc) === rowName)
@@ -129,7 +132,7 @@ export class DisaggregatedCOCsGridViewModel {
                     });
 
                 return {
-                    name: _(rowName).capitalize(),
+                    name: rowConfig?.rowName ?? _(rowName).capitalize(),
                     items: items,
                 };
             })

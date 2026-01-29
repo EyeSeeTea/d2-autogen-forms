@@ -108,6 +108,7 @@ interface BaseSectionConfig {
     enableTopScroll: boolean;
     columnsConfig?: GridColumnsConfig;
     disabled: boolean;
+    rowsConfig?: Maybe<Record<string, { cellsVisible?: boolean; rowNameConstant?: string; hide?: boolean }>>;
 }
 
 const dataElementsToExcludeCodec = Codec.interface({
@@ -186,7 +187,7 @@ type GridColumnsConfig = Record<string, { rules?: FromRulesFormulaCodec }>;
 interface GridCategoryColumnsConfig extends BaseSectionConfig {
     viewType: "grid-category-columns";
     categoriesColumns: CategoryColumnConfig[];
-    rowsConfig: Maybe<Record<string, { cellsVisible?: boolean; rowNameConstant?: string }>>;
+    rowsConfig: Maybe<Record<string, { cellsVisible?: boolean; rowNameConstant?: string; hide?: boolean }>>;
     singleCategoryInColumns: boolean;
     categoryOptionFilter: Maybe<CategoryOptionFilter>;
     dataElementsToExclude: Maybe<DataElementsToExclude[]>;
@@ -454,7 +455,11 @@ const DataStoreConfigCodec = Codec.interface({
                 rowsConfig: optional(
                     record(
                         string,
-                        Codec.interface({ cellsVisible: optional(boolean), rowNameConstant: optional(string) })
+                        Codec.interface({
+                            cellsVisible: optional(boolean),
+                            rowNameConstant: optional(string),
+                            hide: optional(boolean),
+                        })
                     )
                 ),
                 categoriesColumns: optional(array(Codec.interface({ dataElementCode: string, categoryCode: string }))),

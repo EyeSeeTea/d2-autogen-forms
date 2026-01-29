@@ -113,6 +113,7 @@ export interface SectionBase {
     fixedRowNames: boolean;
     hidden?: boolean;
     columnsConfig?: Record<string, { rules?: RulesFormula }>;
+    rowsConfig?: Maybe<RowConfig>;
 }
 
 export interface SectionSimple extends SectionBase {
@@ -188,7 +189,7 @@ export type TypeCategoryOptionFilterConfig = {
 };
 
 export type RowConfig = Record<string, RowConfigDetails>;
-export type RowConfigDetails = { cellsVisible: boolean; rowName: Maybe<string> };
+export type RowConfigDetails = { cellsVisible: boolean; rowName: Maybe<string>; hide?: boolean };
 
 export type CategoryColumnConfig = { dataElementCode: Code; categoryCode: Code };
 
