@@ -69,23 +69,25 @@ export class DisaggregatedCOCsGridViewModel {
     private static getGridRows(section: Section, columns: Column[], dataFormInfo: DataFormInfo): Row[] {
         const rows = _(section.dataElements)
             .flatMap(dataElement => dataElement.categoryOptionCombos)
-            .groupBy(coc => getRowNameFromCoc(coc))
-            .map((_group, rowName) => {
-                if (!rowName) {
+            .groupBy(coc => getRowCategoryOptionCodeFromCoc(coc))
+            .map((_group, rowCatOptionCode) => {
+                if (!rowCatOptionCode) {
                     console.warn("Skipping row with empty row name");
                     return undefined;
                 }
 
-                const rowConfig = section.rowsConfig?.[rowName];
+                const rowConfig = section.rowsConfig?.[rowCatOptionCode];
                 if (rowConfig?.hide) return undefined;
 
                 const items = section.dataElements
                     .filter(dataElement =>
-                        dataElement.categoryOptionCombos.some(coc => getRowNameFromCoc(coc) === rowName)
+                        dataElement.categoryOptionCombos.some(
+                            coc => getRowCategoryOptionCodeFromCoc(coc) === rowCatOptionCode
+                        )
                     )
                     .map(dataElement => {
                         const rowItems = _(dataElement.categoryOptionCombos)
-                            .filter(item => getRowNameFromCoc(item) === rowName)
+                            .filter(item => getRowCategoryOptionCodeFromCoc(item) === rowCatOptionCode)
                             .map(coc => {
                                 const columnName =
                                     columns
@@ -116,11 +118,11 @@ export class DisaggregatedCOCsGridViewModel {
                             categoryCombos: {
                                 ...dataElement.categoryCombos,
                                 categoryOptionCombos: dataElement.categoryCombos.categoryOptionCombos.filter(
-                                    coc => getRowNameFromCoc(coc) === rowName
+                                    coc => getRowCategoryOptionCodeFromCoc(coc) === rowCatOptionCode
                                 ),
                             },
                             categoryOptionCombos: dataElement.categoryOptionCombos.filter(
-                                coc => getRowNameFromCoc(coc) === rowName
+                                coc => getRowCategoryOptionCodeFromCoc(coc) === rowCatOptionCode
                             ),
                         };
 
@@ -131,8 +133,12 @@ export class DisaggregatedCOCsGridViewModel {
                         };
                     });
 
+                const catOptionFormName = getCocFormNameFromCombos(
+                    items.flatMap(i => i.rowItems.flatMap(ri => ri.categoryOptionCombos)),
+                    rowCatOptionCode
+                );
                 return {
-                    name: rowConfig?.rowName ?? _(rowName).capitalize(),
+                    name: rowConfig?.rowName ?? _(catOptionFormName).capitalize(),
                     items: items,
                 };
             })
@@ -291,14 +297,18 @@ function getColumnNameFromCoc(categoryOptionCombo: CategoryOptionCombo): Maybe<s
     return getCocFormName(categoryOptionCombo, cocName);
 }
 
-function getRowNameFromCoc(categoryOptionCombo: CategoryOptionCombo): Maybe<string> {
-    const cocName = categoryOptionCombo.name.split(separator)[1];
-    return getCocFormName(categoryOptionCombo, cocName);
+function getRowCategoryOptionCodeFromCoc(categoryOptionCombo: CategoryOptionCombo): Maybe<string> {
+    return categoryOptionCombo.name.split(separator)[1];
+}
+
+function getCocFormNameFromCombos(categoryOptionCombos: CategoryOptionCombo[], optionCode: string): string {
+    const coc = categoryOptionCombos.find(coc => getRowCategoryOptionCodeFromCoc(coc) === optionCode);
+    if (!coc) return optionCode;
+    return getCocFormName(coc, optionCode) || optionCode;
 }
 
 function getCocFormName(categoryOptionCombo: CategoryOptionCombo, cocName: Maybe<string>): Maybe<string> {
     const cocFormName = categoryOptionCombo.categoryOptions.find(co => cocName?.includes(co.name))?.displayFormName;
-
     return cocFormName || cocName;
 }
 
