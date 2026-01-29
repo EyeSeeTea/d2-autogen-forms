@@ -1159,6 +1159,10 @@ export class Dhis2DataStoreDataForm {
                         };
                         return [section.id, config] as [typeof section.id, typeof config];
                     }
+                    case "grid-disaggregated-cocs": {
+                        const config = { ...baseConfig, viewType, rowsConfig: sectionConfig.rowsConfig };
+                        return [section.id, config] as [typeof section.id, typeof config];
+                    }
                     default: {
                         const config = { ...baseConfig, viewType };
                         return [section.id, config] as [typeof section.id, typeof config];
