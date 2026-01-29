@@ -10,6 +10,7 @@ import { getIndexedLabel } from "./DataTableSection";
 import { Period } from "../../../domain/common/entities/Period";
 import { isToggleMultipleDeDisabled } from "../../../domain/common/entities/ToggleMultiple";
 import { getIndexedIndicator } from "./indicatorIndexing";
+import { calculateFormula } from "./datatables/InputFormula";
 
 export interface Grid {
     id: string;
@@ -37,6 +38,7 @@ interface Column {
     name: string;
     dataElements: DataElement[];
     description?: string;
+    isVisible: boolean;
 }
 
 type Row = {
@@ -179,14 +181,17 @@ export class GridWithCatOptionCombosViewModel {
                 .flatMap(({ rows }) => subsection.dataElements.filter(de => rows.some(row => row.name === de.name)))
                 .map(de => ({ ...de, disabled: isToggleMultipleDeDisabled(section, de, orgUnitCode) }));
 
-            return {
+            const column: Column = {
                 name: subsection.name,
                 dataElements: columnDataElements,
                 description: columnDescription,
+                isVisible: true,
             };
+            return GridWithCatOptionCombosViewModel.applyColumnVisibility(section, column, dataFormInfo, subsection);
         });
 
-        return _.orderBy(subsectionColumns, [section.sortRowsBy ? section.sortRowsBy : ""]);
+        const visibleColumns = subsectionColumns.filter(column => column.isVisible);
+        return _.orderBy(visibleColumns, [section.sortRowsBy ? section.sortRowsBy : ""]);
     }
 
     private static getSummary(section: SectionWithPeriods, columns: Column[], dataFormInfo: DataFormInfo): Summary[] {
@@ -241,6 +246,58 @@ export class GridWithCatOptionCombosViewModel {
             })
             .value();
     }
+
+    /**
+     * Returns the column with the visible property applied based on the section's columnsConfig.
+     * columnConfig key can be either "dataElementCode||categoryOptionCode" or "categoryOptionCode".
+     */
+    private static applyColumnVisibility(
+        section: SectionWithPeriods,
+        column: Column,
+        dataFormInfo: DataFormInfo,
+        subsection: SubSectionGrid
+    ): Column {
+        if (!section.columnsConfig) return column;
+
+        const applyVisibilityRule = (configKey: string): Maybe<Column> => {
+            const visibleRule = section.columnsConfig?.[configKey]?.rules?.visible;
+            if (!visibleRule) return undefined;
+
+            const dataElementCodesForFormula = _(visibleRule.dataElements)
+                .map(de => de.code)
+                .compact()
+                .value();
+
+            const value = calculateFormula({
+                dataElementCodes: dataElementCodesForFormula,
+                dataFormInfo,
+                formula: visibleRule.formula.value ?? "",
+                period: dataFormInfo.period,
+            });
+
+            const isVisible = value === visibleRule.formula.condition;
+            return { ...column, isVisible };
+        };
+
+        const categoryOptionCode = subsection.code || "";
+        const columnWithCatOptionVisibility = applyVisibilityRule(categoryOptionCode);
+        if (columnWithCatOptionVisibility) return columnWithCatOptionVisibility;
+
+        const dataElementConfigKeys = subsection.dataElements
+            .map(de => `${de.code}${COLUMNS_CONFIG_SEPARATOR}${categoryOptionCode}`)
+            .filter(key => key in (section.columnsConfig || {}));
+
+        const isVisibleForAllRows = dataElementConfigKeys.every(configKey => {
+            const columnWithDeVisibility = applyVisibilityRule(configKey);
+            return columnWithDeVisibility ? columnWithDeVisibility.isVisible : true;
+        });
+
+        if (!isVisibleForAllRows) {
+            return { ...column, isVisible: false };
+        }
+
+        return column;
+    }
 }
 
 export type Summary = { cells: CellTotal[]; cellName: string };
@@ -259,11 +316,7 @@ function getDataElementLabel(
     return getIndexedLabel(section, dataFormInfo, deName, deIndex);
 }
 
-function getDataElementHtmlText(
-    dataElement: DataElement,
-    section: SectionWithPeriods,
-    dataFormInfo: DataFormInfo
-) {
+function getDataElementHtmlText(dataElement: DataElement, section: SectionWithPeriods, dataFormInfo: DataFormInfo) {
     if (!dataElement.htmlText) return undefined;
     return getDataElementLabel(dataElement, section, dataFormInfo, dataElement.htmlText);
 }
@@ -286,3 +339,5 @@ export function getFilteredIndicators(
             : undefined
     );
 }
+
+const COLUMNS_CONFIG_SEPARATOR = "||";
