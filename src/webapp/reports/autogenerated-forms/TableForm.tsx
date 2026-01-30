@@ -72,7 +72,7 @@ const TableForm: React.FC<TableFormProps> = React.memo(props => {
                                 {dataElement.indicator && checkIndicatorDirection(dataElement.indicator, "before") && (
                                     <RowIndicatorItem
                                         indicator={dataElement.indicator}
-                                        colSpan="0"
+                                        colSpan={section.dataEntryPeriod ? "2" : "1"}
                                         dataFormInfo={dataFormInfo}
                                         periods={[section.dataEntryPeriod?.id || dataFormInfo.period]}
                                     />
@@ -109,7 +109,7 @@ const TableForm: React.FC<TableFormProps> = React.memo(props => {
                                 {dataElement.indicator && checkIndicatorDirection(dataElement.indicator, "after") && (
                                     <RowIndicatorItem
                                         indicator={dataElement.indicator}
-                                        colSpan="0"
+                                        colSpan={section.dataEntryPeriod ? "2" : "1"}
                                         dataFormInfo={dataFormInfo}
                                         periods={[section.dataEntryPeriod?.id || dataFormInfo.period]}
                                     />
@@ -145,7 +145,7 @@ const TableForm: React.FC<TableFormProps> = React.memo(props => {
                             <RowIndicatorItem
                                 key={`parent_${indicator.id}`}
                                 indicator={indicator}
-                                colSpan="0"
+                                colSpan={section.dataEntryPeriod ? "2" : "1"}
                                 dataFormInfo={dataFormInfo}
                                 periods={[section.dataEntryPeriod?.id || dataFormInfo.period]}
                             />

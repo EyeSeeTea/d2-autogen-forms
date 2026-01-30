@@ -204,7 +204,7 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                         <RowIndicatorItem
                             key={`parent_${indicator.id}`}
                             indicator={indicator}
-                            colSpan="2"
+                            colSpan={grid.periods.length > 0 ? "3" : "2"}
                             dataFormInfo={dataFormInfo}
                             periods={[dataFormInfo.period]}
                         />
