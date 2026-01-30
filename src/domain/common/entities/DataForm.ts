@@ -35,6 +35,7 @@ export interface DataForm {
     periodType: PeriodType;
     rules: Maybe<DataFormRule[]>;
     removePrefix: Maybe<string>;
+    customCss: Maybe<string>;
 }
 
 export type Texts = {
