@@ -15,6 +15,7 @@ import { getDescription } from "../../../utils/viewTypes";
 import {
     checkIndicatorDirection,
     getIndicatorRelatedToDataElement,
+    getNonDirectionalIndicatorsCountAtSectionStart,
     Indicator,
     IndicatorDirection,
     isNonDirectionalIndicator,
@@ -308,11 +309,7 @@ export class GridViewModel {
             const groupMeta = lastPartSubSection && groupsByRow ? groupsByRow[lastPartSubSection] : undefined;
             const rowName = groupsByRow ? lastPartSubSection ?? "" : subsection.name;
 
-            const nonDirectionalIndicatorsCount =
-                section.indicatorsPosition === "start"
-                    ? section.indicators.filter(indicator => isNonDirectionalIndicator(indicator)).length
-                    : 0;
-            const rowIndex = index + 1 + nonDirectionalIndicatorsCount;
+            const rowIndex = index + 1 + getNonDirectionalIndicatorsCountAtSectionStart(section);
 
             return {
                 includePadding: 0,
@@ -566,11 +563,12 @@ export function getDataElementLabel(
     name: string
 ): string {
     const deIndex = section.dataElements.findIndex(de => dataElement.id === de.id) + 1;
-    const nonDirectionalIndicatorsCount =
-        section.indicatorsPosition === "start"
-            ? section.indicators.filter(indicator => isNonDirectionalIndicator(indicator)).length
-            : 0;
-    return getIndexedLabel(section, dataFormInfo, name, deIndex + nonDirectionalIndicatorsCount);
+    return getIndexedLabel(
+        section,
+        dataFormInfo,
+        name,
+        deIndex + getNonDirectionalIndicatorsCountAtSectionStart(section)
+    );
 }
 
 /** Move the data element index to the row name, so indexed data elements are automatically grouped 
