@@ -63,8 +63,9 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
         indicator => !checkIndicatorDirection(indicator, "before") && !checkIndicatorDirection(indicator, "after")
     );
 
-    const totalsPeriod = grid.periods.length === 1 ? grid.periods[0]?.id : undefined;
-    const totalsPeriodLabel = grid.periods.length === 1 ? grid.periods[0]?.label : "";
+    // If there is only one period, we use it for the summary, otherwise use current period
+    const summaryPeriod = grid.periods.length === 1 ? grid.periods[0]?.id : undefined;
+    const summaryPeriodLabel = grid.periods.length === 1 ? grid.periods[0]?.label : "";
 
     return (
         <DataTableSection section={grid} dataFormInfo={dataFormInfo} sectionStyles={section.styles}>
@@ -240,7 +241,7 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                                     backgroundColor={section.styles.totals.backgroundColor}
                                     key="total-period-placeholder"
                                 >
-                                    {totalsPeriodLabel}
+                                    {summaryPeriodLabel}
                                 </CustomDataTableCell>
                             )}
                             {summary.cells.map(itemTotal => {
@@ -251,7 +252,7 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                                         styles={section.styles}
                                         total={itemTotal}
                                         formula={itemTotal.formula}
-                                        period={totalsPeriod}
+                                        period={summaryPeriod}
                                     />
                                 );
                             })}
@@ -260,7 +261,7 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                                     dataFormInfo={dataFormInfo}
                                     styles={section.styles}
                                     dataElements={summary.cells}
-                                    period={totalsPeriod}
+                                    period={summaryPeriod}
                                 />
                             )}
                         </DataTableRow>
