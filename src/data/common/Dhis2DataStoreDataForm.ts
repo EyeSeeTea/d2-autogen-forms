@@ -38,6 +38,7 @@ export interface DataSetConfig {
     texts: Texts;
     sections: Record<Id, SectionConfig>;
     rules: Maybe<DataFormRule[]>;
+    customCss: Maybe<string>;
 }
 
 export type SectionConfig =
@@ -443,6 +444,7 @@ const DataStoreConfigCodec = Codec.interface({
         removePrefix: optional(string),
         viewType: optional(viewType),
         texts: optional(textsCodec),
+        customCss: optional(string),
         showIndex: optional(boolean),
         rules: optional(array(dataSetRuleCodec)),
         sections: optional(
@@ -1175,6 +1177,7 @@ export class Dhis2DataStoreDataForm {
             removePrefix: removePrefix,
             sections: sections,
             rules: this.getDataFormRules(dataSetConfig?.rules),
+            customCss: dataSetConfig?.customCss,
         };
     }
 
