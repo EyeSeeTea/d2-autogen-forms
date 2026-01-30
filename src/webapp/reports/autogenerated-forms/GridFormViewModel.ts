@@ -50,7 +50,7 @@ export type Grid = GridComponents & {
     hasIndicatorsBefore: boolean;
     hasIndicatorsAfter: boolean;
     nonDirectionalIndicators: Indicator[];
-    indicatorsPosition: "start" | "end";
+    indicatorsPosition: Section["indicatorsPosition"];
 };
 
 type GridComponents = {

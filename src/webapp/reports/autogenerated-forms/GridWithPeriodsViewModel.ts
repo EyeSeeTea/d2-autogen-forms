@@ -34,7 +34,7 @@ export interface GridWithPeriodsI {
     periodTabs: PeriodTab[];
     summary: Summary[];
     indicators: Indicator[];
-    indicatorsPosition: "start" | "end";
+    indicatorsPosition: Section["indicatorsPosition"];
     lockException: boolean;
     hidden: boolean;
 }

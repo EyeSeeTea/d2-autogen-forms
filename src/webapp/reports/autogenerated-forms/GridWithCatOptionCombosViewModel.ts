@@ -34,7 +34,7 @@ export interface Grid {
     hasIndicatorsBefore: boolean;
     hasIndicatorsAfter: boolean;
     nonDirectionalIndicators: Indicator[];
-    indicatorsPosition: "start" | "end";
+    indicatorsPosition: Section["indicatorsPosition"];
 }
 
 interface SubSectionGrid {
