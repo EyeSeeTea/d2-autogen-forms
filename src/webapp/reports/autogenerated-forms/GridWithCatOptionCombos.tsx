@@ -63,6 +63,9 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
         indicator => !checkIndicatorDirection(indicator, "before") && !checkIndicatorDirection(indicator, "after")
     );
 
+    const totalsPeriod = grid.periods.length === 1 ? grid.periods[0]?.id : undefined;
+    const totalsPeriodLabel = grid.periods.length === 1 ? grid.periods[0]?.label : "";
+
     return (
         <DataTableSection section={grid} dataFormInfo={dataFormInfo} sectionStyles={section.styles}>
             <DataTable className={classes.table} layout="fixed" width="initial">
@@ -206,6 +209,7 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                                         dataFormInfo={dataFormInfo}
                                         styles={section.styles}
                                         dataElement={row.dataElement}
+                                        period={row.period?.id}
                                     />
                                 )}
                             </DataTableRow>
@@ -231,6 +235,14 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                             >
                                 <Html content={summary.cellName} />
                             </CustomDataTableCell>
+                            {grid.periods.length > 0 && (
+                                <CustomDataTableCell
+                                    backgroundColor={section.styles.totals.backgroundColor}
+                                    key="total-period-placeholder"
+                                >
+                                    {totalsPeriodLabel}
+                                </CustomDataTableCell>
+                            )}
                             {summary.cells.map(itemTotal => {
                                 return (
                                     <DataTableCellFormula
@@ -239,6 +251,7 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                                         styles={section.styles}
                                         total={itemTotal}
                                         formula={itemTotal.formula}
+                                        period={totalsPeriod}
                                     />
                                 );
                             })}
@@ -247,6 +260,7 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                                     dataFormInfo={dataFormInfo}
                                     styles={section.styles}
                                     dataElements={summary.cells}
+                                    period={totalsPeriod}
                                 />
                             )}
                         </DataTableRow>
