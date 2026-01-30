@@ -16,7 +16,7 @@ type MultipleConditionRule = {
 
 export const STATE_CONDITIONS = {
     disabled: "disabled",
-};
+} as const;
 type StateConditionRule = {
     type: "state";
     condition: typeof STATE_CONDITIONS[keyof typeof STATE_CONDITIONS];

@@ -557,7 +557,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
         configDataForm: Dhis2DataStoreDataForm
     ): Record<string, DeleteRule[]> {
         return _(dataElements)
-            .map(dataElement => {
+            .map<Maybe<[string, DeleteRule[]]>>(dataElement => {
                 const dataElementConfig = configDataForm.dataElementsConfig[dataElement.code];
                 if (!dataElementConfig) return undefined;
 
