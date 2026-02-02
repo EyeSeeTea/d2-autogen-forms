@@ -34,6 +34,17 @@ const TableForm: React.FC<TableFormProps> = React.memo(props => {
     );
     const classes = useStyles();
 
+    const Indicators = section.indicators.map(indicator => {
+        return (
+            <RowIndicatorItem
+                key={`parent_${indicator.id}`}
+                indicator={indicator}
+                colSpan="0"
+                dataFormInfo={dataFormInfo}
+                periods={[section.dataEntryPeriod?.id || dataFormInfo.period]}
+            />
+        );
+    });
     return (
         <DataTableSection section={section} sectionStyles={props.section.styles} dataFormInfo={dataFormInfo}>
             <DataTable>
@@ -66,6 +77,8 @@ const TableForm: React.FC<TableFormProps> = React.memo(props => {
                 </TableHead>
 
                 <TableBody>
+                    {section.indicatorsPosition === "start" && Indicators}
+
                     {section.dataElements.map(dataElement => {
                         return (
                             <React.Fragment key={dataElement.id}>
@@ -140,17 +153,7 @@ const TableForm: React.FC<TableFormProps> = React.memo(props => {
                         </DataTableRow>
                     ))}
 
-                    {section.indicators.map(indicator => {
-                        return (
-                            <RowIndicatorItem
-                                key={`parent_${indicator.id}`}
-                                indicator={indicator}
-                                colSpan={section.dataEntryPeriod ? "2" : "1"}
-                                dataFormInfo={dataFormInfo}
-                                periods={[section.dataEntryPeriod?.id || dataFormInfo.period]}
-                            />
-                        );
-                    })}
+                    {section.indicatorsPosition === "end" && Indicators}
                 </TableBody>
             </DataTable>
         </DataTableSection>

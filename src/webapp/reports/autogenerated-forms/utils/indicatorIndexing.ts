@@ -9,6 +9,9 @@ export function getIndexedIndicator(
     indicator: Indicator,
     indicatorIndex?: number
 ): Indicator {
+    if (!section.showIndex) {
+        return indicator;
+    }
     const dataElementIndex = indicator.dataElement
         ? section.dataElements.findIndex(de => de.code === indicator.dataElement?.code)
         : -1;
