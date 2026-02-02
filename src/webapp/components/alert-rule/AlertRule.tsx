@@ -28,6 +28,7 @@ export const AlertContent = styled.div`
     background-color: #d1ecf1;
     gap: 1em;
     padding: 1em;
+    z-index: 1;
 
     p {
         margin: 0;
