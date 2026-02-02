@@ -42,6 +42,7 @@ export interface DataSetConfig {
 
 export type SectionConfig =
     | BasicSectionConfig
+    | DisaggregatedCocsSectionConfig
     | GridSectionConfig
     | GridWithPeriodsSectionConfig
     | GridWithTotalsSectionConfig
@@ -108,7 +109,6 @@ interface BaseSectionConfig {
     enableTopScroll: boolean;
     columnsConfig?: GridColumnsConfig;
     disabled: boolean;
-    rowsConfig?: Maybe<Record<string, { cellsVisible?: boolean; rowNameConstant?: string; hide?: boolean }>>;
 }
 
 const dataElementsToExcludeCodec = Codec.interface({
@@ -121,8 +121,13 @@ const dataElementsToExcludeCodec = Codec.interface({
 });
 
 interface BasicSectionConfig extends BaseSectionConfig {
-    viewType: "grid-with-combos" | "matrix-grid" | "grid-disaggregated-cocs";
+    viewType: "grid-with-combos" | "matrix-grid";
     columnsConfig?: Record<string, { rules?: FromRulesFormulaCodec }>;
+}
+
+interface DisaggregatedCocsSectionConfig extends BaseSectionConfig {
+    viewType: "grid-disaggregated-cocs";
+    rowsConfig: Maybe<RowsConfig>;
 }
 
 interface GridSectionConfig extends BaseSectionConfig {
@@ -184,10 +189,12 @@ export type GridIndicatorsCalculatedRow = {
 
 type GridColumnsConfig = Record<string, { rules?: FromRulesFormulaCodec }>;
 
+type RowsConfig = Record<string, { cellsVisible?: boolean; rowNameConstant?: string; hide?: boolean }>;
+
 interface GridCategoryColumnsConfig extends BaseSectionConfig {
     viewType: "grid-category-columns";
     categoriesColumns: CategoryColumnConfig[];
-    rowsConfig: Maybe<Record<string, { cellsVisible?: boolean; rowNameConstant?: string; hide?: boolean }>>;
+    rowsConfig: Maybe<RowsConfig>;
     singleCategoryInColumns: boolean;
     categoryOptionFilter: Maybe<CategoryOptionFilter>;
     dataElementsToExclude: Maybe<DataElementsToExclude[]>;
