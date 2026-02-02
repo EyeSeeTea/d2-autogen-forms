@@ -9,7 +9,7 @@ import { checkIndicatorDirection, Indicator, IndicatorDirection } from "../../..
 import { getIndexedLabel } from "./DataTableSection";
 import { Period } from "../../../domain/common/entities/Period";
 import { isToggleMultipleDeDisabled } from "../../../domain/common/entities/ToggleMultiple";
-import { getIndexedIndicator } from "./indicatorIndexing";
+import { getIndexedIndicator } from "./utils/indicatorIndexing";
 
 export interface Grid {
     id: string;
@@ -259,11 +259,7 @@ function getDataElementLabel(
     return getIndexedLabel(section, dataFormInfo, deName, deIndex);
 }
 
-function getDataElementHtmlText(
-    dataElement: DataElement,
-    section: SectionWithPeriods,
-    dataFormInfo: DataFormInfo
-) {
+function getDataElementHtmlText(dataElement: DataElement, section: SectionWithPeriods, dataFormInfo: DataFormInfo) {
     if (!dataElement.htmlText) return undefined;
     return getDataElementLabel(dataElement, section, dataFormInfo, dataElement.htmlText);
 }

@@ -23,7 +23,7 @@ import { calculateFormula } from "./datatables/InputFormula";
 import { getIndexedLabel } from "./DataTableSection";
 import { Period } from "../../../domain/common/entities/Period";
 import { isToggleMultipleDeDisabled } from "../../../domain/common/entities/ToggleMultiple";
-import { getIndexedIndicator } from "./indicatorIndexing";
+import { getIndexedIndicator } from "./utils/indicatorIndexing";
 
 export type Grid = GridComponents & {
     dataElements: Array<DataElement & { indicator: Maybe<Indicator> }>;

@@ -15,7 +15,7 @@ import { GridViewModel } from "./GridFormViewModel";
 import { getIndexedLabel } from "./DataTableSection";
 import { Period, PeriodType } from "../../../domain/common/entities/Period";
 import { isToggleMultipleDeDisabled } from "../../../domain/common/entities/ToggleMultiple";
-import { getIndexedIndicator } from "./indicatorIndexing";
+import { getIndexedIndicator } from "./utils/indicatorIndexing";
 
 export interface GridWithPeriodsI {
     id: string;
@@ -109,7 +109,9 @@ export class GridWithPeriodsViewModel {
                     const firstDataElement = dataElementsForGroup[0];
                     const code = firstDataElement.code;
                     const indicatorBase = getIndicatorRelatedToDataElement(section.indicators, code);
-                    const indicator = indicatorBase ? getIndexedIndicator(section, dataFormInfo, indicatorBase) : undefined;
+                    const indicator = indicatorBase
+                        ? getIndexedIndicator(section, dataFormInfo, indicatorBase)
+                        : undefined;
                     const orgUnitCode = dataFormInfo.orgUnit.code;
                     return {
                         type: firstDataElement.type === "FILE" ? "dataElementFile" : "dataElement",
@@ -148,7 +150,10 @@ export class GridWithPeriodsViewModel {
                             const hasSubGroup = isRowSubGroup(dataElement);
                             const subGroup = uniqueSubGroups.find(subGroup => subGroup.position === index);
 
-                            const indicatorBase = getIndicatorRelatedToDataElement(section.indicators, dataElement.code);
+                            const indicatorBase = getIndicatorRelatedToDataElement(
+                                section.indicators,
+                                dataElement.code
+                            );
                             const indicator = indicatorBase
                                 ? getIndexedIndicator(section, dataFormInfo, indicatorBase)
                                 : undefined;
@@ -299,11 +304,7 @@ function getDataElementLabel(
     return getIndexedLabel(section, dataFormInfo, deName, deIndex);
 }
 
-function getDataElementHtmlText(
-    dataElement: DataElement,
-    section: SectionWithPeriods,
-    dataFormInfo: DataFormInfo
-) {
+function getDataElementHtmlText(dataElement: DataElement, section: SectionWithPeriods, dataFormInfo: DataFormInfo) {
     if (!dataElement.htmlText) return undefined;
     return getDataElementLabel(dataElement, section, dataFormInfo, dataElement.htmlText);
 }
