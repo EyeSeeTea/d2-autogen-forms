@@ -26,6 +26,7 @@ import { Dhis2DataElement } from "./Dhis2DataElement";
 import {
     DataElementConfig,
     DataSetConfig,
+    DEFAULT_INDICATORS_POSITION,
     Dhis2DataStoreDataForm,
     IndicatorConfig,
     SectionConfig,
@@ -173,6 +174,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                     toggleMultiple: config?.toggleMultiple
                         ? buildToggleMultiple(config.toggleMultiple, section, dataElements)
                         : undefined,
+                    indicatorsPosition: config?.indicatorsPosition || DEFAULT_INDICATORS_POSITION,
                     fixedHeaders: config?.fixedHeaders || false,
                     enableTopScroll: config?.enableTopScroll || false,
                     fixedRowNames: config?.fixedRowNames || false,
@@ -185,6 +187,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                         calculateTotals: undefined,
                         periods: [],
                         ...base,
+                        indicatorsPosition: DEFAULT_INDICATORS_POSITION,
                         fixedHeaders: false,
                         columnsOrder: undefined,
                         enableGroups: false,

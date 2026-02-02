@@ -9,15 +9,14 @@ export function getIndexedIndicator(
     indicator: Indicator,
     indicatorIndex?: number
 ): Indicator {
+    if (!section.showIndex) {
+        return indicator;
+    }
     const dataElementIndex = indicator.dataElement
         ? section.dataElements.findIndex(de => de.code === indicator.dataElement?.code)
         : -1;
     const indexedPosition =
-        typeof indicatorIndex === "number"
-            ? indicatorIndex
-            : dataElementIndex >= 0
-            ? dataElementIndex + 1
-            : undefined;
+        typeof indicatorIndex === "number" ? indicatorIndex : dataElementIndex >= 0 ? dataElementIndex + 1 : undefined;
 
     return {
         ...indicator,
