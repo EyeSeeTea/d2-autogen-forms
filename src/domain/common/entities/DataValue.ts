@@ -117,7 +117,7 @@ export class DataValueStore {
 
     static from(dataValues: DataValue[]): DataValueStore {
         const store = _.keyBy(dataValues, dv =>
-            getStoreKey({
+            this.getKey({
                 dataElementId: dv.dataElement.id,
                 period: dv.period,
                 categoryOptionComboId: dv.categoryOptionComboId,
@@ -128,7 +128,7 @@ export class DataValueStore {
     }
 
     set(dataValue: DataValue): DataValueStore {
-        const key = getStoreKey({
+        const key = DataValueStore.getKey({
             dataElementId: dataValue.dataElement.id,
             period: dataValue.period,
             categoryOptionComboId: dataValue.categoryOptionComboId,
@@ -138,7 +138,7 @@ export class DataValueStore {
     }
 
     get(dataElement: DataElement, base: DataValueBase): Maybe<DataValue> {
-        const key = getStoreKey({
+        const key = DataValueStore.getKey({
             dataElementId: dataElement.id,
             period: base.period,
             categoryOptionComboId: dataElement.cocId ?? base.categoryOptionComboId,
@@ -151,9 +151,32 @@ export class DataValueStore {
     getOrEmpty(dataElement: DataElement, base: DataValueBase): DataValue {
         return this.get(dataElement, base) || getEmpty(dataElement, base);
     }
+
+    merge(dataValues: DataValue[]): DataValueStore {
+        const store = _.keyBy(dataValues, dv =>
+            DataValueStore.getKey({
+                dataElementId: dv.dataElement.id,
+                period: dv.period,
+                categoryOptionComboId: dv.categoryOptionComboId,
+                orgUnit: dv.orgUnitId,
+            })
+        );
+        return new DataValueStore({ ...this.store, ...store });
+    }
+
+    static getKey(options: {
+        dataElementId: Id;
+        period: Period;
+        categoryOptionComboId: Id;
+        orgUnit: Id;
+    }): DataValueSelector {
+        return _([options.dataElementId, options.period, options.categoryOptionComboId, options.orgUnit])
+            .compact()
+            .join(".");
+    }
 }
 
-function getEmpty(dataElement: DataElement, base: DataValueBase): DataValue {
+export function getEmpty(dataElement: DataElement, base: DataValueBase): DataValue {
     const { type } = dataElement;
 
     switch (type) {
@@ -179,17 +202,6 @@ function getEmpty(dataElement: DataElement, base: DataValueBase): DataValue {
         default:
             assertUnreachable(type);
     }
-}
-
-function getStoreKey(options: {
-    dataElementId: Id;
-    period: Period;
-    categoryOptionComboId: Id;
-    orgUnit: Id;
-}): DataValueSelector {
-    return _([options.dataElementId, options.period, options.categoryOptionComboId, options.orgUnit])
-        .compact()
-        .join(".");
 }
 
 export const MULTI_TEXT_SEPARATOR = ",";

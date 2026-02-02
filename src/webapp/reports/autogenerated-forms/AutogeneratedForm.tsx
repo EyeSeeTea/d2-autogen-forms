@@ -291,18 +291,10 @@ function useDataFormInfo() {
             if (!dataValues) return dataValues;
             await compositionRoot.dataForms
                 .saveValue(dataValues, dataValue, dataForm?.compulsoryDataValues ?? [])
-                .then(newStore => {
+                .then(savedValue => {
                     setDataValues(prev => {
-                        if (!prev) return undefined;
-                        return {
-                            get: newStore.get,
-                            set: newStore.set,
-                            getOrEmpty: newStore.getOrEmpty,
-                            store: {
-                                ...prev.store,
-                                ...newStore.store,
-                            },
-                        };
+                        if (!prev) return prev;
+                        return prev.set(savedValue);
                     });
                 });
             checkValidationRules(dataValue);
@@ -310,23 +302,30 @@ function useDataFormInfo() {
         [compositionRoot, dataValues, dataForm?.compulsoryDataValues, checkValidationRules]
     );
 
+    const deleteDataValues = useCallback<DataFormInfo["data"]["delete"]>(
+        async (dataValuesToDelete: DataValue[]) => {
+            if (!dataValues) return dataValues;
+            await compositionRoot.dataForms.deleteValues(dataValuesToDelete).then(savedDataValues => {
+                setDataValues(prev => {
+                    if (!prev) return undefined;
+                    return prev.merge(savedDataValues);
+                });
+            });
+        },
+        [compositionRoot, dataValues]
+    );
+
     const SourceTypeApplyToAll = useCallback<DataFormInfo["data"]["stApplyToAll"]>(
         async (dataValue: DataValueTextMultiple, sourceTypeDEs: DataElementRefType[], rows: Row[]) => {
             if (!dataValues) return undefined;
-            return compositionRoot.dataForms.applyToAll(dataValues, dataValue, sourceTypeDEs, rows).then(newStore => {
-                setDataValues(prev => {
-                    if (!prev) return undefined;
-                    return {
-                        get: newStore.get,
-                        set: newStore.set,
-                        getOrEmpty: newStore.getOrEmpty,
-                        store: {
-                            ...prev.store,
-                            ...newStore.store,
-                        },
-                    };
+            return compositionRoot.dataForms
+                .applyToAll(dataValues, dataValue, sourceTypeDEs, rows)
+                .then(savedDataValues => {
+                    setDataValues(prev => {
+                        if (!prev) return undefined;
+                        return prev.merge(savedDataValues);
+                    });
                 });
-            });
         },
         [compositionRoot, dataValues]
     );
@@ -341,18 +340,10 @@ function useDataFormInfo() {
             if (!dataValues) return dataValues;
             return compositionRoot.dataForms
                 .saveWithTotals(dataValues, dataValue, columnTotal, columnDataElements, cocId)
-                .then(newStore => {
+                .then(saveDataValues => {
                     setDataValues(prev => {
                         if (!prev) return undefined;
-                        return {
-                            get: newStore.get,
-                            set: newStore.set,
-                            getOrEmpty: newStore.getOrEmpty,
-                            store: {
-                                ...prev.store,
-                                ...newStore.store,
-                            },
-                        };
+                        return prev.merge(saveDataValues);
                     });
                 })
                 .then(() => {
@@ -369,6 +360,7 @@ function useDataFormInfo() {
                   data: {
                       values: dataValues,
                       save: saveDataValue,
+                      delete: deleteDataValues,
                       stApplyToAll: SourceTypeApplyToAll,
                       saveWithTotals: saveWithTotals,
                   },
@@ -395,6 +387,7 @@ export interface DataFormInfo {
     data: {
         values: DataValueStore;
         save: (dataValue: DataValue) => Promise<void>;
+        delete: (dataValues: DataValue[]) => Promise<void>;
         stApplyToAll: (
             dataValue: DataValueTextMultiple,
             sourceTypeDEs: DataElementRefType[],

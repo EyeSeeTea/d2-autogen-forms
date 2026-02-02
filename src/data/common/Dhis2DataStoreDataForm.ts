@@ -18,7 +18,12 @@ import {
 } from "../../domain/common/entities/DataForm";
 import { titleVariant } from "../../domain/common/entities/TitleVariant";
 import { SectionStyle, SectionStyleAttrs } from "../../domain/common/entities/SectionStyle";
-import { DataElementRuleOptions, SectionRuleOptions } from "../../domain/common/entities/DataElementRule";
+import {
+    ConditionRule,
+    RuleType,
+    SectionRuleOptions,
+    TotalDataElementRuleOptions,
+} from "../../domain/common/entities/DataElementRule";
 import {
     ToggleLogicalOperator,
     ToggleMultiple,
@@ -51,7 +56,7 @@ export type TotalsRule = (
       }
     | {
           type: "dataElements";
-          rules?: DataElementRuleOptions;
+          rules?: TotalDataElementRuleOptions;
       }
 ) & { formula: string };
 
@@ -253,16 +258,25 @@ const multipleConditionDERuleCodec = Codec.interface({
     type: exactly("option"),
     conditions: array(singleConditionDERuleCodec),
 });
+const stateConditionDERuleCodec = Codec.interface({
+    type: exactly("state"),
+    condition: oneOf([exactly("disabled")]),
+});
 
 const dataElementRuleCodec = record(
-    oneOf([exactly("visible"), exactly("disabled"), exactly("enabled")]),
+    oneOf([exactly("visible"), exactly("disabled"), exactly("enabled"), exactly("delete"), exactly("clear")]),
+    oneOf([singleConditionDERuleCodec, multipleConditionDERuleCodec, stateConditionDERuleCodec])
+);
+
+const totalDataElementRuleCodec = record(
+    oneOf([exactly("visible"), exactly("disabled"), exactly("enabled"), exactly("delete")]),
     oneOf([singleConditionDERuleCodec, multipleConditionDERuleCodec])
 );
 
 const dataElementTotalsRuleCodec = Codec.interface({
     type: exactly("dataElements"),
     formula: string,
-    rules: optional(dataElementRuleCodec),
+    rules: optional(totalDataElementRuleCodec),
 });
 
 const sectionTotalsRuleCodec = Codec.interface({
@@ -539,8 +553,9 @@ const DataStoreConfigCodec = Codec.interface({
     }),
 });
 
+type DataElementRule = Record<RuleType | "delete", ConditionRule>;
 export interface DataElementConfig {
-    rules?: DataElementRuleOptions;
+    rules?: DataElementRule;
     disabled?: boolean;
     disableComments?: boolean;
     texts?: Texts;
@@ -616,6 +631,7 @@ function getRelativeIntervalPeriodsByViewType(
             return formatRelativeIntervalPeriodsByPeriodType(dataSetPeriod, interval2, periodType);
         }
         case "grid-with-cat-option-combos":
+        case "table":
             if (!interval) return [];
             return formatRelativeIntervalPeriodsByPeriodType(dataSetPeriod, interval, periodType);
         default:

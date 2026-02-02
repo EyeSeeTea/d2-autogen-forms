@@ -33,11 +33,11 @@ export function useUpdatableDataValueWithFeedback(options: DataEntryItemProps) {
         dataValueCb => {
             setState("saving");
             if (columnTotal && columnDataElements && cocId) {
-                saveWithTotals(dataValueCb, columnTotal, columnDataElements, cocId)
+                return saveWithTotals(dataValueCb, columnTotal, columnDataElements, cocId)
                     .then(() => setState("saveSuccessful"))
                     .catch(() => setState("saveError"));
             } else {
-                save(dataValueCb)
+                return save(dataValueCb)
                     .then(() => {
                         // validate compulsory fields
                         const value = getValueAccordingType(dataValueCb);
