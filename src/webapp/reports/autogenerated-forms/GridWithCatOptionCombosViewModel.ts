@@ -249,7 +249,8 @@ export class GridWithCatOptionCombosViewModel {
 
     /**
      * Returns the column with the visible property applied based on the section's columnsConfig.
-     * columnConfig key can be either "dataElementCode||categoryOptionCode" or "categoryOptionCode".
+     * columnConfig key can be either "categoryOptionCode" or "dataElementCode||categoryOptionCode".
+     * If both "categoryOptionCode" and "dataElementCode||categoryOptionCode" are defined, "categoryOptionCode" takes precendence
      */
     private static applyColumnVisibility(
         section: SectionWithPeriods,
