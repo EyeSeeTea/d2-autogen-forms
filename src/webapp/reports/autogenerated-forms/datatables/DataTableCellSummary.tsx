@@ -9,6 +9,7 @@ import { DataValueNumberSingle, Period } from "../../../../domain/common/entitie
 import { CustomInput } from "../widgets/NumberWidget";
 import { Maybe } from "../../../../utils/ts-utils";
 import { getItemTotalDataValue } from "./DataTableCellFormula";
+import { resolveDataElement } from "../utils/resolveDataElement";
 
 export type DataTableCellSummaryProps = {
     dataElements: CellTotal[];
@@ -38,7 +39,8 @@ export function getValueFromDataElement(
     itemTotal: TotalItem,
     period?: Period
 ): Maybe<number> {
-    const dataValue = dataFormInfo.data.values.getOrEmpty(itemTotal.dataElement, {
+    const dataElementToRead = resolveDataElement(dataFormInfo, itemTotal.dataElement);
+    const dataValue = dataFormInfo.data.values.getOrEmpty(dataElementToRead, {
         categoryOptionComboId: itemTotal.categoryOptionCombo.id,
         orgUnitId: dataFormInfo.orgUnitId,
         period: period || dataFormInfo.period,
