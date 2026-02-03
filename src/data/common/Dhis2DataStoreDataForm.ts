@@ -302,6 +302,7 @@ const totalsType = Codec.interface({
     formula: optional(string),
     rules: optional(dataElementRuleCodec),
     texts: optional(Codec.interface({ name: optional(string), code: optional(string) })),
+    strict: optional(boolean),
 });
 
 const stylesType = Codec.interface({

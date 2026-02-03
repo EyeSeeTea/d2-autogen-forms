@@ -352,6 +352,7 @@ export class GridViewModel {
                                     columnName: key,
                                     formula: sectionTotal.formula || "",
                                     items: this.getColumnWithDataElements(selectedDataElements, key),
+                                    strict: sectionTotal.strict,
                                 },
                             ],
                         };
@@ -374,6 +375,7 @@ export class GridViewModel {
                                 columnName: column.name,
                                 formula: getFormulaByColumnName(section, column.name) || sectionTotal.formula || "",
                                 items: columnWithDataElements,
+                                strict: sectionTotal.strict,
                             };
                         });
 

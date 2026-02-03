@@ -21,7 +21,9 @@ export type DataTableCellSummaryProps = {
 export const DataTableCellSummary: React.FC<DataTableCellSummaryProps> = props => {
     const { dataFormInfo, styles, dataElements, period } = props;
     const totals = _(dataElements).map(cellTotal => {
-        const values = cellTotal.items.map(itemTotal => getItemTotalDataValue(dataFormInfo, itemTotal, period));
+        const values = cellTotal.items.map(itemTotal =>
+            getItemTotalDataValue(dataFormInfo, itemTotal, period, cellTotal.strict)
+        );
         const compiled = _.template(cellTotal.formula);
         return compiled(_.merge({}, ...values));
     });
@@ -40,7 +42,8 @@ export const DataTableCellSummary: React.FC<DataTableCellSummaryProps> = props =
 export function getValueFromDataElement(
     dataFormInfo: DataFormInfo,
     itemTotal: TotalItem,
-    period?: Period
+    period?: Period,
+    strict?: boolean
 ): Maybe<number> {
     const dataElementToRead = resolveDataElement(dataFormInfo, itemTotal.dataElement);
     const dataValue = dataFormInfo.data.values.getOrEmpty(dataElementToRead, {
@@ -48,7 +51,7 @@ export function getValueFromDataElement(
         orgUnitId: dataFormInfo.orgUnitId,
         period: period || dataFormInfo.period,
     }) as DataValueNumberSingle;
-    if (dataValue.value === "") {
+    if (strict && dataValue.value === "") {
         return undefined;
     }
     const numericValue = Number(dataValue.value);
