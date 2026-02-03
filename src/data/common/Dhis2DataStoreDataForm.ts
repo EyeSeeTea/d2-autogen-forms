@@ -43,6 +43,7 @@ export interface DataSetConfig {
 
 export type SectionConfig =
     | BasicSectionConfig
+    | DisaggregatedCocsSectionConfig
     | GridSectionConfig
     | GridWithPeriodsSectionConfig
     | GridWithTotalsSectionConfig
@@ -122,8 +123,13 @@ const dataElementsToExcludeCodec = Codec.interface({
 });
 
 interface BasicSectionConfig extends BaseSectionConfig {
-    viewType: "grid-with-combos" | "matrix-grid" | "grid-disaggregated-cocs";
+    viewType: "grid-with-combos" | "matrix-grid";
     columnsConfig?: Record<string, { rules?: FromRulesFormulaCodec }>;
+}
+
+interface DisaggregatedCocsSectionConfig extends BaseSectionConfig {
+    viewType: "grid-disaggregated-cocs";
+    rowsConfig: Maybe<RowsConfig>;
 }
 
 interface GridSectionConfig extends BaseSectionConfig {
@@ -185,10 +191,12 @@ export type GridIndicatorsCalculatedRow = {
 
 type GridColumnsConfig = Record<string, { rules?: FromRulesFormulaCodec }>;
 
+type RowsConfig = Record<string, { cellsVisible?: boolean; rowNameConstant?: string; hide?: boolean }>;
+
 interface GridCategoryColumnsConfig extends BaseSectionConfig {
     viewType: "grid-category-columns";
     categoriesColumns: CategoryColumnConfig[];
-    rowsConfig: Maybe<Record<string, { cellsVisible?: boolean; rowNameConstant?: string }>>;
+    rowsConfig: Maybe<RowsConfig>;
     singleCategoryInColumns: boolean;
     categoryOptionFilter: Maybe<CategoryOptionFilter>;
     dataElementsToExclude: Maybe<DataElementsToExclude[]>;
@@ -458,7 +466,11 @@ const DataStoreConfigCodec = Codec.interface({
                 rowsConfig: optional(
                     record(
                         string,
-                        Codec.interface({ cellsVisible: optional(boolean), rowNameConstant: optional(string) })
+                        Codec.interface({
+                            cellsVisible: optional(boolean),
+                            rowNameConstant: optional(string),
+                            hide: optional(boolean),
+                        })
                     )
                 ),
                 categoriesColumns: optional(array(Codec.interface({ dataElementCode: string, categoryCode: string }))),
@@ -1159,6 +1171,10 @@ export class Dhis2DataStoreDataForm {
                             categoryOptionFilter: sectionConfig.categoryOptionFilter,
                             dataElementsToExclude: sectionConfig.dataElementsToExclude ?? [],
                         };
+                        return [section.id, config] as [typeof section.id, typeof config];
+                    }
+                    case "grid-disaggregated-cocs": {
+                        const config = { ...baseConfig, viewType, rowsConfig: sectionConfig.rowsConfig };
                         return [section.id, config] as [typeof section.id, typeof config];
                     }
                     default: {
