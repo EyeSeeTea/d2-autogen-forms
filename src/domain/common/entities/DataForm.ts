@@ -118,7 +118,12 @@ export interface SectionBase {
 }
 
 export interface SectionSimple extends SectionBase {
-    viewType: "grid-with-combos" | "matrix-grid" | "grid-disaggregated-cocs";
+    viewType: "grid-with-combos" | "matrix-grid";
+}
+
+export interface SectionDisaggregatedCocs extends SectionBase {
+    viewType: "grid-disaggregated-cocs";
+    rowsConfig: Maybe<RowConfig>;
 }
 
 export interface SectionWithPeriods extends SectionBase {
@@ -190,7 +195,7 @@ export type TypeCategoryOptionFilterConfig = {
 };
 
 export type RowConfig = Record<string, RowConfigDetails>;
-export type RowConfigDetails = { cellsVisible: boolean; rowName: Maybe<string> };
+export type RowConfigDetails = { cellsVisible: boolean; rowName: Maybe<string>; hide?: boolean };
 
 export type CategoryColumnConfig = { dataElementCode: Code; categoryCode: Code };
 
@@ -215,6 +220,7 @@ export type VirtualColumnCalculated = BaseVirtualColumn & {
 
 export type Section =
     | SectionSimple
+    | SectionDisaggregatedCocs
     | SectionGrid
     | SectionWithPeriods
     | SectionWithTotals

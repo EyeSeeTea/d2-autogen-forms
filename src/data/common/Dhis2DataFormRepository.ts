@@ -255,22 +255,10 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                             ...base2,
                         };
                     case "grid-category-columns": {
-                        const rowsConfigWithTexts = _(config.rowsConfig)
-                            .map((rowConfig, key): [string, RowConfigDetails] => {
-                                const constant = configDataForm.constants.find(
-                                    c => c.code === rowConfig.rowNameConstant
-                                );
-
-                                return [
-                                    key,
-                                    {
-                                        cellsVisible: rowConfig.cellsVisible ?? true,
-                                        rowName: constant?.displayDescription,
-                                    },
-                                ];
-                            })
-                            .fromPairs()
-                            .value();
+                        const rowsConfigWithTexts = buildRowsConfigWithTexts(
+                            config.rowsConfig,
+                            configDataForm.constants
+                        );
 
                         return {
                             ...base2,
@@ -282,6 +270,12 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                             dataElementsToExclude: config.dataElementsToExclude || [],
                         };
                     }
+                    case "grid-disaggregated-cocs":
+                        return {
+                            viewType: config.viewType,
+                            rowsConfig: buildRowsConfigWithTexts(config.rowsConfig, configDataForm.constants),
+                            ...base2,
+                        };
                     default:
                         return { viewType: config.viewType, ...base2 };
                 }
@@ -810,6 +804,29 @@ function getSectionBaseWithToggle(
         default:
             return base;
     }
+}
+
+function buildRowsConfigWithTexts(
+    rowsConfig: Maybe<Record<string, { cellsVisible?: boolean; rowNameConstant?: string; hide?: boolean }>>,
+    constants: Array<{ code: string; displayDescription?: string }>
+): Maybe<Record<string, RowConfigDetails>> {
+    if (!rowsConfig) return undefined;
+
+    return _(rowsConfig)
+        .map((rowConfig, key): [string, RowConfigDetails] => {
+            const constant = constants.find(c => c.code === rowConfig.rowNameConstant);
+
+            return [
+                key,
+                {
+                    cellsVisible: rowConfig.cellsVisible ?? true,
+                    rowName: constant?.displayDescription,
+                    hide: rowConfig.hide,
+                },
+            ];
+        })
+        .fromPairs()
+        .value();
 }
 
 const indicatorsFields = {
