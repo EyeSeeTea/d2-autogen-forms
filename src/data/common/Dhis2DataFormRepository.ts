@@ -15,7 +15,14 @@ import {
     TotalRules,
     TotalRuleType,
 } from "../../domain/common/entities/DataElementRule";
-import { DataForm, defaultTexts, RowConfigDetails, Section, SectionBase } from "../../domain/common/entities/DataForm";
+import {
+    DataForm,
+    defaultTexts,
+    RowConfigDetails,
+    Section,
+    SectionBase,
+    SubNational,
+} from "../../domain/common/entities/DataForm";
 import { Indicator } from "../../domain/common/entities/Indicator";
 import { SectionStyle } from "../../domain/common/entities/SectionStyle";
 import { buildToggleMultiple } from "../../domain/common/entities/ToggleMultiple";
@@ -23,14 +30,13 @@ import { DataFormRepository } from "../../domain/common/repositories/DataFormRep
 import { D2Api, MetadataPick } from "../../types/d2-api";
 import { Maybe } from "../../utils/ts-utils";
 import { Dhis2DataElement } from "./Dhis2DataElement";
+import { Dhis2DataStoreDataForm } from "./Dhis2DataStoreDataForm";
 import {
     DataElementConfig,
     DataSetConfig,
-    Dhis2DataStoreDataForm,
     IndicatorConfig,
     SectionConfig,
-    SubNational,
-} from "./Dhis2DataStoreDataForm";
+} from "../../domain/common/entities/AutogenConfig";
 import { validatePeriodType } from "../../domain/common/entities/Period";
 import { Period } from "../../domain/common/entities/DataValue";
 import { getApplicableDataFormRules } from "../../domain/common/entities/DataFormRule";

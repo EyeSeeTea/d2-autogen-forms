@@ -3,228 +3,29 @@ import { D2Api } from "@eyeseetea/d2-api/2.34";
 import { boolean, Codec, exactly, GetType, oneOf, optional, record, string, number, array } from "purify-ts";
 import { Namespaces } from "./clients/storage/Namespaces";
 import { assertUnreachable, Maybe, NonPartial } from "../../utils/ts-utils";
-import { Code, getCode, Id, NamedRef } from "../../domain/common/entities/Base";
-import { Option } from "../../domain/common/entities/DataElement";
+import { Code, getCode, Id } from "../../domain/common/entities/Base";
+import { SectionStyle } from "../../domain/common/entities/SectionStyle";
 import {
-    CategoryColumnConfig,
-    CategoryOptionFilter,
-    ColumnOrder,
-    DataElementsToExclude,
-    DataElementWidget,
-    DescriptionText,
-    SectionTexts,
-    Texts,
-    Totals,
-} from "../../domain/common/entities/DataForm";
-import { titleVariant } from "../../domain/common/entities/TitleVariant";
-import { SectionStyle, SectionStyleAttrs } from "../../domain/common/entities/SectionStyle";
-import {
-    ConditionRule,
-    RuleType,
-    SectionRuleOptions,
-    TotalDataElementRuleOptions,
-} from "../../domain/common/entities/DataElementRule";
+    BaseSectionConfig,
+    CategoryCombinationConfig,
+    CategoryOptionConfig,
+    DataElementConfig,
+    DataSetConfig,
+    OptionSet,
+    SectionConfig,
+    SectionTotals,
+    Toggle,
+    TotalsConfig,
+} from "../../domain/common/entities/AutogenConfig";
+import { SubNational } from "../../domain/common/entities/DataForm";
 import {
     ToggleLogicalOperator,
     ToggleMultiple,
     ToggleMultipleCondition,
 } from "../../domain/common/entities/ToggleMultiple";
 import { Period, PeriodType, validatePeriodType } from "../../domain/common/entities/Period";
-import { FromRulesFormulaCodec, rulesFormulaCodec } from "./RulesFormula";
 import { DataFormRule } from "../../domain/common/entities/DataFormRule";
-
-export interface DataSetConfig {
-    removePrefix: Maybe<string>;
-    texts: Texts;
-    sections: Record<Id, SectionConfig>;
-    rules: Maybe<DataFormRule[]>;
-}
-
-export type SectionConfig =
-    | BasicSectionConfig
-    | GridSectionConfig
-    | GridWithPeriodsSectionConfig
-    | GridWithTotalsSectionConfig
-    | GridWithSubnationalSectionConfig
-    | GridIndicatorsCalculated
-    | GridCategoryColumnsConfig;
-
-export type TotalsRule = (
-    | {
-          type: "sections";
-          rules?: SectionRuleOptions;
-      }
-    | {
-          type: "dataElements";
-          rules?: TotalDataElementRuleOptions;
-      }
-) & { formula: string };
-
-type SectionTotals = Totals & {
-    texts?: { name?: string; code?: string };
-};
-
-type TotalsConfig = SectionTotals | Record<string, SectionTotals>;
-
-type DataElementToggle = {
-    type: "dataElement";
-    code: Code;
-    disabled: boolean;
-};
-
-type DataElementExternalToggle = {
-    type: "dataElementExternal";
-    code: Code;
-    condition: string | undefined;
-    disabled: boolean;
-};
-
-export type OrgUnitToggle = {
-    type: "orgUnit";
-    orgUnits: string[];
-    dataElements: string[];
-    condition: "show" | "hide";
-    disabled: boolean;
-};
-
-type Toggle = DataElementToggle | DataElementExternalToggle | OrgUnitToggle | { type: "none" };
-
-interface BaseSectionConfig {
-    texts: SectionTexts;
-    toggle: Toggle;
-    tabs: { active: true; order: string | number; rules?: FromRulesFormulaCodec } | { active: false };
-    showIndex: boolean;
-    sortRowsBy: string;
-    titleVariant: titleVariant;
-    styles: SectionStyleAttrs;
-    columnsDescriptions: DescriptionText;
-    groupDescriptions: DescriptionText;
-    disableComments: boolean;
-    totals?: Record<string, SectionTotals>;
-    toggleMultiple: Maybe<ToggleMultiple>;
-    indicators?: Record<Code, IndicatorConfig>;
-    fixedHeaders: boolean;
-    fixedRowNames: boolean;
-    enableTopScroll: boolean;
-    columnsConfig?: GridColumnsConfig;
-    disabled: boolean;
-}
-
-const dataElementsToExcludeCodec = Codec.interface({
-    codesToExclude: array(Codec.interface({ code: string })),
-    formula: Codec.interface({
-        condition: string,
-        value: string,
-    }),
-    dataElements: array(Codec.interface({ code: string })),
-});
-
-interface BasicSectionConfig extends BaseSectionConfig {
-    viewType: "grid-with-combos" | "matrix-grid" | "grid-disaggregated-cocs";
-    columnsConfig?: Record<string, { rules?: FromRulesFormulaCodec }>;
-}
-
-interface GridSectionConfig extends BaseSectionConfig {
-    viewType: "table" | "grid";
-    calculateTotals: CalculateTotalType;
-    columnsOrder: Maybe<ColumnOrder>;
-    enableGroups: boolean;
-    columnsConfig?: Record<
-        string,
-        {
-            rules?: FromRulesFormulaCodec;
-        }
-    >;
-    firstColumnConfig?: {
-        width: number;
-    };
-    periods: Period[];
-}
-
-interface GridWithPeriodsSectionConfig extends BaseSectionConfig {
-    viewType: "grid-with-cat-option-combos" | "grid-with-periods";
-    periods: Period[];
-}
-
-interface GridWithTotalsSectionConfig extends BaseSectionConfig {
-    viewType: "grid-with-totals";
-    calculateTotals: CalculateTotalType;
-    columnsOrder: Maybe<ColumnOrder>;
-    fixedRowNames: boolean;
-    enableGroups: boolean;
-    enableTopScroll: boolean;
-    columnsConfig?: GridColumnsConfig;
-    firstColumnConfig?: {
-        width: number;
-    };
-}
-
-interface GridIndicatorsCalculated extends BaseSectionConfig {
-    viewType: "grid-indicators-calculated";
-    periods: Period[];
-    rows: GridIndicatorsCalculatedRow[];
-    virtualRows: VirtualRow[];
-    virtualColumns: (VirtualColumnDataElement | VirtualColumnCalculated)[];
-}
-
-type VirtualRow = {
-    rowConstantCode: string;
-    dataElementCode: string;
-};
-
-export type GridIndicatorsCalculatedRow = {
-    code: Code;
-    denominator: Maybe<{ text: { code: Code }; dataElementCode: Code }>;
-    value: Maybe<{
-        dataElementCodes: Code[];
-        formula: { value: string };
-    }>;
-};
-
-type GridColumnsConfig = Record<string, { rules?: FromRulesFormulaCodec }>;
-
-interface GridCategoryColumnsConfig extends BaseSectionConfig {
-    viewType: "grid-category-columns";
-    categoriesColumns: CategoryColumnConfig[];
-    rowsConfig: Maybe<Record<string, { cellsVisible?: boolean; rowNameConstant?: string }>>;
-    singleCategoryInColumns: boolean;
-    categoryOptionFilter: Maybe<CategoryOptionFilter>;
-    dataElementsToExclude: Maybe<DataElementsToExclude[]>;
-}
-
-interface GridWithSubnationalSectionConfig extends BaseSectionConfig {
-    viewType: "grid-with-subnational-ous";
-    calculateTotals: CalculateTotalType;
-    subNationalDataset: string;
-}
-
-export type CalculateTotalConfig = {
-    totalDeCode: Code | undefined;
-    disabled: boolean | undefined;
-};
-
-export type CalculateTotalType = Record<string, CalculateTotalConfig | undefined> | undefined;
-
-type D2BaseVirtualColumn = {
-    dataElementCode: string;
-    position: number;
-    texts?: {
-        columnNameCode: string;
-    };
-};
-
-type VirtualColumnDataElement = D2BaseVirtualColumn & {
-    type: "dataElement";
-    dataElementRefValue: string;
-};
-
-type VirtualColumnCalculated = D2BaseVirtualColumn & {
-    type: "calculated";
-    formula: {
-        dataElementCodes: string[];
-        value: string;
-    };
-};
+import { rulesFormulaCodec } from "./RulesFormula";
 
 const defaultViewType = "table";
 
@@ -252,6 +53,15 @@ const titleVariantType = oneOf([
     exactly("h5"),
     exactly("h6"),
 ]);
+
+const dataElementsToExcludeCodec = Codec.interface({
+    codesToExclude: array(Codec.interface({ code: string })),
+    formula: Codec.interface({
+        condition: string,
+        value: string,
+    }),
+    dataElements: array(Codec.interface({ code: string })),
+});
 
 const singleConditionDERuleCodec = Codec.interface({ dataElements: array(string), condition: string });
 const multipleConditionDERuleCodec = Codec.interface({
@@ -409,7 +219,7 @@ const dataSetRuleCodec = Codec.interface({
     }),
 });
 
-const DataStoreConfigCodec = Codec.interface({
+export const DataStoreConfigCodec = Codec.interface({
     categoryCombinations: sectionConfig({
         viewType: optional(oneOf([exactly("name"), exactly("shortName"), exactly("formName")])),
     }),
@@ -437,7 +247,6 @@ const DataStoreConfigCodec = Codec.interface({
         ),
         texts: optional(textsCodec),
     }),
-
     dataSets: sectionConfig({
         disableComments: optional(boolean),
         removePrefix: optional(string),
@@ -552,27 +361,6 @@ const DataStoreConfigCodec = Codec.interface({
         ),
     }),
 });
-
-type DataElementRule = Record<RuleType | "delete", ConditionRule>;
-export interface DataElementConfig {
-    rules?: DataElementRule;
-    disabled?: boolean;
-    disableComments?: boolean;
-    texts?: Texts;
-    selection?: {
-        optionSet?: OptionSet;
-        isMultiple: boolean;
-        widget: Maybe<DataElementWidget>;
-        visible: { dataElementCode: string; value: string } | undefined;
-    };
-}
-
-export type IndicatorConfig = { position: Maybe<{ dataElement: string; direction: "after" | "before" }> };
-
-interface OptionSet extends NamedRef {
-    code: string;
-    options: Option<string>[];
-}
 
 type Selector = GetType<typeof selector>;
 type DataFormStoreConfigFromCodec = GetType<typeof DataStoreConfigCodec>;
@@ -773,16 +561,6 @@ interface DataSet {
     sections: Array<{ id: string; code: string }>;
     periodType: string;
 }
-
-type CategoryCombinationConfig = {
-    viewType: "name" | "shortName" | "formName" | undefined;
-};
-
-type CategoryOptionConfig = {
-    visible: Maybe<boolean>;
-};
-
-type ToggleConfig = GetType<typeof toggleCodec>;
 
 export class Dhis2DataStoreDataForm {
     public dataElementsConfig: Record<Code, DataElementConfig>;
@@ -1363,6 +1141,8 @@ export class Dhis2DataStoreDataForm {
     }
 }
 
+type ToggleConfig = GetType<typeof toggleCodec>;
+
 function selectorMatches<T extends { code: string }>(obj: T, selector: Selector): boolean {
     return obj.code === selector.code;
 }
@@ -1380,9 +1160,3 @@ interface Constant {
 function sectionConfig<T extends Record<string, Codec<any>>>(properties: T) {
     return optional(record(string, Codec.interface(properties)));
 }
-
-export type SubNational = {
-    id: Id;
-    parentId: Id;
-    name: string;
-};

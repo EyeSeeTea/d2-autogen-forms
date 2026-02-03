@@ -312,8 +312,8 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
                     })}
                 </StyledTabs>
 
-                <FadedOverlay hidden={!showLeftFade} style={{ left: 0, transform: "rotate(180deg)" }} />
-                <FadedOverlay hidden={!showRightFade} style={{ right: 0 }} />
+                <FadedOverlay hidden={!showLeftFade} style={{ insetInlineStart: 0, transform: "rotate(180deg)" }} />
+                <FadedOverlay hidden={!showRightFade} style={{ insetInlineEnd: 0 }} />
             </StyledAppBar>
             {sections.map(section => {
                 return (
@@ -338,6 +338,7 @@ const useStyles = makeStyles({
 });
 
 const StyledAppBar = styled(AppBar)`
+    inset-block-start: 48px !important;
     z-index: 100 !important;
 `;
 
@@ -347,7 +348,7 @@ const StyledTabs = styled(Tabs)`
 
 const FadedOverlay = styled.div<{ hidden?: boolean }>`
     position: absolute;
-    top: 0;
+    inset-block-start: 0;
     width: 25%;
     height: 100%;
     background: linear-gradient(to left, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0));
@@ -361,9 +362,9 @@ const StyledIconButton = styled(IconButton)<Omit<ScrollButtonProps, "handleScrol
         (!props.showLeftFade && props.direction === "left") || (!props.showRightFade && props.direction === "right")
             ? 0.5
             : undefined};
-    left: ${props => (props.direction === "left" ? "-1rem" : undefined)};
-    right: ${props => (props.direction === "right" ? "1rem" : undefined)};
-    bottom: -0.6rem;
+    inset-inline-start: ${props => (props.direction === "left" ? "-1rem" : undefined)};
+    inset-inline-end: ${props => (props.direction === "right" ? "1rem" : undefined)};
+    inset-block-end: -0.6rem;
     z-index: 10;
     color: inherit;
 `;
