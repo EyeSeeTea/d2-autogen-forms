@@ -144,7 +144,8 @@ interface GridSectionConfig extends BaseSectionConfig {
         }
     >;
     firstColumnConfig?: {
-        width: number;
+        width: Maybe<number>;
+        header: Maybe<string>;
     };
     periods: Period[];
 }
@@ -460,7 +461,9 @@ const DataStoreConfigCodec = Codec.interface({
             sectionConfig({
                 dataElementsToExclude: optional(array(dataElementsToExcludeCodec)),
                 categoryOptionFilter: optional(categoryOptionFilterConfigCodec),
-                firstColumnConfig: optional(Codec.interface({ width: number })),
+                firstColumnConfig: optional(
+                    Codec.interface({ width: optional(number), header: optional(oneOf([string, selector])) })
+                ),
                 singleCategoryInColumns: optional(boolean),
                 rowsConfig: optional(
                     record(
@@ -974,6 +977,15 @@ export class Dhis2DataStoreDataForm {
             .compact()
             .value();
 
+        const firstColumnHeaderCodes = _(storeConfig.dataSets)
+            .values()
+            .flatMap(dataSet => _.values(dataSet.sections))
+            .map(section => section.firstColumnConfig?.header)
+            .compact()
+            .map(header => (typeof header !== "string" ? header.code : undefined))
+            .compact()
+            .value();
+
         const virtualCodes = virtualColumnsCodes.concat(virtualRowsCodes).concat(rowNamesKeys);
 
         const dataSetRulesCodes = _(storeConfig.dataSets)
@@ -994,7 +1006,7 @@ export class Dhis2DataStoreDataForm {
         ])
             .map(v => (typeof v !== "string" && !Array.isArray(v) ? v?.code : undefined))
             .compact()
-            .concat([...descriptionCodes, ...totalsCodes, ...dataSetRulesCodes])
+            .concat([...descriptionCodes, ...totalsCodes, ...dataSetRulesCodes, ...firstColumnHeaderCodes])
             .uniq()
             .value();
 
@@ -1127,6 +1139,15 @@ export class Dhis2DataStoreDataForm {
                     case "table":
                     case "grid":
                     case "grid-with-totals": {
+                        const firstColumnConfig = sectionConfig.firstColumnConfig
+                            ? {
+                                  ...sectionConfig.firstColumnConfig,
+                                  header: this.getTextFromConstants(
+                                      sectionConfig.firstColumnConfig.header,
+                                      constantsByCode
+                                  ),
+                              }
+                            : undefined;
                         const config = {
                             ...baseConfig,
                             viewType,
@@ -1134,7 +1155,7 @@ export class Dhis2DataStoreDataForm {
                             columnsOrder: sectionConfig.columnsOrder,
                             enableGroups: sectionConfig.enableGroups || false,
                             columnsConfig: sectionConfig.columnsConfig,
-                            firstColumnConfig: sectionConfig.firstColumnConfig,
+                            firstColumnConfig: firstColumnConfig,
                             periods: getSectionPeriods(viewType, period, sectionConfig.periods, periodType),
                         };
                         return [section.id, config] as [typeof section.id, typeof config];
