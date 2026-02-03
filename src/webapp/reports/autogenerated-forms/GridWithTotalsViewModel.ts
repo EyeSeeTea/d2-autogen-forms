@@ -1,7 +1,6 @@
 import _ from "lodash";
-import { Section, SectionWithTotals, Texts } from "../../../domain/common/entities/DataForm";
+import { DataElementWidget, Section, SectionWithTotals } from "../../../domain/common/entities/DataForm";
 import { DataElement } from "../../../domain/common/entities/DataElement";
-import { Maybe } from "../../../utils/ts-utils";
 import { isSourceTypeColumn } from "./GridFormViewModel";
 
 export interface Grid {
@@ -12,8 +11,9 @@ export interface Grid {
     toggle: Section["toggle"];
     toggleMultiple: Section["toggleMultiple"];
     useIndexes: boolean;
-    texts: Texts;
+    texts: Section["texts"];
     parentColumns: ParentColumn[];
+    hidden: boolean;
 }
 
 interface SubSectionGrid {
@@ -53,7 +53,7 @@ export class GridWithTotalsViewModel {
     static get(
         section: SectionWithTotals,
         sectionDataElements: DataElement[],
-        dataElementsConfig: Record<string, { widget: Maybe<"dropdown" | "radio" | "sourceType"> }>
+        dataElementsConfig: Record<string, { widget: DataElementWidget }>
     ): Grid {
         const dataElements = getDataElementsWithIndexProccessing(section);
 
@@ -134,18 +134,26 @@ export class GridWithTotalsViewModel {
                             );
                         });
 
+                    if (columnTotal) {
+                        columnTotal = { ...columnTotal, cocId: dataElement?.cocId };
+                    }
+
                     const dataElementsInTotalColumn = dataElementsByTotal.find(
                         x => x.totalColumn === parentTotal?.code
                     );
 
                     columnDataElements = dataElementsInTotalColumn
-                        ? dataElements.filter(de => dataElementsInTotalColumn.dataElements.includes(de.code))
-                        : indexedDEs.filter(de => {
-                              return (
-                                  de.name.match(/^\d+\.\d+ - /g) &&
-                                  de.name.endsWith(`${dataElement?.name.split(separator)[0]}`)
-                              );
-                          });
+                        ? dataElements
+                              .filter(de => dataElementsInTotalColumn.dataElements.includes(de.code))
+                              .map(de => ({ ...de, cocId: dataElement?.cocId }))
+                        : indexedDEs
+                              .filter(de => {
+                                  return (
+                                      de.name.match(/^\d+\.\d+ - /g) &&
+                                      de.name.endsWith(`${dataElement?.name.split(separator)[0]}`)
+                                  );
+                              })
+                              .map(de => ({ ...de, cocId: dataElement?.cocId }));
                 }
 
                 return {
@@ -185,6 +193,7 @@ export class GridWithTotalsViewModel {
             useIndexes: useIndexes,
             parentColumns,
             toggleMultiple: section.toggleMultiple,
+            hidden: section.hidden || false,
         };
     }
 }

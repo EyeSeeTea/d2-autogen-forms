@@ -5,13 +5,16 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2025-11-18T07:36:32.359Z\n"
-"PO-Revision-Date: 2025-11-18T07:36:32.359Z\n"
+"POT-Creation-Date: 2026-01-12T13:06:32.390Z\n"
+"PO-Revision-Date: 2026-01-12T13:06:32.390Z\n"
 
 msgid "<No value>"
 msgstr ""
 
 msgid "- All -"
+msgstr ""
+
+msgid "Accept"
 msgstr ""
 
 msgid "Loading..."
@@ -57,6 +60,9 @@ msgid "Apply to all"
 msgstr ""
 
 msgid "Add new data form configuration"
+msgstr ""
+
+msgid "Please enter a valid email address"
 msgstr ""
 
 msgid "Save"

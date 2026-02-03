@@ -1,6 +1,6 @@
 import { Maybe } from "../../../utils/ts-utils";
 import { Code, Id } from "./Base";
-import { Rule } from "./DataElementRule";
+import { DeleteRule, Rule } from "./DataElementRule";
 
 export type DataElement =
     | DataElementBoolean
@@ -8,7 +8,8 @@ export type DataElement =
     | DataElementText
     | DataElementPercentage
     | DataElementFile
-    | DataElementDate;
+    | DataElementDate
+    | DataElementMultiText;
 
 interface DataElementBase {
     id: Id;
@@ -17,18 +18,15 @@ interface DataElementBase {
     description?: string;
     options?: Options;
     categoryCombos: CategoryCombos;
-    categoryOptionCombos: {
-        id: Id;
-        name: string;
-        shortName: string | undefined;
-        formName?: string;
-    }[];
+    categoryOptionCombos: CategoryOptionCombo[];
     cocId?: string;
     orgUnit?: Id;
     related: { dataElement: DataElement; value: string } | undefined;
     disabledComments?: boolean;
     rules: Rule[];
+    deleteRules: DeleteRule[];
     htmlText: Maybe<string>;
+    disabled: boolean;
 }
 
 export interface DataElementBoolean extends DataElementBase {
@@ -48,6 +46,12 @@ export interface DataElementPercentage extends DataElementBase {
 
 export interface DataElementText extends DataElementBase {
     type: "TEXT";
+    isLongText: boolean;
+    isEmail?: boolean;
+}
+
+export interface DataElementMultiText extends DataElementBase {
+    type: "MULTI_TEXT";
 }
 
 export interface DataElementFile extends DataElementBase {
@@ -60,19 +64,33 @@ export interface DataElementDate extends DataElementBase {
 
 type Options = Maybe<{ isMultiple: boolean; items: Option<string>[] }>;
 
+export type CategoryOption = {
+    id: Id;
+    originalName: string;
+    name: string;
+    code: Code;
+    displayFormName: string;
+};
+
 type CategoryCombos = {
     id: Id;
     name: string;
-    categoryOptionCombos: {
+    categories: Array<{
         id: Id;
+        code: Code;
         name: string;
-        formName: string | undefined;
-        shortName: string | undefined;
-        categoryOptions?: {
-            id: Id;
-            code: string;
-        }[];
-    }[];
+        categoryOptions: CategoryOption[];
+    }>;
+    categoryOptionCombos: CategoryOptionCombo[];
+};
+
+export type CategoryOptionCombo = {
+    id: Id;
+    name: string;
+    shortName: Maybe<string>;
+    formName?: string;
+    categoryOptions: CategoryOption[];
+    originalName: string;
 };
 
 type NumberType =

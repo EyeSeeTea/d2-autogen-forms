@@ -1,8 +1,21 @@
+import { FromRulesFormulaCodec } from "../../../data/common/RulesFormula";
 import { Maybe } from "../../../utils/ts-utils";
 import { Code, Id, NamedRef } from "./Base";
 import { Option } from "./DataElement";
-import { DataElementRuleOptions } from "./DataElementRule";
-import { DescriptionText, Texts, Totals } from "./DataForm";
+import { ConditionRule, RuleType } from "./DataElementRule";
+import {
+    CategoryColumnConfig,
+    CategoryOptionFilter,
+    ColumnOrder,
+    DataElementsToExclude,
+    DataElementWidget,
+    DescriptionText,
+    SectionTexts,
+    Texts,
+    Totals,
+} from "./DataForm";
+import { DataFormRule } from "./DataFormRule";
+import { Period } from "./Period";
 import { SectionStyleAttrs } from "./SectionStyle";
 import { TitleVariant } from "./TitleVariant";
 import { ToggleMultiple } from "./ToggleMultiple";
@@ -15,18 +28,23 @@ export type AutogenConfig = {
 };
 
 export type DataSetConfig = {
+    removePrefix: Maybe<string>;
     texts: Texts;
     sections: Record<Id, SectionConfig>;
+    rules: Maybe<DataFormRule[]>;
 };
 
+type DataElementRule = Record<RuleType | "delete", ConditionRule>;
+
 export type DataElementConfig = {
-    rules?: DataElementRuleOptions;
+    rules?: DataElementRule;
+    disabled?: boolean;
     disableComments?: boolean;
     texts?: Texts;
     selection?: {
         optionSet?: OptionSet;
         isMultiple: boolean;
-        widget: Maybe<"dropdown" | "radio" | "sourceType">;
+        widget: Maybe<DataElementWidget>;
         visible: { dataElementCode: string; value: string } | undefined;
     };
 };
@@ -45,7 +63,8 @@ export type SectionConfig =
     | GridWithPeriodsSectionConfig
     | GridWithTotalsSectionConfig
     | GridWithSubnationalSectionConfig
-    | GridIndicatorsCalculated;
+    | GridIndicatorsCalculated
+    | GridCategoryColumnsConfig;
 
 export type SectionTotals = Totals & {
     texts?: { name?: string; code?: string };
@@ -68,12 +87,21 @@ type DataElementExternalToggle = {
     disabled: boolean;
 };
 
-export type Toggle = DataElementToggle | DataElementExternalToggle | { type: "none" };
+export type OrgUnitToggle = {
+    type: "orgUnit";
+    orgUnits: string[];
+    dataElements: string[];
+    condition: "show" | "hide";
+    disabled: boolean;
+};
+
+export type Toggle = DataElementToggle | DataElementExternalToggle | OrgUnitToggle | { type: "none" };
 
 export type BaseSectionConfig = {
-    texts: Texts;
+    texts: SectionTexts;
     toggle: Toggle;
-    tabs: { active: true; order: string | number } | { active: false };
+    tabs: { active: true; order: string | number; rules?: FromRulesFormulaCodec } | { active: false };
+    showIndex: boolean;
     sortRowsBy: string;
     titleVariant: TitleVariant;
     styles: SectionStyleAttrs;
@@ -83,33 +111,70 @@ export type BaseSectionConfig = {
     totals?: Record<string, SectionTotals>;
     toggleMultiple: Maybe<ToggleMultiple>;
     indicators?: Record<Code, IndicatorConfig>;
+    fixedHeaders: boolean;
+    fixedRowNames: boolean;
+    enableTopScroll: boolean;
+    columnsConfig?: GridColumnsConfig;
+    disabled: boolean;
 };
 
 type BasicSectionConfig = BaseSectionConfig & {
     viewType: "grid-with-combos" | "matrix-grid" | "grid-disaggregated-cocs";
+    columnsConfig?: Record<string, { rules?: FromRulesFormulaCodec }>;
 };
 
 type GridSectionConfig = BaseSectionConfig & {
     viewType: "table" | "grid";
     calculateTotals: CalculateTotalType;
+    columnsOrder: Maybe<ColumnOrder>;
+    enableGroups: boolean;
+    columnsConfig?: Record<
+        string,
+        {
+            rules?: FromRulesFormulaCodec;
+        }
+    >;
+    firstColumnConfig?: {
+        width: number;
+    };
+    periods: Period[];
 };
 
 type GridWithPeriodsSectionConfig = BaseSectionConfig & {
     viewType: "grid-with-periods" | "grid-with-cat-option-combos";
-    periods: string[];
+    periods: Period[];
 };
 
 type GridWithTotalsSectionConfig = BaseSectionConfig & {
     viewType: "grid-with-totals";
     calculateTotals: CalculateTotalType;
+    columnsOrder: Maybe<ColumnOrder>;
+    fixedRowNames: boolean;
+    enableGroups: boolean;
+    enableTopScroll: boolean;
+    columnsConfig?: GridColumnsConfig;
+    firstColumnConfig?: {
+        width: number;
+    };
 };
 
 type GridIndicatorsCalculated = BaseSectionConfig & {
     viewType: "grid-indicators-calculated";
-    periods: string[];
+    periods: Period[];
     rows: GridIndicatorsCalculatedRow[];
     virtualRows: VirtualRow[];
     virtualColumns: (VirtualColumnDataElement | VirtualColumnCalculated)[];
+};
+
+type GridColumnsConfig = Record<string, { rules?: FromRulesFormulaCodec }>;
+
+type GridCategoryColumnsConfig = BaseSectionConfig & {
+    viewType: "grid-category-columns";
+    categoriesColumns: CategoryColumnConfig[];
+    rowsConfig: Maybe<Record<string, { cellsVisible?: boolean; rowNameConstant?: string }>>;
+    singleCategoryInColumns: boolean;
+    categoryOptionFilter: Maybe<CategoryOptionFilter>;
+    dataElementsToExclude: Maybe<DataElementsToExclude[]>;
 };
 
 type VirtualRow = {

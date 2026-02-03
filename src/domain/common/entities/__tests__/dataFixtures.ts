@@ -1,6 +1,7 @@
 import { DataForm, SectionBase, defaultTexts } from "../DataForm";
 import { DataElementText } from "../DataElement";
 import { DataValue, DataValueBase, DataValueTextSingle } from "../DataValue";
+import { PeriodType } from "../Period";
 
 export const dataElementText: DataElementText = {
     id: "1",
@@ -16,6 +17,7 @@ export const dataElementText: DataElementText = {
                 name: "Option Combo",
                 shortName: "OC",
                 formName: undefined,
+                categoryOptions: [],
             },
         ],
     },
@@ -23,6 +25,7 @@ export const dataElementText: DataElementText = {
     rules: [],
     htmlText: undefined,
     related: undefined,
+    isLongText: false,
 };
 
 export const sectionBase: Omit<SectionBase, "id" | "name" | "viewType"> = {
@@ -35,6 +38,8 @@ export const sectionBase: Omit<SectionBase, "id" | "name" | "viewType"> = {
     columnsDescriptions: undefined,
     groupDescriptions: undefined,
     disableComments: false,
+    disabled: false,
+    showIndex: false,
     showRowTotals: false,
     toggleMultiple: {
         logicalOperator: "AND",
@@ -57,6 +62,7 @@ export const dataFormBase: Omit<DataForm, "sections"> = {
         dataElementTotalRules: [],
         sectionTotalRules: [],
     },
+    periodType: PeriodType.YEARLY,
 };
 
 export const dataValueBase: DataValueBase = {

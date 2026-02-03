@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { Section, Texts } from "../../../domain/common/entities/DataForm";
+import { Section } from "../../../domain/common/entities/DataForm";
 import { DataElement } from "../../../domain/common/entities/DataElement";
 
 export interface Grid {
@@ -10,8 +10,9 @@ export interface Grid {
     toggle: Section["toggle"];
     toggleMultiple: Section["toggleMultiple"];
     useIndexes: boolean;
-    texts: Texts;
+    texts: Section["texts"];
     parentColumns: ParentColumn[];
+    hidden: boolean;
 }
 
 interface SubSectionGrid {
@@ -111,6 +112,7 @@ export class GridWithCombosViewModel {
             useIndexes: useIndexes,
             parentColumns: parentColumns.length === columns.length ? [] : parentColumns,
             toggleMultiple: section.toggleMultiple,
+            hidden: section.hidden || false,
         };
     }
 }

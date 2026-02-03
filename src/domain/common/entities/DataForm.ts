@@ -2,13 +2,16 @@ import _ from "lodash";
 import { Maybe, UnionFromValues } from "../../../utils/ts-utils";
 import { Code, Id } from "./Base";
 import { DataElement, dataInputPeriodsType } from "./DataElement";
-import { Period } from "./DataValue";
 import { Indicator } from "./Indicator";
 import { SectionStyle } from "./SectionStyle";
 import { TitleVariant } from "./TitleVariant";
 import { DataElementToggle } from "./ToggleMultiple";
-import { DataElementRuleOptions, SectionRuleOptions, TotalRules } from "./DataElementRule";
+import { DataElementRuleOptions, SectionRuleOptions, TotalDataElementRuleOptions, TotalRules } from "./DataElementRule";
 import { CalculateTotalType, GridIndicatorsCalculatedRow } from "./AutogenConfig";
+import { RulesFormula } from "../../../data/common/RulesFormula";
+import { DataFormRule } from "./DataFormRule";
+import { CompulsoryDataValue } from "./CompulsoryDataValue";
+import { Period, PeriodType } from "./Period";
 
 export interface DataForm {
     id: Id;
@@ -18,26 +21,36 @@ export interface DataForm {
     sections: Section[];
     texts: Texts;
     options: {
-        dataElements: Record<Id, { widget: "dropdown" | "radio" | "sourceType" }>;
+        dataElements: Record<Id, { widget: DataElementWidget }>;
     };
     indicators: Indicator[];
     totalRules: TotalRules;
+    compulsoryDataValues: CompulsoryDataValue[];
+    showErrorOnCompulsory: boolean;
+    periodType: PeriodType;
+    rules: Maybe<DataFormRule[]>;
+    removePrefix: Maybe<string>;
 }
 
-export interface Texts {
+export type Texts = {
     header: Maybe<string>;
     footer: Maybe<string>;
     name: Maybe<string>;
     rowTotals: Maybe<string>;
     totals: Maybe<string>;
-}
+};
 
-export const defaultTexts: Texts = {
+export type SectionTexts = Texts & {
+    tabLabel: Maybe<string>;
+};
+
+export const defaultTexts: SectionTexts = {
     header: undefined,
     footer: undefined,
     rowTotals: undefined,
     totals: undefined,
     name: undefined,
+    tabLabel: undefined,
 };
 
 const viewTypes = [
@@ -51,6 +64,7 @@ const viewTypes = [
     "matrix-grid",
     "grid-with-subnational-ous",
     "grid-indicators-calculated",
+    "grid-category-columns",
 ] as const;
 export type ViewType = UnionFromValues<typeof DataFormM.viewTypes>;
 
@@ -61,14 +75,14 @@ type FormulaRules = {
     rules?: DataElementRuleOptions;
 };
 
-type TotalsRule = (
+export type TotalsRule = (
     | {
           type: "sections";
           rules?: SectionRuleOptions;
       }
     | {
           type: "dataElements";
-          rules?: DataElementRuleOptions;
+          rules?: TotalDataElementRuleOptions;
       }
 ) & { formula: string };
 
@@ -85,19 +99,27 @@ export interface SectionBase {
     toggle:
         | { type: "none" }
         | { type: "dataElement"; dataElement: DataElement; disabled: boolean }
-        | { type: "dataElementExternal"; dataElement: DataElement; condition: string; disabled: boolean };
-    texts: Texts;
-    tabs: { active: boolean; order?: string };
+        | { type: "dataElementExternal"; dataElement: DataElement; condition: string; disabled: boolean }
+        | { type: "orgUnit"; orgUnits: Code[]; condition: "show" | "hide"; dataElements: Code[]; disabled: boolean };
+    texts: SectionTexts;
+    tabs: { active: boolean; order?: string; rules?: RulesFormula };
+    showIndex: boolean;
     sortRowsBy: string;
     titleVariant: TitleVariant;
     styles: SectionStyle;
     columnsDescriptions: DescriptionText;
     groupDescriptions: DescriptionText;
     disableComments: boolean;
+    disabled: boolean;
     totals?: Record<string, Totals>;
     showRowTotals: boolean;
     toggleMultiple?: DataElementToggle;
     indicators: Indicator[];
+    fixedHeaders: boolean;
+    enableTopScroll: boolean;
+    fixedRowNames: boolean;
+    hidden?: boolean;
+    columnsConfig?: Record<string, { rules?: RulesFormula }>;
 }
 
 export interface SectionSimple extends SectionBase {
@@ -106,17 +128,29 @@ export interface SectionSimple extends SectionBase {
 
 export interface SectionWithPeriods extends SectionBase {
     viewType: "grid-with-periods" | "grid-with-cat-option-combos";
-    periods: string[];
+    periods: Period[];
 }
 
 export interface SectionGrid extends SectionBase {
     viewType: "table" | "grid";
+    enableGroups: boolean;
     calculateTotals: CalculateTotalType;
+    columnsOrder: Maybe<ColumnOrder>;
+    columnsConfig?: Record<string, { rules?: RulesFormula }>;
+    firstColumnConfig: Maybe<{
+        width: number;
+    }>;
+    periods: Period[];
 }
 
 export interface SectionWithTotals extends SectionBase {
     viewType: "grid-with-totals";
     calculateTotals: CalculateTotalType;
+    columnsOrder: Maybe<ColumnOrder>;
+    enableGroups: boolean;
+    firstColumnConfig: Maybe<{
+        width: number;
+    }>;
 }
 
 export interface SectionWithSubnationals extends SectionBase {
@@ -133,11 +167,43 @@ export type SubNational = {
 
 export interface SectionWithIndicatorsCalculated extends SectionBase {
     viewType: "grid-indicators-calculated";
-    periods: string[];
+    periods: Period[];
     rows: GridIndicatorsCalculatedRow[];
     virtualColumns: (VirtualColumnCalculated | VirtualColumnDataElement)[];
     virtualRows: { rowConstantCode: string; dataElementCode: string; rowName: string }[];
 }
+
+export interface SectionWithCategoryColumns extends SectionBase {
+    viewType: "grid-category-columns";
+    categoriesColumns: CategoryColumnConfig[];
+    rowsConfig: Maybe<RowConfig>;
+    singleCategoryInColumns: boolean;
+    categoryOptionFilter: Maybe<CategoryOptionFilter>;
+    dataElementsToExclude: DataElementsToExclude[];
+}
+
+export type DataElementsToExclude = {
+    codesToExclude: Array<{ code: string }>;
+    formula: { condition: string; value: string };
+    dataElements: Array<{ code: string }>;
+};
+
+export type CategoryOptionFilter = {
+    dataElementCode: Code;
+    config: TypeCategoryOptionFilterConfig[];
+};
+
+export type TypeCategoryOptionFilterConfig = {
+    code: string;
+    disabled: boolean;
+    showWhenValue: string[];
+    children: Array<{ categoryOptionCode: string }>;
+};
+
+export type RowConfig = Record<string, RowConfigDetails>;
+export type RowConfigDetails = { cellsVisible: boolean; rowName: Maybe<string> };
+
+export type CategoryColumnConfig = { dataElementCode: Code; categoryCode: Code };
 
 export type BaseVirtualColumn = {
     dataElementCode: string;
@@ -164,26 +230,32 @@ export type Section =
     | SectionWithPeriods
     | SectionWithTotals
     | SectionWithSubnationals
-    | SectionWithIndicatorsCalculated;
+    | SectionWithIndicatorsCalculated
+    | SectionWithCategoryColumns;
+
+export type ColumnOrder = Record<Code, number>;
 
 export class DataFormM {
     static viewTypes = viewTypes;
 
-    static getReferencedPeriods(dataForm: DataForm, basePeriod: Period): Period[] {
+    static getReferencedPeriods(dataForm: DataForm, basePeriod: Id): string[] {
         return _(dataForm.sections)
             .flatMap(section => {
                 switch (section.viewType) {
+                    case "table":
+                    case "grid":
                     case "grid-with-periods":
-                        return section.periods;
                     case "grid-indicators-calculated":
-                        return section.periods;
+                        return section.periods.map(period => period.id);
                     default:
                         return [];
                 }
             })
-            .uniq()
             .concat([basePeriod])
+            .uniq()
             .sortBy()
             .value();
     }
 }
+
+export type DataElementWidget = "dropdown" | "radio" | "sourceType" | "checkbox";

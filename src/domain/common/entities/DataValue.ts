@@ -6,6 +6,7 @@ import {
     DataElementBoolean,
     DataElementDate,
     DataElementFile,
+    DataElementMultiText,
     DataElementNumber,
     DataElementPercentage,
     DataElementText,
@@ -15,6 +16,7 @@ export interface DataValueBase {
     orgUnitId: Id;
     period: Period;
     categoryOptionComboId: Id;
+    isRequired?: boolean;
 }
 
 export interface DataValueBoolean extends DataValueBase {
@@ -59,6 +61,13 @@ export interface DataValueTextMultiple extends DataValueBase {
     values: string[];
 }
 
+export interface DataValueMultiText extends DataValueBase {
+    type: "MULTI_TEXT";
+    isMultiple: true;
+    dataElement: DataElementMultiText;
+    values: string[];
+}
+
 export interface DataValueFile extends DataValueBase {
     type: "FILE";
     isMultiple: false;
@@ -95,7 +104,8 @@ export type DataValue =
     | DataValueTextSingle
     | DataValueTextMultiple
     | DataValueFile
-    | DataValueDate;
+    | DataValueDate
+    | DataValueMultiText;
 
 export type Period = string;
 
@@ -107,7 +117,7 @@ export class DataValueStore {
 
     static from(dataValues: DataValue[]): DataValueStore {
         const store = _.keyBy(dataValues, dv =>
-            getStoreKey({
+            this.getKey({
                 dataElementId: dv.dataElement.id,
                 period: dv.period,
                 categoryOptionComboId: dv.categoryOptionComboId,
@@ -118,7 +128,7 @@ export class DataValueStore {
     }
 
     set(dataValue: DataValue): DataValueStore {
-        const key = getStoreKey({
+        const key = DataValueStore.getKey({
             dataElementId: dataValue.dataElement.id,
             period: dataValue.period,
             categoryOptionComboId: dataValue.categoryOptionComboId,
@@ -128,7 +138,7 @@ export class DataValueStore {
     }
 
     get(dataElement: DataElement, base: DataValueBase): Maybe<DataValue> {
-        const key = getStoreKey({
+        const key = DataValueStore.getKey({
             dataElementId: dataElement.id,
             period: base.period,
             categoryOptionComboId: dataElement.cocId ?? base.categoryOptionComboId,
@@ -141,9 +151,32 @@ export class DataValueStore {
     getOrEmpty(dataElement: DataElement, base: DataValueBase): DataValue {
         return this.get(dataElement, base) || getEmpty(dataElement, base);
     }
+
+    merge(dataValues: DataValue[]): DataValueStore {
+        const store = _.keyBy(dataValues, dv =>
+            DataValueStore.getKey({
+                dataElementId: dv.dataElement.id,
+                period: dv.period,
+                categoryOptionComboId: dv.categoryOptionComboId,
+                orgUnit: dv.orgUnitId,
+            })
+        );
+        return new DataValueStore({ ...this.store, ...store });
+    }
+
+    static getKey(options: {
+        dataElementId: Id;
+        period: Period;
+        categoryOptionComboId: Id;
+        orgUnit: Id;
+    }): DataValueSelector {
+        return _([options.dataElementId, options.period, options.categoryOptionComboId, options.orgUnit])
+            .compact()
+            .join(".");
+    }
 }
 
-function getEmpty(dataElement: DataElement, base: DataValueBase): DataValue {
+export function getEmpty(dataElement: DataElement, base: DataValueBase): DataValue {
     const { type } = dataElement;
 
     switch (type) {
@@ -157,6 +190,8 @@ function getEmpty(dataElement: DataElement, base: DataValueBase): DataValue {
             return dataElement.options?.isMultiple
                 ? { ...base, dataElement, type: "TEXT", isMultiple: true, values: [] }
                 : { ...base, dataElement, type: "TEXT", isMultiple: false, value: "" };
+        case "MULTI_TEXT":
+            return { ...base, dataElement, type: "MULTI_TEXT", isMultiple: true, values: [] };
         case "PERCENTAGE":
             return { ...base, dataElement, type: "PERCENTAGE", isMultiple: false, value: "" };
         case "FILE":
@@ -169,13 +204,4 @@ function getEmpty(dataElement: DataElement, base: DataValueBase): DataValue {
     }
 }
 
-function getStoreKey(options: {
-    dataElementId: Id;
-    period: Period;
-    categoryOptionComboId: Id;
-    orgUnit: Id;
-}): DataValueSelector {
-    return _([options.dataElementId, options.period, options.categoryOptionComboId, options.orgUnit])
-        .compact()
-        .join(".");
-}
+export const MULTI_TEXT_SEPARATOR = ",";

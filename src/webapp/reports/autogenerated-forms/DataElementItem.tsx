@@ -9,6 +9,7 @@ import { DataValue } from "../../../domain/common/entities/DataValue";
 import { Row } from "./GridWithTotalsViewModel";
 import { isDev } from "../../..";
 import { Maybe } from "../../../utils/ts-utils";
+import { DebugLabel } from "../../components/debug/DebugLabel";
 
 export interface DataElementItemProps {
     dataElement: DataElement;
@@ -88,6 +89,7 @@ export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props 
                 className={`${classes.valueInput} sourcetype`}
                 id={auditId}
             >
+                <DebugLabel>{dataElement.code}</DebugLabel>
                 <DataEntryItem
                     dataElement={dataElement}
                     dataFormInfo={dataFormInfo}
@@ -138,3 +140,7 @@ const useStyles = makeStyles({
     valueInput: { flexGrow: 1, border: "0 !important" },
     valueWrapper: { display: "flex" },
 });
+
+export function isDataValueEnabled(dataValue: DataValue): boolean {
+    return dataValue.type === "BOOLEAN" ? Boolean(dataValue.value) : false;
+}

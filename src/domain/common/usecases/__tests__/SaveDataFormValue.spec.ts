@@ -1,4 +1,4 @@
-import { SaveDataFormValueUseCase } from "../SaveDataFormValue";
+import { SaveDataFormValueUseCase } from "../SaveDataFormValueUseCase";
 import { DataValue, DataValueStore } from "../../entities/DataValue";
 import { DataValueRepository } from "../../repositories/DataValueRepository";
 import { instance, mock, when, verify, anything, deepEqual } from "ts-mockito";
@@ -14,22 +14,22 @@ describe("SaveDataFormValueUseCase", () => {
         mockDataValueStore = mock<DataValueStore>(DataValueStore);
     });
 
-    it("returns the store if the existing data value is equal to the new data value and type is not FILE", async () => {
+    it("returns the dataValue if the existing data value is equal to the new data value and type is not FILE", async () => {
         const useCase = givenSaveDataFormValueUseCase();
         const dataValue = dataValueText;
         givenExistingDataValue(dataValue);
 
         const stubDataValueStore = instance(mockDataValueStore);
 
-        const result = await useCase.execute(stubDataValueStore, dataValue);
+        const result = await useCase.execute(stubDataValueStore, dataValue, []);
 
         verify(mockDataValueStore.get(dataValue.dataElement, dataValue)).once();
         verify(mockDataValueStore.set(anything())).never();
         verify(mockDataValueRepository.save(anything())).never();
-        expect(result).toBe(stubDataValueStore);
+        expect(result).toBe(dataValue);
     });
 
-    it("updates the store with the new data value and saves it", async () => {
+    it("returns the updated dataValue after saving", async () => {
         const useCase = givenSaveDataFormValueUseCase();
         const dataValue = dataValueText;
         const saveDataValue = { ...dataValueText, value: "20" };
@@ -37,12 +37,11 @@ describe("SaveDataFormValueUseCase", () => {
         givenSavedDataValue(saveDataValue);
 
         const dataValueStore = DataValueStore.from([dataValue]);
-        const saveDataValueStore = DataValueStore.from([saveDataValue]);
 
-        const result = await useCase.execute(dataValueStore, saveDataValue);
+        const result = await useCase.execute(dataValueStore, saveDataValue, []);
 
         verify(mockDataValueRepository.save(deepEqual(saveDataValue))).once();
-        expect(result).toStrictEqual(saveDataValueStore);
+        expect(result).toStrictEqual(saveDataValue);
     });
 
     it("updates the store with the new FILE data value and saves it", async () => {
@@ -61,12 +60,11 @@ describe("SaveDataFormValueUseCase", () => {
         givenSavedDataValue(saveDataValue);
 
         const dataValueStore = DataValueStore.from([dataValue]);
-        const saveDataValueStore = DataValueStore.from([saveDataValue]);
 
-        const result = await useCase.execute(dataValueStore, saveDataValue);
+        const result = await useCase.execute(dataValueStore, saveDataValue, []);
 
         verify(mockDataValueRepository.save(deepEqual(saveDataValue))).once();
-        expect(result).toStrictEqual(saveDataValueStore);
+        expect(result).toStrictEqual(saveDataValue);
     });
 });
 

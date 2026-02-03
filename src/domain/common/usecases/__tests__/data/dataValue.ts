@@ -13,33 +13,39 @@ export const dataElement: Omit<DataElement, "type"> = {
     categoryCombos: {
         id: "1",
         name: "Combo",
+        categories: [],
         categoryOptionCombos: [
             {
                 id: "1",
                 name: "Option Combo",
                 shortName: "OC",
                 formName: undefined,
+                categoryOptions: [],
+                originalName: "Option Combo",
             },
         ],
     },
     categoryOptionCombos: [],
     rules: [],
+    deleteRules: [],
     htmlText: undefined,
     related: undefined,
+    disabled: false,
 };
 
 export const dataValueText: DataValueTextSingle = {
-    dataElement: { ...dataElement, type: "TEXT" },
+    dataElement: { ...dataElement, type: "TEXT", isLongText: false },
     period: "202101",
     orgUnitId: "ou1",
     categoryOptionComboId: "coc1",
     isMultiple: false,
     type: "TEXT",
     value: "10",
+    isRequired: false,
 };
 
 export const dataValueTextMultiple: DataValueTextMultiple = {
-    dataElement: { ...dataElement, id: "de1", code: "de1", type: "TEXT" },
+    dataElement: { ...dataElement, id: "de1", code: "de1", type: "TEXT", isLongText: false },
     period: "202101",
     orgUnitId: "ou1",
     categoryOptionComboId: "coc1",
@@ -63,6 +69,7 @@ export const dataValueNumberSingle: DataValueNumberSingle = {
     value: "10",
     type: "NUMBER",
     isMultiple: false,
+    isRequired: false,
 };
 
 export const dataValueFile: DataValueFile = {
@@ -78,4 +85,5 @@ export const dataValueFile: DataValueFile = {
         size: 1024,
         url: "/path/to/file",
     },
+    isRequired: false,
 };
