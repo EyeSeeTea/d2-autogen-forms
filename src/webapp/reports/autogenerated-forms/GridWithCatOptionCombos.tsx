@@ -75,8 +75,21 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                         <CustomDataTableColumnHeader
                             backgroundColor={section.styles.columns.backgroundColor}
                             width="400px"
-                            colSpan={`${grid.hasIndicatorsBefore ? "3" : "2"}`}
+                            colSpan="2"
                         ></CustomDataTableColumnHeader>
+
+                        {grid.hasIndicatorsBefore && (
+                            <CustomDataTableColumnHeader
+                                backgroundColor={section.styles.columns.backgroundColor}
+                                key="column-indicators-before"
+                            >
+                                {grid.indicatorsConfig.before?.headers.map(indicatorHeader => (
+                                    <span className={classes.header} key={indicatorHeader}>
+                                        {indicatorHeader}
+                                    </span>
+                                ))}
+                            </CustomDataTableColumnHeader>
+                        )}
 
                         {grid.periods.length > 0 && (
                             <CustomDataTableColumnHeader
@@ -105,8 +118,14 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                         {grid.hasIndicatorsAfter && (
                             <CustomDataTableColumnHeader
                                 backgroundColor={section.styles.columns.backgroundColor}
-                                key="column-indicators"
-                            ></CustomDataTableColumnHeader>
+                                key="column-indicators-after"
+                            >
+                                {grid.indicatorsConfig.after?.headers.map(indicatorHeader => (
+                                    <span className={classes.header} key={indicatorHeader}>
+                                        {indicatorHeader}
+                                    </span>
+                                ))}
+                            </CustomDataTableColumnHeader>
                         )}
 
                         {showRowTotals && (

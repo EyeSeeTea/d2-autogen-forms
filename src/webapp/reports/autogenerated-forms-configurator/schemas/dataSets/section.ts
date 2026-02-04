@@ -58,6 +58,28 @@ export const sectionSchema = (
         },
     };
 
+    const indicatorsConfigBeforeOrAfterSchema = {
+        type: "object",
+        properties: {
+            headers: {
+                type: "array",
+                items: {
+                    oneOf: [
+                        { type: "string" },
+                        {
+                            type: "object",
+                            properties: {
+                                code: { type: "string", enum: constantCodes },
+                            },
+                            required: ["code"],
+                        },
+                    ],
+                },
+            },
+        },
+        required: ["headers"],
+    };
+
     const sectionProperties = {
         indicators: {
             type: "object",
@@ -82,6 +104,8 @@ export const sectionSchema = (
                     type: "string",
                     enum: ["start", "end"],
                 },
+                before: indicatorsConfigBeforeOrAfterSchema,
+                after: indicatorsConfigBeforeOrAfterSchema,
             },
         },
         columnsDescriptions: mergeArrayWithSchema(columnsDescriptions, textSchema(constantCodes)),

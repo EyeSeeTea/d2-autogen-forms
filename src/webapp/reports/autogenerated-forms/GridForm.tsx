@@ -123,7 +123,13 @@ const GridForm: React.FC<GridFormProps> = props => {
                                 <CustomDataTableColumnHeader
                                     backgroundColor={section.styles.columns.backgroundColor}
                                     key="column-indicators-before"
-                                ></CustomDataTableColumnHeader>
+                                >
+                                    {grid.indicatorsConfig.before?.headers.map(indicatorHeader => (
+                                        <span className={classes.header} key={indicatorHeader}>
+                                            {indicatorHeader}
+                                        </span>
+                                    ))}
+                                </CustomDataTableColumnHeader>
                             )}
 
                             {grid.columns.map(column => {
@@ -151,7 +157,13 @@ const GridForm: React.FC<GridFormProps> = props => {
                                 <CustomDataTableColumnHeader
                                     backgroundColor={section.styles.columns.backgroundColor}
                                     key="column-indicators-after"
-                                ></CustomDataTableColumnHeader>
+                                >
+                                    {grid.indicatorsConfig.after?.headers.map(indicatorHeader => (
+                                        <span className={classes.header} key={indicatorHeader}>
+                                            {indicatorHeader}
+                                        </span>
+                                    ))}
+                                </CustomDataTableColumnHeader>
                             )}
                         </DataTableRow>
                     </TableHead>
