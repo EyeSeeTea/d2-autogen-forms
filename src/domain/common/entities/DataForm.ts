@@ -138,7 +138,8 @@ export interface SectionGrid extends SectionBase {
     columnsOrder: Maybe<ColumnOrder>;
     columnsConfig?: Record<string, { rules?: RulesFormula }>;
     firstColumnConfig: Maybe<{
-        width: number;
+        width: Maybe<number>;
+        header: Maybe<string>;
     }>;
     periods: Period[];
 }
