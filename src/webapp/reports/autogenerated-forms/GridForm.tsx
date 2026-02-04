@@ -102,7 +102,11 @@ const GridForm: React.FC<GridFormProps> = props => {
                                         width={`${firstColumnWidth}px`}
                                         position={fixColumns ? "sticky" : undefined}
                                         left={fixColumns ? "162px" : undefined}
-                                    ></CustomDataTableColumnHeader>
+                                    >
+                                        <span className={classes.header}>
+                                            {section.firstColumnConfig?.header || ""}
+                                        </span>
+                                    </CustomDataTableColumnHeader>
                                 )
                             )}
 
