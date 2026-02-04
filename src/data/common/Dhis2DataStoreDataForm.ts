@@ -430,6 +430,7 @@ const DataStoreConfigCodec = Codec.interface({
     dataElements: sectionConfig({
         disabled: optional(boolean),
         disableComments: optional(boolean),
+        mirrorFrom: optional(string),
         rules: optional(dataElementRuleCodec),
         selection: optional(
             Codec.interface({
@@ -577,6 +578,7 @@ export interface DataElementConfig {
     rules?: DataElementRule;
     disabled?: boolean;
     disableComments?: boolean;
+    mirrorFrom?: Code;
     texts?: Texts;
     selection?: {
         optionSet?: OptionSet;
@@ -1349,6 +1351,7 @@ export class Dhis2DataStoreDataForm {
                 const dataElementConfig: DataElementConfig = {
                     disabled: config.disabled,
                     disableComments: config.disableComments,
+                    mirrorFrom: config.mirrorFrom,
                     rules: config.rules,
                     texts: {
                         header: this.getTextFromConstants(config.texts?.header, constantsByCode),

@@ -155,6 +155,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                                 name: removePrefixFromName(dataSetConfig, dataElement.name),
                                 disabledComments: deConfig?.disableComments || false,
                                 disabled: deConfig?.disabled || false,
+                                mirrorFrom: deConfig?.mirrorFrom,
                                 related: deRelated
                                     ? { dataElement: deRelated, value: deHideConfig?.value || "" }
                                     : undefined,
