@@ -421,6 +421,10 @@ const dataSetRuleCodec = Codec.interface({
     }),
 });
 
+const indicatorsDirectionalConfigCodec = Codec.interface({
+    headers: array(oneOf([string, selector])),
+});
+
 const DataStoreConfigCodec = Codec.interface({
     categoryCombinations: sectionConfig({
         viewType: optional(oneOf([exactly("name"), exactly("shortName"), exactly("formName")])),
@@ -529,16 +533,8 @@ const DataStoreConfigCodec = Codec.interface({
                 indicatorsConfig: optional(
                     Codec.interface({
                         position: optional(oneOf([exactly("start"), exactly("end")])),
-                        before: optional(
-                            Codec.interface({
-                                headers: array(oneOf([string, selector])),
-                            })
-                        ),
-                        after: optional(
-                            Codec.interface({
-                                headers: array(oneOf([string, selector])),
-                            })
-                        ),
+                        before: optional(indicatorsDirectionalConfigCodec),
+                        after: optional(indicatorsDirectionalConfigCodec),
                     })
                 ),
                 virtualColumns: optional(
