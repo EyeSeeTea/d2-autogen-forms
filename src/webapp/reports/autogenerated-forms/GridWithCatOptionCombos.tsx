@@ -121,7 +121,7 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                 </TableHead>
 
                 <TableBody>
-                    {grid.indicatorsPosition === "start" && NonDirectionalIndicators}
+                    {grid.indicatorsConfig.position === "start" && NonDirectionalIndicators}
 
                     {grid.rows.map(row => {
                         const { groupDescription, groupName, rows } = row;
@@ -212,7 +212,7 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                         ));
                     })}
 
-                    {grid.indicatorsPosition === "end" && NonDirectionalIndicators}
+                    {grid.indicatorsConfig.position === "end" && NonDirectionalIndicators}
 
                     {grid.summary.map(summary => (
                         <DataTableRow key={`${summary.cellName}-totals`}>

@@ -75,9 +75,14 @@ export const sectionSchema = (
                 },
             },
         },
-        indicatorsPosition: {
-            type: "string",
-            enum: ["start", "end"],
+        indicatorsConfig: {
+            type: "object",
+            properties: {
+                position: {
+                    type: "string",
+                    enum: ["start", "end"],
+                },
+            },
         },
         columnsDescriptions: mergeArrayWithSchema(columnsDescriptions, textSchema(constantCodes)),
         groupDescriptions: {

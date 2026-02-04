@@ -50,7 +50,7 @@ export type Grid = GridComponents & {
     hasIndicatorsBefore: boolean;
     hasIndicatorsAfter: boolean;
     nonDirectionalIndicators: Indicator[];
-    indicatorsPosition: Section["indicatorsPosition"];
+    indicatorsConfig: Section["indicatorsConfig"];
 };
 
 type GridComponents = {
@@ -120,7 +120,7 @@ export class GridViewModel {
         const dataElements = getDataElementsWithIndexProccessing(section);
         const { columns, rows, summary } = this.getGridComponents(section, dataFormInfo, dataElements, viewType);
         const indicatorIndexOffset =
-            section.indicatorsPosition === "start" ? 0 : viewType === "grid" ? rows.length : dataElements.length;
+            section.indicatorsConfig.position === "start" ? 0 : viewType === "grid" ? rows.length : dataElements.length;
         const indicators = this.getIndicators(section).map((indicator, index) =>
             getIndexedIndicator(section, dataFormInfo, indicator, indicatorIndexOffset + index + 1)
         );
@@ -177,7 +177,7 @@ export class GridViewModel {
             hasIndicatorsBefore,
             hasIndicatorsAfter,
             nonDirectionalIndicators,
-            indicatorsPosition: section.indicatorsPosition,
+            indicatorsConfig: section.indicatorsConfig,
         };
     }
 

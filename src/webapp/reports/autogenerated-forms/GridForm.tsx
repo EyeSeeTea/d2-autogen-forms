@@ -157,7 +157,7 @@ const GridForm: React.FC<GridFormProps> = props => {
                     </TableHead>
 
                     <TableBody>
-                        {grid.indicatorsPosition === "start" && NonDirectionalIndicators}
+                        {grid.indicatorsConfig.position === "start" && NonDirectionalIndicators}
 
                         {grid.rows.map((row, idx) => {
                             return (
@@ -264,7 +264,7 @@ const GridForm: React.FC<GridFormProps> = props => {
                             </DataTableRow>
                         ))}
 
-                        {grid.indicatorsPosition === "end" && NonDirectionalIndicators}
+                        {grid.indicatorsConfig.position === "end" && NonDirectionalIndicators}
                     </TableBody>
                 </DataTable>
             </div>

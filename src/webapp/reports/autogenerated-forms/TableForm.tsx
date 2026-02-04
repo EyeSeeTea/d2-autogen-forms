@@ -77,7 +77,7 @@ const TableForm: React.FC<TableFormProps> = React.memo(props => {
                 </TableHead>
 
                 <TableBody>
-                    {section.indicatorsPosition === "start" && Indicators}
+                    {section.indicatorsConfig.position === "start" && Indicators}
 
                     {section.dataElements.map(dataElement => {
                         return (
@@ -153,7 +153,7 @@ const TableForm: React.FC<TableFormProps> = React.memo(props => {
                         </DataTableRow>
                     ))}
 
-                    {section.indicatorsPosition === "end" && Indicators}
+                    {section.indicatorsConfig.position === "end" && Indicators}
                 </TableBody>
             </DataTable>
         </DataTableSection>
