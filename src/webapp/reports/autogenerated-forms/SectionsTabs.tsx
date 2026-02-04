@@ -8,6 +8,7 @@ import {
     SectionWithTotals,
     SectionWithSubnationals,
     SectionSimple,
+    SectionDisaggregatedCocs,
     SectionGrid,
     SectionWithIndicatorsCalculated,
     SectionWithCategoryColumns,
@@ -98,7 +99,7 @@ function TypeSwitch(props: TypeSwitchProps) {
                 <DisaggregatedCOCsGrid
                     key={`${section.id}+tab`}
                     dataFormInfo={dataFormInfo}
-                    section={section as SectionSimple}
+                    section={section as SectionDisaggregatedCocs}
                 />
             );
 

@@ -43,6 +43,7 @@ export interface DataSetConfig {
 
 export type SectionConfig =
     | BasicSectionConfig
+    | DisaggregatedCocsSectionConfig
     | GridSectionConfig
     | GridWithPeriodsSectionConfig
     | GridWithTotalsSectionConfig
@@ -104,6 +105,7 @@ interface BaseSectionConfig {
     totals?: Record<string, SectionTotals>;
     toggleMultiple: Maybe<ToggleMultiple>;
     indicators?: Record<Code, IndicatorConfig>;
+    indicatorsPosition: "start" | "end";
     fixedHeaders: boolean;
     fixedRowNames: boolean;
     enableTopScroll: boolean;
@@ -121,8 +123,13 @@ const dataElementsToExcludeCodec = Codec.interface({
 });
 
 interface BasicSectionConfig extends BaseSectionConfig {
-    viewType: "grid-with-combos" | "matrix-grid" | "grid-disaggregated-cocs";
+    viewType: "grid-with-combos" | "matrix-grid";
     columnsConfig?: Record<string, { rules?: FromRulesFormulaCodec }>;
+}
+
+interface DisaggregatedCocsSectionConfig extends BaseSectionConfig {
+    viewType: "grid-disaggregated-cocs";
+    rowsConfig: Maybe<RowsConfig>;
 }
 
 interface GridSectionConfig extends BaseSectionConfig {
@@ -137,7 +144,8 @@ interface GridSectionConfig extends BaseSectionConfig {
         }
     >;
     firstColumnConfig?: {
-        width: number;
+        width: Maybe<number>;
+        header: Maybe<string>;
     };
     periods: Period[];
 }
@@ -184,10 +192,12 @@ export type GridIndicatorsCalculatedRow = {
 
 type GridColumnsConfig = Record<string, { rules?: FromRulesFormulaCodec }>;
 
+type RowsConfig = Record<string, { cellsVisible?: boolean; rowNameConstant?: string; hide?: boolean }>;
+
 interface GridCategoryColumnsConfig extends BaseSectionConfig {
     viewType: "grid-category-columns";
     categoriesColumns: CategoryColumnConfig[];
-    rowsConfig: Maybe<Record<string, { cellsVisible?: boolean; rowNameConstant?: string }>>;
+    rowsConfig: Maybe<RowsConfig>;
     singleCategoryInColumns: boolean;
     categoryOptionFilter: Maybe<CategoryOptionFilter>;
     dataElementsToExclude: Maybe<DataElementsToExclude[]>;
@@ -451,12 +461,18 @@ const DataStoreConfigCodec = Codec.interface({
             sectionConfig({
                 dataElementsToExclude: optional(array(dataElementsToExcludeCodec)),
                 categoryOptionFilter: optional(categoryOptionFilterConfigCodec),
-                firstColumnConfig: optional(Codec.interface({ width: number })),
+                firstColumnConfig: optional(
+                    Codec.interface({ width: optional(number), header: optional(oneOf([string, selector])) })
+                ),
                 singleCategoryInColumns: optional(boolean),
                 rowsConfig: optional(
                     record(
                         string,
-                        Codec.interface({ cellsVisible: optional(boolean), rowNameConstant: optional(string) })
+                        Codec.interface({
+                            cellsVisible: optional(boolean),
+                            rowNameConstant: optional(string),
+                            hide: optional(boolean),
+                        })
                     )
                 ),
                 categoriesColumns: optional(array(Codec.interface({ dataElementCode: string, categoryCode: string }))),
@@ -509,6 +525,7 @@ const DataStoreConfigCodec = Codec.interface({
                         ),
                     })
                 ),
+                indicatorsPosition: optional(oneOf([exactly("start"), exactly("end")])),
                 virtualColumns: optional(
                     array(
                         oneOf([
@@ -960,6 +977,15 @@ export class Dhis2DataStoreDataForm {
             .compact()
             .value();
 
+        const firstColumnHeaderCodes = _(storeConfig.dataSets)
+            .values()
+            .flatMap(dataSet => _.values(dataSet.sections))
+            .map(section => section.firstColumnConfig?.header)
+            .compact()
+            .map(header => (typeof header !== "string" ? header.code : undefined))
+            .compact()
+            .value();
+
         const virtualCodes = virtualColumnsCodes.concat(virtualRowsCodes).concat(rowNamesKeys);
 
         const dataSetRulesCodes = _(storeConfig.dataSets)
@@ -980,7 +1006,7 @@ export class Dhis2DataStoreDataForm {
         ])
             .map(v => (typeof v !== "string" && !Array.isArray(v) ? v?.code : undefined))
             .compact()
-            .concat([...descriptionCodes, ...totalsCodes, ...dataSetRulesCodes])
+            .concat([...descriptionCodes, ...totalsCodes, ...dataSetRulesCodes, ...firstColumnHeaderCodes])
             .uniq()
             .value();
 
@@ -1091,6 +1117,7 @@ export class Dhis2DataStoreDataForm {
                     totals: this.getSectionTotals(sectionConfig, constantsByCode),
                     toggleMultiple: this.getToggleMultipleConfig(sectionConfig),
                     indicators: sectionConfig.indicators,
+                    indicatorsPosition: sectionConfig.indicatorsPosition || DEFAULT_INDICATORS_POSITION,
                     fixedHeaders: sectionConfig.fixedHeaders || false,
                     fixedRowNames: sectionConfig.fixedRowNames || false,
                     enableTopScroll: sectionConfig.enableTopScroll || false,
@@ -1112,6 +1139,15 @@ export class Dhis2DataStoreDataForm {
                     case "table":
                     case "grid":
                     case "grid-with-totals": {
+                        const firstColumnConfig = sectionConfig.firstColumnConfig
+                            ? {
+                                  ...sectionConfig.firstColumnConfig,
+                                  header: this.getTextFromConstants(
+                                      sectionConfig.firstColumnConfig.header,
+                                      constantsByCode
+                                  ),
+                              }
+                            : undefined;
                         const config = {
                             ...baseConfig,
                             viewType,
@@ -1119,7 +1155,7 @@ export class Dhis2DataStoreDataForm {
                             columnsOrder: sectionConfig.columnsOrder,
                             enableGroups: sectionConfig.enableGroups || false,
                             columnsConfig: sectionConfig.columnsConfig,
-                            firstColumnConfig: sectionConfig.firstColumnConfig,
+                            firstColumnConfig: firstColumnConfig,
                             periods: getSectionPeriods(viewType, period, sectionConfig.periods, periodType),
                         };
                         return [section.id, config] as [typeof section.id, typeof config];
@@ -1154,6 +1190,10 @@ export class Dhis2DataStoreDataForm {
                             categoryOptionFilter: sectionConfig.categoryOptionFilter,
                             dataElementsToExclude: sectionConfig.dataElementsToExclude ?? [],
                         };
+                        return [section.id, config] as [typeof section.id, typeof config];
+                    }
+                    case "grid-disaggregated-cocs": {
+                        const config = { ...baseConfig, viewType, rowsConfig: sectionConfig.rowsConfig };
                         return [section.id, config] as [typeof section.id, typeof config];
                     }
                     default: {
@@ -1389,3 +1429,5 @@ export type SubNational = {
     parentId: Id;
     name: string;
 };
+
+export const DEFAULT_INDICATORS_POSITION = "end" as const;

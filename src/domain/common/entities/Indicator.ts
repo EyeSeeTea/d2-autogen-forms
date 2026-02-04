@@ -1,5 +1,6 @@
 import { Maybe } from "../../../utils/ts-utils";
 import { Code, Id } from "./Base";
+import { SectionBase } from "./DataForm";
 
 export type Indicator = {
     id: Id;
@@ -14,8 +15,18 @@ export function checkIndicatorDirection(indicator: Indicator, direction: Indicat
     return indicator.dataElement?.direction === direction;
 }
 
+export function isNonDirectionalIndicator(indicator: Indicator): boolean {
+    return !checkIndicatorDirection(indicator, "before") && !checkIndicatorDirection(indicator, "after");
+}
+
 export function getIndicatorRelatedToDataElement(indicators: Indicator[], code: Code): Maybe<Indicator> {
     return indicators.find(indicator => indicator.dataElement?.code === code);
+}
+
+export function getNonDirectionalIndicatorsCountAtSectionStart(section: SectionBase): number {
+    return section.indicatorsPosition === "start"
+        ? section.indicators.filter(indicator => isNonDirectionalIndicator(indicator)).length
+        : 0;
 }
 
 export type IndicatorDirection = "after" | "before";
