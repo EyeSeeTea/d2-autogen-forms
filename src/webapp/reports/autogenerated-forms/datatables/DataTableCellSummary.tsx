@@ -14,13 +14,14 @@ export type DataTableCellSummaryProps = {
     dataElements: CellTotal[];
     styles: SectionStyle;
     dataFormInfo: DataFormInfo;
+    period?: Period;
 };
 
 export const DataTableCellSummary: React.FC<DataTableCellSummaryProps> = props => {
-    const { dataFormInfo, styles, dataElements } = props;
+    const { dataFormInfo, styles, dataElements, period } = props;
     const totalCalculated = _(dataElements)
         .map(cellTotal => {
-            const values = cellTotal.items.map(itemTotal => getItemTotalDataValue(dataFormInfo, itemTotal));
+            const values = cellTotal.items.map(itemTotal => getItemTotalDataValue(dataFormInfo, itemTotal, period));
             const compiled = _.template(cellTotal.formula);
             return compiled(_.merge({}, ...values));
         })
