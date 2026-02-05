@@ -38,18 +38,12 @@ export function getSectionVisibilityState(
         sectionTotalRules.length === 0
             ? true
             : sectionTotalRules.map(rule => evaluateTotalRule(rule, dataFormInfo)).some(value => value);
+    const toggleMultipleState = toggleMultiple ? evaluateToggleMultipleState(dataFormInfo, toggleMultiple) : undefined;
 
     const isDisabled = (() => {
         if (toggle.type === "none" && !toggleMultiple) return false;
         if (toggleMultiple) {
-            const isVisibleFromToggleMultiple = evaluateToggleMultiple(dataFormInfo, toggleMultiple);
-            if (!isVisibleFromToggleMultiple) {
-                const hasDisabledFlag =
-                    toggleMultiple.toggleDataElements.some(t => t.dataElement.disabled) ||
-                    toggleMultiple.orgUnitConditions.some(condition => condition.disabled);
-                return hasDisabledFlag;
-            }
-            return false;
+            return toggleMultipleState?.isVisible ? Boolean(toggleMultipleState?.isDisabled) : false;
         }
         return toggle.type !== "none" ? toggle.disabled : false;
     })();
@@ -59,14 +53,7 @@ export function getSectionVisibilityState(
         if (toggle.type === "dataElementExternal" && !isOpen) return false;
         if (sectionTotalRules.length > 0 && !isVisibleFromTotals) return false;
         if (toggleMultiple) {
-            const isVisibleFromToggleMultiple = evaluateToggleMultiple(dataFormInfo, toggleMultiple);
-            if (!isVisibleFromToggleMultiple) {
-                const hasDisabledFlag =
-                    toggleMultiple.toggleDataElements.some(t => t.dataElement.disabled) ||
-                    toggleMultiple.orgUnitConditions.some(condition => condition.disabled);
-                return hasDisabledFlag;
-            }
-            return true;
+            return Boolean(toggleMultipleState?.isVisible);
         }
 
         return true;
@@ -90,23 +77,44 @@ function evaluateSectionOpenState(toggle: Section["toggle"], dataFormInfo: DataF
     }
 }
 
-function evaluateToggleMultiple(dataFormInfo: DataFormInfo, toggleMultiple: DataElementToggle): boolean {
+type ToggleMultipleConditionState = {
+    isMatch: boolean;
+    isDisabled: boolean;
+    affectsVisibility: boolean;
+};
+
+function evaluateToggleMultipleState(
+    dataFormInfo: DataFormInfo,
+    toggleMultiple: DataElementToggle
+): { isVisible: boolean; isDisabled: boolean } {
     const currentOrgUnitCode = dataFormInfo.orgUnit.code;
     const { logicalOperator, toggleDataElements, orgUnitConditions } = toggleMultiple;
-    const toggleConditions = [
-        ...toggleDataElements.map(toggle => () => evaluateToggleCondition(toggle, dataFormInfo, currentOrgUnitCode)),
-        ...orgUnitConditions.map(condition => () =>
-            evaluateOrgUnitCondition(condition.orgUnitCodes, condition.condition, currentOrgUnitCode)
-        ),
+    const conditions: ToggleMultipleConditionState[] = [
+        ...toggleDataElements.map(toggle => {
+            const isMatch = evaluateToggleCondition(toggle, dataFormInfo, currentOrgUnitCode);
+            const isDisabled = Boolean(toggle.dataElement.disabled);
+            return { isMatch, isDisabled, affectsVisibility: !isDisabled };
+        }),
+        ...orgUnitConditions.map(condition => {
+            const isMatch = evaluateOrgUnitCondition(condition.orgUnitCodes, condition.condition, currentOrgUnitCode);
+            const isDisabled = Boolean(condition.disabled);
+            return { isMatch, isDisabled, affectsVisibility: !isDisabled };
+        }),
     ];
-    if (toggleConditions.length === 0) return true;
 
-    switch (logicalOperator) {
-        case "AND":
-            return toggleConditions.every(evaluateCondition => evaluateCondition());
-        case "OR":
-            return toggleConditions.some(evaluateCondition => evaluateCondition());
-    }
+    const visibilityConditions = conditions.filter(condition => condition.affectsVisibility);
+    const isVisible = (() => {
+        if (visibilityConditions.length === 0) return true;
+        switch (logicalOperator) {
+            case "AND":
+                return visibilityConditions.every(condition => condition.isMatch);
+            case "OR":
+                return visibilityConditions.some(condition => condition.isMatch);
+        }
+    })();
+
+    const isDisabled = conditions.some(condition => condition.isDisabled && condition.isMatch);
+    return { isVisible, isDisabled };
 }
 
 function evaluateToggleCondition(
