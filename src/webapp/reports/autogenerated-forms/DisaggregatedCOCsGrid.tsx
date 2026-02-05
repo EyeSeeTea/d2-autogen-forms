@@ -142,7 +142,7 @@ const DisaggregatedCOCsGrid: React.FC<DisaggregatedCOCsGridProps> = props => {
                 </TableHead>
 
                 <TableBody>
-                    {section.indicatorsPosition === "start" && Indicators}
+                    {section.indicatorsConfig.position === "start" && Indicators}
                     {grid.rows.map(row => (
                         <DataTableRow key={row.name}>
                             <CustomDataTableCell backgroundColor={section.styles.rows.backgroundColor}>
@@ -229,7 +229,7 @@ const DisaggregatedCOCsGrid: React.FC<DisaggregatedCOCsGridProps> = props => {
                             )}
                         </DataTableRow>
                     ))}
-                    {section.indicatorsPosition === "end" && Indicators}
+                    {section.indicatorsConfig.position === "end" && Indicators}
                 </TableBody>
             </DataTable>
         </DataTableSection>
