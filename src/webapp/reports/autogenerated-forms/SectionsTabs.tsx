@@ -356,7 +356,6 @@ const useStyles = makeStyles({
 });
 
 const StyledAppBar = styled(AppBar)`
-    inset-block-start: 48px !important;
     z-index: 100 !important;
 `;
 
