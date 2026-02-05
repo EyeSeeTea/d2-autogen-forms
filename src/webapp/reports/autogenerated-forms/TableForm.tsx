@@ -11,7 +11,6 @@ import {
     DataTableRow,
     TableBody, // @ts-ignore
 } from "@dhis2/ui";
-import { makeStyles } from "@material-ui/core";
 import DataTableSection from "./DataTableSection";
 import { CustomDataTableCell, CustomDataTableColumnHeader } from "./datatables/CustomDataTables";
 import { DataTableCellRowName } from "./datatables/DataTableCellRowName";
@@ -32,7 +31,6 @@ const TableForm: React.FC<TableFormProps> = React.memo(props => {
         () => GridViewModel.get(props.section, dataFormInfo, "table"),
         [props.section, dataFormInfo]
     );
-    const classes = useStyles();
 
     const Indicators = section.indicators.map(indicator => {
         return (
@@ -50,17 +48,11 @@ const TableForm: React.FC<TableFormProps> = React.memo(props => {
             <DataTable>
                 <TableHead>
                     <DataTableRow>
-                        {!_.isEmpty(section.columns) && (
-                            <CustomDataTableColumnHeader
-                                backgroundColor={props.section.styles.columns.backgroundColor}
-                                colSpan={section.dataEntryPeriod ? "1" : "2"}
-                            >
-                                <span className={classes.header}>{section.name}</span>
-                            </CustomDataTableColumnHeader>
-                        )}
-
                         {section.dataEntryPeriod && (
                             <>
+                                <CustomDataTableColumnHeader
+                                    backgroundColor={props.section.styles.columns.backgroundColor}
+                                ></CustomDataTableColumnHeader>
                                 <CustomDataTableColumnHeader
                                     backgroundColor={props.section.styles.columns.backgroundColor}
                                     width="50px"
@@ -158,13 +150,6 @@ const TableForm: React.FC<TableFormProps> = React.memo(props => {
             </DataTable>
         </DataTableSection>
     );
-});
-
-const useStyles = makeStyles({
-    wrapper: { margin: 10 },
-    header: { fontSize: "1.4em", fontWeight: "bold" as const },
-    center: { display: "table", margin: "0 auto" },
-    tableStyles: { backgroundColor: "aqua !important" },
 });
 
 export default React.memo(TableForm);
