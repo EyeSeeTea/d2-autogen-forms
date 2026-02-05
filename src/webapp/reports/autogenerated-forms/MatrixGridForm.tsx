@@ -42,11 +42,11 @@ const MatrixGridForm: React.FC<MatrixGridFormProps> = props => {
                         ))}
                     </DataTableRow>
                     <DataTableRow>
-                        {grid.columns.map(column => (
+                        {grid.columns.map((column, i) => (
                             <CustomDataTableColumnHeader
                                 backgroundColor={props.section.styles.columns.backgroundColor}
                                 colSpan={"2"}
-                                key={column.columnDescription}
+                                key={`${column.columnDescription}-${i}`}
                             >
                                 <span>{column.columnDescription}</span>
                             </CustomDataTableColumnHeader>

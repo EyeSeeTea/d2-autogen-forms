@@ -375,7 +375,9 @@ const FadedOverlay = styled.div<{ hidden?: boolean }>`
     opacity: ${props => (props.hidden ? 0 : 1)};
 `;
 
-const StyledIconButton = styled(IconButton)<Omit<ScrollButtonProps, "handleScroll">>`
+const StyledIconButton = styled(IconButton).withConfig({
+    shouldForwardProp: prop => !["showLeftFade", "showRightFade", "direction"].includes(prop),
+})<Omit<ScrollButtonProps, "handleScroll">>`
     opacity: ${props =>
         (!props.showLeftFade && props.direction === "left") || (!props.showRightFade && props.direction === "right")
             ? 0.5
