@@ -24,7 +24,7 @@ export function getIndicatorRelatedToDataElement(indicators: Indicator[], code: 
 }
 
 export function getNonDirectionalIndicatorsCountAtSectionStart(section: SectionBase): number {
-    return section.indicatorsPosition === "start"
+    return section.indicatorsConfig.position === "start"
         ? section.indicators.filter(indicator => isNonDirectionalIndicator(indicator)).length
         : 0;
 }

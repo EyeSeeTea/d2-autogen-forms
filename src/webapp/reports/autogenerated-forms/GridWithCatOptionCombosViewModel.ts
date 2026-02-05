@@ -35,7 +35,7 @@ export interface Grid {
     hasIndicatorsBefore: boolean;
     hasIndicatorsAfter: boolean;
     nonDirectionalIndicators: Indicator[];
-    indicatorsPosition: Section["indicatorsPosition"];
+    indicatorsConfig: Section["indicatorsConfig"];
 }
 
 interface SubSectionGrid {
@@ -128,7 +128,7 @@ export class GridWithCatOptionCombosViewModel {
         const columns = GridWithCatOptionCombosViewModel.getColumns(subsections, section, dataFormInfo, rows);
         const summary = GridWithCatOptionCombosViewModel.getSummary(section, columns, dataFormInfo);
 
-        const indicatorIndexOffset = section.indicatorsPosition === "start" ? 0 : section.dataElements.length;
+        const indicatorIndexOffset = section.indicatorsConfig.position === "start" ? 0 : section.dataElements.length;
         let nonDataElementIndex = 0;
         const indicators = section.indicators.map(indicator => {
             const indexOverride = indicator.dataElement ? undefined : indicatorIndexOffset + ++nonDataElementIndex;
@@ -157,7 +157,7 @@ export class GridWithCatOptionCombosViewModel {
             hasIndicatorsBefore,
             hasIndicatorsAfter,
             nonDirectionalIndicators,
-            indicatorsPosition: section.indicatorsPosition,
+            indicatorsConfig: section.indicatorsConfig,
         };
     }
 
