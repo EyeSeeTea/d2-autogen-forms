@@ -19,7 +19,7 @@ import { GridViewModel } from "./GridFormViewModel";
 import { getIndexedLabel } from "./DataTableSection";
 import { Period, PeriodType } from "../../../domain/common/entities/Period";
 import { isToggleMultipleDeDisabled } from "../../../domain/common/entities/ToggleMultiple";
-import { getIndexedIndicator } from "./indicatorIndexing";
+import { getIndexedIndicator } from "./utils/indicatorIndexing";
 
 export interface GridWithPeriodsI {
     id: string;

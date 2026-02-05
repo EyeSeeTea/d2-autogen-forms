@@ -17,6 +17,7 @@ import { DataTableCellRowTotal } from "./datatables/DataTableCellRowTotal";
 import { Html } from "./Html";
 import { checkVisibleRule } from "./hooks/useApplyRules";
 import { DataElement } from "../../../domain/common/entities/DataElement";
+import { RowIndicatorItem } from "../../components/IndicatorItem/IndicatorItem";
 
 type DisaggregatedCOCsGridProps = {
     dataFormInfo: DataFormInfo;
@@ -54,6 +55,18 @@ const DisaggregatedCOCsGrid: React.FC<DisaggregatedCOCsGridProps> = props => {
 
     const showRowTotals = section.showRowTotals;
     const { getColSpan, isDataElementVisible } = useGridLayout(grid, dataFormInfo);
+
+    const Indicators = grid.indicators.map(indicator => {
+        return (
+            <RowIndicatorItem
+                key={`parent_${indicator.id}`}
+                indicator={indicator}
+                colSpan="0"
+                dataFormInfo={dataFormInfo}
+                periods={[dataFormInfo.period]}
+            />
+        );
+    });
 
     return (
         <DataTableSection section={grid} dataFormInfo={dataFormInfo} sectionStyles={section.styles}>
@@ -129,6 +142,7 @@ const DisaggregatedCOCsGrid: React.FC<DisaggregatedCOCsGridProps> = props => {
                 </TableHead>
 
                 <TableBody>
+                    {section.indicatorsPosition === "start" && Indicators}
                     {grid.rows.map(row => (
                         <DataTableRow key={row.name}>
                             <CustomDataTableCell backgroundColor={section.styles.rows.backgroundColor}>
@@ -182,7 +196,6 @@ const DisaggregatedCOCsGrid: React.FC<DisaggregatedCOCsGridProps> = props => {
                                 })}
                         </DataTableRow>
                     ))}
-
                     {grid.summary.map(summary => (
                         <DataTableRow key={`${summary.cellName}-totals`}>
                             <CustomDataTableCell
@@ -216,6 +229,7 @@ const DisaggregatedCOCsGrid: React.FC<DisaggregatedCOCsGridProps> = props => {
                             )}
                         </DataTableRow>
                     ))}
+                    {section.indicatorsPosition === "end" && Indicators}
                 </TableBody>
             </DataTable>
         </DataTableSection>

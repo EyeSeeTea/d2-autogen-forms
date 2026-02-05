@@ -9,18 +9,20 @@ import { DataValueNumberSingle, Period } from "../../../../domain/common/entitie
 import { CustomInput } from "../widgets/NumberWidget";
 import { Maybe } from "../../../../utils/ts-utils";
 import { getItemTotalDataValue } from "./DataTableCellFormula";
+import { resolveDataElement } from "../utils/resolveDataElement";
 
 export type DataTableCellSummaryProps = {
     dataElements: CellTotal[];
     styles: SectionStyle;
     dataFormInfo: DataFormInfo;
+    period?: Period;
 };
 
 export const DataTableCellSummary: React.FC<DataTableCellSummaryProps> = props => {
-    const { dataFormInfo, styles, dataElements } = props;
+    const { dataFormInfo, styles, dataElements, period } = props;
     const totalCalculated = _(dataElements)
         .map(cellTotal => {
-            const values = cellTotal.items.map(itemTotal => getItemTotalDataValue(dataFormInfo, itemTotal));
+            const values = cellTotal.items.map(itemTotal => getItemTotalDataValue(dataFormInfo, itemTotal, period));
             const compiled = _.template(cellTotal.formula);
             return compiled(_.merge({}, ...values));
         })
@@ -37,7 +39,8 @@ export function getValueFromDataElement(
     itemTotal: TotalItem,
     period?: Period
 ): Maybe<number> {
-    const dataValue = dataFormInfo.data.values.getOrEmpty(itemTotal.dataElement, {
+    const dataElementToRead = resolveDataElement(dataFormInfo, itemTotal.dataElement);
+    const dataValue = dataFormInfo.data.values.getOrEmpty(dataElementToRead, {
         categoryOptionComboId: itemTotal.categoryOptionCombo.id,
         orgUnitId: dataFormInfo.orgUnitId,
         period: period || dataFormInfo.period,

@@ -15,7 +15,7 @@ import {
 import { getIndexedLabel } from "./DataTableSection";
 import { Period } from "../../../domain/common/entities/Period";
 import { isToggleMultipleDeDisabled } from "../../../domain/common/entities/ToggleMultiple";
-import { getIndexedIndicator } from "./indicatorIndexing";
+import { getIndexedIndicator } from "./utils/indicatorIndexing";
 import { calculateFormula } from "./datatables/InputFormula";
 
 export interface Grid {
