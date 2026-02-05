@@ -247,6 +247,7 @@ export class GridWithPeriodsViewModel {
                         columnName: column.label,
                         formula: getFormulaByColumnName(section, "") || sectionTotal.formula || "",
                         items: columnWithDataElements,
+                        strict: sectionTotal.strict,
                     };
                 });
 
