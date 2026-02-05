@@ -33,7 +33,8 @@ import GridWithCategoryColumns from "./GridWithCategoryColumns";
 import { DebugLabel } from "../../components/debug/DebugLabel";
 
 export interface TabPanelProps {
-    sections: Section[];
+    tabbedSections: Section[];
+    untabbedSections: Section[];
     dataFormInfo: DataFormInfo;
 }
 
@@ -176,7 +177,7 @@ const ScrollButton: React.FC<ScrollButtonProps> = React.memo(props => {
 
     return (
         <StyledIconButton
-            style={{ position: "absolute", height: " max-content", width: "max-content" }}
+            style={{ position: "absolute", height: "max-content", width: "max-content" }}
             direction={direction}
             showLeftFade={showLeftFade}
             showRightFade={showRightFade}
@@ -189,7 +190,7 @@ const ScrollButton: React.FC<ScrollButtonProps> = React.memo(props => {
 });
 
 const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
-    const { sections, dataFormInfo } = props;
+    const { dataFormInfo, tabbedSections, untabbedSections } = props;
 
     const [activeTab, setActiveTab] = useState(0);
     const [showLeftFade, setShowLeftFade] = useState(false);
@@ -267,7 +268,7 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
                     scrollButtons="auto"
                     TabScrollButtonProps={{ style: { opacity: 0 } }}
                 >
-                    {sections.flatMap(section => {
+                    {tabbedSections.flatMap(section => {
                         const order = section.tabs.order;
 
                         if (isTabHeader(order)) {
@@ -310,12 +311,21 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
                             return [];
                         }
                     })}
+                    {untabbedSections.length > 0 && (
+                        <Tab
+                            key="others-tab"
+                            label="Others"
+                            id="tab-others"
+                            aria-controls="tabpanel-others"
+                            value={-1}
+                        />
+                    )}
                 </StyledTabs>
 
                 <FadedOverlay hidden={!showLeftFade} style={{ insetInlineStart: 0, transform: "rotate(180deg)" }} />
                 <FadedOverlay hidden={!showRightFade} style={{ insetInlineEnd: 0 }} />
             </StyledAppBar>
-            {sections.map(section => {
+            {tabbedSections.map(section => {
                 return (
                     <TabPanel
                         key={section.id + "TabPanel"}
@@ -325,6 +335,14 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
                     />
                 );
             })}
+            <div role="tabpanel" hidden={activeTab !== -1} id="tabpanel-others" aria-labelledby="tab-others">
+                {untabbedSections.map(section => (
+                    <React.Fragment key={section.id + "UntabbedSection"}>
+                        <DebugLabel>{section.code}</DebugLabel>
+                        <AutoFormComponent dataFormInfo={dataFormInfo} section={section} viewType={section.viewType} />
+                    </React.Fragment>
+                ))}
+            </div>
         </Box>
     );
 });
