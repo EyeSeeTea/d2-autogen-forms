@@ -14,7 +14,6 @@ import {
 import DataTableSection from "./DataTableSection";
 import { CustomDataTableCell, CustomDataTableColumnHeader } from "./datatables/CustomDataTables";
 import { DataTableCellRowName } from "./datatables/DataTableCellRowName";
-import _ from "lodash";
 import { checkIndicatorDirection } from "../../../domain/common/entities/Indicator";
 import { RowIndicatorItem } from "../../components/IndicatorItem/IndicatorItem";
 import { DataTableCellFormula } from "./datatables/DataTableCellFormula";
