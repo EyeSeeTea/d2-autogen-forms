@@ -42,9 +42,7 @@ export function getSectionVisibilityState(
 
     const isDisabled = (() => {
         if (toggle.type === "none" && !toggleMultiple) return false;
-        if (toggleMultiple) {
-            return toggleMultipleState?.isVisible ? Boolean(toggleMultipleState?.isDisabled) : false;
-        }
+        if (toggleMultipleState) return toggleMultipleState.isDisabled;
         return toggle.type !== "none" ? toggle.disabled : false;
     })();
 
@@ -52,10 +50,7 @@ export function getSectionVisibilityState(
         if (section.hidden) return !section.hidden;
         if (toggle.type === "dataElementExternal" && !isOpen) return false;
         if (sectionTotalRules.length > 0 && !isVisibleFromTotals) return false;
-        if (toggleMultiple) {
-            return Boolean(toggleMultipleState?.isVisible);
-        }
-
+        if (toggleMultipleState) return toggleMultipleState.isVisible;
         return true;
     })();
 
@@ -78,42 +73,44 @@ function evaluateSectionOpenState(toggle: Section["toggle"], dataFormInfo: DataF
 }
 
 type ToggleMultipleConditionState = {
-    isMatch: boolean;
+    isVisible: boolean;
     isDisabled: boolean;
-    affectsVisibility: boolean;
 };
 
-function evaluateToggleMultipleState(
+export function evaluateToggleMultipleState(
     dataFormInfo: DataFormInfo,
     toggleMultiple: DataElementToggle
-): { isVisible: boolean; isDisabled: boolean } {
+): ToggleMultipleConditionState {
     const currentOrgUnitCode = dataFormInfo.orgUnit.code;
     const { logicalOperator, toggleDataElements, orgUnitConditions } = toggleMultiple;
     const conditions: ToggleMultipleConditionState[] = [
         ...toggleDataElements.map(toggle => {
-            const isMatch = evaluateToggleCondition(toggle, dataFormInfo, currentOrgUnitCode);
-            const isDisabled = Boolean(toggle.dataElement.disabled);
-            return { isMatch, isDisabled, affectsVisibility: !isDisabled };
+            return {
+                isVisible: evaluateToggleCondition(toggle, dataFormInfo, currentOrgUnitCode),
+                isDisabled: toggle.dataElement.disabled,
+            };
         }),
         ...orgUnitConditions.map(condition => {
-            const isMatch = evaluateOrgUnitCondition(condition.orgUnitCodes, condition.condition, currentOrgUnitCode);
-            const isDisabled = Boolean(condition.disabled);
-            return { isMatch, isDisabled, affectsVisibility: !isDisabled };
+            return {
+                isVisible: evaluateOrgUnitCondition(condition.orgUnitCodes, condition.condition, currentOrgUnitCode),
+                isDisabled: condition.disabled,
+            };
         }),
     ];
+    if (conditions.length === 0) {
+        return { isVisible: true, isDisabled: false };
+    }
 
-    const visibilityConditions = conditions.filter(condition => condition.affectsVisibility);
-    const isVisible = (() => {
-        if (visibilityConditions.length === 0) return true;
-        switch (logicalOperator) {
-            case "AND":
-                return visibilityConditions.every(condition => condition.isMatch);
-            case "OR":
-                return visibilityConditions.some(condition => condition.isMatch);
-        }
-    })();
+    const isVisible =
+        logicalOperator === "AND"
+            ? conditions.every(condition => condition.isVisible)
+            : conditions.some(condition => condition.isVisible);
 
-    const isDisabled = conditions.some(condition => condition.isDisabled && condition.isMatch);
+    const visibleConditions = conditions.filter(condition => condition.isVisible);
+    const isDisabled =
+        logicalOperator === "AND"
+            ? visibleConditions.every(condition => condition.isDisabled)
+            : visibleConditions.some(condition => condition.isDisabled);
     return { isVisible, isDisabled };
 }
 
