@@ -77,7 +77,12 @@ const CsvSectionToDatasetSections: Record<CsvSectionColumn, readonly Code[]> = {
         "TUB_BEDAQUILINE_LINEZOLID_SUSC_TESTING_AMONG",
         "TUB_TESTING_RESISTANCE_OTHER_DRUGS_AMONG",
     ],
-    show_tbhiv: ["TUB_TB_HIV", "TUB_GLOBAL_AIDS_MONITORING"],
+    show_tbhiv: [
+        "TUB_TB_HIV",
+        "TUB_GLOBAL_AIDS_MONITORING",
+        "TUB_GLOBAL_AIDS_MONITORING_CURRENT_YEAR",
+        "TUB_GLOBAL_AIDS_MONITORING_PREVIOUS_YEAR",
+    ],
     show_treatment_outcomes: [
         "TUB_TREATMENT_OUTCOMES_TB_PATIENTS_REGISTERED",
         "TUB_TREATMENT_OUTCOMES_PEOPLE_AGED_YEARS",
