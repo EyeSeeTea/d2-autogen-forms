@@ -793,7 +793,7 @@ function getSectionBaseWithToggle(
                     },
                 };
             } else {
-                console.warn(`Data element for toggle not found in section: ${toggle.code}`);
+                console.warn(`Data element for toggle not found: ${toggle.code}`);
                 return base;
             }
         }
