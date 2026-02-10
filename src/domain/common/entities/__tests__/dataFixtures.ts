@@ -18,14 +18,18 @@ export const dataElementText: DataElementText = {
                 shortName: "OC",
                 formName: undefined,
                 categoryOptions: [],
+                originalName: "",
             },
         ],
+        categories: [],
     },
     categoryOptionCombos: [],
     rules: [],
     htmlText: undefined,
     related: undefined,
     isLongText: false,
+    deleteRules: [],
+    disabled: false,
 };
 
 export const sectionBase: Omit<SectionBase, "id" | "name" | "viewType"> = {
@@ -49,6 +53,14 @@ export const sectionBase: Omit<SectionBase, "id" | "name" | "viewType"> = {
     indicators: [],
     dataElements: [dataElementText],
     code: "",
+    indicatorsConfig: {
+        position: "start",
+        before: undefined,
+        after: undefined,
+    },
+    fixedHeaders: false,
+    enableTopScroll: false,
+    fixedRowNames: false,
 };
 
 export const dataFormBase: Omit<DataForm, "sections"> = {
@@ -64,6 +76,11 @@ export const dataFormBase: Omit<DataForm, "sections"> = {
         sectionTotalRules: [],
     },
     periodType: PeriodType.YEARLY,
+    rules: undefined,
+    compulsoryDataValues: [],
+    showErrorOnCompulsory: false,
+    removePrefix: undefined,
+    customCss: undefined,
 };
 
 export const dataValueBase: DataValueBase = {
