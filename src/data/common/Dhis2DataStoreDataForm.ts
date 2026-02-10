@@ -1340,7 +1340,8 @@ export class Dhis2DataStoreDataForm {
         if (!totals) return undefined;
 
         if (Dhis2DataStoreDataForm.isSectionTotals(totals)) {
-            const sectionTotalsText = texts?.totals || totals.texts?.name;
+            const sectionTotalsText =
+                texts?.totals || totals.texts?.name || (totals.texts?.code ? { code: totals.texts.code } : undefined);
             const totalsText = this.getTextFromConstants(sectionTotalsText, constantsByCode);
 
             return {
@@ -1359,15 +1360,21 @@ export class Dhis2DataStoreDataForm {
         } else {
             return _(totals)
                 .map((sectionTotals, key) => {
-                    const constantCodeOrValue = sectionTotals.texts?.name || { code: sectionTotals.texts?.code ?? "" };
+                    const constantCodeOrValue =
+                        sectionTotals.texts?.name ||
+                        (sectionTotals.texts?.code ? { code: sectionTotals.texts.code } : undefined);
                     const constantValue = this.getTextFromConstants(constantCodeOrValue, constantsByCode) ?? key;
+
+                    const nameText =
+                        sectionTotals.texts?.name ||
+                        (sectionTotals.texts?.code ? { code: sectionTotals.texts.code } : undefined);
 
                     return [
                         constantValue,
                         {
                             ...sectionTotals,
                             texts: {
-                                name: this.getTextFromConstants(sectionTotals.texts?.name, constantsByCode) || "",
+                                name: this.getTextFromConstants(nameText, constantsByCode) || "",
                             },
                         },
                     ] as [string, SectionTotals];
