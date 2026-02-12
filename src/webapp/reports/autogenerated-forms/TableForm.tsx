@@ -36,7 +36,7 @@ const TableForm: React.FC<TableFormProps> = React.memo(props => {
             <RowIndicatorItem
                 key={`parent_${indicator.id}`}
                 indicator={indicator}
-                colSpan="0"
+                colSpan={section.dataEntryPeriod ? "2" : "1"}
                 dataFormInfo={dataFormInfo}
                 periods={[section.dataEntryPeriod?.id || dataFormInfo.period]}
             />
