@@ -26,8 +26,10 @@ type Config = Record<"dataSets", Record<Code, { sections: Record<Code, SectionCo
 
 const CsvSectionColumns = [
     "disactivate_tb_notifications_by_history",
-    "disactivate_diagnosis_enrolment",
+    "disactivete_subsection_diagnosis_enrollment",
+    "disactivate_subsection_cohort_sizes",
     "disactivate_drug_resistance_surveillance",
+    "disactivate_subsection_testing_for_hiv",
     "disactivate_treatment_outcomes",
 ] as const;
 
@@ -47,10 +49,8 @@ const CsvSectionToDatasetSections: Record<CsvSectionColumn, readonly Code[]> = {
         "TUB_AGE_GROUP",
         "TUB_RECOMMENDED_RAPID_DIAGNOSTIC_TESTS",
     ],
-    disactivate_diagnosis_enrolment: [
-        "TUB_DIAGNOSIS_ENROLMENT_TREATMENT",
-        "TUB_COHORT_SIZES_TREATMENT_OUTCOME_MONITORING",
-    ],
+    disactivete_subsection_diagnosis_enrollment: ["TUB_DIAGNOSIS_ENROLMENT_TREATMENT"],
+    disactivate_subsection_cohort_sizes: ["TUB_COHORT_SIZES_TREATMENT_OUTCOME_MONITORING"],
     disactivate_drug_resistance_surveillance: [
         "TUB_ANTI_TB_DRUG_RESISTANCE_SURVEILLANCE",
         "TUB_RIFAMPICIN_TESTING_AMONG_RECURRENT_RELAPSE",
@@ -60,6 +60,7 @@ const CsvSectionToDatasetSections: Record<CsvSectionColumn, readonly Code[]> = {
         "TUB_BEDAQUILINE_LINEZOLID_SUSC_TESTING_AMONG",
         "TUB_TESTING_RESISTANCE_OTHER_DRUGS_AMONG",
     ],
+    disactivate_subsection_testing_for_hiv: ["TUB_TB_HIV_TEST"],
     disactivate_treatment_outcomes: [
         "TUB_TREATMENT_OUTCOMES_TB_PATIENTS_REGISTERED",
         "TUB_TREATMENT_OUTCOMES_PEOPLE_AGED_YEARS",
@@ -156,7 +157,15 @@ function updateSectionToggleCondition(
     }
 
     sectionConfig.toggleMultiple.logicalOperator = "OR";
-    sectionConfig.toggleMultiple.conditions.push(conditionObj);
+    const existingDisabledCondition = sectionConfig.toggleMultiple.conditions.find(
+        cond => cond.type === "orgUnit" && cond.condition === "show" && cond.disabled === true
+    );
+    // we only have one condition per section for disabling in TUB. If already set, replace orgUnits in place
+    if (existingDisabledCondition) {
+        existingDisabledCondition.orgUnits = conditionObj.orgUnits;
+    } else {
+        sectionConfig.toggleMultiple.conditions.push(conditionObj);
+    }
 }
 
 function buildSectionsConfigFromSheetRules(config: Config, sheetRules: CsvRow[]): Config {
