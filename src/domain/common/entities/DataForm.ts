@@ -83,6 +83,7 @@ type FormulaRules = {
 export type Totals = FormulaRules & {
     dataElementsCodes: string[];
     formulas: Record<string, TotalsRule> | undefined;
+    strict?: boolean;
 };
 
 export interface SectionBase {

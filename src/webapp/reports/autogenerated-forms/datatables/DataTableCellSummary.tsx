@@ -20,13 +20,18 @@ export type DataTableCellSummaryProps = {
 
 export const DataTableCellSummary: React.FC<DataTableCellSummaryProps> = props => {
     const { dataFormInfo, styles, dataElements, period } = props;
-    const totalCalculated = _(dataElements)
-        .map(cellTotal => {
-            const values = cellTotal.items.map(itemTotal => getItemTotalDataValue(dataFormInfo, itemTotal, period));
-            const compiled = _.template(cellTotal.formula);
-            return compiled(_.merge({}, ...values));
-        })
-        .sumBy(Number);
+    const totals = _(dataElements).map(cellTotal => {
+        const values = cellTotal.items.map(itemTotal =>
+            getItemTotalDataValue(dataFormInfo, itemTotal, period, cellTotal.strict)
+        );
+        const compiled = _.template(cellTotal.formula);
+        return compiled(_.merge({}, ...values));
+    });
+
+    // formula evaluation in totals can return NaN if values are undefined
+    const totalCalculated = totals.every(value => Number.isNaN(Number(value)) || value === "")
+        ? ""
+        : totals.sumBy(value => (Number.isNaN(Number(value)) ? 0 : Number(value)));
 
     return (
         <CustomDataTableCell backgroundColor={styles.totals.backgroundColor} key="column-totals">
@@ -37,7 +42,8 @@ export const DataTableCellSummary: React.FC<DataTableCellSummaryProps> = props =
 export function getValueFromDataElement(
     dataFormInfo: DataFormInfo,
     itemTotal: TotalItem,
-    period?: Period
+    period?: Period,
+    strict?: boolean
 ): Maybe<number> {
     const dataElementToRead = resolveDataElement(dataFormInfo, itemTotal.dataElement);
     const dataValue = dataFormInfo.data.values.getOrEmpty(dataElementToRead, {
@@ -45,7 +51,9 @@ export function getValueFromDataElement(
         orgUnitId: dataFormInfo.orgUnitId,
         period: period || dataFormInfo.period,
     }) as DataValueNumberSingle;
-
+    if (strict && dataValue.value === "") {
+        return undefined;
+    }
     const numericValue = Number(dataValue.value);
     return window.isNaN(numericValue) ? undefined : numericValue;
 }

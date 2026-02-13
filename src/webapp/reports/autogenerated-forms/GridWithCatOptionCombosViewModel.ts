@@ -239,6 +239,7 @@ export class GridWithCatOptionCombosViewModel {
                         columnName: column.name,
                         formula: getFormulaByColumnName(section, column.name) || sectionTotal.formula || "",
                         items: columnWithDataElements,
+                        strict: sectionTotal.strict,
                     };
                 });
 
@@ -329,7 +330,7 @@ export class GridWithCatOptionCombosViewModel {
 }
 
 export type Summary = { cells: CellTotal[]; cellName: string };
-export type CellTotal = { formula: string; columnName: string; items: TotalItem[] };
+export type CellTotal = { formula: string; columnName: string; items: TotalItem[]; strict?: boolean };
 export type TotalItem = { dataElement: DataElement; categoryOptionCombo: CategoryOptionCombo };
 
 function getDataElementLabel(
