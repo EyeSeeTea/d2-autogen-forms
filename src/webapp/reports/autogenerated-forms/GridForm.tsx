@@ -201,31 +201,33 @@ const GridForm: React.FC<GridFormProps> = props => {
                                             )
                                     )}
 
-                                    {row.items.map((item, idx) =>
-                                        item.dataElement ? (
-                                            <CustomDataTableCell
-                                                backgroundColor={props.section.styles.rows.backgroundColor}
-                                                key={item.dataElement.id}
-                                            >
-                                                <DataElementItem
-                                                    columnTotal={item.columnTotal}
-                                                    columnDataElements={item.columnDataElements}
-                                                    manualyDisabled={item.disabled}
-                                                    noComment={item.disableComments}
-                                                    dataElement={item.dataElement}
-                                                    dataFormInfo={dataFormInfo}
-                                                    rows={grid.rows}
-                                                    period={grid.dataEntryPeriod?.id || dataFormInfo.period}
-                                                    lockException={grid.dataEntryPeriod !== undefined}
-                                                />
-                                            </CustomDataTableCell>
-                                        ) : (
-                                            <CustomDataTableCell
-                                                backgroundColor={props.section.styles.rows.backgroundColor}
-                                                key={`cell-${idx}`}
-                                            ></CustomDataTableCell>
-                                        )
-                                    )}
+                                    {row.items
+                                        .filter(item => item.isVisible)
+                                        .map((item, idx) =>
+                                            item.dataElement ? (
+                                                <CustomDataTableCell
+                                                    backgroundColor={props.section.styles.rows.backgroundColor}
+                                                    key={item.dataElement.id}
+                                                >
+                                                    <DataElementItem
+                                                        columnTotal={item.columnTotal}
+                                                        columnDataElements={item.columnDataElements}
+                                                        manualyDisabled={item.disabled}
+                                                        noComment={item.disableComments}
+                                                        dataElement={item.dataElement}
+                                                        dataFormInfo={dataFormInfo}
+                                                        rows={grid.rows}
+                                                        period={grid.dataEntryPeriod?.id || dataFormInfo.period}
+                                                        lockException={grid.dataEntryPeriod !== undefined}
+                                                    />
+                                                </CustomDataTableCell>
+                                            ) : (
+                                                <CustomDataTableCell
+                                                    backgroundColor={props.section.styles.rows.backgroundColor}
+                                                    key={`cell-${idx}`}
+                                                ></CustomDataTableCell>
+                                            )
+                                        )}
 
                                     {getFilteredIndicators(section.indicators, row, "after").map(
                                         indicator =>
