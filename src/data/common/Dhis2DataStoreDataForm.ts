@@ -32,6 +32,7 @@ import {
 import { Period, PeriodType, validatePeriodType } from "../../domain/common/entities/Period";
 import { FromRulesFormulaCodec, rulesFormulaCodec } from "./RulesFormula";
 import { DataFormRule } from "../../domain/common/entities/DataFormRule";
+import { SectionRule } from "../../domain/common/entities/SectionRule";
 
 export interface DataSetConfig {
     removePrefix: Maybe<string>;
@@ -111,6 +112,7 @@ interface BaseSectionConfig {
     enableTopScroll: boolean;
     columnsConfig?: GridColumnsConfig;
     disabled: boolean;
+    rules: Maybe<SectionRule[]>;
 }
 
 const dataElementsToExcludeCodec = Codec.interface({
@@ -420,6 +422,16 @@ const dataSetRuleCodec = Codec.interface({
     }),
 });
 
+const sectionRuleCodec = Codec.interface({
+    conditions: Codec.interface({
+        orgUnitIn: optional(array(string)),
+    }),
+    action: Codec.interface({
+        type: exactly("showMessage"),
+        text: oneOf([string, selector]),
+    }),
+});
+
 const DataStoreConfigCodec = Codec.interface({
     categoryCombinations: sectionConfig({
         viewType: optional(oneOf([exactly("name"), exactly("shortName"), exactly("formName")])),
@@ -516,6 +528,7 @@ const DataStoreConfigCodec = Codec.interface({
                 ),
                 totals: optional(oneOf([totalsType, record(string, totalsType)])),
                 toggleMultiple: optional(toggleMultipleCodec),
+                rules: optional(array(sectionRuleCodec)),
                 indicators: optional(
                     sectionConfig({
                         position: optional(
@@ -598,6 +611,7 @@ interface OptionSet extends NamedRef {
 type Selector = GetType<typeof selector>;
 type DataFormStoreConfigFromCodec = GetType<typeof DataStoreConfigCodec>;
 type DataSetRuleFromCodec = GetType<typeof dataSetRuleCodec>;
+type SectionRuleFromCodec = GetType<typeof sectionRuleCodec>;
 
 type PeriodInterval = { type: "relative-interval"; startOffset: number; endOffset: number };
 type PeriodSectionOffset = { type: "section-offset"; offset: number };
@@ -1001,6 +1015,18 @@ export class Dhis2DataStoreDataForm {
             .compact()
             .value();
 
+        const sectionRulesCodes = _(storeConfig.dataSets)
+            .values()
+            .flatMap(dataSet => _.values(dataSet.sections))
+            .flatMap(section => section.rules)
+            .compact()
+            .flatMap(rule => {
+                const messageText = rule.action.text;
+                return typeof messageText !== "string" ? messageText.code : undefined;
+            })
+            .compact()
+            .value();
+
         const codes = _([
             ...extractTextCodes(dataSetTexts),
             ...extractTextCodes(dataElementTexts),
@@ -1008,7 +1034,13 @@ export class Dhis2DataStoreDataForm {
         ])
             .map(v => (typeof v !== "string" && !Array.isArray(v) ? v?.code : undefined))
             .compact()
-            .concat([...descriptionCodes, ...totalsCodes, ...dataSetRulesCodes, ...firstColumnHeaderCodes])
+            .concat([
+                ...descriptionCodes,
+                ...totalsCodes,
+                ...dataSetRulesCodes,
+                ...sectionRulesCodes,
+                ...firstColumnHeaderCodes,
+            ])
             .uniq()
             .value();
 
@@ -1124,6 +1156,7 @@ export class Dhis2DataStoreDataForm {
                     fixedRowNames: sectionConfig.fixedRowNames || false,
                     enableTopScroll: sectionConfig.enableTopScroll || false,
                     columnsConfig: sectionConfig.columnsConfig,
+                    rules: this.getSectionRules(sectionConfig.rules, constantsByCode),
                 };
 
                 const baseConfig = { ...base, viewType };
@@ -1405,6 +1438,29 @@ export class Dhis2DataStoreDataForm {
                 };
             }
             throw new Error(`Unsupported custom rule action type: ${ruleConfig.action.type}`);
+        });
+    }
+
+    private getSectionRules(
+        rulesConfig: Maybe<SectionRuleFromCodec[]>,
+        constantsByCode: Record<string, Constant>
+    ): Maybe<SectionRule[]> {
+        if (!rulesConfig) return undefined;
+
+        return rulesConfig.map(ruleConfig => {
+            if (ruleConfig.action.type === "showMessage") {
+                return {
+                    ...ruleConfig,
+                    action: {
+                        ...ruleConfig.action,
+                        text:
+                            typeof ruleConfig.action.text === "string"
+                                ? ruleConfig.action.text
+                                : this.getTextFromConstants(ruleConfig.action.text, constantsByCode) || "",
+                    },
+                };
+            }
+            throw new Error(`Unsupported custom section rule action type: ${ruleConfig.action.type}`);
         });
     }
 }

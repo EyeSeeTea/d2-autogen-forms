@@ -95,7 +95,12 @@ export class Dhis2DataFormRepository implements DataFormRepository {
         return this.api.metadata.get(metadataQuery).getData();
     }
 
-    private async getSections(dataSet: D2DataSet, configDataForm: Dhis2DataStoreDataForm, period: Period, orgUnit: Id) {
+    private async getSections(
+        dataSet: D2DataSet,
+        configDataForm: Dhis2DataStoreDataForm,
+        period: Period,
+        orgUnit: Id
+    ) {
         const dataSetConfig = configDataForm.getDataSetConfig(dataSet, period);
         const dataElementIds = _(dataSet.sections)
             .flatMap(section => section.dataElements)
@@ -180,6 +185,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                     enableTopScroll: config?.enableTopScroll || false,
                     fixedRowNames: config?.fixedRowNames || false,
                     columnsConfig: config?.columnsConfig,
+                    rules: config?.rules ?? [],
                 };
 
                 if (!config)
@@ -196,6 +202,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                         enableTopScroll: false,
                         columnsConfig: undefined,
                         firstColumnConfig: undefined,
+                        rules: [],
                     };
 
                 const base2 = getSectionBaseWithToggle(config, base, dataElements);

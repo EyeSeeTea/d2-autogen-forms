@@ -161,6 +161,29 @@ export const sectionSchema = (
             },
         }),
         toggleMultiple: toggleMultipleSchema,
+        rules: {
+            type: "array",
+            items: defaultObjectProperties({
+                type: "object",
+                properties: {
+                    conditions: defaultObjectProperties({
+                        type: "object",
+                        properties: {
+                            orgUnitIn: { type: "array", items: { type: "string" } },
+                        },
+                    }),
+                    action: defaultObjectProperties({
+                        type: "object",
+                        properties: {
+                            type: { const: "showMessage" },
+                            text: textSchema(constantCodes),
+                        },
+                        required: ["type", "text"],
+                    }),
+                },
+                required: ["conditions", "action"],
+            }),
+        },
         titleVariant: {
             enum: ["h1", "h2", "h3", "h4", "h5", "h6"],
         },
