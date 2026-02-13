@@ -76,6 +76,12 @@ export type ViewType = UnionFromValues<typeof DataFormM.viewTypes>;
 
 export type DescriptionText = Maybe<Record<string, Maybe<string>>>;
 
+export type IndicatorsConfig = {
+    position: "start" | "end";
+    before?: { headers: string[] };
+    after?: { headers: string[] };
+};
+
 type FormulaRules = {
     formula?: string;
     rules?: DataElementRuleOptions;
@@ -110,7 +116,7 @@ export interface SectionBase {
     showRowTotals: boolean;
     toggleMultiple?: DataElementToggle;
     indicators: Indicator[];
-    indicatorsPosition: "start" | "end";
+    indicatorsConfig: IndicatorsConfig;
     fixedHeaders: boolean;
     enableTopScroll: boolean;
     fixedRowNames: boolean;

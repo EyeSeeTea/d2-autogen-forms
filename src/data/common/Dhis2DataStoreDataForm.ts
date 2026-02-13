@@ -12,6 +12,7 @@ import {
     DataElementsToExclude,
     DataElementWidget,
     DescriptionText,
+    IndicatorsConfig,
     SectionTexts,
     Texts,
     Totals,
@@ -105,7 +106,7 @@ interface BaseSectionConfig {
     totals?: Record<string, SectionTotals>;
     toggleMultiple: Maybe<ToggleMultiple>;
     indicators?: Record<Code, IndicatorConfig>;
-    indicatorsPosition: "start" | "end";
+    indicatorsConfig: IndicatorsConfig;
     fixedHeaders: boolean;
     fixedRowNames: boolean;
     enableTopScroll: boolean;
@@ -421,6 +422,10 @@ const dataSetRuleCodec = Codec.interface({
     }),
 });
 
+const indicatorsDirectionalConfigCodec = Codec.interface({
+    headers: array(oneOf([string, selector])),
+});
+
 const DataStoreConfigCodec = Codec.interface({
     categoryCombinations: sectionConfig({
         viewType: optional(oneOf([exactly("name"), exactly("shortName"), exactly("formName")])),
@@ -527,7 +532,13 @@ const DataStoreConfigCodec = Codec.interface({
                         ),
                     })
                 ),
-                indicatorsPosition: optional(oneOf([exactly("start"), exactly("end")])),
+                indicatorsConfig: optional(
+                    Codec.interface({
+                        position: optional(oneOf([exactly("start"), exactly("end")])),
+                        before: optional(indicatorsDirectionalConfigCodec),
+                        after: optional(indicatorsDirectionalConfigCodec),
+                    })
+                ),
                 virtualColumns: optional(
                     array(
                         oneOf([
@@ -1002,6 +1013,18 @@ export class Dhis2DataStoreDataForm {
             .compact()
             .value();
 
+        const indicatorsConfigHeadersCodes = _(storeConfig.dataSets)
+            .values()
+            .flatMap(dataSet => _.values(dataSet.sections))
+            .flatMap(section => {
+                const before = section.indicatorsConfig?.before?.headers || [];
+                const after = section.indicatorsConfig?.after?.headers || [];
+                return [...before, ...after];
+            })
+            .map(header => (typeof header !== "string" ? header.code : undefined))
+            .compact()
+            .value();
+
         const codes = _([
             ...extractTextCodes(dataSetTexts),
             ...extractTextCodes(dataElementTexts),
@@ -1009,7 +1032,13 @@ export class Dhis2DataStoreDataForm {
         ])
             .map(v => (typeof v !== "string" && !Array.isArray(v) ? v?.code : undefined))
             .compact()
-            .concat([...descriptionCodes, ...totalsCodes, ...dataSetRulesCodes, ...firstColumnHeaderCodes])
+            .concat([
+                ...descriptionCodes,
+                ...totalsCodes,
+                ...dataSetRulesCodes,
+                ...firstColumnHeaderCodes,
+                ...indicatorsConfigHeadersCodes,
+            ])
             .uniq()
             .value();
 
@@ -1120,7 +1149,25 @@ export class Dhis2DataStoreDataForm {
                     totals: this.getSectionTotals(sectionConfig, constantsByCode),
                     toggleMultiple: this.getToggleMultipleConfig(sectionConfig),
                     indicators: sectionConfig.indicators,
-                    indicatorsPosition: sectionConfig.indicatorsPosition || DEFAULT_INDICATORS_POSITION,
+                    indicatorsConfig: {
+                        position: sectionConfig.indicatorsConfig?.position ?? DEFAULT_INDICATORS_POSITION,
+                        before: sectionConfig.indicatorsConfig?.before
+                            ? {
+                                  headers: _(sectionConfig.indicatorsConfig.before.headers)
+                                      .map(header => this.getTextFromConstants(header, constantsByCode))
+                                      .compact()
+                                      .value(),
+                              }
+                            : undefined,
+                        after: sectionConfig.indicatorsConfig?.after
+                            ? {
+                                  headers: _(sectionConfig.indicatorsConfig.after.headers)
+                                      .map(header => this.getTextFromConstants(header, constantsByCode))
+                                      .compact()
+                                      .value(),
+                              }
+                            : undefined,
+                    },
                     fixedHeaders: sectionConfig.fixedHeaders || false,
                     fixedRowNames: sectionConfig.fixedRowNames || false,
                     enableTopScroll: sectionConfig.enableTopScroll || false,
