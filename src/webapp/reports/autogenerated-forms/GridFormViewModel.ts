@@ -218,7 +218,7 @@ export class GridViewModel {
         const columns = this.addVisibleToColumns({ columns: columnsOrders, dataFormInfo, section });
 
         const rows = GridViewModel.getRows(subsections, section, columns, dataElements, dataFormInfo);
-        const summary = GridViewModel.getSummary(subsections, section, columns, viewType);
+        const summary = GridViewModel.getSummary(dataFormInfo, section, columns, viewType);
 
         return { columns: columns, rows: rows, summary: summary };
     }
@@ -330,13 +330,12 @@ export class GridViewModel {
     }
 
     private static getSummary(
-        subsections: SubSectionGrid[],
+        dataFormInfo: DataFormInfo,
         section: SectionGrid,
         columns: Column[],
         viewType: SectionGrid["viewType"]
     ): Summary[] {
-        const allDataElements = subsections.flatMap(subSection => subSection.dataElements);
-
+        const allDataElements = dataFormInfo.metadata.dataForm.sections.flatMap(section => section.dataElements);
         switch (viewType) {
             case "table":
                 return _(section.totals)
@@ -350,7 +349,7 @@ export class GridViewModel {
                             cells: [
                                 {
                                     columnName: key,
-                                    formula: sectionTotal.formula || "",
+                                    formula: sectionTotal.formulas?.[key]?.formula || sectionTotal.formula || "",
                                     items: this.getColumnWithDataElements(selectedDataElements, key),
                                     strict: sectionTotal.strict,
                                 },
