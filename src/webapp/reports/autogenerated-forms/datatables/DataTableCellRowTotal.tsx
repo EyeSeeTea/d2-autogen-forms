@@ -27,7 +27,7 @@ export const DataTableCellRowTotal: React.FC<DataTableCellRowTotalProps> = props
             ? dataElement.categoryOptionCombos.filter(coc => onlyCocIds?.includes(coc.id))
             : dataElement.categoryOptionCombos;
 
-    const totalValue = _(combinationsToCalculate)
+    const totalValues = _(combinationsToCalculate)
         .map(coc => {
             const deValue = dataFormInfo.data.values.get(
                 {
@@ -40,10 +40,12 @@ export const DataTableCellRowTotal: React.FC<DataTableCellRowTotalProps> = props
                     period: period || dataFormInfo.period,
                 }
             ) as DataValueNumberSingle;
-            return Number(deValue.value);
+            return deValue.value === undefined ? undefined : Number(deValue.value);
         })
-        .compact()
-        .sum();
+        .compact();
+
+    // if no values are set, return empty string instead of 0
+    const totalValue = totalValues.some() ? totalValues.sum() : "";
 
     return (
         <CustomDataTableCell colSpan={colSpan} backgroundColor={styles.rows.backgroundColor} key="total-row">

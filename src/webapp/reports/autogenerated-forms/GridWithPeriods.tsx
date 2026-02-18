@@ -131,7 +131,7 @@ const PeriodTable: React.FC<PeriodTableProps> = props => {
             </TableHead>
 
             <TableBody>
-                {grid.indicatorsPosition === "start" && Indicators}
+                {grid.indicatorsConfig.position === "start" && Indicators}
 
                 {grid.rows.map(row => {
                     switch (row.type) {
@@ -340,7 +340,7 @@ const PeriodTable: React.FC<PeriodTableProps> = props => {
                     </DataTableRow>
                 ))}
 
-                {grid.indicatorsPosition === "end" && Indicators}
+                {grid.indicatorsConfig.position === "end" && Indicators}
             </TableBody>
         </DataTable>
     );

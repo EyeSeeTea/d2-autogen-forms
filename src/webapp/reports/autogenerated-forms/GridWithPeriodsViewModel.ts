@@ -34,7 +34,7 @@ export interface GridWithPeriodsI {
     periodTabs: PeriodTab[];
     summary: Summary[];
     indicators: Indicator[];
-    indicatorsPosition: Section["indicatorsPosition"];
+    indicatorsConfig: Section["indicatorsConfig"];
     lockException: boolean;
     hidden: boolean;
 }
@@ -74,7 +74,7 @@ export class GridWithPeriodsViewModel {
     static get(section: SectionWithPeriods, dataFormInfo: DataFormInfo): GridWithPeriodsI {
         const rows = GridWithPeriodsViewModel.getRows(section, dataFormInfo);
         const summary = GridWithPeriodsViewModel.getSummary(section);
-        const indicatorIndexOffset = section.indicatorsPosition === "start" ? 0 : section.dataElements.length;
+        const indicatorIndexOffset = section.indicatorsConfig.position === "start" ? 0 : section.dataElements.length;
         const indicators = GridWithPeriodsViewModel.getIndicators(rows, section).map((indicator, index) =>
             getIndexedIndicator(section, dataFormInfo, indicator, indicatorIndexOffset + index + 1)
         );
@@ -92,7 +92,7 @@ export class GridWithPeriodsViewModel {
             toggleMultiple: section.toggleMultiple,
             summary: section.totals ? summary : [],
             indicators: indicators,
-            indicatorsPosition: section.indicatorsPosition,
+            indicatorsConfig: section.indicatorsConfig,
             lockException: lockException,
             periodTabs: this.buildTabs(section.dataElements),
             hidden: section.hidden || false,
@@ -247,6 +247,7 @@ export class GridWithPeriodsViewModel {
                         columnName: column.label,
                         formula: getFormulaByColumnName(section, "") || sectionTotal.formula || "",
                         items: columnWithDataElements,
+                        strict: sectionTotal.strict,
                     };
                 });
 

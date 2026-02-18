@@ -61,7 +61,7 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
         <RowIndicatorItem
             key={`parent_${indicator.id}`}
             indicator={indicator}
-            colSpan="2"
+            colSpan={grid.periods.length > 0 ? "3" : "2"}
             dataFormInfo={dataFormInfo}
             periods={[dataFormInfo.period]}
         />
@@ -79,8 +79,21 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                         <CustomDataTableColumnHeader
                             backgroundColor={section.styles.columns.backgroundColor}
                             width="400px"
-                            colSpan={`${grid.hasIndicatorsBefore ? "3" : "2"}`}
+                            colSpan="2"
                         ></CustomDataTableColumnHeader>
+
+                        {grid.hasIndicatorsBefore && (
+                            <CustomDataTableColumnHeader
+                                backgroundColor={section.styles.columns.backgroundColor}
+                                key="column-indicators-before"
+                            >
+                                {grid.indicatorsConfig.before?.headers.map(indicatorHeader => (
+                                    <span className={classes.header} key={indicatorHeader}>
+                                        {indicatorHeader}
+                                    </span>
+                                ))}
+                            </CustomDataTableColumnHeader>
+                        )}
 
                         {grid.periods.length > 0 && (
                             <CustomDataTableColumnHeader
@@ -109,8 +122,14 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                         {grid.hasIndicatorsAfter && (
                             <CustomDataTableColumnHeader
                                 backgroundColor={section.styles.columns.backgroundColor}
-                                key="column-indicators"
-                            ></CustomDataTableColumnHeader>
+                                key="column-indicators-after"
+                            >
+                                {grid.indicatorsConfig.after?.headers.map(indicatorHeader => (
+                                    <span className={classes.header} key={indicatorHeader}>
+                                        {indicatorHeader}
+                                    </span>
+                                ))}
+                            </CustomDataTableColumnHeader>
                         )}
 
                         {showRowTotals && (
@@ -125,7 +144,7 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                 </TableHead>
 
                 <TableBody>
-                    {grid.indicatorsPosition === "start" && NonDirectionalIndicators}
+                    {grid.indicatorsConfig.position === "start" && NonDirectionalIndicators}
 
                     {grid.rows.map(row => {
                         const { groupDescription, groupName, rows } = row;
@@ -217,7 +236,7 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                         ));
                     })}
 
-                    {grid.indicatorsPosition === "end" && NonDirectionalIndicators}
+                    {grid.indicatorsConfig.position === "end" && NonDirectionalIndicators}
 
                     {grid.summary.map(summary => (
                         <DataTableRow key={`${summary.cellName}-totals`}>
