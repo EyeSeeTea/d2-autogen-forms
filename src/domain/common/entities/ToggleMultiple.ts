@@ -118,24 +118,18 @@ export function isToggleMultipleDeDisabled(
 ): boolean {
     if (!dataElement || !section.toggleMultiple) return false;
 
-    return section.toggleMultiple.toggleDataElements
-        .filter(
-            (toggle): toggle is OrgUnitToggle =>
-                toggle.type === "orgUnit" && toggle.dataElement.code === dataElement.code
-        )
-        .some(toggle => {
-            const { orgUnitCodes, condition, dataElement: toggleDe } = toggle;
-            if (!toggleDe.disabled) return false;
+    const orgUnitToggles = section.toggleMultiple.toggleDataElements.filter(
+        (toggle): toggle is OrgUnitToggle => toggle.type === "orgUnit" && toggle.dataElement.code === dataElement.code
+    );
 
-            const isOrgUnitInToggleList = orgUnitCodes.includes(orgUnitCode);
+    const isToggleDisabledForOrgUnit = (toggle: OrgUnitToggle) => {
+        const { orgUnitCodes, dataElement: toggleDe } = toggle;
+        if (!toggleDe.disabled) return false;
 
-            switch (condition) {
-                case "show":
-                    return !isOrgUnitInToggleList;
-                case "hide":
-                    return isOrgUnitInToggleList;
-                default:
-                    return false;
-            }
-        });
+        return orgUnitCodes.includes(orgUnitCode);
+    };
+
+    return section.toggleMultiple.logicalOperator === "OR"
+        ? orgUnitToggles.some(isToggleDisabledForOrgUnit)
+        : orgUnitToggles.every(isToggleDisabledForOrgUnit);
 }
