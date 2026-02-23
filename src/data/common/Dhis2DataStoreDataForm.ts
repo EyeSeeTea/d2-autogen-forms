@@ -438,21 +438,28 @@ const sectionRuleCodec = Codec.interface({
     }),
 });
 
+const optionSetCodec = Codec.interface({
+    code: string,
+    options: optionalRecord({
+        hidden: optional(boolean),
+    }),
+});
+
 const DataStoreConfigCodec = Codec.interface({
-    categoryCombinations: sectionConfig({
+    categoryCombinations: optionalRecord({
         viewType: optional(oneOf([exactly("name"), exactly("shortName"), exactly("formName")])),
     }),
-    categoryOptions: sectionConfig({
+    categoryOptions: optionalRecord({
         visible: optional(boolean),
     }),
-    dataElements: sectionConfig({
+    dataElements: optionalRecord({
         disabled: optional(boolean),
         disableComments: optional(boolean),
         mirrorFrom: optional(string),
         rules: optional(dataElementRuleCodec),
         selection: optional(
             Codec.interface({
-                optionSet: optional(selector),
+                optionSet: optional(optionSetCodec),
                 isMultiple: optional(boolean),
                 widget: optional(
                     oneOf([exactly("dropdown"), exactly("radio"), exactly("sourceType"), exactly("checkbox")])
@@ -468,7 +475,7 @@ const DataStoreConfigCodec = Codec.interface({
         texts: optional(textsCodec),
     }),
 
-    dataSets: sectionConfig({
+    dataSets: optionalRecord({
         disableComments: optional(boolean),
         removePrefix: optional(string),
         viewType: optional(viewType),
@@ -477,7 +484,7 @@ const DataStoreConfigCodec = Codec.interface({
         showIndex: optional(boolean),
         rules: optional(array(dataSetRuleCodec)),
         sections: optional(
-            sectionConfig({
+            optionalRecord({
                 dataElementsToExclude: optional(array(dataElementsToExcludeCodec)),
                 categoryOptionFilter: optional(categoryOptionFilterConfigCodec),
                 firstColumnConfig: optional(
@@ -536,7 +543,7 @@ const DataStoreConfigCodec = Codec.interface({
                 toggleMultiple: optional(toggleMultipleCodec),
                 rules: optional(array(sectionRuleCodec)),
                 indicators: optional(
-                    sectionConfig({
+                    optionalRecord({
                         position: optional(
                             Codec.interface({
                                 direction: oneOf([exactly("after"), exactly("before")]),
@@ -615,9 +622,11 @@ export interface DataElementConfig {
 
 export type IndicatorConfig = { position: Maybe<{ dataElement: string; direction: "after" | "before" }> };
 
+type OptionSetOption = Option<string>;
+
 interface OptionSet extends NamedRef {
     code: string;
-    options: Option<string>[];
+    options: OptionSetOption[];
 }
 
 type Selector = GetType<typeof selector>;
@@ -894,13 +903,13 @@ export class Dhis2DataStoreDataForm {
     }
 
     private static async getOptionSets(api: D2Api, storeConfig: DataFormStoreConfig["custom"]): Promise<OptionSet[]> {
-        const codes = _(storeConfig.dataElements)
+        const optionSets = _(storeConfig.dataElements)
             .values()
-            .map(obj => obj.selection?.optionSet)
+            .map(de => de.selection?.optionSet)
             .compact()
-            .map(sel => sel.code)
             .value();
 
+        const codes = optionSets.map(sel => sel.code);
         if (_.isEmpty(codes)) return [];
 
         const res = await api.metadata
@@ -917,15 +926,25 @@ export class Dhis2DataStoreDataForm {
             })
             .getData();
 
-        return res.optionSets.map(
-            (optionSet): OptionSet => ({
+        return res.optionSets.map((optionSet): OptionSet => {
+            const matchedOptionSet = optionSets.find(os => os.code === optionSet.code);
+
+            return {
                 ...optionSet,
-                options: optionSet.options.map(option => ({
-                    name: option.displayName,
-                    value: option.code,
-                })),
-            })
-        );
+                options: _(optionSet.options)
+                    .map(option => {
+                        const hidden = matchedOptionSet?.options?.[option.code]?.hidden ?? false;
+                        if (hidden) return undefined;
+
+                        return {
+                            name: option.displayName,
+                            value: option.code,
+                        };
+                    })
+                    .compact()
+                    .value(),
+            };
+        });
     }
 
     private static async getConstants(api: D2Api, storeConfig: DataFormStoreConfig["custom"]): Promise<Constant[]> {
@@ -1529,7 +1548,7 @@ interface Constant {
     displayDescription: string;
 }
 
-function sectionConfig<T extends Record<string, Codec<any>>>(properties: T) {
+function optionalRecord<T extends Record<string, Codec<any>>>(properties: T) {
     return optional(record(string, Codec.interface(properties)));
 }
 
