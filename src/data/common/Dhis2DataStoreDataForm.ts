@@ -912,12 +912,13 @@ export class Dhis2DataStoreDataForm {
             })
             .getData();
 
-        return res.optionSets.map(
-            (optionSet): OptionSet => ({
+        return res.optionSets.map((optionSet): OptionSet => {
+            const matchedOptionSet = optionSets.find(os => os.code === optionSet.code);
+
+            return {
                 ...optionSet,
                 options: _(optionSet.options)
                     .map(option => {
-                        const matchedOptionSet = optionSets.find(os => os.code === optionSet.code);
                         const hidden = matchedOptionSet?.options?.[option.code]?.hidden ?? false;
                         if (hidden) return undefined;
 
@@ -928,8 +929,8 @@ export class Dhis2DataStoreDataForm {
                     })
                     .compact()
                     .value(),
-            })
-        );
+            };
+        });
     }
 
     private static async getConstants(api: D2Api, storeConfig: DataFormStoreConfig["custom"]): Promise<Constant[]> {
