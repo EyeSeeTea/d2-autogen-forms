@@ -124,8 +124,18 @@ export class GridWithPeriodsViewModel {
                         type: firstDataElement.type === "FILE" ? "dataElementFile" : "dataElement",
                         dataElement: {
                             ...firstDataElement,
-                            name: getDataElementLabel(firstDataElement, section, dataFormInfo, firstDataElement.name),
-                            htmlText: getDataElementHtmlText(firstDataElement, section, dataFormInfo),
+                            name: getDataElementLabel({
+                                dataElement: firstDataElement,
+                                section,
+                                dataFormInfo,
+                                labelType: "name",
+                            }),
+                            htmlText: getDataElementHtmlText({
+                                dataElement: firstDataElement,
+                                labelType: "htmlText",
+                                section,
+                                dataFormInfo,
+                            }),
                             disabled:
                                 firstDataElement.disabled ??
                                 isToggleMultipleDeDisabled(section, firstDataElement, orgUnitCode),
@@ -172,8 +182,18 @@ export class GridWithPeriodsViewModel {
                                 colSpan: hasSubGroup ? "0" : "2",
                                 dataElement: {
                                     ...dataElement,
-                                    name: getDataElementLabel(dataElement, section, dataFormInfo, dataElement.name),
-                                    htmlText: getDataElementHtmlText(dataElement, section, dataFormInfo),
+                                    name: getDataElementLabel({
+                                        dataElement,
+                                        section,
+                                        dataFormInfo,
+                                        labelType: "name",
+                                    }),
+                                    htmlText: getDataElementHtmlText({
+                                        dataElement,
+                                        labelType: "htmlText",
+                                        section,
+                                        dataFormInfo,
+                                    }),
                                     disabled:
                                         dataElement.disabled ??
                                         isToggleMultipleDeDisabled(section, dataElement, orgUnitCode),
@@ -213,8 +233,18 @@ export class GridWithPeriodsViewModel {
                                     type: "dataElement",
                                     dataElement: {
                                         ...dataElement,
-                                        name: getDataElementLabel(dataElement, section, dataFormInfo, dataElement.name),
-                                        htmlText: getDataElementHtmlText(dataElement, section, dataFormInfo),
+                                        name: getDataElementLabel({
+                                            dataElement,
+                                            section,
+                                            dataFormInfo,
+                                            labelType: "name",
+                                        }),
+                                        htmlText: getDataElementHtmlText({
+                                            dataElement,
+                                            labelType: "htmlText",
+                                            section,
+                                            dataFormInfo,
+                                        }),
                                         disabled:
                                             dataElement.disabled ??
                                             isToggleMultipleDeDisabled(section, dataElement, orgUnitCode),
@@ -300,14 +330,22 @@ function isRowSubGroup(dataElement: DataElement): boolean {
     return dataElement.name.split(separator).length === 3;
 }
 
-function getDataElementLabel(
-    dataElement: DataElement,
-    section: SectionWithPeriods,
-    dataFormInfo: DataFormInfo,
-    label: string
-) {
-    const deName = _(label).split(separator).last() || "-";
+const extractLabel = (options: DataElementLabelOptions): Maybe<string> => {
+    const { dataElement, labelType } = options;
+
+    switch (labelType) {
+        case "name":
+            return _(dataElement.name).split(separator).last();
+        case "htmlText":
+            return dataElement.htmlText;
+    }
+};
+
+function getDataElementLabel(options: DataElementLabelOptions) {
+    const { dataElement, section, dataFormInfo } = options;
+    const deName = extractLabel(options) ?? "-";
     const deIndex = section.dataElements.findIndex(de => de.id === dataElement.id) + 1;
+
     return getIndexedLabel(
         section,
         dataFormInfo,
@@ -316,9 +354,16 @@ function getDataElementLabel(
     );
 }
 
-function getDataElementHtmlText(dataElement: DataElement, section: SectionWithPeriods, dataFormInfo: DataFormInfo) {
-    if (!dataElement.htmlText) return undefined;
-    return getDataElementLabel(dataElement, section, dataFormInfo, dataElement.htmlText);
+function getDataElementHtmlText(options: DataElementLabelOptions): Maybe<string> {
+    if (!options.dataElement.htmlText) return undefined;
+    return getDataElementLabel(options);
 }
 
 type PeriodTab = { id: Id | undefined; name: string };
+type LabelType = keyof Pick<DataElement, "name" | "htmlText">;
+type DataElementLabelOptions = {
+    dataElement: DataElement;
+    dataFormInfo: DataFormInfo;
+    labelType: LabelType;
+    section: SectionWithPeriods;
+};
