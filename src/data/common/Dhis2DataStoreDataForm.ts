@@ -948,6 +948,8 @@ export class Dhis2DataStoreDataForm {
     }
 
     private static async getConstants(api: D2Api, storeConfig: DataFormStoreConfig["custom"]): Promise<Constant[]> {
+        const getCode = (text: string | Selector): Maybe<string> => (typeof text === "string" ? undefined : text.code);
+
         const dataElementTexts = _(storeConfig.dataElements)
             .values()
             .map(x => (x.texts ? x.texts : undefined))
@@ -1029,7 +1031,7 @@ export class Dhis2DataStoreDataForm {
             .flatMap(dataSet => _.values(dataSet.sections))
             .map(section => section.firstColumnConfig?.header)
             .compact()
-            .map(header => (typeof header !== "string" ? header.code : undefined))
+            .map(getCode)
             .compact()
             .value();
 
@@ -1037,12 +1039,8 @@ export class Dhis2DataStoreDataForm {
 
         const dataSetRulesCodes = _(storeConfig.dataSets)
             .values()
-            .flatMap(dataSet => dataSet.rules)
-            .compact()
-            .flatMap(rule => {
-                const warningText = rule.action.text;
-                return typeof warningText !== "string" ? warningText.code : undefined;
-            })
+            .flatMap(dataSet => dataSet.rules ?? [])
+            .flatMap(rule => getCode(rule.action.text))
             .compact()
             .value();
 
@@ -1054,19 +1052,15 @@ export class Dhis2DataStoreDataForm {
                 const after = section.indicatorsConfig?.after?.headers || [];
                 return [...before, ...after];
             })
-            .map(header => (typeof header !== "string" ? header.code : undefined))
+            .map(getCode)
             .compact()
             .value();
 
         const sectionRulesCodes = _(storeConfig.dataSets)
             .values()
             .flatMap(dataSet => _.values(dataSet.sections))
-            .flatMap(section => section.rules)
-            .compact()
-            .flatMap(rule => {
-                const messageText = rule.action.text;
-                return typeof messageText !== "string" ? messageText.code : undefined;
-            })
+            .flatMap(section => section.rules ?? [])
+            .flatMap(rule => getCode(rule.action.text))
             .compact()
             .value();
 
