@@ -25,9 +25,6 @@ function evaluateSectionRuleCondition(rule: SectionRule, context: SectionRuleCon
     return false;
 }
 
-export function getApplicableSectionRules(rules: SectionRule[] | undefined, context: SectionRuleContext): SectionRule[] {
-    if (!rules) {
-        return [];
-    }
+export function getApplicableSectionRules(rules: SectionRule[], context: SectionRuleContext): SectionRule[] {
     return rules.filter(rule => evaluateSectionRuleCondition(rule, context));
 }

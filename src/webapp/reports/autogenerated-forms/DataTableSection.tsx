@@ -47,7 +47,7 @@ const DataTableSection: React.FC<DataTableProps> = React.memo(props => {
 
     return (
         <>
-            {sectionMessages?.map(sectionMessage => (
+            {sectionMessages.map(sectionMessage => (
                 <div key={sectionMessage} className={`${classes.sectionMessage} section-message`}>
                     <Html content={sectionMessage} />
                 </div>

@@ -123,7 +123,7 @@ export interface SectionBase {
     fixedRowNames: boolean;
     hidden?: boolean;
     columnsConfig?: Record<string, { rules?: RulesFormula }>;
-    rules?: SectionRule[];
+    rules: SectionRule[];
 }
 
 export interface SectionSimple extends SectionBase {
