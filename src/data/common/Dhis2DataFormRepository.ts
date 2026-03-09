@@ -95,12 +95,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
         return this.api.metadata.get(metadataQuery).getData();
     }
 
-    private async getSections(
-        dataSet: D2DataSet,
-        configDataForm: Dhis2DataStoreDataForm,
-        period: Period,
-        orgUnit: Id
-    ) {
+    private async getSections(dataSet: D2DataSet, configDataForm: Dhis2DataStoreDataForm, period: Period, orgUnit: Id) {
         const dataSetConfig = configDataForm.getDataSetConfig(dataSet, period);
         const dataElementIds = _(dataSet.sections)
             .flatMap(section => section.dataElements)
