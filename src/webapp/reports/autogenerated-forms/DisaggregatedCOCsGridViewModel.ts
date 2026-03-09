@@ -138,7 +138,7 @@ export class DisaggregatedCOCsGridViewModel {
                     });
 
                 const catOptionFormName = getCocFormNameFromCombos(
-                    items.flatMap(i => i.rowItems.flatMap(ri => ri.categoryOptionCombos)),
+                    items.flatMap(i => i.dataElement.categoryOptionCombos),
                     rowCatOptionCode
                 );
                 return {
