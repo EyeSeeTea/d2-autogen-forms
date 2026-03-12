@@ -37,3 +37,9 @@ dist
 bak
 NOTES*
 datastore
+
+# Claude Code
+.claude/
+
+# OpenSpec changes (local workflow state)
+openspec/changes/
