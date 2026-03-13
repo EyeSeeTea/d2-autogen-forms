@@ -33,7 +33,8 @@ const TabNavigation: React.FC<TabNavigationProps> = React.memo(props => {
         if (nextTab) onTabChange(nextTab.primaryIndex);
     }, [currentPosition, visibleTabs, onTabChange]);
 
-    const positionDisplay = currentPosition === -1 ? `0/${visibleTabs.length}` : `${currentPosition + 1}/${visibleTabs.length}`;
+    const positionDisplay =
+        currentPosition === -1 ? `0/${visibleTabs.length}` : `${currentPosition + 1}/${visibleTabs.length}`;
 
     return (
         <Box display="flex" alignItems="center" justifyContent="space-between" padding={1}>
@@ -50,12 +51,7 @@ const TabNavigation: React.FC<TabNavigationProps> = React.memo(props => {
                 {positionDisplay}
             </Typography>
 
-            <Button
-                endIcon={<ChevronRight />}
-                disabled={isLast}
-                onClick={handleNext}
-                aria-label={i18n.t("Next tab")}
-            >
+            <Button endIcon={<ChevronRight />} disabled={isLast} onClick={handleNext} aria-label={i18n.t("Next tab")}>
                 {i18n.t("Next")}
             </Button>
         </Box>

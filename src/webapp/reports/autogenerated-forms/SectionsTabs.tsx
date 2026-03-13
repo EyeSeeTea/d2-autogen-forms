@@ -258,13 +258,28 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
             const primaryIndex = Number(primaryValue);
             if (!Number.isFinite(primaryIndex) || primaryIndex === -1) return [];
             if (!tabVisibilityByIndex[primaryIndex]) return [];
+
+            const visibleRule = section.tabs.rules?.visible;
+            if (visibleRule) {
+                const dataElementCodes = visibleRule.dataElements.map(de => de.code);
+                const value =
+                    dataElementCodes.length > 0
+                        ? calculateFormula({
+                              dataElementCodes,
+                              dataFormInfo,
+                              formula: visibleRule.formula.value,
+                          })
+                        : undefined;
+                if (value !== visibleRule.formula.condition) return [];
+            }
+
             if (seen.has(primaryIndex)) return [];
             seen.add(primaryIndex);
 
             const label = section.texts.tabLabel || section.name;
             return [{ primaryIndex, label }];
         });
-    }, [sections, tabVisibilityByIndex]);
+    }, [sections, tabVisibilityByIndex, dataFormInfo]);
 
     const handleTabNavigation = useCallback(
         (primaryIndex: number) => {
@@ -302,6 +317,14 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
             setActiveTab(firstVisibleTabIndex);
         }
     }, [activeTab, tabVisibilityByIndex, firstVisibleTabIndex]);
+
+    useEffect(() => {
+        if (visiblePrimaryTabs.length === 0) return;
+        const isActiveTabVisible = visiblePrimaryTabs.some(tab => tab.primaryIndex === activeTab);
+        if (!isActiveTabVisible) {
+            setActiveTab(visiblePrimaryTabs[0]!.primaryIndex);
+        }
+    }, [activeTab, visiblePrimaryTabs]);
 
     useEffect(() => {
         const scrollButtons = document.querySelectorAll(".MuiTabs-scrollButtons");
