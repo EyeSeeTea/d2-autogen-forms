@@ -40,6 +40,7 @@ export interface DataSetConfig {
     sections: Record<Id, SectionConfig>;
     rules: Maybe<DataFormRule[]>;
     customCss: Maybe<string>;
+    showNavigation: boolean;
 }
 
 export type SectionConfig =
@@ -433,7 +434,7 @@ const optionSetCodec = Codec.interface({
     }),
 });
 
-const DataStoreConfigCodec = Codec.interface({
+export const DataStoreConfigCodec = Codec.interface({
     categoryCombinations: optionalRecord({
         viewType: optional(oneOf([exactly("name"), exactly("shortName"), exactly("formName")])),
     }),
@@ -470,6 +471,7 @@ const DataStoreConfigCodec = Codec.interface({
         texts: optional(textsCodec),
         customCss: optional(string),
         showIndex: optional(boolean),
+        showNavigation: optional(boolean),
         rules: optional(array(dataSetRuleCodec)),
         sections: optional(
             optionalRecord({
@@ -1287,6 +1289,7 @@ export class Dhis2DataStoreDataForm {
             sections: sections,
             rules: this.getDataFormRules(dataSetConfig?.rules),
             customCss: dataSetConfig?.customCss,
+            showNavigation: dataSetConfig?.showNavigation ?? false,
         };
     }
 

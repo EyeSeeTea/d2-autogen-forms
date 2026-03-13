@@ -36,6 +36,7 @@ export interface DataForm {
     rules: Maybe<DataFormRule[]>;
     removePrefix: Maybe<string>;
     customCss: Maybe<string>;
+    showNavigation: boolean;
 }
 
 export type Texts = {

@@ -1,5 +1,5 @@
 import _ from "lodash";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Tabs, Tab, Box, makeStyles } from "@material-ui/core";
 import {
     Section,
@@ -33,6 +33,7 @@ import { calculateFormula } from "./datatables/InputFormula";
 import GridWithCategoryColumns from "./GridWithCategoryColumns";
 import { useTabVisibility } from "./hooks/useTabVisibility";
 import { DebugLabel } from "../../components/debug/DebugLabel";
+import TabNavigation, { VisibleTab } from "./TabNavigation";
 
 export interface TabPanelProps {
     sections: Section[];
@@ -246,6 +247,31 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
     const [showLeftFade, setShowLeftFade] = useState(false);
     const [showRightFade, setShowRightFade] = useState(true);
     const { tabVisibilityByIndex, firstVisibleTabIndex } = useTabVisibility(sections, dataFormInfo);
+    const showNavigation = dataFormInfo.metadata.dataForm.showNavigation;
+
+    const visiblePrimaryTabs: ReadonlyArray<VisibleTab> = useMemo(() => {
+        const seen = new Set<number>();
+        return sections.flatMap(section => {
+            if (!isTabHeader(section.tabs.order)) return [];
+
+            const primaryValue = _(section.tabs.order).split(".").first() ?? "0";
+            const primaryIndex = Number(primaryValue);
+            if (!Number.isFinite(primaryIndex) || primaryIndex === -1) return [];
+            if (!tabVisibilityByIndex[primaryIndex]) return [];
+            if (seen.has(primaryIndex)) return [];
+            seen.add(primaryIndex);
+
+            const label = section.texts.tabLabel || section.name;
+            return [{ primaryIndex, label }];
+        });
+    }, [sections, tabVisibilityByIndex]);
+
+    const handleTabNavigation = useCallback(
+        (primaryIndex: number) => {
+            setActiveTab(primaryIndex);
+        },
+        [setActiveTab]
+    );
 
     const handleChange = (_event: React.ChangeEvent<{}>, value: number) => {
         if (tabVisibilityByIndex[value]) {
@@ -399,6 +425,14 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
                         section={section}
                     />
                 ))}
+
+            {showNavigation && visiblePrimaryTabs.length > 0 && (
+                <TabNavigation
+                    activeTabIndex={activeTab}
+                    visibleTabs={visiblePrimaryTabs}
+                    onTabChange={handleTabNavigation}
+                />
+            )}
         </Box>
     );
 });
