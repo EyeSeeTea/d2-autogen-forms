@@ -1,7 +1,7 @@
 import React from "react";
 import { Button, Box, Typography } from "@material-ui/core";
 import { ChevronLeft, ChevronRight } from "@material-ui/icons";
-import i18n from "../../../locales";
+import i18n from "@eyeseetea/d2-ui-components/locales";
 
 export interface VisibleTab {
     readonly primaryIndex: number;
