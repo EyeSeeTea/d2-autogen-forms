@@ -37,3 +37,9 @@ dist
 bak
 NOTES*
 datastore
+
+# Claude
+.claude/
+
+# OpenSpec (changes are local, specs are committed)
+openspec/changes/
