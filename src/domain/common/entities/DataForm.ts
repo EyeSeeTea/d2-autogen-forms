@@ -19,24 +19,24 @@ import { CompulsoryDataValue } from "./CompulsoryDataValue";
 import { Period, PeriodType } from "./Period";
 
 export interface DataForm {
-    id: Id;
-    expiryDays: number;
-    dataInputPeriods: dataInputPeriodsType;
-    dataElements: DataElement[];
-    sections: Section[];
-    texts: Texts;
-    options: {
-        dataElements: Record<Id, { widget: DataElementWidget }>;
+    readonly id: Id;
+    readonly expiryDays: number;
+    readonly dataInputPeriods: dataInputPeriodsType;
+    readonly dataElements: DataElement[];
+    readonly sections: Section[];
+    readonly texts: Texts;
+    readonly options: {
+        readonly dataElements: Record<Id, { readonly widget: DataElementWidget }>;
     };
-    indicators: Indicator[];
-    totalRules: TotalRules;
-    compulsoryDataValues: CompulsoryDataValue[];
-    showErrorOnCompulsory: boolean;
-    periodType: PeriodType;
-    rules: Maybe<DataFormRule[]>;
-    removePrefix: Maybe<string>;
-    customCss: Maybe<string>;
-    showNavigation: boolean;
+    readonly indicators: Indicator[];
+    readonly totalRules: TotalRules;
+    readonly compulsoryDataValues: CompulsoryDataValue[];
+    readonly showErrorOnCompulsory: boolean;
+    readonly periodType: PeriodType;
+    readonly rules: Maybe<DataFormRule[]>;
+    readonly removePrefix: Maybe<string>;
+    readonly customCss: Maybe<string>;
+    readonly showNavigation: boolean;
 }
 
 export type Texts = {

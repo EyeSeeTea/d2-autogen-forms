@@ -35,12 +35,12 @@ import { FromRulesFormulaCodec, rulesFormulaCodec } from "./RulesFormula";
 import { DataFormRule } from "../../domain/common/entities/DataFormRule";
 
 export interface DataSetConfig {
-    removePrefix: Maybe<string>;
-    texts: Texts;
-    sections: Record<Id, SectionConfig>;
-    rules: Maybe<DataFormRule[]>;
-    customCss: Maybe<string>;
-    showNavigation: boolean;
+    readonly removePrefix: Maybe<string>;
+    readonly texts: Texts;
+    readonly sections: Record<Id, SectionConfig>;
+    readonly rules: Maybe<DataFormRule[]>;
+    readonly customCss: Maybe<string>;
+    readonly showNavigation: boolean;
 }
 
 export type SectionConfig =

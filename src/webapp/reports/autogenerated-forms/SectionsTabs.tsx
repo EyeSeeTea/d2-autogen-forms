@@ -186,7 +186,7 @@ export function getTabIndices(
 }
 
 function isTabHeader(order: Maybe<string>) {
-    const [_, secondaryTabIndex] = getTabIndices(order);
+    const [_primaryTabIndex, secondaryTabIndex] = getTabIndices(order);
     return isNaN(secondaryTabIndex) || secondaryTabIndex === 0 || secondaryTabIndex === 1;
 }
 
@@ -210,7 +210,7 @@ const AutoFormComponent = React.memo(TypeSwitch);
 const TabPanel: React.FC<TabProps> = React.memo(props => {
     const { section, dataFormInfo, value } = props;
     const { viewType, tabs } = section;
-    const [index, _] = getTabIndices(tabs.order);
+    const [index, _secondaryTabIndex] = getTabIndices(tabs.order);
 
     return (
         <div role="tabpanel" hidden={value !== index} id={`tabpanel-${index}`} aria-labelledby={`tab-${index}`}>
@@ -250,43 +250,35 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
     const showNavigation = dataFormInfo.metadata.dataForm.showNavigation;
 
     const visiblePrimaryTabs: ReadonlyArray<VisibleTab> = useMemo(() => {
-        const seen = new Set<number>();
-        return sections.flatMap(section => {
-            if (!isTabHeader(section.tabs.order)) return [];
+        return _.uniqBy(
+            sections.flatMap(section => {
+                if (!isTabHeader(section.tabs.order)) return [];
 
-            const primaryValue = _(section.tabs.order).split(".").first() ?? "0";
-            const primaryIndex = Number(primaryValue);
-            if (!Number.isFinite(primaryIndex) || primaryIndex === -1) return [];
-            if (!tabVisibilityByIndex[primaryIndex]) return [];
+                const primaryValue = _(section.tabs.order).split(".").first() ?? "0";
+                const primaryIndex = Number(primaryValue);
+                if (!Number.isFinite(primaryIndex) || primaryIndex === -1) return [];
+                if (!tabVisibilityByIndex[primaryIndex]) return [];
 
-            const visibleRule = section.tabs.rules?.visible;
-            if (visibleRule) {
-                const dataElementCodes = visibleRule.dataElements.map(de => de.code);
-                const value =
-                    dataElementCodes.length > 0
-                        ? calculateFormula({
-                              dataElementCodes,
-                              dataFormInfo,
-                              formula: visibleRule.formula.value,
-                          })
-                        : undefined;
-                if (value !== visibleRule.formula.condition) return [];
-            }
+                const visibleRule = section.tabs.rules?.visible;
+                if (visibleRule) {
+                    const dataElementCodes = visibleRule.dataElements.map(de => de.code);
+                    const value =
+                        dataElementCodes.length > 0
+                            ? calculateFormula({
+                                  dataElementCodes,
+                                  dataFormInfo,
+                                  formula: visibleRule.formula.value,
+                              })
+                            : undefined;
+                    if (value !== visibleRule.formula.condition) return [];
+                }
 
-            if (seen.has(primaryIndex)) return [];
-            seen.add(primaryIndex);
-
-            const label = section.texts.tabLabel || section.name;
-            return [{ primaryIndex, label }];
-        });
+                const label = section.texts.tabLabel || section.name;
+                return [{ primaryIndex, label }];
+            }),
+            tab => tab.primaryIndex
+        );
     }, [sections, tabVisibilityByIndex, dataFormInfo]);
-
-    const handleTabNavigation = useCallback(
-        (primaryIndex: number) => {
-            setActiveTab(primaryIndex);
-        },
-        [setActiveTab]
-    );
 
     const handleChange = (_event: React.ChangeEvent<{}>, value: number) => {
         if (tabVisibilityByIndex[value]) {
@@ -408,13 +400,13 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
                             const isConditionMet = value === visibleRule?.formula.condition;
 
                             if (visibleRule && !isConditionMet) {
-                                return null;
+                                return [];
                             }
 
                             const primaryValue = _(order).split(".").first() ?? "0";
                             const primaryIndex = Number(primaryValue);
                             if (!Number.isFinite(primaryIndex) || !tabVisibilityByIndex[primaryIndex]) {
-                                return null;
+                                return [];
                             }
 
                             return (
@@ -453,7 +445,7 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
                 <TabNavigation
                     activeTabIndex={activeTab}
                     visibleTabs={visiblePrimaryTabs}
-                    onTabChange={handleTabNavigation}
+                    onTabChange={setActiveTab}
                 />
             )}
         </Box>
