@@ -37,6 +37,6 @@ export const CommentIcon: React.FC<CommentIconProps> = React.memo(props => {
 });
 
 const styles = {
-    wrapper: { marginLeft: 10 },
+    wrapper: { marginInlineStart: 10 },
     image: { cursor: "pointer" },
 };

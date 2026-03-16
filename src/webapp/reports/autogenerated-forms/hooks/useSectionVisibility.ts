@@ -60,12 +60,24 @@ export function getSectionVisibilityState(
 function evaluateSectionOpenState(toggle: Section["toggle"], dataFormInfo: DataFormInfo): boolean {
     switch (toggle.type) {
         case "dataElement": {
-            const dataValue = dataFormInfo.data.values.getOrEmpty(toggle.dataElement, dataFormInfo);
-            return isDataValueEnabled(dataValue);
+            const dataValues = toggle.dataElement.categoryOptionCombos.map(coc => {
+                const updatedDataElement = {
+                    ...toggle.dataElement,
+                    cocId: coc.id,
+                };
+                return dataFormInfo.data.values.getOrEmpty(updatedDataElement, dataFormInfo);
+            });
+            return dataValues.some(dv => isDataValueEnabled(dv));
         }
         case "dataElementExternal": {
-            const dataValue = dataFormInfo.data.values.getOrEmpty(toggle.dataElement, dataFormInfo);
-            return verifyConditionByDataValueType(dataValue, toggle);
+            const dataValues = toggle.dataElement.categoryOptionCombos.map(coc => {
+                const updatedDataElement = {
+                    ...toggle.dataElement,
+                    cocId: coc.id,
+                };
+                return dataFormInfo.data.values.getOrEmpty(updatedDataElement, dataFormInfo);
+            });
+            return dataValues.some(dv => verifyConditionByDataValueType(dv, toggle));
         }
         default:
             return true;

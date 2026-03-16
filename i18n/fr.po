@@ -65,8 +65,59 @@ msgstr "Appliquer à tous"
 msgid "Please enter a valid email address"
 msgstr ""
 
+msgid "Add new data form configuration"
+msgstr ""
+
 msgid "Save"
 msgstr ""
 
-msgid "Data set"
+msgid "Delete config"
+msgstr ""
+
+msgid "Cancel"
+msgstr ""
+
+msgid "Create config"
+msgstr ""
+
+msgid "Only datasets with codes are listed here."
+msgstr ""
+
+msgid "An empty configuration will be created for the dataset"
+msgstr ""
+
+msgid "{{dataSet}}."
+msgstr ""
+
+msgid "Delete data form configuration"
+msgstr ""
+
+msgid "Are you sure you want to delete the configuration for dataset"
+msgstr ""
+
+msgid "{{dataSet}}"
+msgstr ""
+
+msgid "? This action cannot be undone."
+msgstr ""
+
+msgid "Select dataset"
+msgstr ""
+
+msgid "Processing Error: {{error}}"
+msgstr ""
+
+msgid "Processing large JSON..."
+msgstr ""
+
+msgid "Large file detected. Some features are disabled for better performance."
+msgstr ""
+
+msgid "New configuration created"
+msgstr ""
+
+msgid "Configuration deleted"
+msgstr ""
+
+msgid "Configuration saved"
 msgstr ""
