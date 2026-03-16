@@ -48,7 +48,11 @@ export const DataTableCellRowTotal: React.FC<DataTableCellRowTotalProps> = props
     const totalValue = totalValues.some() ? totalValues.sum() : "";
 
     return (
-        <CustomDataTableCell colSpan={colSpan} backgroundColor={styles.rows.backgroundColor} key="total-row">
+        <CustomDataTableCell
+            colSpan={colSpan?.toString()}
+            backgroundColor={styles.rows.backgroundColor}
+            key="total-row"
+        >
             <CustomInput value={totalValue} disabled readOnly />
         </CustomDataTableCell>
     );
