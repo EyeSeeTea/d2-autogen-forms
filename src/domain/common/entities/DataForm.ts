@@ -1,18 +1,13 @@
 import _ from "lodash";
-import {
-    CalculateTotalType,
-    GridIndicatorsCalculatedRow,
-    SubNational,
-    TotalsRule,
-} from "../../../data/common/Dhis2DataStoreDataForm";
 import { Maybe, UnionFromValues } from "../../../utils/ts-utils";
 import { Code, Id } from "./Base";
 import { DataElement, dataInputPeriodsType } from "./DataElement";
 import { Indicator } from "./Indicator";
 import { SectionStyle } from "./SectionStyle";
-import { titleVariant } from "./TitleVariant";
+import { TitleVariant } from "./TitleVariant";
 import { DataElementToggle } from "./ToggleMultiple";
-import { DataElementRuleOptions, TotalRules } from "./DataElementRule";
+import { DataElementRuleOptions, SectionRuleOptions, TotalDataElementRuleOptions, TotalRules } from "./DataElementRule";
+import { CalculateTotalType, GridIndicatorsCalculatedRow } from "./AutogenConfig";
 import { RulesFormula } from "../../../data/common/RulesFormula";
 import { DataFormRule } from "./DataFormRule";
 import { CompulsoryDataValue } from "./CompulsoryDataValue";
@@ -37,20 +32,25 @@ export interface DataForm {
     removePrefix: Maybe<string>;
 }
 
-export interface Texts {
+export type Texts = {
     header: Maybe<string>;
     footer: Maybe<string>;
     name: Maybe<string>;
     rowTotals: Maybe<string>;
     totals: Maybe<string>;
-}
+};
 
-export const defaultTexts: Texts = {
+export type SectionTexts = Texts & {
+    tabLabel: Maybe<string>;
+};
+
+export const defaultTexts: SectionTexts = {
     header: undefined,
     footer: undefined,
     rowTotals: undefined,
     totals: undefined,
     name: undefined,
+    tabLabel: undefined,
 };
 
 const viewTypes = [
@@ -74,6 +74,18 @@ type FormulaRules = {
     formula?: string;
     rules?: DataElementRuleOptions;
 };
+
+export type TotalsRule = (
+    | {
+          type: "sections";
+          rules?: SectionRuleOptions;
+      }
+    | {
+          type: "dataElements";
+          rules?: TotalDataElementRuleOptions;
+      }
+) & { formula: string };
+
 export type Totals = FormulaRules & {
     dataElementsCodes: string[];
     formulas: Record<string, TotalsRule> | undefined;
@@ -89,11 +101,11 @@ export interface SectionBase {
         | { type: "dataElement"; dataElement: DataElement; disabled: boolean }
         | { type: "dataElementExternal"; dataElement: DataElement; condition: string; disabled: boolean }
         | { type: "orgUnit"; orgUnits: Code[]; condition: "show" | "hide"; dataElements: Code[]; disabled: boolean };
-    texts: Texts;
+    texts: SectionTexts;
     tabs: { active: boolean; order?: string; rules?: RulesFormula };
     showIndex: boolean;
     sortRowsBy: string;
-    titleVariant: titleVariant;
+    titleVariant: TitleVariant;
     styles: SectionStyle;
     columnsDescriptions: DescriptionText;
     groupDescriptions: DescriptionText;
@@ -146,6 +158,12 @@ export interface SectionWithSubnationals extends SectionBase {
     calculateTotals: CalculateTotalType;
     subNationals: SubNational[];
 }
+
+export type SubNational = {
+    id: Id;
+    parentId: Id;
+    name: string;
+};
 
 export interface SectionWithIndicatorsCalculated extends SectionBase {
     viewType: "grid-indicators-calculated";

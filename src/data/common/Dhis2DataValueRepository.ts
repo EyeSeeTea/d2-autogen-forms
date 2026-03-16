@@ -367,6 +367,18 @@ export class Dhis2DataValueRepository implements DataValueRepository {
         }
     }
 
+    async delete(dataValues: DataValue[]): Promise<void> {
+        const dataValuesToDelete = dataValues.map(dataValue => ({
+            dataElement: dataValue.dataElement.id,
+            categoryOptionCombo: dataValue.dataElement.cocId || dataValue.categoryOptionComboId,
+            period: dataValue.period,
+            orgUnit: dataValue.orgUnitId,
+            value: this.getStrValue(dataValue),
+        }));
+
+        await this.api.dataValues.postSet({ importStrategy: "DELETE" }, { dataValues: dataValuesToDelete }).getData();
+    }
+
     async applyToAll(
         dataValue: DataValueTextMultiple,
         sourceTypeDeList: DataElementRefType[]

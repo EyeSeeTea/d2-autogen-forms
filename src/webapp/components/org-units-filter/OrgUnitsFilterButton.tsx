@@ -54,5 +54,5 @@ export const OrgUnitsFilterButton: React.FC<OrgUnitsFilterButtonProps> = React.m
 });
 
 const styles = {
-    textField: { display: "inline-flex", marginTop: -24 },
+    textField: { display: "inline-flex", marginBlockStart: -24 },
 };

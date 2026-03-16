@@ -20,18 +20,21 @@ export const dataElement: Omit<DataElement, "type"> = {
                 name: "Option Combo",
                 shortName: "OC",
                 formName: undefined,
+                categoryOptions: [],
+                originalName: "Option Combo",
             },
         ],
     },
     categoryOptionCombos: [],
     rules: [],
+    deleteRules: [],
     htmlText: undefined,
     related: undefined,
     disabled: false,
 };
 
 export const dataValueText: DataValueTextSingle = {
-    dataElement: { ...dataElement, type: "TEXT" },
+    dataElement: { ...dataElement, type: "TEXT", isLongText: false },
     period: "202101",
     orgUnitId: "ou1",
     categoryOptionComboId: "coc1",
@@ -42,7 +45,7 @@ export const dataValueText: DataValueTextSingle = {
 };
 
 export const dataValueTextMultiple: DataValueTextMultiple = {
-    dataElement: { ...dataElement, id: "de1", code: "de1", type: "TEXT" },
+    dataElement: { ...dataElement, id: "de1", code: "de1", type: "TEXT", isLongText: false },
     period: "202101",
     orgUnitId: "ou1",
     categoryOptionComboId: "coc1",

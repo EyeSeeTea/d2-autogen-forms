@@ -47,6 +47,6 @@ export const OrgUnitsFilter: React.FC<OrgUnitsFilterProps> = React.memo(props =>
 const useStyles = makeStyles({
     orgUnitFilter: {
         order: -1,
-        marginRight: "1rem",
+        marginInlineEnd: "1rem",
     },
 });

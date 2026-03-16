@@ -15,6 +15,8 @@ export interface NamedRef extends Ref {
     name: string;
 }
 
+export type CodedRef = Named & { code: Code };
+
 export function getId<T extends Ref>(obj: T): Id {
     return obj.id;
 }

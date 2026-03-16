@@ -5,14 +5,24 @@ import { CompulsoryDataValue } from "../../domain/common/entities/CompulsoryData
 import { DataElement } from "../../domain/common/entities/DataElement";
 import {
     ConditionRule,
-    DataElementRuleOptions,
     DataElementTotalRule,
+    DeleteRule,
     Rule,
     RuleType,
     SectionTotalRule,
+    TotalConditionRule,
+    TotalDataElementRuleOptions,
     TotalRules,
+    TotalRuleType,
 } from "../../domain/common/entities/DataElementRule";
-import { DataForm, defaultTexts, RowConfigDetails, Section, SectionBase } from "../../domain/common/entities/DataForm";
+import {
+    DataForm,
+    defaultTexts,
+    RowConfigDetails,
+    Section,
+    SectionBase,
+    SubNational,
+} from "../../domain/common/entities/DataForm";
 import { Indicator } from "../../domain/common/entities/Indicator";
 import { SectionStyle } from "../../domain/common/entities/SectionStyle";
 import { buildToggleMultiple } from "../../domain/common/entities/ToggleMultiple";
@@ -20,14 +30,13 @@ import { DataFormRepository } from "../../domain/common/repositories/DataFormRep
 import { D2Api, MetadataPick } from "../../types/d2-api";
 import { Maybe } from "../../utils/ts-utils";
 import { Dhis2DataElement } from "./Dhis2DataElement";
+import { Dhis2DataStoreDataForm } from "./Dhis2DataStoreDataForm";
 import {
     DataElementConfig,
     DataSetConfig,
-    Dhis2DataStoreDataForm,
     IndicatorConfig,
     SectionConfig,
-    SubNational,
-} from "./Dhis2DataStoreDataForm";
+} from "../../domain/common/entities/AutogenConfig";
 import { validatePeriodType } from "../../domain/common/entities/Period";
 import { Period } from "../../domain/common/entities/DataValue";
 import { getApplicableDataFormRules } from "../../domain/common/entities/DataFormRule";
@@ -53,7 +62,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
             id: dataSet.id,
             expiryDays: dataSet.expiryDays,
             dataInputPeriods: dataSet.dataInputPeriods,
-            dataElements: _.flatMap(sections, section => section.dataElements),
+            dataElements: dataElements,
             sections: sections,
             texts: dataSetConfig.texts,
             options: { dataElements: dataElementsOptions },
@@ -105,6 +114,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
         const dataElements = await new Dhis2DataElement(this.api).get(dataElementIds, dataSet.code);
 
         const dataElementsRulesConfig = this.buildRulesFromConfig(dataElements, configDataForm, allDataElements);
+        const deleteRulesByDataElement = this.buildDeleteRulesFromConfig(dataElements, configDataForm);
 
         return _(dataSet.sections)
             .map((section): Section => {
@@ -137,6 +147,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                                 dataElement,
                                 dataElements
                             );
+                            const deleteRules = deleteRulesByDataElement[dataElementRef.code] ?? [];
 
                             const deHideConfig = deConfig?.selection?.visible;
                             const d2DataElement = deHideConfig
@@ -152,6 +163,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                                     ? { dataElement: deRelated, value: deHideConfig?.value || "" }
                                     : undefined,
                                 rules: dataElementRules,
+                                deleteRules: deleteRules,
                                 htmlText: deConfig?.texts?.name,
                             };
                         })
@@ -328,8 +340,15 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                             dataElementsByCode,
                             formula
                         );
+                        const enabledTotalRule = this.getTotalRuleByRuleType(
+                            "enabled",
+                            rules,
+                            section,
+                            dataElementsByCode,
+                            formula
+                        );
 
-                        return visibleTotalRule || disabledTotalRule;
+                        return visibleTotalRule || disabledTotalRule || enabledTotalRule;
                     }
                 })
                 .compact()
@@ -374,8 +393,8 @@ export class Dhis2DataFormRepository implements DataFormRepository {
     }
 
     private getTotalRuleByRuleType(
-        ruleType: RuleType,
-        rules: DataElementRuleOptions,
+        ruleType: TotalRuleType,
+        rules: TotalDataElementRuleOptions,
         section: Section,
         dataElements: Record<Code, DataElement>,
         formula: string
@@ -394,7 +413,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
         };
     }
 
-    private getTotalDataElements(rule: ConditionRule, dataElements: Record<string, DataElement>): Id[] {
+    private getTotalDataElements(rule: TotalConditionRule, dataElements: Record<string, DataElement>): Id[] {
         const extractedDataElements =
             rule.type === "option" ? rule.conditions.flatMap(condition => condition.dataElements) : rule.dataElements;
 
@@ -520,11 +539,65 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                     allDataElements: allDataElements,
                     dataElement: dataElement,
                 });
+                const enabledDataElements = this.getRuleConfigByType({
+                    ruleType: "enabled",
+                    dataElementConfig: dataElementConfig,
+                    allDataElements: allDataElements,
+                    dataElement: dataElement,
+                });
+                const clearDataElements = this.getRuleConfigByType({
+                    ruleType: "clear",
+                    dataElementConfig: dataElementConfig,
+                    allDataElements: allDataElements,
+                    dataElement: dataElement,
+                });
 
-                return [...disabledDataElements, ...visibleDataElements];
+                return [...disabledDataElements, ...visibleDataElements, ...enabledDataElements, ...clearDataElements];
             })
             .compact()
             .value();
+    }
+
+    private buildDeleteRulesFromConfig(
+        dataElements: Record<string, DataElement>,
+        configDataForm: Dhis2DataStoreDataForm
+    ): Record<string, DeleteRule[]> {
+        return _(dataElements)
+            .map<Maybe<[string, DeleteRule[]]>>(dataElement => {
+                const dataElementConfig = configDataForm.dataElementsConfig[dataElement.code];
+                if (!dataElementConfig) return undefined;
+
+                const deleteRulesConfig = dataElementConfig.rules?.delete;
+                if (!deleteRulesConfig) return undefined;
+
+                const rules = this.buildDeleteRules(deleteRulesConfig);
+                return [dataElement.code, rules];
+            })
+            .compact()
+            .fromPairs()
+            .value();
+    }
+
+    private buildDeleteRules(deleteRulesConfig: ConditionRule): DeleteRule[] {
+        switch (deleteRulesConfig.type) {
+            case "option":
+                return deleteRulesConfig.conditions.map(rule => ({
+                    condition: rule.condition,
+                    dataElements: rule.dataElements,
+                    type: "delete",
+                }));
+            case "single":
+            case undefined:
+                return [
+                    {
+                        condition: deleteRulesConfig.condition,
+                        dataElements: deleteRulesConfig.dataElements,
+                        type: "delete",
+                    },
+                ];
+            default:
+                return [];
+        }
     }
 
     private getRuleConfigByType(options: RuleConfigParams): RuleConfig[] {
@@ -550,6 +623,14 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                         .value();
                 });
             }
+            case "state":
+                return this.buildRuleConfigList({
+                    dataElements: [dataElement.code],
+                    ruleType: ruleType,
+                    dataElementConfig: dataElementConfig,
+                    allDataElements: allDataElements,
+                    dataElement: dataElement,
+                });
             default:
                 return this.buildRuleConfigList({
                     dataElements: currentConfig?.dataElements || [],
@@ -599,6 +680,11 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                 return dataElementConfigRules.rules?.disabled;
             case "visible":
                 return dataElementConfigRules.rules?.visible;
+            case "enabled":
+                return dataElementConfigRules.rules?.enabled;
+            case "clear": {
+                return dataElementConfigRules.rules?.clear;
+            }
             default:
                 return undefined;
         }
@@ -707,7 +793,7 @@ function getSectionBaseWithToggle(
                     },
                 };
             } else {
-                console.warn(`Data element for toggle not found in section: ${toggle.code}`);
+                console.warn(`Data element for toggle not found: ${toggle.code}`);
                 return base;
             }
         }

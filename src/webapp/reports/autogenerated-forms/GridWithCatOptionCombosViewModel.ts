@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { Section, SectionWithPeriods, Texts } from "../../../domain/common/entities/DataForm";
+import { Section, SectionWithPeriods } from "../../../domain/common/entities/DataForm";
 import { DataElement } from "../../../domain/common/entities/DataElement";
 import { CategoryOptionCombo } from "../../../domain/common/entities/CategoryOptionCombo";
 import { Maybe } from "../../../utils/ts-utils";
@@ -20,7 +20,7 @@ export interface Grid {
     tabs: Section["tabs"];
     toggle: SectionWithPeriods["toggle"];
     toggleMultiple: SectionWithPeriods["toggleMultiple"];
-    texts: Texts;
+    texts: Section["texts"];
     summary: Summary[];
     indicators: Indicator[];
     hidden: boolean;

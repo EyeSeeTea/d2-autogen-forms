@@ -1,0 +1,92 @@
+import { useCallback, useRef, useState } from "react";
+import { sortObjectKeys } from "../../../utils/sortObjectKeys";
+import { AutogenConfig } from "../../../../domain/common/entities/AutogenConfig";
+import { Maybe } from "../../../../utils/ts-utils";
+
+type JsonProcessorState = {
+    error: Maybe<string>;
+    isProcessing: boolean;
+    formatJson: (config: AutogenConfig) => Promise<string>;
+    parseJson: (json: string) => Promise<AutogenConfig>;
+    validateJson: (json: string) => Promise<boolean>;
+};
+
+export const useJsonProcessor = (): JsonProcessorState => {
+    const [isProcessing, setIsProcessing] = useState(false);
+    const [error, setError] = useState<Maybe<string>>();
+    const cancelRef = useRef<boolean>(false);
+
+    const processWithYielding = useCallback(async <T>(processor: () => T): Promise<T> => {
+        return new Promise((resolve, reject) => {
+            cancelRef.current = false;
+            setIsProcessing(true);
+            setError(undefined);
+
+            const processChunk = () => {
+                if (cancelRef.current) {
+                    setIsProcessing(false);
+                    reject(new Error("Processing cancelled"));
+                    return;
+                }
+
+                try {
+                    const result = processor();
+                    setIsProcessing(false);
+                    resolve(result);
+                } catch (error) {
+                    setIsProcessing(false);
+                    const errorMessage = error instanceof Error ? error.message : "Processing error";
+                    setError(errorMessage);
+                    reject(error);
+                }
+            };
+
+            requestAnimationFrame(() => {
+                setTimeout(processChunk, 0);
+            });
+        });
+    }, []);
+
+    const formatJson = useCallback(
+        async (config: AutogenConfig): Promise<string> =>
+            processWithYielding(() => JSON.stringify(sortObjectKeys(config), null, 4)),
+        [processWithYielding]
+    );
+
+    const parseJson = useCallback(
+        async (json: string): Promise<AutogenConfig> =>
+            processWithYielding(() => {
+                if (!json.trim()) return null;
+                return JSON.parse(json);
+            }),
+        [processWithYielding]
+    );
+
+    const validateJson = useCallback(
+        async (json: string): Promise<boolean> => {
+            return processWithYielding(() => {
+                if (!json.trim()) return true;
+
+                try {
+                    const parsed = JSON.parse(json);
+                    if (typeof parsed !== "object" || parsed === null) {
+                        return false;
+                    }
+
+                    return true;
+                } catch {
+                    return false;
+                }
+            });
+        },
+        [processWithYielding]
+    );
+
+    return {
+        error: error,
+        isProcessing: isProcessing,
+        formatJson: formatJson,
+        parseJson: parseJson,
+        validateJson: validateJson,
+    };
+};

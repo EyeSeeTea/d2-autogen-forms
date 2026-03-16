@@ -17,11 +17,18 @@ describe("ApplyToAllUseCase", () => {
         applyToAllUseCase = new ApplyToAllUseCase(instance(mockDataValueRepository));
     });
 
-    it("updates the store with the new values and calls applyToAll on the repository", async () => {
+    it("updates the values and calls applyToAll on the repository", async () => {
         const row: Row = {
             items: [
                 {
-                    dataElement: { ...dataElement, id: "de2", code: "de2", name: "Data Element 2", type: "TEXT" },
+                    dataElement: {
+                        ...dataElement,
+                        id: "de2",
+                        code: "de2",
+                        name: "Data Element 2",
+                        type: "TEXT",
+                        isLongText: false,
+                    },
                     column: {
                         isSourceType: true,
                         name: "",
@@ -68,7 +75,6 @@ describe("ApplyToAllUseCase", () => {
             )
         ).once();
         verify(mockDataValueStore.get(anything(), anything())).twice();
-        verify(mockDataValueStore.set(deepEqual(updatedDataValueTextMultiple))).once();
-        expect(result).toEqual(stubDataValueStore);
+        expect(result).toEqual([updatedDataValueTextMultiple]);
     });
 });

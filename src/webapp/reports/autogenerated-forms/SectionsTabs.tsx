@@ -30,9 +30,11 @@ import DisaggregatedCOCsGrid from "./DisaggregatedCOCsGrid";
 import GridIndicatorsCalculated from "./GridIndicatorsCalculated";
 import { calculateFormula } from "./datatables/InputFormula";
 import GridWithCategoryColumns from "./GridWithCategoryColumns";
+import { DebugLabel } from "../../components/debug/DebugLabel";
 
 export interface TabPanelProps {
-    sections: Section[];
+    tabbedSections: Section[];
+    untabbedSections: Section[];
     dataFormInfo: DataFormInfo;
 }
 
@@ -195,6 +197,7 @@ const TabPanel: React.FC<TabProps> = React.memo(props => {
 
     return (
         <div role="tabpanel" hidden={value !== index} id={`tabpanel-${index}`} aria-labelledby={`tab-${index}`}>
+            <DebugLabel>{section.code}</DebugLabel>
             <AutoFormComponent dataFormInfo={dataFormInfo} section={section} viewType={viewType} />
         </div>
     );
@@ -206,7 +209,7 @@ const ScrollButton: React.FC<ScrollButtonProps> = React.memo(props => {
 
     return (
         <StyledIconButton
-            style={{ position: "absolute", height: " max-content", width: "max-content" }}
+            style={{ position: "absolute", height: "max-content", width: "max-content" }}
             direction={direction}
             showLeftFade={showLeftFade}
             showRightFade={showRightFade}
@@ -219,7 +222,7 @@ const ScrollButton: React.FC<ScrollButtonProps> = React.memo(props => {
 });
 
 const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
-    const { sections, dataFormInfo } = props;
+    const { dataFormInfo, tabbedSections, untabbedSections } = props;
 
     const [activeTab, setActiveTab] = useState(0);
     const [showLeftFade, setShowLeftFade] = useState(false);
@@ -297,15 +300,20 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
                     scrollButtons="auto"
                     TabScrollButtonProps={{ style: { opacity: 0 } }}
                 >
-                    {sections.flatMap(section => {
+                    {tabbedSections.flatMap(section => {
                         const order = section.tabs.order;
 
                         if (isTabHeader(order)) {
-                            const [primaryTabIndex] = getTabIndices(section.tabs.order, sections, section.showIndex);
+                            const [primaryTabIndex] = getTabIndices(
+                                section.tabs.order,
+                                [...tabbedSections, ...untabbedSections],
+                                section.showIndex
+                            );
+                            const sectionTabLabel = section.texts.tabLabel || section.name;
                             const tabLabel =
                                 section.showIndex && primaryTabIndex !== -1
-                                    ? `${primaryTabIndex + 1} - ${section.name}`
-                                    : section.name;
+                                    ? `${primaryTabIndex + 1} - ${sectionTabLabel}`
+                                    : sectionTabLabel;
 
                             const visibleRule = section.tabs.rules?.visible;
                             const dataElementCodes = visibleRule?.dataElements.map(de => de.code) || [];
@@ -339,12 +347,21 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
                             return [];
                         }
                     })}
+                    {untabbedSections.length > 0 && (
+                        <Tab
+                            key="others-tab"
+                            label="Others"
+                            id="tab-others"
+                            aria-controls="tabpanel-others"
+                            value={-1}
+                        />
+                    )}
                 </StyledTabs>
 
-                <FadedOverlay hidden={!showLeftFade} style={{ left: 0, transform: "rotate(180deg)" }} />
-                <FadedOverlay hidden={!showRightFade} style={{ right: 0 }} />
+                <FadedOverlay hidden={!showLeftFade} style={{ insetInlineStart: 0, transform: "rotate(180deg)" }} />
+                <FadedOverlay hidden={!showRightFade} style={{ insetInlineEnd: 0 }} />
             </StyledAppBar>
-            {sections.map(section => {
+            {tabbedSections.map(section => {
                 return (
                     <TabPanel
                         key={section.id + "TabPanel"}
@@ -354,6 +371,14 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
                     />
                 );
             })}
+            <div role="tabpanel" hidden={activeTab !== -1} id="tabpanel-others" aria-labelledby="tab-others">
+                {untabbedSections.map(section => (
+                    <React.Fragment key={section.id + "UntabbedSection"}>
+                        <DebugLabel>{section.code}</DebugLabel>
+                        <AutoFormComponent dataFormInfo={dataFormInfo} section={section} viewType={section.viewType} />
+                    </React.Fragment>
+                ))}
+            </div>
         </Box>
     );
 });
@@ -376,7 +401,7 @@ const StyledTabs = styled(Tabs)`
 
 const FadedOverlay = styled.div<{ hidden?: boolean }>`
     position: absolute;
-    top: 0;
+    inset-block-start: 0;
     width: 25%;
     height: 100%;
     background: linear-gradient(to left, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0));
@@ -385,14 +410,16 @@ const FadedOverlay = styled.div<{ hidden?: boolean }>`
     opacity: ${props => (props.hidden ? 0 : 1)};
 `;
 
-const StyledIconButton = styled(IconButton)<Omit<ScrollButtonProps, "handleScroll">>`
+const StyledIconButton = styled(IconButton).withConfig({
+    shouldForwardProp: prop => !["showLeftFade", "showRightFade", "direction"].includes(prop),
+})<Omit<ScrollButtonProps, "handleScroll">>`
     opacity: ${props =>
         (!props.showLeftFade && props.direction === "left") || (!props.showRightFade && props.direction === "right")
             ? 0.5
             : undefined};
-    left: ${props => (props.direction === "left" ? "-1rem" : undefined)};
-    right: ${props => (props.direction === "right" ? "1rem" : undefined)};
-    bottom: -0.6rem;
+    inset-inline-start: ${props => (props.direction === "left" ? "-1rem" : undefined)};
+    inset-inline-end: ${props => (props.direction === "right" ? "1rem" : undefined)};
+    inset-block-end: -0.6rem;
     z-index: 10;
     color: inherit;
 `;

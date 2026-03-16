@@ -1,9 +1,9 @@
-import { DataStoreConfigurationRepository } from "../repositories/DataStoreConfigurationRepository";
+import { AutogenConfigRepository } from "../repositories/AutogenConfigRepository";
 
 export class GetFormConfigUseCase {
-    constructor(private dataStoreConfigRepository: DataStoreConfigurationRepository) {}
+    constructor(private autogenConfigRepository: AutogenConfigRepository) {}
 
     execute(namespace: string) {
-        return this.dataStoreConfigRepository.getFormConfig(namespace);
+        return this.autogenConfigRepository.get(namespace);
     }
 }
