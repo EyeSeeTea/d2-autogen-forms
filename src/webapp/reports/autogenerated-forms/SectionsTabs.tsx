@@ -242,15 +242,14 @@ const ScrollButton: React.FC<ScrollButtonProps> = React.memo(props => {
 
 const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
     const { dataFormInfo, tabbedSections, untabbedSections } = props;
-    const allSections = [...tabbedSections, ...untabbedSections];
 
     const [activeTab, setActiveTab] = useState(0);
     const [showLeftFade, setShowLeftFade] = useState(false);
     const [showRightFade, setShowRightFade] = useState(true);
-    const { tabVisibilityByIndex, firstVisibleTabIndex } = useTabVisibility(allSections, dataFormInfo);
+    const { tabVisibilityByIndex, firstVisibleTabIndex } = useTabVisibility(props);
 
     const handleChange = (_event: React.ChangeEvent<{}>, value: number) => {
-        if (tabVisibilityByIndex[value]) {
+        if (value === -1 || tabVisibilityByIndex[value]) {
             setActiveTab(value);
             return;
         }
@@ -274,6 +273,7 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
 
     useEffect(() => {
         if (firstVisibleTabIndex === undefined) return;
+        if (activeTab === -1) return;
         if (!tabVisibilityByIndex[activeTab]) {
             setActiveTab(firstVisibleTabIndex);
         }
@@ -336,6 +336,7 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
                 >
                     {tabbedSections.flatMap(section => {
                         const order = section.tabs.order;
+                        const allSections = [...tabbedSections, ...untabbedSections];
 
                         if (isTabHeader(order)) {
                             const [primaryTabIndex] = getTabIndices(section.tabs.order, allSections, section.showIndex);
