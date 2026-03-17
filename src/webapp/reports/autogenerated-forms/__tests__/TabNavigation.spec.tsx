@@ -125,6 +125,44 @@ describe("TabNavigation", () => {
         });
     });
 
+    describe("scroll-to-top on navigation", () => {
+        beforeEach(() => {
+            window.scrollTo = jest.fn();
+        });
+
+        it("scrolls to top when Next is clicked", () => {
+            renderNavigation({ activeTabIndex: 0 });
+
+            fireEvent.click(getNextButton());
+
+            expect(window.scrollTo).toHaveBeenCalledWith(0, 0);
+        });
+
+        it("scrolls to top when Previous is clicked", () => {
+            renderNavigation({ activeTabIndex: 2 });
+
+            fireEvent.click(getPreviousButton());
+
+            expect(window.scrollTo).toHaveBeenCalledWith(0, 0);
+        });
+
+        it("does not scroll when Next is clicked on the last tab", () => {
+            renderNavigation({ activeTabIndex: 3 });
+
+            fireEvent.click(getNextButton());
+
+            expect(window.scrollTo).not.toHaveBeenCalled();
+        });
+
+        it("does not scroll when Previous is clicked on the first tab", () => {
+            renderNavigation({ activeTabIndex: 0 });
+
+            fireEvent.click(getPreviousButton());
+
+            expect(window.scrollTo).not.toHaveBeenCalled();
+        });
+    });
+
     describe("edge cases", () => {
         it("disables both buttons when there is only one visible tab", () => {
             const singleTab: ReadonlyArray<VisibleTab> = [{ primaryIndex: 5, label: "Only" }];

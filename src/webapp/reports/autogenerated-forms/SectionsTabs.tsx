@@ -1,5 +1,5 @@
 import _ from "lodash";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Tabs, Tab, Box, makeStyles } from "@material-ui/core";
 import {
     Section,
@@ -33,7 +33,7 @@ import { calculateFormula } from "./datatables/InputFormula";
 import GridWithCategoryColumns from "./GridWithCategoryColumns";
 import { useTabVisibility } from "./hooks/useTabVisibility";
 import { DebugLabel } from "../../components/debug/DebugLabel";
-import TabNavigation, { VisibleTab } from "./TabNavigation";
+import TabNavigation from "./TabNavigation";
 
 export interface TabPanelProps {
     sections: Section[];
@@ -185,7 +185,7 @@ export function getTabIndices(
     return [adjustedPrimary, adjustedSecondary];
 }
 
-function isTabHeader(order: Maybe<string>) {
+export function isTabHeader(order: Maybe<string>) {
     const [_primaryTabIndex, secondaryTabIndex] = getTabIndices(order);
     return isNaN(secondaryTabIndex) || secondaryTabIndex === 0 || secondaryTabIndex === 1;
 }
@@ -246,39 +246,11 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
     const [activeTab, setActiveTab] = useState(0);
     const [showLeftFade, setShowLeftFade] = useState(false);
     const [showRightFade, setShowRightFade] = useState(true);
-    const { tabVisibilityByIndex, firstVisibleTabIndex } = useTabVisibility(sections, dataFormInfo);
+    const { tabVisibilityByIndex, firstVisibleTabIndex, visiblePrimaryTabs } = useTabVisibility(
+        sections,
+        dataFormInfo
+    );
     const showNavigation = dataFormInfo.metadata.dataForm.showNavigation;
-
-    const visiblePrimaryTabs: ReadonlyArray<VisibleTab> = useMemo(() => {
-        return _.uniqBy(
-            sections.flatMap(section => {
-                if (!isTabHeader(section.tabs.order)) return [];
-
-                const primaryValue = _(section.tabs.order).split(".").first() ?? "0";
-                const primaryIndex = Number(primaryValue);
-                if (!Number.isFinite(primaryIndex) || primaryIndex === -1) return [];
-                if (!tabVisibilityByIndex[primaryIndex]) return [];
-
-                const visibleRule = section.tabs.rules?.visible;
-                if (visibleRule) {
-                    const dataElementCodes = visibleRule.dataElements.map(de => de.code);
-                    const value =
-                        dataElementCodes.length > 0
-                            ? calculateFormula({
-                                  dataElementCodes,
-                                  dataFormInfo,
-                                  formula: visibleRule.formula.value,
-                              })
-                            : undefined;
-                    if (value !== visibleRule.formula.condition) return [];
-                }
-
-                const label = section.texts.tabLabel || section.name;
-                return [{ primaryIndex, label }];
-            }),
-            tab => tab.primaryIndex
-        );
-    }, [sections, tabVisibilityByIndex, dataFormInfo]);
 
     const handleChange = (_event: React.ChangeEvent<{}>, value: number) => {
         if (tabVisibilityByIndex[value]) {
@@ -309,14 +281,6 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
             setActiveTab(firstVisibleTabIndex);
         }
     }, [activeTab, tabVisibilityByIndex, firstVisibleTabIndex]);
-
-    useEffect(() => {
-        if (visiblePrimaryTabs.length === 0) return;
-        const isActiveTabVisible = visiblePrimaryTabs.some(tab => tab.primaryIndex === activeTab);
-        if (!isActiveTabVisible) {
-            setActiveTab(visiblePrimaryTabs[0]!.primaryIndex);
-        }
-    }, [activeTab, visiblePrimaryTabs]);
 
     useEffect(() => {
         const scrollButtons = document.querySelectorAll(".MuiTabs-scrollButtons");

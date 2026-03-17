@@ -2,11 +2,9 @@ import React from "react";
 import { Button, Box, Typography } from "@material-ui/core";
 import { ChevronLeft, ChevronRight } from "@material-ui/icons";
 import i18n from "@eyeseetea/d2-ui-components/locales";
+import { VisibleTab } from "./hooks/useTabVisibility";
 
-export interface VisibleTab {
-    readonly primaryIndex: number;
-    readonly label: string;
-}
+export type { VisibleTab };
 
 export interface TabNavigationProps {
     readonly activeTabIndex: number;
@@ -24,13 +22,19 @@ const TabNavigation: React.FC<TabNavigationProps> = React.memo(props => {
     const handlePrevious = React.useCallback(() => {
         if (currentPosition <= 0) return;
         const previousTab = visibleTabs[currentPosition - 1];
-        if (previousTab) onTabChange(previousTab.primaryIndex);
+        if (previousTab) {
+            onTabChange(previousTab.primaryIndex);
+            window.scrollTo(0, 0);
+        }
     }, [currentPosition, visibleTabs, onTabChange]);
 
     const handleNext = React.useCallback(() => {
         if (currentPosition >= visibleTabs.length - 1) return;
         const nextTab = visibleTabs[currentPosition + 1];
-        if (nextTab) onTabChange(nextTab.primaryIndex);
+        if (nextTab) {
+            onTabChange(nextTab.primaryIndex);
+            window.scrollTo(0, 0);
+        }
     }, [currentPosition, visibleTabs, onTabChange]);
 
     const positionDisplay =
