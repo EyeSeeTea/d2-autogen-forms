@@ -76,10 +76,11 @@ export class GridWithTotalsViewModel {
                 const categoryOptionCombos = de.categoryCombos.categoryOptionCombos;
                 const config = dataElementsConfig[de.id];
                 if (categoryOptionCombos.length !== 1 && categoryOptionCombos[0]?.name !== "default") {
+                    const nameParts = splitDataElementName(de.name);
                     return {
                         name: de.name,
-                        deName: splitDataElementName(de.name)[0],
-                        cocName: _.last(splitDataElementName(de.name)),
+                        deName: nameParts[0],
+                        cocName: _.last(nameParts),
                         isSourceType: false,
                     };
                 } else {
@@ -106,10 +107,10 @@ export class GridWithTotalsViewModel {
             }))
             .value();
 
+        const separatorTotalRegex = new RegExp(`${DATA_ELEMENT_NAME_SEPARATOR.source}Total$`);
+
         const rows = subsections.map(subsection => {
-            const total = sectionDataElements.find(
-                de => de.name.replace(new RegExp(`${DATA_ELEMENT_NAME_SEPARATOR.source}Total$`), "") === subsection.name
-            );
+            const total = sectionDataElements.find(de => de.name.replace(separatorTotalRegex, "") === subsection.name);
             const index = splitDataElementName(subsection.name)[0];
             const totalRowIndex = index?.split(".")[0];
 
@@ -118,6 +119,9 @@ export class GridWithTotalsViewModel {
             });
 
             const hasTotals = index?.split(".").length === 2 && !_.isEmpty(totalRowIndex);
+            const totalRowIndexRegex = totalRowIndex
+                ? new RegExp(`^${_.escapeRegExp(totalRowIndex)}${DATA_ELEMENT_NAME_SEPARATOR.source}`)
+                : undefined;
             const items = columns.map(column => {
                 const dataElement = subsection.dataElements.find(de => de.name === column.name);
                 let columnTotal;
@@ -131,15 +135,11 @@ export class GridWithTotalsViewModel {
                         ? dataElements.find(de => de.code === deCalculateTotal?.totalDeCode)
                         : undefined;
 
+                    const deNameFirstPart = splitDataElementName(dataElement?.name || "")[0];
                     columnTotal =
                         parentTotal ||
                         dataElements.find(de => {
-                            return (
-                                new RegExp(
-                                    `^${_.escapeRegExp(totalRowIndex)}${DATA_ELEMENT_NAME_SEPARATOR.source}`
-                                ).test(de.name) &&
-                                de.name.endsWith(`${splitDataElementName(dataElement?.name || "")[0]}`)
-                            );
+                            return totalRowIndexRegex?.test(de.name) && de.name.endsWith(`${deNameFirstPart}`);
                         });
 
                     if (columnTotal) {
@@ -156,10 +156,7 @@ export class GridWithTotalsViewModel {
                               .map(de => ({ ...de, cocId: dataElement?.cocId }))
                         : indexedDEs
                               .filter(de => {
-                                  return (
-                                      hasIndexedSubRowPrefix(de.name) &&
-                                      de.name.endsWith(`${splitDataElementName(dataElement?.name || "")[0]}`)
-                                  );
+                                  return hasIndexedSubRowPrefix(de.name) && de.name.endsWith(`${deNameFirstPart}`);
                               })
                               .map(de => ({ ...de, cocId: dataElement?.cocId }));
                 }

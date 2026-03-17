@@ -68,10 +68,11 @@ export class GridWithCombosViewModel {
             .flatMap(subsection => subsection.dataElements)
             .uniqBy(de => de.name)
             .map(de => {
+                const nameParts = splitDataElementName(de.name);
                 return {
                     name: de.name,
-                    deName: splitDataElementName(de.name)[0] || "",
-                    cocName: _.last(splitDataElementName(de.name)) || "",
+                    deName: nameParts[0] || "",
+                    cocName: _.last(nameParts) || "",
                 };
             })
             .value();
