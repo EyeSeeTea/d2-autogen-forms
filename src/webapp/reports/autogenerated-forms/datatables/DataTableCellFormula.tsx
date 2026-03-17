@@ -21,7 +21,7 @@ export type DataTableCellFormulaProps = {
 export const DataTableCellFormula: React.FC<DataTableCellFormulaProps> = props => {
     const { dataFormInfo, formula, period, styles, total } = props;
     const totalCalculated = _(total.items)
-        .map(itemTotal => getItemTotalDataValue(dataFormInfo, itemTotal, period))
+        .map(itemTotal => getItemTotalDataValue(dataFormInfo, itemTotal, period, total.strict))
         .compact()
         .value();
 
@@ -38,8 +38,9 @@ export const DataTableCellFormula: React.FC<DataTableCellFormulaProps> = props =
 export function getItemTotalDataValue(
     dataFormInfo: DataFormInfo,
     itemTotal: TotalItem,
-    period?: string
+    period?: string,
+    strict?: boolean
 ): Maybe<Record<string, Maybe<number>>> {
-    const numericValue = getValueFromDataElement(dataFormInfo, itemTotal, period);
+    const numericValue = getValueFromDataElement(dataFormInfo, itemTotal, period, strict);
     return numericValue && window.isNaN(numericValue) ? undefined : { [itemTotal.dataElement.code]: numericValue };
 }

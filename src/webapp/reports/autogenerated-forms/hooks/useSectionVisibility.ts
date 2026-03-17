@@ -13,58 +13,48 @@ export type SectionVisibilityState = {
 };
 
 export function useSectionVisibility(section: DataTableSectionObj, dataFormInfo: DataFormInfo): SectionVisibilityState {
+    return useMemo(() => getSectionVisibilityState(section, dataFormInfo), [section, dataFormInfo]);
+}
+
+type SectionVisibilityInput = {
+    id: DataTableSectionObj["id"];
+    hidden?: DataTableSectionObj["hidden"];
+    toggle: DataTableSectionObj["toggle"];
+    toggleMultiple?: DataTableSectionObj["toggleMultiple"];
+};
+
+export function getSectionVisibilityState(
+    section: SectionVisibilityInput,
+    dataFormInfo: DataFormInfo
+): SectionVisibilityState {
     const { toggle, toggleMultiple } = section;
-    const sectionTotalRules = useMemo(
-        () =>
-            dataFormInfo.metadata.dataForm.totalRules.sectionTotalRules.filter(sectionTotalRule =>
-                sectionTotalRule.sections.includes(section.id)
-            ),
-        [dataFormInfo, section.id]
+    const sectionTotalRules = dataFormInfo.metadata.dataForm.totalRules.sectionTotalRules.filter(sectionTotalRule =>
+        sectionTotalRule.sections.includes(section.id)
     );
 
-    const isDisabled = useMemo(() => {
+    const isOpen = evaluateSectionOpenState(toggle, dataFormInfo);
+
+    const isVisibleFromTotals =
+        sectionTotalRules.length === 0
+            ? true
+            : sectionTotalRules.map(rule => evaluateTotalRule(rule, dataFormInfo)).some(value => value);
+    const toggleMultipleState = toggleMultiple ? evaluateToggleMultipleState(dataFormInfo, toggleMultiple) : undefined;
+
+    const isDisabled = (() => {
         if (toggle.type === "none" && !toggleMultiple) return false;
-        if (toggleMultiple) {
-            const isVisibleFromToggleMultiple = evaluateToggleMultiple(dataFormInfo, toggleMultiple);
-            if (!isVisibleFromToggleMultiple) {
-                const hasDisabledFlag = toggleMultiple.toggleDataElements.some(t => t.dataElement.disabled);
-                return hasDisabledFlag;
-            }
-            return false;
-        }
+        if (toggleMultipleState) return toggleMultipleState.isDisabled;
         return toggle.type !== "none" ? toggle.disabled : false;
-    }, [toggle, toggleMultiple, dataFormInfo]);
+    })();
 
-    const isOpen = useMemo(() => {
-        return evaluateSectionOpenState(toggle, dataFormInfo);
-    }, [toggle, dataFormInfo]);
-
-    const isVisibleFromTotals = useMemo(() => {
-        if (sectionTotalRules.length === 0) return true;
-        return sectionTotalRules.map(rule => evaluateTotalRule(rule, dataFormInfo)).some(value => value);
-    }, [dataFormInfo, sectionTotalRules]);
-
-    const isVisible = useMemo(() => {
+    const isVisible = (() => {
         if (section.hidden) return !section.hidden;
         if (toggle.type === "dataElementExternal" && !isOpen) return false;
         if (sectionTotalRules.length > 0 && !isVisibleFromTotals) return false;
-        if (toggleMultiple) {
-            const isVisibleFromToggleMultiple = evaluateToggleMultiple(dataFormInfo, toggleMultiple);
-            if (!isVisibleFromToggleMultiple) {
-                const hasDisabledFlag = toggleMultiple.toggleDataElements.some(t => t.dataElement.disabled);
-                return hasDisabledFlag;
-            }
-            return true;
-        }
-
+        if (toggleMultipleState) return toggleMultipleState.isVisible;
         return true;
-    }, [section, toggle.type, isOpen, sectionTotalRules.length, isVisibleFromTotals, toggleMultiple, dataFormInfo]);
+    })();
 
-    return {
-        isDisabled: isDisabled,
-        isOpen: isOpen,
-        isVisible: isVisible,
-    };
+    return { isDisabled, isOpen, isVisible };
 }
 
 function evaluateSectionOpenState(toggle: Section["toggle"], dataFormInfo: DataFormInfo): boolean {
@@ -94,30 +84,65 @@ function evaluateSectionOpenState(toggle: Section["toggle"], dataFormInfo: DataF
     }
 }
 
-function evaluateToggleMultiple(dataFormInfo: DataFormInfo, toggleMultiple: DataElementToggle): boolean {
-    const hasToggleDataElements = toggleMultiple.toggleDataElements.length > 0;
-    if (!hasToggleDataElements) return true;
+type ToggleMultipleConditionState = {
+    isVisible: boolean;
+    isDisabled: boolean;
+};
 
+export function evaluateToggleMultipleState(
+    dataFormInfo: DataFormInfo,
+    toggleMultiple: DataElementToggle
+): ToggleMultipleConditionState {
     const currentOrgUnitCode = dataFormInfo.orgUnit.code;
-    const { logicalOperator, toggleDataElements } = toggleMultiple;
-
-    const evaluateToggleCondition = (toggle: DataElementToggle["toggleDataElements"][number]): boolean => {
-        switch (toggle.type) {
-            case "orgUnit": {
-                const isOrgUnitInToggleList = toggle.orgUnitCodes.includes(currentOrgUnitCode);
-                return toggle.condition === "show" ? isOrgUnitInToggleList : !isOrgUnitInToggleList;
-            }
-            case "dataElement": {
-                const dataValue = dataFormInfo.data.values.getOrEmpty(toggle.dataElement, dataFormInfo);
-                return verifyConditionByDataValueType(dataValue, toggle);
-            }
-        }
-    };
-
-    switch (logicalOperator) {
-        case "AND":
-            return toggleDataElements.every(evaluateToggleCondition);
-        case "OR":
-            return toggleDataElements.some(evaluateToggleCondition);
+    const { logicalOperator, toggleDataElements, orgUnitConditions } = toggleMultiple;
+    const conditions: ToggleMultipleConditionState[] = [
+        ...toggleDataElements.map(toggle => {
+            return {
+                isVisible: evaluateToggleCondition(toggle, dataFormInfo, currentOrgUnitCode),
+                isDisabled: toggle.dataElement.disabled,
+            };
+        }),
+        ...orgUnitConditions.map(condition => {
+            return {
+                isVisible: evaluateOrgUnitCondition(condition.orgUnitCodes, condition.condition, currentOrgUnitCode),
+                isDisabled: condition.disabled,
+            };
+        }),
+    ];
+    if (conditions.length === 0) {
+        return { isVisible: true, isDisabled: false };
     }
+
+    const isVisible =
+        logicalOperator === "AND"
+            ? conditions.every(condition => condition.isVisible)
+            : conditions.some(condition => condition.isVisible);
+
+    const visibleConditions = conditions.filter(condition => condition.isVisible);
+    const isDisabled =
+        logicalOperator === "AND"
+            ? visibleConditions.every(condition => condition.isDisabled)
+            : visibleConditions.some(condition => condition.isDisabled);
+    return { isVisible, isDisabled };
+}
+
+function evaluateToggleCondition(
+    toggle: DataElementToggle["toggleDataElements"][number],
+    dataFormInfo: DataFormInfo,
+    currentOrgUnitCode: string
+): boolean {
+    switch (toggle.type) {
+        case "orgUnit": {
+            return evaluateOrgUnitCondition(toggle.orgUnitCodes, toggle.condition, currentOrgUnitCode);
+        }
+        case "dataElement": {
+            const dataValue = dataFormInfo.data.values.getOrEmpty(toggle.dataElement, dataFormInfo);
+            return verifyConditionByDataValueType(dataValue, toggle);
+        }
+    }
+}
+
+function evaluateOrgUnitCondition(orgUnitCodes: string[], condition: string, currentOrgUnitCode: string): boolean {
+    const isOrgUnitInToggleList = orgUnitCodes.includes(currentOrgUnitCode);
+    return condition === "show" ? isOrgUnitInToggleList : !isOrgUnitInToggleList;
 }
