@@ -16,6 +16,7 @@ import Share from "../share/Share";
 import "./App.css";
 import muiThemeLegacy from "./themes/dhis2-legacy.theme";
 import { muiTheme } from "./themes/dhis2.theme";
+import { ThemeProvider } from "styled-components";
 
 type D2 = object;
 
@@ -49,17 +50,19 @@ const App = ({ api, d2 }: { api: D2Api; d2: D2 }) => {
 
     return (
         <MuiThemeProvider theme={muiTheme}>
-            <OldMuiThemeProvider muiTheme={muiThemeLegacy}>
-                <SnackbarProvider>
-                    <div id="app" className="content">
-                        <AppContext.Provider value={appContext}>
-                            <Report />
-                        </AppContext.Provider>
-                    </div>
+            <ThemeProvider theme={muiTheme}>
+                <OldMuiThemeProvider muiTheme={muiThemeLegacy}>
+                    <SnackbarProvider>
+                        <div id="app" className="content">
+                            <AppContext.Provider value={appContext}>
+                                <Report />
+                            </AppContext.Provider>
+                        </div>
 
-                    <Share visible={showShareButton} />
-                </SnackbarProvider>
-            </OldMuiThemeProvider>
+                        <Share visible={showShareButton} />
+                    </SnackbarProvider>
+                </OldMuiThemeProvider>
+            </ThemeProvider>
         </MuiThemeProvider>
     );
 };

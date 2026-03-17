@@ -6,7 +6,7 @@ import { DataForm, Section } from "../entities/DataForm";
 import _ from "lodash";
 import { OrgUnit } from "../entities/OrgUnit";
 import { DataElement } from "../entities/DataElement";
-import { OrgUnitToggle } from "../../../data/common/Dhis2DataStoreDataForm";
+import { OrgUnitToggle } from "../entities/AutogenConfig";
 
 export class GetDataFormUseCase {
     constructor(private dataFormRepository: DataFormRepository, private orgUnitsRepository: OrgUnitsRepository) {}

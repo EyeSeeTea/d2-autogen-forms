@@ -36,7 +36,8 @@ import { DebugLabel } from "../../components/debug/DebugLabel";
 import TabNavigation from "./TabNavigation";
 
 export interface TabPanelProps {
-    sections: Section[];
+    tabbedSections: Section[];
+    untabbedSections: Section[];
     dataFormInfo: DataFormInfo;
 }
 
@@ -228,7 +229,7 @@ const ScrollButton: React.FC<ScrollButtonProps> = React.memo(props => {
 
     return (
         <StyledIconButton
-            style={{ position: "absolute", height: " max-content", width: "max-content" }}
+            style={{ position: "absolute", height: "max-content", width: "max-content" }}
             direction={direction}
             showLeftFade={showLeftFade}
             showRightFade={showRightFade}
@@ -241,24 +242,23 @@ const ScrollButton: React.FC<ScrollButtonProps> = React.memo(props => {
 });
 
 const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
-    const { sections, dataFormInfo } = props;
+    const { dataFormInfo, tabbedSections, untabbedSections } = props;
 
     const [activeTab, setActiveTab] = useState(0);
     const [showLeftFade, setShowLeftFade] = useState(false);
     const [showRightFade, setShowRightFade] = useState(true);
-    const { tabVisibilityByIndex, firstVisibleTabIndex, visiblePrimaryTabs } = useTabVisibility(
-        sections,
-        dataFormInfo
-    );
+    const { tabVisibilityByIndex, firstVisibleTabIndex, visiblePrimaryTabs } = useTabVisibility(props);
     const showNavigation = dataFormInfo.metadata.dataForm.showNavigation;
 
     const handleChange = (_event: React.ChangeEvent<{}>, value: number) => {
-        if (tabVisibilityByIndex[value]) {
+        if (value === -1 || tabVisibilityByIndex[value]) {
             setActiveTab(value);
+            window.scrollTo(0, 0);
             return;
         }
         if (firstVisibleTabIndex !== undefined) {
             setActiveTab(firstVisibleTabIndex);
+            window.scrollTo(0, 0);
         }
     };
 
@@ -277,6 +277,7 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
 
     useEffect(() => {
         if (firstVisibleTabIndex === undefined) return;
+        if (activeTab === -1) return;
         if (!tabVisibilityByIndex[activeTab]) {
             setActiveTab(firstVisibleTabIndex);
         }
@@ -337,14 +338,14 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
                     scrollButtons="auto"
                     TabScrollButtonProps={{ style: { opacity: 0 } }}
                 >
-                    {sections.flatMap(section => {
+                    {tabbedSections.flatMap(section => {
                         const order = section.tabs.order;
+                        const allSections = [...tabbedSections, ...untabbedSections];
 
                         if (isTabHeader(order)) {
+                            const [primaryTabIndex] = getTabIndices(section.tabs.order, allSections, section.showIndex);
                             const sectionTabLabel = section.texts.tabLabel || section.name;
-                            const [primaryTabIndex] = getTabIndices(section.tabs.order, sections, section.showIndex);
-                            const shouldShowIndex = tabHeaderShouldShowIndex(section, sections);
-
+                            const shouldShowIndex = tabHeaderShouldShowIndex(section, allSections);
                             const tabLabel =
                                 shouldShowIndex && primaryTabIndex !== -1
                                     ? `${primaryTabIndex + 1} - ${sectionTabLabel}`
@@ -386,24 +387,38 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
                             return [];
                         }
                     })}
+                    {untabbedSections.length > 0 && (
+                        <Tab
+                            key="others-tab"
+                            label="Others"
+                            id="tab-others"
+                            aria-controls="tabpanel-others"
+                            value={-1}
+                        />
+                    )}
                 </StyledTabs>
 
-                <FadedOverlay hidden={!showLeftFade} style={{ left: 0, transform: "rotate(180deg)" }} />
-                <FadedOverlay hidden={!showRightFade} style={{ right: 0 }} />
+                <FadedOverlay hidden={!showLeftFade} style={{ insetInlineStart: 0, transform: "rotate(180deg)" }} />
+                <FadedOverlay hidden={!showRightFade} style={{ insetInlineEnd: 0 }} />
             </StyledAppBar>
-            {sections
-                .filter(section => {
-                    const [primaryTabIndex] = getTabIndices(section.tabs.order);
-                    return tabVisibilityByIndex[primaryTabIndex];
-                })
-                .map(section => (
+            {tabbedSections.map(section => {
+                return (
                     <TabPanel
                         key={section.id + "TabPanel"}
                         value={activeTab}
                         dataFormInfo={dataFormInfo}
                         section={section}
                     />
+                );
+            })}
+            <div role="tabpanel" hidden={activeTab !== -1} id="tabpanel-others" aria-labelledby="tab-others">
+                {untabbedSections.map(section => (
+                    <React.Fragment key={section.id + "UntabbedSection"}>
+                        <DebugLabel>{section.code}</DebugLabel>
+                        <AutoFormComponent dataFormInfo={dataFormInfo} section={section} viewType={section.viewType} />
+                    </React.Fragment>
                 ))}
+            </div>
 
             {showNavigation && visiblePrimaryTabs.length > 0 && (
                 <TabNavigation
@@ -434,7 +449,7 @@ const StyledTabs = styled(Tabs)`
 
 const FadedOverlay = styled.div<{ hidden?: boolean }>`
     position: absolute;
-    top: 0;
+    inset-block-start: 0;
     width: 25%;
     height: 100%;
     background: linear-gradient(to left, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0));
@@ -443,14 +458,16 @@ const FadedOverlay = styled.div<{ hidden?: boolean }>`
     opacity: ${props => (props.hidden ? 0 : 1)};
 `;
 
-const StyledIconButton = styled(IconButton)<Omit<ScrollButtonProps, "handleScroll">>`
+const StyledIconButton = styled(IconButton).withConfig({
+    shouldForwardProp: prop => !["showLeftFade", "showRightFade", "direction"].includes(prop),
+})<Omit<ScrollButtonProps, "handleScroll">>`
     opacity: ${props =>
         (!props.showLeftFade && props.direction === "left") || (!props.showRightFade && props.direction === "right")
             ? 0.5
             : undefined};
-    left: ${props => (props.direction === "left" ? "-1rem" : undefined)};
-    right: ${props => (props.direction === "right" ? "1rem" : undefined)};
-    bottom: -0.6rem;
+    inset-inline-start: ${props => (props.direction === "left" ? "-1rem" : undefined)};
+    inset-inline-end: ${props => (props.direction === "right" ? "1rem" : undefined)};
+    inset-block-end: -0.6rem;
     z-index: 10;
     color: inherit;
 `;

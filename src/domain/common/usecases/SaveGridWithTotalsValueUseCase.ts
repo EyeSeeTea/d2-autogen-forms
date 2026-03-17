@@ -27,21 +27,18 @@ export class SaveGridWithTotalsValueUseCase {
             const storeUpdated = store.set(currentDataValue);
 
             // SAVE COLUMN TOTAL
-            const selector = {
+            const selector: Selector = {
                 orgUnitId: dataValue.orgUnitId,
                 period: dataValue.period,
                 categoryOptionComboId: dataValue.categoryOptionComboId,
             };
 
-            const newColTotalValue = columnDataElements
-                .map(de => {
-                    const dv = storeUpdated.get(de, {
-                        ...selector,
-                        categoryOptionComboId: dataValue.categoryOptionComboId,
-                    }) as DataValueNumberSingle;
-                    return dv.value ?? "0";
-                })
-                .reduce((partialSum, i) => partialSum + Number(i), 0);
+            const valuesForColumn = this.getValuesForColumn({
+                selector,
+                store: storeUpdated,
+                dataElements: columnDataElements,
+                dataValue,
+            });
 
             const colTotalDataValue = storeUpdated.get(columnTotal, {
                 ...selector,
@@ -50,7 +47,7 @@ export class SaveGridWithTotalsValueUseCase {
 
             const updatedColTotalDataValue = {
                 ...colTotalDataValue,
-                value: newColTotalValue.toString(),
+                value: valuesForColumn.length === 0 ? "" : _(valuesForColumn).sum().toString(),
             };
 
             await Promise.all([
@@ -61,4 +58,33 @@ export class SaveGridWithTotalsValueUseCase {
             return [currentDataValue, updatedColTotalDataValue];
         }
     }
+
+    private getValuesForColumn(options: {
+        selector: Selector;
+        store: DataValueStore;
+        dataElements: DataElement[];
+        dataValue: DataValueNumberSingle;
+    }): number[] {
+        const { dataValue, selector, store, dataElements } = options;
+        const values = _(dataElements)
+            .map(de => {
+                const dv = store.get(de, {
+                    ...selector,
+                    categoryOptionComboId: dataValue.categoryOptionComboId,
+                }) as DataValueNumberSingle;
+                return dv.value;
+            })
+            .compact()
+            .value();
+
+        if (!values.length) return [];
+
+        return values.map(v => Number(v));
+    }
 }
+
+type Selector = {
+    orgUnitId: string;
+    period: string;
+    categoryOptionComboId: string;
+};

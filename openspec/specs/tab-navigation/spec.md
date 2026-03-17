@@ -70,8 +70,12 @@ The "Others" tab (untabbed sections) SHALL NOT be included in the navigation seq
 - **WHEN** the form has 3 primary tabs and an "Others" tab, and the user is on tab 3
 - **THEN** the Next button is disabled (tab 3 is the last navigable tab) and the indicator shows "3/3"
 
-### Requirement: Scroll to top on navigation
-When the user navigates to a different tab using the Previous or Next button, the page SHALL scroll to the top so the user sees the beginning of the new tab content.
+### Requirement: Scroll to top on tab change
+When the user navigates to a different tab by any means (clicking a tab in the top bar, or clicking Previous/Next in the bottom navigation bar), the page SHALL scroll to the top so the user sees the beginning of the new tab content.
+
+#### Scenario: Navigate via top tab bar
+- **WHEN** the user clicks a tab in the top tab bar
+- **THEN** the page scrolls to the top of the viewport
 
 #### Scenario: Navigate via bottom bar
 - **WHEN** the user clicks Next or Previous in the bottom navigation bar
