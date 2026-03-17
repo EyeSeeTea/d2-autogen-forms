@@ -6,7 +6,7 @@ import { DataForm, Section } from "../entities/DataForm";
 import _ from "lodash";
 import { OrgUnit } from "../entities/OrgUnit";
 import { DataElement } from "../entities/DataElement";
-import { OrgUnitToggle } from "../../../data/common/Dhis2DataStoreDataForm";
+import { OrgUnitToggle } from "../entities/AutogenConfig";
 import { getApplicableSectionRules } from "../entities/SectionRule";
 
 export class GetDataFormUseCase {

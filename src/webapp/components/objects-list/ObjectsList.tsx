@@ -54,5 +54,5 @@ export function ObjectsList<T extends ReferenceObject>(
 }
 
 const useStyles = makeStyles({
-    wrapper: { marginTop: 25 },
+    wrapper: { marginBlockStart: 25 },
 });

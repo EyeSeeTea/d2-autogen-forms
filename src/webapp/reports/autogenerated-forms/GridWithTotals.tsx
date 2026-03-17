@@ -126,7 +126,9 @@ const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
                                 >
                                     <p
                                         style={{
-                                            paddingLeft: row.includePadding ? `${row.includePadding * 10}px` : "0",
+                                            paddingInlineStart: row.includePadding
+                                                ? `${row.includePadding * 10}px`
+                                                : "0",
                                         }}
                                     >
                                         {grid.useIndexes ? (idx + 1).toString() : row.name}
@@ -214,7 +216,7 @@ const useStyles = makeStyles({
             alignItems: "center",
         },
     },
-    tableHeader: { position: "sticky", top: 0, zIndex: 2 },
+    tableHeader: { position: "sticky", insetBlockStart: 0, zIndex: 2 },
     fixedHeaders: fixHeaderClasses.fixedHeaders,
 });
 

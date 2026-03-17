@@ -135,7 +135,7 @@ const useStyles = makeStyles({
             alignItems: "center",
         },
     },
-    tableHeader: { position: "sticky", top: 0, zIndex: 2 },
+    tableHeader: { position: "sticky", insetBlockStart: 0, zIndex: 2 },
     fixedHeaders: fixHeaderClasses.fixedHeaders,
 });
 

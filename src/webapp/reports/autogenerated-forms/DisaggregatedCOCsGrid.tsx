@@ -74,34 +74,33 @@ const DisaggregatedCOCsGrid: React.FC<DisaggregatedCOCsGridProps> = props => {
                 <TableHead>
                     <DataTableRow>
                         {grid.columns.map(({ columnItems, dataElement }, index) => (
-                            <>
+                            <React.Fragment key={dataElement.id}>
                                 {index === 0 && (
                                     <CustomDataTableColumnHeader
                                         backgroundColor={section.styles.columns.backgroundColor}
-                                        colSpan={1}
+                                        colSpan={"1"}
                                     ></CustomDataTableColumnHeader>
                                 )}
 
                                 {isDataElementVisible(dataElement) && (
                                     <CustomDataTableColumnHeader
                                         backgroundColor={section.styles.columns.backgroundColor}
-                                        key={`column-${dataElement.id}`}
                                         colSpan={getColSpan(columnItems)}
                                     >
                                         <span className={classes.header}>{dataElement.name}</span>
                                     </CustomDataTableColumnHeader>
                                 )}
-                            </>
+                            </React.Fragment>
                         ))}
                     </DataTableRow>
 
                     <DataTableRow>
                         {grid.columns.map(({ columnItems, dataElement }, index) => (
-                            <>
+                            <React.Fragment key={dataElement.id}>
                                 {index === 0 && (
                                     <CustomDataTableColumnHeader
                                         backgroundColor={section.styles.columns.backgroundColor}
-                                        colSpan={1}
+                                        colSpan={"1"}
                                     ></CustomDataTableColumnHeader>
                                 )}
                                 {isDataElementVisible(dataElement) && (
@@ -136,7 +135,7 @@ const DisaggregatedCOCsGrid: React.FC<DisaggregatedCOCsGridProps> = props => {
                                         )}
                                     </>
                                 )}
-                            </>
+                            </React.Fragment>
                         ))}
                     </DataTableRow>
                 </TableHead>
@@ -157,7 +156,7 @@ const DisaggregatedCOCsGrid: React.FC<DisaggregatedCOCsGridProps> = props => {
                                     );
 
                                     return (
-                                        <>
+                                        <React.Fragment key={dataElement.id}>
                                             {columnItems.map((columnItem, colIndex) => {
                                                 const rowItem = rowItemByDe?.rowItems?.find(
                                                     rowItem => rowItem.columnName === columnItem.name
@@ -191,7 +190,7 @@ const DisaggregatedCOCsGrid: React.FC<DisaggregatedCOCsGridProps> = props => {
                                                     onlyCocIds={rowItemByDe?.cocIdsToSum}
                                                 />
                                             )}
-                                        </>
+                                        </React.Fragment>
                                     );
                                 })}
                         </DataTableRow>
@@ -207,7 +206,7 @@ const DisaggregatedCOCsGrid: React.FC<DisaggregatedCOCsGridProps> = props => {
                             {summary.cells.map(
                                 cell =>
                                     isDataElementVisible(cell) && (
-                                        <>
+                                        <React.Fragment key={cell.id}>
                                             <DataTableCellRowTotal
                                                 key={cell.id}
                                                 colSpan={cell.columnItems.length}
@@ -224,7 +223,7 @@ const DisaggregatedCOCsGrid: React.FC<DisaggregatedCOCsGridProps> = props => {
                                                     <span>{""}</span>
                                                 </CustomDataTableCell>
                                             )}
-                                        </>
+                                        </React.Fragment>
                                     )
                             )}
                         </DataTableRow>
@@ -253,14 +252,18 @@ const useStyles = makeStyles({
 export default React.memo(DisaggregatedCOCsGrid);
 
 type GridLayoutState = {
-    getColSpan: (columnItems?: ColumnItem[]) => number;
+    getColSpan: (columnItems?: ColumnItem[]) => string;
     isDataElementVisible: (dataElement: DataElement) => boolean;
 };
 
 function useGridLayout(grid: Grid, dataFormInfo: DataFormInfo): GridLayoutState {
     const getColSpan = useCallback(
-        (columnItems?: ColumnItem[]) =>
-            columnItems ? columnItems.length + 1 : grid.columns.flatMap(column => column.columnItems).length,
+        (columnItems?: ColumnItem[]) => {
+            const columnSpan = columnItems
+                ? columnItems.length + 1
+                : grid.columns.flatMap(column => column.columnItems).length;
+            return columnSpan.toString();
+        },
         [grid.columns]
     );
 
