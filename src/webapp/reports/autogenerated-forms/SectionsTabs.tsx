@@ -1,5 +1,5 @@
 import _ from "lodash";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Tabs, Tab, Box, makeStyles } from "@material-ui/core";
 import {
     Section,
@@ -232,6 +232,42 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
         setActiveTab(value);
     };
 
+    const allSections = useMemo(() => [...tabbedSections, ...untabbedSections], [tabbedSections, untabbedSections]);
+    const tabHeaders = useMemo(
+        () =>
+            tabbedSections.flatMap(section => {
+                const order = section.tabs.order;
+                if (!isTabHeader(order)) return [];
+
+                const [primaryTabIndex] = getTabIndices(section.tabs.order, allSections, section.showIndex);
+                const sectionTabLabel = section.texts.tabLabel || section.name;
+                const tabLabel =
+                    section.showIndex && primaryTabIndex !== -1
+                        ? `${primaryTabIndex + 1} - ${sectionTabLabel}`
+                        : sectionTabLabel;
+
+                const visibleRule = section.tabs.rules?.visible;
+                const dataElementCodes = visibleRule?.dataElements.map(de => de.code) || [];
+                const value =
+                    visibleRule && dataElementCodes.length > 0
+                        ? calculateFormula({
+                              dataElementCodes,
+                              dataFormInfo,
+                              formula: visibleRule.formula.value,
+                          })
+                        : undefined;
+
+                if (visibleRule && value !== visibleRule.formula.condition) return [];
+
+                const primaryValue = _(order).split(".").first() ?? "0";
+                const primaryIndex = Number(primaryValue);
+
+                return [{ key: section.id, order, label: tabLabel, primaryIndex }];
+            }),
+        [allSections, dataFormInfo, tabbedSections]
+    );
+    const printTabHeaders = useMemo(() => _.uniqBy(tabHeaders, "primaryIndex"), [tabHeaders]);
+
     const tabContainer = document.querySelector(".MuiTabs-scroller.MuiTabs-scrollable");
     const handleScroll = useCallback(
         (direction: TabScrollButtonDirection) => {
@@ -278,107 +314,114 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
 
     return (
         <Box sx={{ width: "100%" }}>
-            <StyledAppBar position="sticky" color="default">
-                <ScrollButton
-                    direction="left"
-                    showLeftFade={showLeftFade}
-                    showRightFade={showRightFade}
-                    handleScroll={handleScroll}
-                />
-                <ScrollButton
-                    direction="right"
-                    showLeftFade={showLeftFade}
-                    showRightFade={showRightFade}
-                    handleScroll={handleScroll}
-                />
-                <StyledTabs
-                    value={activeTab}
-                    onChange={handleChange}
-                    indicatorColor="primary"
-                    textColor="primary"
-                    variant="scrollable"
-                    scrollButtons="auto"
-                    TabScrollButtonProps={{ style: { opacity: 0 } }}
-                >
-                    {tabbedSections.flatMap(section => {
-                        const order = section.tabs.order;
+            <ScreenOnlyContent>
+                <StyledAppBar position="sticky" color="default">
+                    <ScrollButton
+                        direction="left"
+                        showLeftFade={showLeftFade}
+                        showRightFade={showRightFade}
+                        handleScroll={handleScroll}
+                    />
+                    <ScrollButton
+                        direction="right"
+                        showLeftFade={showLeftFade}
+                        showRightFade={showRightFade}
+                        handleScroll={handleScroll}
+                    />
+                    <StyledTabs
+                        value={activeTab}
+                        onChange={handleChange}
+                        indicatorColor="primary"
+                        textColor="primary"
+                        variant="scrollable"
+                        scrollButtons="auto"
+                        TabScrollButtonProps={{ style: { opacity: 0 } }}
+                    >
+                        {tabHeaders.map(tabHeader => (
+                            <Tab
+                                key={tabHeader.key + "Tab"}
+                                label={tabHeader.label}
+                                id={`tab-${tabHeader.order}`}
+                                aria-controls={`tabpanel-${tabHeader.order}`}
+                                value={tabHeader.primaryIndex}
+                            />
+                        ))}
+                        {untabbedSections.length > 0 && (
+                            <Tab
+                                key="others-tab"
+                                label="Others"
+                                id="tab-others"
+                                aria-controls="tabpanel-others"
+                                value={-1}
+                            />
+                        )}
+                    </StyledTabs>
 
-                        if (isTabHeader(order)) {
-                            const [primaryTabIndex] = getTabIndices(
-                                section.tabs.order,
-                                [...tabbedSections, ...untabbedSections],
-                                section.showIndex
-                            );
-                            const sectionTabLabel = section.texts.tabLabel || section.name;
-                            const tabLabel =
-                                section.showIndex && primaryTabIndex !== -1
-                                    ? `${primaryTabIndex + 1} - ${sectionTabLabel}`
-                                    : sectionTabLabel;
-
-                            const visibleRule = section.tabs.rules?.visible;
-                            const dataElementCodes = visibleRule?.dataElements.map(de => de.code) || [];
-                            const value =
-                                visibleRule && dataElementCodes.length > 0
-                                    ? calculateFormula({
-                                          dataElementCodes: dataElementCodes,
-                                          dataFormInfo: dataFormInfo,
-                                          formula: visibleRule.formula.value,
-                                      })
-                                    : undefined;
-
-                            const isConditionMet = value === visibleRule?.formula.condition;
-
-                            if (visibleRule && !isConditionMet) {
-                                return null;
-                            }
-
-                            const primaryValue = _(order).split(".").first() ?? "0";
-
-                            return (
-                                <Tab
-                                    key={section.id + "Tab"}
-                                    label={tabLabel}
-                                    id={`tab-${order}`}
-                                    aria-controls={`tabpanel-${order}`}
-                                    value={Number(primaryValue)}
-                                />
-                            );
-                        } else {
-                            return [];
-                        }
-                    })}
-                    {untabbedSections.length > 0 && (
-                        <Tab
-                            key="others-tab"
-                            label="Others"
-                            id="tab-others"
-                            aria-controls="tabpanel-others"
-                            value={-1}
-                        />
-                    )}
-                </StyledTabs>
-
-                <FadedOverlay hidden={!showLeftFade} style={{ insetInlineStart: 0, transform: "rotate(180deg)" }} />
-                <FadedOverlay hidden={!showRightFade} style={{ insetInlineEnd: 0 }} />
-            </StyledAppBar>
-            {tabbedSections.map(section => {
-                return (
+                    <FadedOverlay hidden={!showLeftFade} style={{ insetInlineStart: 0, transform: "rotate(180deg)" }} />
+                    <FadedOverlay hidden={!showRightFade} style={{ insetInlineEnd: 0 }} />
+                </StyledAppBar>
+                {tabbedSections.map(section => (
                     <TabPanel
                         key={section.id + "TabPanel"}
                         value={activeTab}
                         dataFormInfo={dataFormInfo}
                         section={section}
                     />
-                );
-            })}
-            <div role="tabpanel" hidden={activeTab !== -1} id="tabpanel-others" aria-labelledby="tab-others">
-                {untabbedSections.map(section => (
-                    <React.Fragment key={section.id + "UntabbedSection"}>
-                        <DebugLabel>{section.code}</DebugLabel>
-                        <AutoFormComponent dataFormInfo={dataFormInfo} section={section} viewType={section.viewType} />
-                    </React.Fragment>
                 ))}
-            </div>
+                <div role="tabpanel" hidden={activeTab !== -1} id="tabpanel-others" aria-labelledby="tab-others">
+                    {untabbedSections.map(section => (
+                        <React.Fragment key={section.id + "UntabbedSection"}>
+                            <DebugLabel>{section.code}</DebugLabel>
+                            <AutoFormComponent
+                                dataFormInfo={dataFormInfo}
+                                section={section}
+                                viewType={section.viewType}
+                            />
+                        </React.Fragment>
+                    ))}
+                </div>
+            </ScreenOnlyContent>
+
+            <PrintOnlyContent>
+                {printTabHeaders.map(tabHeader => {
+                    const sectionsByTab = tabbedSections.filter(section => {
+                        const [primaryTabIndex] = getTabIndices(section.tabs.order);
+                        return primaryTabIndex === tabHeader.primaryIndex;
+                    });
+
+                    return (
+                        <div key={`print-tab-${tabHeader.primaryIndex}`}>
+                            <PrintTabLabel>{tabHeader.label}</PrintTabLabel>
+                            {sectionsByTab.map(section => (
+                                <React.Fragment key={section.id + "PrintSection"}>
+                                    <DebugLabel>{section.code}</DebugLabel>
+                                    <AutoFormComponent
+                                        dataFormInfo={dataFormInfo}
+                                        section={section}
+                                        viewType={section.viewType}
+                                    />
+                                </React.Fragment>
+                            ))}
+                        </div>
+                    );
+                })}
+
+                {untabbedSections.length > 0 && (
+                    <div>
+                        <PrintTabLabel>Others</PrintTabLabel>
+                        {untabbedSections.map(section => (
+                            <React.Fragment key={section.id + "PrintUntabbedSection"}>
+                                <DebugLabel>{section.code}</DebugLabel>
+                                <AutoFormComponent
+                                    dataFormInfo={dataFormInfo}
+                                    section={section}
+                                    viewType={section.viewType}
+                                />
+                            </React.Fragment>
+                        ))}
+                    </div>
+                )}
+            </PrintOnlyContent>
         </Box>
     );
 });
@@ -393,6 +436,29 @@ const useStyles = makeStyles({
 
 const StyledAppBar = styled(AppBar)`
     z-index: 100 !important;
+`;
+
+const ScreenOnlyContent = styled.div`
+    @media print {
+        display: none;
+    }
+`;
+
+const PrintOnlyContent = styled.div`
+    display: none;
+    @media print {
+        display: block;
+    }
+`;
+
+const PrintTabLabel = styled.h3`
+    margin: 1.5rem 0 0.75rem 0;
+    padding: 0.75rem 1rem;
+    border-bottom: 2px solid ${props => props.theme.palette.primary.main};
+    color: ${props => props.theme.palette.primary.main};
+    font-size: 1rem;
+    font-weight: 500;
+    page-break-after: avoid;
 `;
 
 const StyledTabs = styled(Tabs)`
