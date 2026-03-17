@@ -454,10 +454,12 @@ const PrintOnlyContent = styled.div`
 const PrintTabLabel = styled.h3`
     margin: 1.5rem 0 0.75rem 0;
     padding: 0.75rem 1rem;
-    border-bottom: 2px solid ${props => props.theme.palette.primary.main};
-    color: ${props => props.theme.palette.primary.main};
+    background: #ffffff;
     font-size: 1rem;
-    font-weight: 500;
+    font-weight: 700;
+    line-height: 1.25;
+    text-transform: uppercase;
+    letter-spacing: 0.02857em;
     page-break-after: avoid;
 `;
 
