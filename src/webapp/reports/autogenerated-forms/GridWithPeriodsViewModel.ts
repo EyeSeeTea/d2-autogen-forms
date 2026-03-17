@@ -20,6 +20,7 @@ import { getIndexedLabel } from "./DataTableSection";
 import { Period, PeriodType } from "../../../domain/common/entities/Period";
 import { isToggleMultipleDeDisabled } from "../../../domain/common/entities/ToggleMultiple";
 import { getIndexedIndicator } from "./utils/indicatorIndexing";
+import { PERIOD_NAME_SEPARATOR } from "./utils/dataElementNameSeparator";
 
 export interface GridWithPeriodsI {
     id: string;
@@ -68,7 +69,7 @@ interface DataElementSubGroup {
 
 type Row = DataElementGroup | DataElementSubGroup | DataElementRow;
 
-const separator = /:| - /;
+const separator = PERIOD_NAME_SEPARATOR;
 
 export class GridWithPeriodsViewModel {
     static get(section: SectionWithPeriods, dataFormInfo: DataFormInfo): GridWithPeriodsI {
@@ -335,7 +336,7 @@ const extractLabel = (options: DataElementLabelOptions): Maybe<string> => {
 
     switch (labelType) {
         case "name":
-            return _(dataElement.name).split(separator).last();
+            return _.last(dataElement.name.split(separator));
         case "htmlText":
             return dataElement.htmlText;
     }

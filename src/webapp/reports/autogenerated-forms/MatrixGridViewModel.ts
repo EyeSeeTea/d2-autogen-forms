@@ -2,6 +2,7 @@ import _ from "lodash";
 import { Section } from "../../../domain/common/entities/DataForm";
 import { DataElement } from "../../../domain/common/entities/DataElement";
 import { Maybe } from "../../../utils/ts-utils";
+import { splitDataElementName } from "./utils/dataElementNameSeparator";
 
 export interface MatrixGrid {
     id: string;
@@ -25,15 +26,15 @@ export class MatrixGridViewModel {
     static get(section: Section): MatrixGrid {
         const columns: Column[] = _(section.dataElements)
             .groupBy(dataElement => {
-                const columnHeader = _(dataElement.name).split(" - ").first();
+                const columnHeader = splitDataElementName(dataElement.name)[0];
                 return columnHeader;
             })
             .map((group, columnHeader) => ({
                 columnHeader,
-                columnDescription: group[0].name.split(" - ")[1],
+                columnDescription: splitDataElementName(group[0].name)[1],
                 rows: group.map(item => ({
                     ...item,
-                    name: _(item.name).split(" - ").last() ?? "",
+                    name: _.last(splitDataElementName(item.name)) ?? "",
                 })),
             }))
             .value();
