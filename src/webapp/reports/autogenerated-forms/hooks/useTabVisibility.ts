@@ -52,7 +52,7 @@ export function useTabVisibility(props: TabPanelProps): TabVisibilityState {
     const firstVisibleTabIndex = sortedVisibleTabIndices[0];
 
     const visiblePrimaryTabs: ReadonlyArray<VisibleTab> = useMemo(() => {
-        return _.uniqBy(
+        const tabbedVisible = _.uniqBy(
             tabbedSections.flatMap(section => {
                 if (!isTabHeader(section.tabs.order)) return [];
 
@@ -68,6 +68,10 @@ export function useTabVisibility(props: TabPanelProps): TabVisibilityState {
             }),
             tab => tab.primaryIndex
         );
+
+        const othersTab: VisibleTab[] = tabVisibilityByIndex[-1] ? [{ primaryIndex: -1, label: "Others" }] : [];
+
+        return [...tabbedVisible, ...othersTab];
     }, [tabbedSections, tabVisibilityByIndex, dataFormInfo]);
 
     return { tabVisibilityByIndex, firstVisibleTabIndex, visiblePrimaryTabs };

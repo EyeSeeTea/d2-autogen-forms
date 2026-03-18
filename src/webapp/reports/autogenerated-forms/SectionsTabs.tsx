@@ -421,11 +421,7 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
             </div>
 
             {showNavigation && visiblePrimaryTabs.length > 0 && (
-                <TabNavigation
-                    activeTabIndex={activeTab}
-                    visibleTabs={visiblePrimaryTabs}
-                    onTabChange={setActiveTab}
-                />
+                <TabNavigation activeTabIndex={activeTab} visibleTabs={visiblePrimaryTabs} onTabChange={setActiveTab} />
             )}
         </Box>
     );
