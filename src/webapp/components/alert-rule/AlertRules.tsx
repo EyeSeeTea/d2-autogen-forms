@@ -58,6 +58,7 @@ const AlertContainer = styled.div`
     max-width: 400px;
     position: fixed;
     right: 15px;
+    z-index: 1;
 `;
 
 const MarkAllAsReadButton = styled.div`

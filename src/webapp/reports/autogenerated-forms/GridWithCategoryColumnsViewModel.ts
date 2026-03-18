@@ -223,7 +223,7 @@ export class GridWithCategoryColumnsViewModel {
 
         return _(items)
             .groupBy(item => item.groupRowId)
-            .map((group): Row => {
+            .map((group): Maybe<Row> => {
                 const id = _(group)
                     .flatMap(x => x.cocCodes)
                     .uniq()
@@ -232,6 +232,7 @@ export class GridWithCategoryColumnsViewModel {
                 const name = group[0].cocName ?? "";
 
                 const rowConfig = section.rowsConfig?.[id];
+                if (rowConfig?.hide) return undefined;
 
                 return {
                     id: id,
@@ -293,6 +294,7 @@ export class GridWithCategoryColumnsViewModel {
                     }),
                 };
             })
+            .compact()
             .value();
     }
 

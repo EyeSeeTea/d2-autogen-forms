@@ -10,6 +10,7 @@ import {
     DataElementsToExclude,
     DataElementWidget,
     DescriptionText,
+    IndicatorsConfig,
     SectionTexts,
     Texts,
     Totals,
@@ -32,6 +33,7 @@ export type DataSetConfig = {
     texts: Texts;
     sections: Record<Id, SectionConfig>;
     rules: Maybe<DataFormRule[]>;
+    customCss: Maybe<string>;
 };
 
 type DataElementRule = Record<RuleType | "delete", ConditionRule>;
@@ -47,6 +49,7 @@ export type DataElementConfig = {
         widget: Maybe<DataElementWidget>;
         visible: { dataElementCode: string; value: string } | undefined;
     };
+    mirrorFrom?: string;
 };
 
 export type CategoryCombinationConfig = {
@@ -59,6 +62,7 @@ export type CategoryOptionConfig = {
 
 export type SectionConfig =
     | BasicSectionConfig
+    | DisaggregatedCocsSectionConfig
     | GridSectionConfig
     | GridWithPeriodsSectionConfig
     | GridWithTotalsSectionConfig
@@ -111,6 +115,7 @@ export type BaseSectionConfig = {
     totals?: Record<string, SectionTotals>;
     toggleMultiple: Maybe<ToggleMultiple>;
     indicators?: Record<Code, IndicatorConfig>;
+    indicatorsConfig: IndicatorsConfig;
     fixedHeaders: boolean;
     fixedRowNames: boolean;
     enableTopScroll: boolean;
@@ -119,8 +124,13 @@ export type BaseSectionConfig = {
 };
 
 type BasicSectionConfig = BaseSectionConfig & {
-    viewType: "grid-with-combos" | "matrix-grid" | "grid-disaggregated-cocs";
+    viewType: "grid-with-combos" | "matrix-grid";
     columnsConfig?: Record<string, { rules?: FromRulesFormulaCodec }>;
+};
+
+type DisaggregatedCocsSectionConfig = BaseSectionConfig & {
+    viewType: "grid-disaggregated-cocs";
+    rowsConfig: Maybe<RowsConfig>;
 };
 
 type GridSectionConfig = BaseSectionConfig & {
@@ -135,7 +145,8 @@ type GridSectionConfig = BaseSectionConfig & {
         }
     >;
     firstColumnConfig?: {
-        width: number;
+        width: Maybe<number>;
+        header: Maybe<string>;
     };
     periods: Period[];
 };
@@ -168,10 +179,12 @@ type GridIndicatorsCalculated = BaseSectionConfig & {
 
 type GridColumnsConfig = Record<string, { rules?: FromRulesFormulaCodec }>;
 
+type RowsConfig = Record<string, { cellsVisible?: boolean; rowNameConstant?: string; hide?: boolean }>;
+
 type GridCategoryColumnsConfig = BaseSectionConfig & {
     viewType: "grid-category-columns";
     categoriesColumns: CategoryColumnConfig[];
-    rowsConfig: Maybe<Record<string, { cellsVisible?: boolean; rowNameConstant?: string }>>;
+    rowsConfig: Maybe<RowsConfig>;
     singleCategoryInColumns: boolean;
     categoryOptionFilter: Maybe<CategoryOptionFilter>;
     dataElementsToExclude: Maybe<DataElementsToExclude[]>;

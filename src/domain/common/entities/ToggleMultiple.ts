@@ -33,9 +33,19 @@ export type ToggleDataElement = {
 type DEToggle = { type: "dataElement" } & ToggleDataElement;
 type OrgUnitToggle = { type: "orgUnit"; orgUnitCodes: string[] } & ToggleDataElement;
 
+export type OrgUnitCondition = {
+    orgUnitCodes: string[];
+    condition: string;
+    disabled: boolean;
+};
+
 export type DataElementToggle = {
     logicalOperator: ToggleLogicalOperator;
     toggleDataElements: Array<DEToggle | OrgUnitToggle>;
+    /**
+     * Org unit conditions for sections without data elements (section-level toggleMultiple).
+     */
+    orgUnitConditions: OrgUnitCondition[];
 };
 
 export function buildToggleMultiple(
@@ -47,16 +57,26 @@ export function buildToggleMultiple(
         .map(value => value)
         .value();
 
+    const orgUnitConditions: OrgUnitCondition[] = [];
     const toggleDataElements = _(toggleMultiple.conditions)
         .map(toggle => {
             switch (toggle.type) {
                 case "orgUnit": {
+                    const sectionHasDataElements = section.dataElements.length > 0;
                     const sectionDataElementCodes = section.dataElements.map(de => de.code);
                     const sectionDataElements = allDataElements.filter(de => sectionDataElementCodes.includes(de.code));
 
                     const selectedDataElements = toggle.dataElements
                         ? sectionDataElements.filter(de => toggle.dataElements?.includes(de.code))
                         : sectionDataElements;
+
+                    if (!sectionHasDataElements && selectedDataElements.length === 0) {
+                        orgUnitConditions.push({
+                            orgUnitCodes: toggle.orgUnits,
+                            condition: toggle.condition,
+                            disabled: Boolean(toggle.disabled),
+                        });
+                    }
 
                     return selectedDataElements.map(dataElement => ({
                         type: toggle.type,
@@ -84,7 +104,11 @@ export function buildToggleMultiple(
         .compact()
         .value();
 
-    return { toggleDataElements: toggleDataElements, logicalOperator: toggleMultiple.logicalOperator };
+    return {
+        toggleDataElements: toggleDataElements,
+        logicalOperator: toggleMultiple.logicalOperator,
+        orgUnitConditions: orgUnitConditions,
+    };
 }
 
 export function isToggleMultipleDeDisabled(
@@ -94,24 +118,18 @@ export function isToggleMultipleDeDisabled(
 ): boolean {
     if (!dataElement || !section.toggleMultiple) return false;
 
-    return section.toggleMultiple.toggleDataElements
-        .filter(
-            (toggle): toggle is OrgUnitToggle =>
-                toggle.type === "orgUnit" && toggle.dataElement.code === dataElement.code
-        )
-        .some(toggle => {
-            const { orgUnitCodes, condition, dataElement: toggleDe } = toggle;
-            if (!toggleDe.disabled) return false;
+    const orgUnitToggles = section.toggleMultiple.toggleDataElements.filter(
+        (toggle): toggle is OrgUnitToggle => toggle.type === "orgUnit" && toggle.dataElement.code === dataElement.code
+    );
 
-            const isOrgUnitInToggleList = orgUnitCodes.includes(orgUnitCode);
+    const isToggleDisabledForOrgUnit = (toggle: OrgUnitToggle) => {
+        const { orgUnitCodes, dataElement: toggleDe } = toggle;
+        if (!toggleDe.disabled) return false;
 
-            switch (condition) {
-                case "show":
-                    return !isOrgUnitInToggleList;
-                case "hide":
-                    return isOrgUnitInToggleList;
-                default:
-                    return false;
-            }
-        });
+        return orgUnitCodes.includes(orgUnitCode);
+    };
+
+    return section.toggleMultiple.logicalOperator === "OR"
+        ? orgUnitToggles.some(isToggleDisabledForOrgUnit)
+        : orgUnitToggles.every(isToggleDisabledForOrgUnit);
 }

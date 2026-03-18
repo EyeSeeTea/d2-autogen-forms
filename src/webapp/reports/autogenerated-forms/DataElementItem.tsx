@@ -10,6 +10,7 @@ import { Row } from "./GridWithTotalsViewModel";
 import { isDev } from "../../..";
 import { Maybe } from "../../../utils/ts-utils";
 import { DebugLabel } from "../../components/debug/DebugLabel";
+import { MirrorDataElementItem } from "./MirrorDataElementItem";
 
 export interface DataElementItemProps {
     dataElement: DataElement;
@@ -46,7 +47,6 @@ export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props 
     const elId = _([dataElement.id, period]).compact().join("-");
     const dataElementCocId = dataElement.cocId ?? dataFormInfo.categoryOptionComboId;
     const auditId = _([dataElement.orgUnit, dataElement.id, dataElementCocId, "val"]).compact().join("-");
-
     const notifyParent = React.useCallback<DataEntryItemProps["onValueChange"]>(
         async dataValue => {
             if (onChange) onChange(dataValue);
@@ -79,6 +79,10 @@ export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props 
             }
         }
     };
+
+    if (dataElement.mirrorFrom) {
+        return <MirrorDataElementItem dataElement={dataElement} dataFormInfo={dataFormInfo} period={period} />;
+    }
 
     return !noComment ? (
         <div id={elId} className={classes.valueWrapper}>

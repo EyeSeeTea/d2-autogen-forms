@@ -8,6 +8,7 @@ import {
     SectionWithTotals,
     SectionWithSubnationals,
     SectionSimple,
+    SectionDisaggregatedCocs,
     SectionGrid,
     SectionWithIndicatorsCalculated,
     SectionWithCategoryColumns,
@@ -30,6 +31,7 @@ import DisaggregatedCOCsGrid from "./DisaggregatedCOCsGrid";
 import GridIndicatorsCalculated from "./GridIndicatorsCalculated";
 import { calculateFormula } from "./datatables/InputFormula";
 import GridWithCategoryColumns from "./GridWithCategoryColumns";
+import { useTabVisibility } from "./hooks/useTabVisibility";
 import { DebugLabel } from "../../components/debug/DebugLabel";
 
 export interface TabPanelProps {
@@ -98,7 +100,7 @@ function TypeSwitch(props: TypeSwitchProps) {
                 <DisaggregatedCOCsGrid
                     key={`${section.id}+tab`}
                     dataFormInfo={dataFormInfo}
-                    section={section as SectionSimple}
+                    section={section as SectionDisaggregatedCocs}
                 />
             );
 
@@ -188,6 +190,21 @@ function isTabHeader(order: Maybe<string>) {
     return isNaN(secondaryTabIndex) || secondaryTabIndex === 0 || secondaryTabIndex === 1;
 }
 
+function tabHeaderShouldShowIndex(section: Section, sections: Section[]): boolean {
+    if (section.showIndex) return true;
+    if (!section.tabs.order) return false;
+
+    const [rawPrimaryIndex] = getTabIndices(section.tabs.order);
+    const hasSiblingsWithShowIndex = sections.some(s => {
+        const siblingOrder = s.tabs.order;
+        if (!siblingOrder) return false;
+        const [siblingPrimaryIndex] = getTabIndices(siblingOrder);
+        return siblingPrimaryIndex === rawPrimaryIndex && s.showIndex;
+    });
+
+    return hasSiblingsWithShowIndex;
+}
+
 const AutoFormComponent = React.memo(TypeSwitch);
 
 const TabPanel: React.FC<TabProps> = React.memo(props => {
@@ -197,7 +214,9 @@ const TabPanel: React.FC<TabProps> = React.memo(props => {
 
     return (
         <div role="tabpanel" hidden={value !== index} id={`tabpanel-${index}`} aria-labelledby={`tab-${index}`}>
-            <DebugLabel>{section.code}</DebugLabel>
+            <DebugLabel>
+                {section.code} - {section.viewType}
+            </DebugLabel>
             <AutoFormComponent dataFormInfo={dataFormInfo} section={section} viewType={viewType} />
         </div>
     );
@@ -227,9 +246,16 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
     const [activeTab, setActiveTab] = useState(0);
     const [showLeftFade, setShowLeftFade] = useState(false);
     const [showRightFade, setShowRightFade] = useState(true);
+    const { tabVisibilityByIndex, firstVisibleTabIndex } = useTabVisibility(props);
 
     const handleChange = (_event: React.ChangeEvent<{}>, value: number) => {
-        setActiveTab(value);
+        if (value === -1 || tabVisibilityByIndex[value]) {
+            setActiveTab(value);
+            return;
+        }
+        if (firstVisibleTabIndex !== undefined) {
+            setActiveTab(firstVisibleTabIndex);
+        }
     };
 
     const allSections = useMemo(() => [...tabbedSections, ...untabbedSections], [tabbedSections, untabbedSections]);
@@ -241,8 +267,9 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
 
                 const [primaryTabIndex] = getTabIndices(section.tabs.order, allSections, section.showIndex);
                 const sectionTabLabel = section.texts.tabLabel || section.name;
+                const shouldShowIndex = tabHeaderShouldShowIndex(section, allSections);
                 const tabLabel =
-                    section.showIndex && primaryTabIndex !== -1
+                    shouldShowIndex && primaryTabIndex !== -1
                         ? `${primaryTabIndex + 1} - ${sectionTabLabel}`
                         : sectionTabLabel;
 
@@ -280,6 +307,14 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
         },
         [tabContainer]
     );
+
+    useEffect(() => {
+        if (firstVisibleTabIndex === undefined) return;
+        if (activeTab === -1) return;
+        if (!tabVisibilityByIndex[activeTab]) {
+            setActiveTab(firstVisibleTabIndex);
+        }
+    }, [activeTab, tabVisibilityByIndex, firstVisibleTabIndex]);
 
     useEffect(() => {
         const scrollButtons = document.querySelectorAll(".MuiTabs-scrollButtons");
