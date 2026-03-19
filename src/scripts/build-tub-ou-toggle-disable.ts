@@ -4,6 +4,7 @@ import { ArgumentParser } from "argparse";
 import { Code } from "../domain/common/entities/Base";
 import _ from "lodash";
 import { readFile, writeFile } from "fs/promises";
+import { SectionRule } from "../domain/common/entities/SectionRule";
 
 type OrgUnitToggleCondition = {
     type: "orgUnit";
@@ -20,6 +21,7 @@ type ToggleMultiple = {
 
 type SectionConfig = {
     toggleMultiple?: ToggleMultiple;
+    rules?: SectionRule[];
 };
 
 type Config = Record<"dataSets", Record<Code, { sections: Record<Code, SectionConfig> }>>;
@@ -70,6 +72,30 @@ const CsvSectionToDatasetSections: Record<CsvSectionColumn, readonly Code[]> = {
         "TUB_TREATMENT_OUTCOMES_PATIENTS_STARTED_TREATMENT",
     ],
 } as const;
+
+const CsvSectionToDatasetSectionForMessage: Record<CsvSectionColumn, { sectionCode: Code; constantCode: Code }> = {
+    disactivate_tb_notifications_by_history: {
+        sectionCode: "TUB_TB_NOTIFICATIONS_HISTORY_SITE_DIAGNOSTIC",
+        constantCode: "TUB_SECTION_MSG_ECDC_2",
+    },
+    disactivete_subsection_diagnosis_enrollment: {
+        sectionCode: "TUB_DIAGNOSIS_ENROLMENT_TREATMENT",
+        constantCode: "TUB_SECTION_MSG_ECDC_3",
+    },
+    disactivate_subsection_cohort_sizes: {
+        sectionCode: "TUB_DIAGNOSIS_ENROLMENT_TREATMENT",
+        constantCode: "TUB_SECTION_MSG_ECDC_3",
+    },
+    disactivate_drug_resistance_surveillance: {
+        sectionCode: "TUB_ANTI_TB_DRUG_RESISTANCE_SURVEILLANCE",
+        constantCode: "TUB_SECTION_MSG_ECDC_4",
+    },
+    disactivate_subsection_testing_for_hiv: { sectionCode: "TUB_TB_HIV_TEST", constantCode: "TUB_SECTION_MSG_ECDC_5" },
+    disactivate_treatment_outcomes: {
+        sectionCode: "TUB_TREATMENT_OUTCOMES_TB_PATIENTS_REGISTERED",
+        constantCode: "TUB_SECTION_MSG_ECDC_6",
+    },
+};
 
 async function main() {
     const parser = new ArgumentParser();
@@ -168,6 +194,30 @@ function updateSectionToggleCondition(
     }
 }
 
+// modify in-place the rules array of the section config to add the message rule
+// important: no preexisting rules must exist in the base config or they will be overriden!
+function updateSectionConfigWithMessages(
+    dataSetConfig: Config["dataSets"][Code],
+    section: string,
+    rule: SectionRule
+): void {
+    const sectionConfig = dataSetConfig.sections[section];
+    if (!sectionConfig) {
+        throw new Error(
+            `Section config not found for section ${section} when trying to add message rule. Expected to be already present`
+        );
+    }
+    sectionConfig.rules = sectionConfig.rules || [];
+    if (sectionConfig.rules[0]) {
+        // if we apply multiple rules for the same section, we just merge the conditions assuming the rest is the same
+        sectionConfig.rules[0].conditions.orgUnitIn = [
+            ...new Set([...(sectionConfig.rules[0].conditions.orgUnitIn || []), ...(rule.conditions.orgUnitIn || [])]),
+        ];
+    } else {
+        sectionConfig.rules.push(rule);
+    }
+}
+
 function buildSectionsConfigFromSheetRules(config: Config, sheetRules: CsvRow[]): Config {
     const disableBySection = Object.keys(CsvSectionToDatasetSections).map(sectionTitleInCsv => {
         const show = sheetRules.filter(row => row[sectionTitleInCsv as CsvSectionColumn] === 1).map(row => row.iso3);
@@ -191,6 +241,31 @@ function buildSectionsConfigFromSheetRules(config: Config, sheetRules: CsvRow[])
         });
     });
 
+    const messagesBySection = Object.entries(CsvSectionToDatasetSectionForMessage).map(
+        ([sectionTitleInCsv, config]) => {
+            const orgUnitsDisabled = sheetRules
+                .filter(row => row[sectionTitleInCsv as CsvSectionColumn] === 1)
+                .map(row => row.iso3);
+            return [config.sectionCode, { orgUnits: orgUnitsDisabled, constant: config.constantCode }] as const;
+        }
+    );
+
+    messagesBySection.forEach(([section, { orgUnits, constant }]) => {
+        const ruleObj: SectionRule = {
+            conditions: {
+                orgUnitIn: orgUnits,
+            },
+            action: {
+                type: "showMessage",
+                text: {
+                    code: constant,
+                } as any,
+            },
+        };
+        Object.values(updatedConfig.dataSets).forEach(dataSetConfig => {
+            updateSectionConfigWithMessages(dataSetConfig, section, ruleObj);
+        });
+    });
     return updatedConfig;
 }
 

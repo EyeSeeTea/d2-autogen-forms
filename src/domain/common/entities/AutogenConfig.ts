@@ -17,6 +17,7 @@ import {
 } from "./DataForm";
 import { DataFormRule } from "./DataFormRule";
 import { Period } from "./Period";
+import { SectionRule } from "./SectionRule";
 import { SectionStyleAttrs } from "./SectionStyle";
 import { TitleVariant } from "./TitleVariant";
 import { ToggleMultiple } from "./ToggleMultiple";
@@ -121,6 +122,7 @@ export type BaseSectionConfig = {
     enableTopScroll: boolean;
     columnsConfig?: GridColumnsConfig;
     disabled: boolean;
+    rules: Maybe<SectionRule[]>;
 };
 
 type BasicSectionConfig = BaseSectionConfig & {
