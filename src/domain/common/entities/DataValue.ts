@@ -17,6 +17,7 @@ export interface DataValueBase {
     period: Period;
     categoryOptionComboId: Id;
     isRequired?: boolean;
+    comment?: string;
 }
 
 export interface DataValueBoolean extends DataValueBase {
