@@ -61,6 +61,7 @@ export const sectionBase: Omit<SectionBase, "id" | "name" | "viewType"> = {
     fixedHeaders: false,
     enableTopScroll: false,
     fixedRowNames: false,
+    rules: [],
 };
 
 export const dataFormBase: Omit<DataForm, "sections"> = {

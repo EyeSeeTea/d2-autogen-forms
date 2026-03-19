@@ -190,6 +190,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                     enableTopScroll: config?.enableTopScroll || false,
                     fixedRowNames: config?.fixedRowNames || false,
                     columnsConfig: config?.columnsConfig,
+                    rules: config?.rules ?? [],
                 };
 
                 if (!config)
@@ -206,6 +207,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                         enableTopScroll: false,
                         columnsConfig: undefined,
                         firstColumnConfig: undefined,
+                        rules: [],
                     };
 
                 const base2 = getSectionBaseWithToggle(config, base, dataElements);

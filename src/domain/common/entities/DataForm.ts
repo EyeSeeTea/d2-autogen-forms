@@ -10,6 +10,7 @@ import { DataElementRuleOptions, SectionRuleOptions, TotalDataElementRuleOptions
 import { CalculateTotalType, GridIndicatorsCalculatedRow } from "./AutogenConfig";
 import { RulesFormula } from "../../../data/common/RulesFormula";
 import { DataFormRule } from "./DataFormRule";
+import { SectionRule } from "./SectionRule";
 import { CompulsoryDataValue } from "./CompulsoryDataValue";
 import { Period, PeriodType } from "./Period";
 
@@ -130,6 +131,7 @@ export interface SectionBase {
     fixedRowNames: boolean;
     hidden?: boolean;
     columnsConfig?: Record<string, { rules?: RulesFormula }>;
+    rules: SectionRule[];
 }
 
 export interface SectionSimple extends SectionBase {

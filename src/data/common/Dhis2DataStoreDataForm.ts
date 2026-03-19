@@ -25,6 +25,7 @@ import {
 } from "../../domain/common/entities/ToggleMultiple";
 import { Period, PeriodType, validatePeriodType } from "../../domain/common/entities/Period";
 import { DataFormRule } from "../../domain/common/entities/DataFormRule";
+import { SectionRule } from "../../domain/common/entities/SectionRule";
 import { rulesFormulaCodec } from "./RulesFormula";
 
 export type OrgUnitToggle = {
@@ -248,6 +249,16 @@ const indicatorsDirectionalConfigCodec = Codec.interface({
     headers: array(oneOf([string, selector])),
 });
 
+const sectionRuleCodec = Codec.interface({
+    conditions: Codec.interface({
+        orgUnitIn: optional(array(string)),
+    }),
+    action: Codec.interface({
+        type: exactly("showMessage"),
+        text: oneOf([string, selector]),
+    }),
+});
+
 const optionSetCodec = Codec.interface({
     code: string,
     options: optionalRecord({
@@ -352,6 +363,7 @@ export const DataStoreConfigCodec = Codec.interface({
                 ),
                 totals: optional(oneOf([totalsType, record(string, totalsType)])),
                 toggleMultiple: optional(toggleMultipleCodec),
+                rules: optional(array(sectionRuleCodec)),
                 indicators: optional(
                     optionalRecord({
                         position: optional(
@@ -418,6 +430,7 @@ export const DataStoreConfigCodec = Codec.interface({
 type Selector = GetType<typeof selector>;
 type DataFormStoreConfigFromCodec = GetType<typeof DataStoreConfigCodec>;
 type DataSetRuleFromCodec = GetType<typeof dataSetRuleCodec>;
+type SectionRuleFromCodec = GetType<typeof sectionRuleCodec>;
 
 type PeriodInterval = { type: "relative-interval"; startOffset: number; endOffset: number };
 type PeriodSectionOffset = { type: "section-offset"; offset: number };
@@ -723,6 +736,8 @@ export class Dhis2DataStoreDataForm {
     }
 
     private static async getConstants(api: D2Api, storeConfig: DataFormStoreConfig["custom"]): Promise<Constant[]> {
+        const getCode = (text: string | Selector): Maybe<string> => (typeof text === "string" ? undefined : text.code);
+
         const dataElementTexts = _(storeConfig.dataElements)
             .values()
             .map(x => (x.texts ? x.texts : undefined))
@@ -804,7 +819,7 @@ export class Dhis2DataStoreDataForm {
             .flatMap(dataSet => _.values(dataSet.sections))
             .map(section => section.firstColumnConfig?.header)
             .compact()
-            .map(header => (typeof header !== "string" ? header.code : undefined))
+            .map(getCode)
             .compact()
             .value();
 
@@ -812,12 +827,8 @@ export class Dhis2DataStoreDataForm {
 
         const dataSetRulesCodes = _(storeConfig.dataSets)
             .values()
-            .flatMap(dataSet => dataSet.rules)
-            .compact()
-            .flatMap(rule => {
-                const warningText = rule.action.text;
-                return typeof warningText !== "string" ? warningText.code : undefined;
-            })
+            .flatMap(dataSet => dataSet.rules ?? [])
+            .flatMap(rule => getCode(rule.action.text))
             .compact()
             .value();
 
@@ -829,7 +840,15 @@ export class Dhis2DataStoreDataForm {
                 const after = section.indicatorsConfig?.after?.headers || [];
                 return [...before, ...after];
             })
-            .map(header => (typeof header !== "string" ? header.code : undefined))
+            .map(getCode)
+            .compact()
+            .value();
+
+        const sectionRulesCodes = _(storeConfig.dataSets)
+            .values()
+            .flatMap(dataSet => _.values(dataSet.sections))
+            .flatMap(section => section.rules ?? [])
+            .flatMap(rule => getCode(rule.action.text))
             .compact()
             .value();
 
@@ -846,6 +865,7 @@ export class Dhis2DataStoreDataForm {
                 ...dataSetRulesCodes,
                 ...firstColumnHeaderCodes,
                 ...indicatorsConfigHeadersCodes,
+                ...sectionRulesCodes,
             ])
             .uniq()
             .value();
@@ -980,6 +1000,7 @@ export class Dhis2DataStoreDataForm {
                     fixedRowNames: sectionConfig.fixedRowNames || false,
                     enableTopScroll: sectionConfig.enableTopScroll || false,
                     columnsConfig: sectionConfig.columnsConfig,
+                    rules: this.getSectionRules(sectionConfig.rules, constantsByCode),
                 };
 
                 const baseConfig = { ...base, viewType };
@@ -1269,6 +1290,29 @@ export class Dhis2DataStoreDataForm {
                 };
             }
             throw new Error(`Unsupported custom rule action type: ${ruleConfig.action.type}`);
+        });
+    }
+
+    private getSectionRules(
+        rulesConfig: Maybe<SectionRuleFromCodec[]>,
+        constantsByCode: Record<string, Constant>
+    ): Maybe<SectionRule[]> {
+        if (!rulesConfig) return undefined;
+
+        return rulesConfig.map(ruleConfig => {
+            if (ruleConfig.action.type === "showMessage") {
+                return {
+                    ...ruleConfig,
+                    action: {
+                        ...ruleConfig.action,
+                        text:
+                            typeof ruleConfig.action.text === "string"
+                                ? ruleConfig.action.text
+                                : this.getTextFromConstants(ruleConfig.action.text, constantsByCode) || "",
+                    },
+                };
+            }
+            throw new Error(`Unsupported custom section rule action type: ${ruleConfig.action.type}`);
         });
     }
 }

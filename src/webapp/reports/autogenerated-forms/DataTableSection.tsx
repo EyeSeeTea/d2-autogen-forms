@@ -8,6 +8,7 @@ import { Id } from "../../../domain/common/entities/Base";
 import { useSectionVisibility } from "./hooks/useSectionVisibility";
 import { getTabIndices } from "./SectionsTabs";
 import { Maybe } from "../../../utils/ts-utils";
+import { useSectionRuleActions } from "./hooks/useSectionRuleActions";
 
 export interface DataTableProps {
     section: DataTableSectionObj;
@@ -33,7 +34,7 @@ const DataTableSection: React.FC<DataTableProps> = React.memo(props => {
     const classes = useStyles();
     const { name: sectionName, toggle } = section;
     const sectionLabel = getIndexedLabel(section, dataFormInfo, sectionName, undefined);
-
+    const { messages: sectionMessages } = useSectionRuleActions({ sectionId: section.id, dataFormInfo });
     const {
         isVisible: isSectionVisible,
         isOpen: isSectionOpen,
@@ -45,29 +46,36 @@ const DataTableSection: React.FC<DataTableProps> = React.memo(props => {
     if (!isSectionVisible) return null;
 
     return (
-        <div className={classes.wrapper}>
-            <div style={{ backgroundColor: sectionStyles?.title.backgroundColor }}>
-                <h3 style={{ color: sectionStyles?.title.color }} className={titleStyle}>
-                    {sectionLabel}
-                </h3>
-            </div>
-
-            <Html backgroundColor={sectionStyles?.title.backgroundColor} content={section.texts.header} />
-
-            {toggle.type === "dataElement" && (
-                <div className={classes.toggleWrapper}>
-                    <div className={classes.toggleTitle}>{toggle.dataElement.name}</div>
-                    <DataElementItem dataElement={toggle.dataElement} dataFormInfo={dataFormInfo} />
+        <>
+            {sectionMessages.map(sectionMessage => (
+                <div key={sectionMessage} className={`${classes.sectionMessage} section-message`}>
+                    <Html content={sectionMessage} />
                 </div>
-            )}
+            ))}
+            <div className={classes.wrapper}>
+                <div style={{ backgroundColor: sectionStyles?.title.backgroundColor }}>
+                    <h3 style={{ color: sectionStyles?.title.color }} className={titleStyle}>
+                        {sectionLabel}
+                    </h3>
+                </div>
 
-            {(isSectionOpen || isSectionDisabled) && (
-                <>
-                    {children}
-                    <Html content={section.texts.footer} />
-                </>
-            )}
-        </div>
+                <Html backgroundColor={sectionStyles?.title.backgroundColor} content={section.texts.header} />
+
+                {toggle.type === "dataElement" && (
+                    <div className={classes.toggleWrapper}>
+                        <div className={classes.toggleTitle}>{toggle.dataElement.name}</div>
+                        <DataElementItem dataElement={toggle.dataElement} dataFormInfo={dataFormInfo} />
+                    </div>
+                )}
+
+                {(isSectionOpen || isSectionDisabled) && (
+                    <>
+                        {children}
+                        <Html content={section.texts.footer} />
+                    </>
+                )}
+            </div>
+        </>
     );
 });
 
@@ -100,6 +108,13 @@ const useStyles = makeStyles({
     h6: {
         fontSize: "1.25rem !important",
         margin: "18px !important",
+    },
+    sectionMessage: {
+        margin: 10,
+        padding: "1em",
+        backgroundColor: "#FFF3CD",
+        border: "1px solid #FFEEBA",
+        color: "rgb(50, 38, 1)",
     },
 });
 

@@ -7,6 +7,7 @@ import _ from "lodash";
 import { OrgUnit } from "../entities/OrgUnit";
 import { DataElement } from "../entities/DataElement";
 import { OrgUnitToggle } from "../entities/AutogenConfig";
+import { getApplicableSectionRules } from "../entities/SectionRule";
 
 export class GetDataFormUseCase {
     constructor(private dataFormRepository: DataFormRepository, private orgUnitsRepository: OrgUnitsRepository) {}
@@ -43,7 +44,7 @@ export class GetDataFormUseCase {
                 `Organization unit ${orgUnitName} has no code. ` +
                     `Cannot evaluate orgUnit toggle for the sections. Defaulting to visible.`
             );
-            return sections;
+            return sections.map(section => ({ ...section, rules: [] }));
         }
 
         return _(sections)
@@ -98,6 +99,10 @@ export class GetDataFormUseCase {
                 }
 
                 return section;
+            })
+            .map(section => {
+                const applicableSectionRules = getApplicableSectionRules(section.rules, { orgUnitCode });
+                return { ...section, rules: applicableSectionRules };
             })
             .compact()
             .value();
