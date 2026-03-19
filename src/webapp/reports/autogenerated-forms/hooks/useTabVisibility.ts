@@ -22,15 +22,26 @@ export function useTabVisibility(props: TabPanelProps): TabVisibilityState {
     const { tabbedSections, untabbedSections, dataFormInfo } = props;
 
     const tabVisibilityByIndex = useMemo(() => {
-        const acc = tabbedSections.reduce<Record<number, boolean>>((acc, section) => {
+        const sectionVisible: Record<number, boolean> = {};
+        const formulaHidden = new Set<number>();
+
+        tabbedSections.forEach(section => {
             const [primaryTabIndex] = getTabIndices(section.tabs.order);
-            if (!Number.isFinite(primaryTabIndex) || primaryTabIndex === -1) return acc;
+            if (!Number.isFinite(primaryTabIndex) || primaryTabIndex === -1) return;
 
             const { isVisible } = getSectionVisibilityState(section, dataFormInfo);
-            if (isVisible) acc[primaryTabIndex] = true;
+            if (isVisible) sectionVisible[primaryTabIndex] = true;
 
-            return acc;
-        }, {});
+            if (isTabHeader(section.tabs.order) && !isFormulaVisible(section, dataFormInfo)) {
+                formulaHidden.add(primaryTabIndex);
+            }
+        });
+
+        const acc: Record<number, boolean> = {};
+        Object.keys(sectionVisible).forEach(key => {
+            const idx = Number(key);
+            if (!formulaHidden.has(idx)) acc[idx] = true;
+        });
 
         const hasVisibleUntabbedSection = untabbedSections.some(
             section => getSectionVisibilityState(section, dataFormInfo).isVisible
@@ -61,8 +72,6 @@ export function useTabVisibility(props: TabPanelProps): TabVisibilityState {
                 if (!Number.isFinite(primaryIndex) || primaryIndex === -1) return [];
                 if (!tabVisibilityByIndex[primaryIndex]) return [];
 
-                if (!isFormulaVisible(section, dataFormInfo)) return [];
-
                 const label = section.texts.tabLabel || section.name;
                 return [{ primaryIndex, label }];
             }),
@@ -72,7 +81,7 @@ export function useTabVisibility(props: TabPanelProps): TabVisibilityState {
         const othersTab: VisibleTab[] = tabVisibilityByIndex[-1] ? [{ primaryIndex: -1, label: "Others" }] : [];
 
         return [...tabbedVisible, ...othersTab];
-    }, [tabbedSections, tabVisibilityByIndex, dataFormInfo]);
+    }, [tabbedSections, tabVisibilityByIndex]);
 
     return { tabVisibilityByIndex, firstVisibleTabIndex, visiblePrimaryTabs };
 }

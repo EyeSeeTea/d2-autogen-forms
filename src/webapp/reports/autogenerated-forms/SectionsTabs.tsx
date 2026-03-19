@@ -29,7 +29,6 @@ import { IconButton } from "material-ui";
 import { ChevronLeft, ChevronRight } from "@material-ui/icons";
 import DisaggregatedCOCsGrid from "./DisaggregatedCOCsGrid";
 import GridIndicatorsCalculated from "./GridIndicatorsCalculated";
-import { calculateFormula } from "./datatables/InputFormula";
 import GridWithCategoryColumns from "./GridWithCategoryColumns";
 import { useTabVisibility } from "./hooks/useTabVisibility";
 import { DebugLabel } from "../../components/debug/DebugLabel";
@@ -343,6 +342,12 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
                         const allSections = [...tabbedSections, ...untabbedSections];
 
                         if (isTabHeader(order)) {
+                            const primaryValue = _(order).split(".").first() ?? "0";
+                            const primaryIndex = Number(primaryValue);
+                            if (!Number.isFinite(primaryIndex) || !tabVisibilityByIndex[primaryIndex]) {
+                                return [];
+                            }
+
                             const [primaryTabIndex] = getTabIndices(section.tabs.order, allSections, section.showIndex);
                             const sectionTabLabel = section.texts.tabLabel || section.name;
                             const shouldShowIndex = tabHeaderShouldShowIndex(section, allSections);
@@ -350,29 +355,6 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
                                 shouldShowIndex && primaryTabIndex !== -1
                                     ? `${primaryTabIndex + 1} - ${sectionTabLabel}`
                                     : sectionTabLabel;
-
-                            const visibleRule = section.tabs.rules?.visible;
-                            const dataElementCodes = visibleRule?.dataElements.map(de => de.code) || [];
-                            const value =
-                                visibleRule && dataElementCodes.length > 0
-                                    ? calculateFormula({
-                                          dataElementCodes: dataElementCodes,
-                                          dataFormInfo: dataFormInfo,
-                                          formula: visibleRule.formula.value,
-                                      })
-                                    : undefined;
-
-                            const isConditionMet = value === visibleRule?.formula.condition;
-
-                            if (visibleRule && !isConditionMet) {
-                                return [];
-                            }
-
-                            const primaryValue = _(order).split(".").first() ?? "0";
-                            const primaryIndex = Number(primaryValue);
-                            if (!Number.isFinite(primaryIndex) || !tabVisibilityByIndex[primaryIndex]) {
-                                return [];
-                            }
 
                             return (
                                 <Tab
