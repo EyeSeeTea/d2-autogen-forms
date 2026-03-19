@@ -1,10 +1,5 @@
-import { DataValueStore } from "../DataValue";
-import {
-    dataElementText,
-    dataValueBase,
-    dataValueTextSingle,
-    dataValueTextWithComment,
-} from "./dataFixtures";
+import { DataValueStore, hasComment } from "../DataValue";
+import { dataElementText, dataValueBase, dataValueTextSingle, dataValueTextWithComment } from "./dataFixtures";
 
 describe("Comment indicator", () => {
     describe("DataValue comment field", () => {
@@ -37,7 +32,7 @@ describe("Comment indicator", () => {
         });
     });
 
-    describe("hasComment helper", () => {
+    describe("hasComment", () => {
         it("should return true when comment is a non-empty string", () => {
             expect(hasComment(dataValueTextWithComment)).toBe(true);
         });
@@ -52,7 +47,3 @@ describe("Comment indicator", () => {
         });
     });
 });
-
-function hasComment(dataValue: { comment?: string }): boolean {
-    return !!dataValue.comment;
-}

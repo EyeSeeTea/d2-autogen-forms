@@ -96,7 +96,6 @@ export const dataValueTextSingle: DataValueTextSingle = {
     isMultiple: false,
     dataElement: dataElementText,
     value: "Sample text",
-    comment: undefined,
 };
 
 export const dataValueTextWithComment: DataValueTextSingle = {

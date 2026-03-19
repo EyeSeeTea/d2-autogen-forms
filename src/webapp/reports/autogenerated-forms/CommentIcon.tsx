@@ -8,7 +8,7 @@ export interface CommentIconProps {
     dataElementId: Id;
     categoryOptionComboId: Id;
     period: string;
-    hasComment?: boolean;
+    hasComment: boolean;
 }
 
 export const CommentIcon: React.FC<CommentIconProps> = React.memo(props => {

@@ -205,4 +205,8 @@ export function getEmpty(dataElement: DataElement, base: DataValueBase): DataVal
     }
 }
 
+export function hasComment(dataValue: Pick<DataValueBase, "comment">): boolean {
+    return !!dataValue.comment;
+}
+
 export const MULTI_TEXT_SEPARATOR = ",";
