@@ -39,7 +39,7 @@ export const CommentIcon: React.FC<CommentIconProps> = React.memo(props => {
 });
 
 const styles: Record<string, React.CSSProperties> = {
-    wrapper: { marginInlineStart: 10, position: "relative", display: "flex" },
+    wrapper: { marginInlineStart: 10, position: "relative" },
     image: { cursor: "pointer" },
     badge: {
         position: "absolute",
