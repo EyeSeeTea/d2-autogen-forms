@@ -56,7 +56,7 @@ const TableForm: React.FC<TableFormProps> = React.memo(props => {
                                 ></CustomDataTableColumnHeader>
                                 <CustomDataTableColumnHeader
                                     backgroundColor={props.section.styles.columns.backgroundColor}
-                                    width="50px"
+                                    className={styles.periodColumnHeader}
                                 >
                                     <span className={styles.header}>
                                         {props.section.texts.periodHeader ?? i18n.t("Period")}
@@ -163,6 +163,10 @@ const useStyles = makeStyles({
         textAlign: "center",
         display: "flex",
         padding: "4px",
+    },
+    periodColumnHeader: {
+        minWidth: "50px",
+        maxWidth: "100px",
     },
 });
 
