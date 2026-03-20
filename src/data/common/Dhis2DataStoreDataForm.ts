@@ -170,6 +170,7 @@ const textsCodec = Codec.interface(textCodecModel);
 const sectionTextCodec = Codec.interface({
     ...textCodecModel,
     tabLabel: optional(oneOf([string, selector])),
+    periodHeader: optional(oneOf([string, selector])),
 });
 
 const categoryOptionFilterConfigCodec = Codec.interface({
@@ -956,6 +957,7 @@ export class Dhis2DataStoreDataForm {
                         totals: this.getTextFromConstants(sectionConfig?.texts?.totals, constantsByCode),
                         name: this.getTextFromConstants(sectionConfig?.texts?.name, constantsByCode),
                         tabLabel: this.getTextFromConstants(sectionConfig?.texts?.tabLabel, constantsByCode),
+                        periodHeader: this.getTextFromConstants(sectionConfig?.texts?.periodHeader, constantsByCode),
                     },
                     showIndex: this.getEffectiveBooleanValue(dataSetConfig?.showIndex, sectionConfig.showIndex),
                     sortRowsBy: sectionConfig.sortRowsBy || "",
