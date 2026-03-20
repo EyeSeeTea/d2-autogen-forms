@@ -11,9 +11,6 @@ msgstr ""
 msgid "Mark all notifications as read"
 msgstr ""
 
-msgid "Mark all notifications as read"
-msgstr ""
-
 msgid "<No value>"
 msgstr ""
 
