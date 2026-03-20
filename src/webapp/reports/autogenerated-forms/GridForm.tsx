@@ -115,7 +115,9 @@ const GridForm: React.FC<GridFormProps> = props => {
                                     backgroundColor={props.section.styles.columns.backgroundColor}
                                     width="50px"
                                 >
-                                    {props.section.texts.periodHeader ?? i18n.t("Period")}
+                                    <span className={classes.header}>
+                                        {props.section.texts.periodHeader ?? i18n.t("Period")}
+                                    </span>
                                 </CustomDataTableColumnHeader>
                             )}
 
