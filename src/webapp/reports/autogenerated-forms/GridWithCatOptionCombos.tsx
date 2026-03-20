@@ -100,7 +100,7 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                                 backgroundColor={section.styles.columns.backgroundColor}
                                 width="50px"
                             >
-                                {section.texts.periodHeader ?? i18n.t("Period")}
+                                <div className={classes.header}>{section.texts.periodHeader ?? i18n.t("Period")}</div>
                             </CustomDataTableColumnHeader>
                         )}
 
