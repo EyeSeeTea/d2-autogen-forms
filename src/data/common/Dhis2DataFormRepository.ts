@@ -29,6 +29,7 @@ import { buildToggleMultiple } from "../../domain/common/entities/ToggleMultiple
 import { DataFormRepository } from "../../domain/common/repositories/DataFormRepository";
 import { D2Api, MetadataPick } from "../../types/d2-api";
 import { Maybe } from "../../utils/ts-utils";
+import { RulesFormula } from "./RulesFormula";
 import { Dhis2DataElement } from "./Dhis2DataElement";
 import { DEFAULT_INDICATORS_POSITION, Dhis2DataStoreDataForm } from "./Dhis2DataStoreDataForm";
 import {
@@ -287,6 +288,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                             viewType: config.viewType,
                             rowsConfig: buildRowsConfigWithTexts(config.rowsConfig, configDataForm.constants),
                             ...base2,
+                            columnsConfig: buildColumnsConfigWithTexts(config.columnsConfig, configDataForm.constants),
                         };
                     default:
                         return { viewType: config.viewType, ...base2 };
@@ -834,6 +836,28 @@ function buildRowsConfigWithTexts(
                     cellsVisible: rowConfig.cellsVisible ?? true,
                     rowName: constant?.displayDescription,
                     hide: rowConfig.hide,
+                },
+            ];
+        })
+        .fromPairs()
+        .value();
+}
+
+function buildColumnsConfigWithTexts(
+    columnsConfig: Maybe<Record<string, { rules?: RulesFormula; columnNameConstant?: string }>>,
+    constants: Array<{ code: string; displayDescription?: string }>
+): SectionBase["columnsConfig"] {
+    if (!columnsConfig) return undefined;
+
+    return _(columnsConfig)
+        .map((colConfig, key): [string, { rules?: RulesFormula; columnName?: string }] => {
+            const constant = constants.find(c => c.code === colConfig.columnNameConstant);
+
+            return [
+                key,
+                {
+                    rules: colConfig.rules,
+                    columnName: constant?.displayDescription,
                 },
             ];
         })
