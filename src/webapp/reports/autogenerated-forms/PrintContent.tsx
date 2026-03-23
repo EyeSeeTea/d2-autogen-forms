@@ -1,4 +1,5 @@
 import _ from "lodash";
+import { makeStyles } from "@material-ui/core";
 import React, { useCallback, useMemo } from "react";
 import styled from "styled-components";
 import { Section } from "../../../domain/common/entities/DataForm";
@@ -18,6 +19,7 @@ export interface PrintSectionsContentProps {
 
 const PrintContent: React.FC<PrintSectionsContentProps> = React.memo(props => {
     const { tabbedSections, untabbedSections, tabHeaders, renderSection } = props;
+    useStyles();
 
     const getPrimaryTabIndex = useCallback((section: Section) => {
         const [primaryTabIndex] = getTabIndices(section.tabs.order);
@@ -52,6 +54,16 @@ const PrintContent: React.FC<PrintSectionsContentProps> = React.memo(props => {
 });
 
 export default React.memo(PrintContent);
+
+const useStyles = makeStyles({
+    "@global": {
+        "@media print": {
+            "#completedByDiv, #completenessDiv, #fileDeleteConfirmationDialog": {
+                display: "none !important",
+            },
+        },
+    },
+});
 
 const PrintOnlyContent = styled.div`
     display: none;
