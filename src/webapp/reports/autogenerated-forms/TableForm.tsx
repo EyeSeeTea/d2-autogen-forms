@@ -18,6 +18,7 @@ import { checkIndicatorDirection } from "../../../domain/common/entities/Indicat
 import { RowIndicatorItem } from "../../components/IndicatorItem/IndicatorItem";
 import { DataTableCellFormula } from "./datatables/DataTableCellFormula";
 import i18n from "../../../locales";
+import { makeStyles } from "@material-ui/core";
 
 export interface TableFormProps {
     dataFormInfo: DataFormInfo;
@@ -26,6 +27,7 @@ export interface TableFormProps {
 
 const TableForm: React.FC<TableFormProps> = React.memo(props => {
     const { dataFormInfo } = props;
+    const styles = useStyles();
     const section = React.useMemo(
         () => GridViewModel.get(props.section, dataFormInfo, "table"),
         [props.section, dataFormInfo]
@@ -54,9 +56,11 @@ const TableForm: React.FC<TableFormProps> = React.memo(props => {
                                 ></CustomDataTableColumnHeader>
                                 <CustomDataTableColumnHeader
                                     backgroundColor={props.section.styles.columns.backgroundColor}
-                                    width="50px"
+                                    className={styles.periodColumnHeader}
                                 >
-                                    {i18n.t("Period")}
+                                    <span className={styles.header}>
+                                        {props.section.texts.periodHeader ?? i18n.t("Period")}
+                                    </span>
                                 </CustomDataTableColumnHeader>
                                 <CustomDataTableColumnHeader
                                     backgroundColor={props.section.styles.columns.backgroundColor}
@@ -149,6 +153,21 @@ const TableForm: React.FC<TableFormProps> = React.memo(props => {
             </DataTable>
         </DataTableSection>
     );
+});
+
+const useStyles = makeStyles({
+    header: {
+        fontSize: "1.2em",
+        fontWeight: "bold",
+        flexDirection: "column",
+        textAlign: "center",
+        display: "flex",
+        padding: "4px",
+    },
+    periodColumnHeader: {
+        minWidth: "50px",
+        maxWidth: "100px",
+    },
 });
 
 export default React.memo(TableForm);
