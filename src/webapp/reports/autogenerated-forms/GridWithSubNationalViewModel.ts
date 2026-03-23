@@ -2,6 +2,7 @@ import _ from "lodash";
 import { Section, SectionWithSubnationals } from "../../../domain/common/entities/DataForm";
 import { DataElement } from "../../../domain/common/entities/DataElement";
 import { Maybe } from "../../../utils/ts-utils";
+import { joinDataElementName, splitDataElementName } from "./utils/dataElementNameSeparator";
 
 export interface Grid {
     id: string;
@@ -45,8 +46,6 @@ type ParentColumn = {
     name: string;
 };
 
-const separator = " - ";
-
 function extractNumber(value: Maybe<string>): string {
     if (!value) return "";
     const regex = /^\d+(\.\d+)?/;
@@ -63,7 +62,7 @@ export class GridWithSubNationalViewModel {
                 return cocNames.flatMap(coc => ({
                     ...dataElement,
                     cocId: dataElement.categoryCombos.categoryOptionCombos.find(c => c.name === coc)?.id || "cocId",
-                    name: `${coc} - ${_(dataElement.name).split(separator).last()}`,
+                    name: `${coc} - ${_.last(splitDataElementName(dataElement.name))}`,
                     fullName: dataElement.name,
                     cocName: coc,
                 }));
@@ -86,7 +85,7 @@ export class GridWithSubNationalViewModel {
             .flatMap(subsection => subsection.dataElements)
             .uniqBy(de => de.name)
             .map(de => {
-                const splitNameBySeparator = _(de.name).split(separator).value();
+                const splitNameBySeparator = splitDataElementName(de.name);
                 const deName = splitNameBySeparator.length > 1 ? _(splitNameBySeparator).first() : "";
                 const parts = deName?.split(".") || [];
                 return {
@@ -179,8 +178,8 @@ function getDataElementsWithIndexProccessing(section: Section) {
         if (!index) {
             return dataElement;
         } else {
-            const parts = dataElement.name.split(separator);
-            const initial = _.initial(parts).join(separator);
+            const parts = splitDataElementName(dataElement.name);
+            const initial = joinDataElementName(_.initial(parts));
             const last = _.last(parts);
             if (!last) return dataElement;
             const lastWithoutIndex = last.replace(/\s*\(\d+\)$/, "");
