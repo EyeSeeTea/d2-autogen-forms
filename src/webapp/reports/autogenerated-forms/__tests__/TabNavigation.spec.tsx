@@ -4,10 +4,10 @@ import "@testing-library/jest-dom/extend-expect";
 import TabNavigation, { VisibleTab, TabNavigationProps } from "../TabNavigation";
 
 const defaultTabs: ReadonlyArray<VisibleTab> = [
-    { primaryIndex: 0, label: "Tab A" },
-    { primaryIndex: 1, label: "Tab B" },
-    { primaryIndex: 2, label: "Tab C" },
-    { primaryIndex: 3, label: "Tab D" },
+    { primaryIndex: 0 },
+    { primaryIndex: 1 },
+    { primaryIndex: 2 },
+    { primaryIndex: 3 },
 ];
 
 function renderNavigation(overrides: Partial<TabNavigationProps> = {}) {
@@ -68,9 +68,9 @@ describe("TabNavigation", () => {
 
         it("shows correct position with non-contiguous primary indices", () => {
             const sparseVisibleTabs: ReadonlyArray<VisibleTab> = [
-                { primaryIndex: 0, label: "First" },
-                { primaryIndex: 3, label: "Fourth" },
-                { primaryIndex: 7, label: "Eighth" },
+                { primaryIndex: 0 },
+                { primaryIndex: 3 },
+                { primaryIndex: 7 },
             ];
 
             renderNavigation({ activeTabIndex: 3, visibleTabs: sparseVisibleTabs });
@@ -165,7 +165,7 @@ describe("TabNavigation", () => {
 
     describe("edge cases", () => {
         it("disables both buttons when there is only one visible tab", () => {
-            const singleTab: ReadonlyArray<VisibleTab> = [{ primaryIndex: 5, label: "Only" }];
+            const singleTab: ReadonlyArray<VisibleTab> = [{ primaryIndex: 5 }];
             renderNavigation({ activeTabIndex: 5, visibleTabs: singleTab });
 
             expect(getPreviousButton().disabled).toBe(true);

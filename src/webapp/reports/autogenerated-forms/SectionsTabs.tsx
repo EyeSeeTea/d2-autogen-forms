@@ -270,6 +270,8 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
                 if (!isTabHeader(order)) return [];
 
                 const [primaryTabIndex] = getTabIndices(section.tabs.order, allSections, section.showIndex);
+                if (!tabVisibilityByIndex[primaryTabIndex]) return [];
+
                 const sectionTabLabel = section.texts.tabLabel || section.name;
                 const shouldShowIndex = tabHeaderShouldShowIndex(section, allSections);
                 const tabLabel =
@@ -277,25 +279,9 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
                         ? `${primaryTabIndex + 1} - ${sectionTabLabel}`
                         : sectionTabLabel;
 
-                const visibleRule = section.tabs.rules?.visible;
-                const dataElementCodes = visibleRule?.dataElements.map(de => de.code) || [];
-                const value =
-                    visibleRule && dataElementCodes.length > 0
-                        ? calculateFormula({
-                              dataElementCodes,
-                              dataFormInfo,
-                              formula: visibleRule.formula.value,
-                          })
-                        : undefined;
-
-                if (visibleRule && value !== visibleRule.formula.condition) return [];
-
-                const primaryValue = _(order).split(".").first() ?? "0";
-                const primaryIndex = Number(primaryValue);
-
-                return [{ key: section.id, order, label: tabLabel, primaryIndex }];
+                return [{ key: section.id, order, label: tabLabel, primaryIndex: primaryTabIndex }];
             }),
-        [allSections, dataFormInfo, tabbedSections]
+        [allSections, tabbedSections, tabVisibilityByIndex]
     );
 
     const renderSection = useCallback(
