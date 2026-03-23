@@ -9,10 +9,7 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
 
 msgid "Mark all notifications as read"
-msgstr ""
-
-msgid "Mark all notifications as read"
-msgstr ""
+msgstr "Marcar todas las notificaciones como leídas"
 
 msgid "<No value>"
 msgstr ""

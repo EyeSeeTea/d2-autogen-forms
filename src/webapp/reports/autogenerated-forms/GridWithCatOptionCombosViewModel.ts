@@ -17,6 +17,7 @@ import { Period } from "../../../domain/common/entities/Period";
 import { isToggleMultipleDeDisabled } from "../../../domain/common/entities/ToggleMultiple";
 import { getIndexedIndicator } from "./utils/indicatorIndexing";
 import { calculateFormula } from "./datatables/InputFormula";
+import { joinDataElementName, splitDataElementName } from "./utils/dataElementNameSeparator";
 
 export interface Grid {
     id: string;
@@ -68,8 +69,6 @@ type SubRow = {
     };
 };
 
-const separator = " - ";
-
 export function getFormulaByColumnName(section: Section, columnName: string): Maybe<string> {
     if (!section.totals) return undefined;
 
@@ -100,7 +99,7 @@ export class GridWithCatOptionCombosViewModel {
                     return {
                         ...dataElement,
                         cocId: categoryOptionCombo?.id,
-                        name: `${coc.name} - ${_(dataElement.name).split(separator).last()}`,
+                        name: `${coc.name} - ${_.last(splitDataElementName(dataElement.name))}`,
                         fullName: dataElement.name,
                         cocName: coc.formName ?? coc.name,
                         catOptionCode: _(coc.categoryOptions).first()?.code || "",
@@ -169,7 +168,7 @@ export class GridWithCatOptionCombosViewModel {
         return _(subsections)
             .flatMap(subsection => subsection.dataElements)
             .uniqBy(de => de.name)
-            .groupBy(de => _(de.name.split(separator)).initial().join(" - "))
+            .groupBy(de => joinDataElementName(_.initial(splitDataElementName(de.name))))
             .map((group, groupName) => {
                 const firstDeInGroup = _(group).first()?.code || "";
                 const groupDescription = getDescription(section.groupDescriptions, dataFormInfo, firstDeInGroup);
@@ -339,7 +338,7 @@ function getDataElementLabel(
     dataFormInfo: DataFormInfo,
     label: string
 ) {
-    const deName = _.last(label.split(separator)) ?? "";
+    const deName = _.last(splitDataElementName(label)) ?? "";
     const deIndex = section.dataElements.findIndex(de => de.id === dataElement.id) + 1;
     return getIndexedLabel(
         section,

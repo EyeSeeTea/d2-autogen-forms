@@ -45,6 +45,7 @@ export type Texts = {
 
 export type SectionTexts = Texts & {
     tabLabel: Maybe<string>;
+    periodHeader: Maybe<string>;
 };
 
 export const defaultTexts: SectionTexts = {
@@ -54,6 +55,7 @@ export const defaultTexts: SectionTexts = {
     totals: undefined,
     name: undefined,
     tabLabel: undefined,
+    periodHeader: undefined,
 };
 
 const viewTypes = [

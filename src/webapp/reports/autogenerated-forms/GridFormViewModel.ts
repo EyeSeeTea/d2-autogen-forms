@@ -26,6 +26,7 @@ import { getIndexedLabel } from "./DataTableSection";
 import { Period } from "../../../domain/common/entities/Period";
 import { isToggleMultipleDeDisabled } from "../../../domain/common/entities/ToggleMultiple";
 import { getIndexedIndicator } from "./utils/indicatorIndexing";
+import { joinDataElementName, splitDataElementName } from "./utils/dataElementNameSeparator";
 
 export type Grid = GridComponents & {
     dataElements: Array<DataElement & { indicator: Maybe<Indicator> }>;
@@ -94,8 +95,6 @@ export interface Row {
         after: Indicator[];
     };
 }
-
-const separator = " - ";
 
 type ColumnScoreInput = {
     columnName: string;
@@ -196,7 +195,7 @@ export class GridViewModel {
                     name: groupName,
                     dataElements: dataElementsForGroup.map(dataElement => ({
                         ...dataElement,
-                        name: _(dataElement.name).split(separator).last() || "-",
+                        name: _.last(splitDataElementName(dataElement.name)) || "-",
                     })),
                 })
             )
@@ -306,7 +305,7 @@ export class GridViewModel {
 
             const firstItemWithHtmlText = _(itemsWithHtmlText).first() || "";
 
-            const lastPartSubSection = groupsByRow ? _(subsection.name).split(separator).last() ?? "" : undefined;
+            const lastPartSubSection = groupsByRow ? _.last(splitDataElementName(subsection.name)) ?? "" : undefined;
             const groupMeta = lastPartSubSection && groupsByRow ? groupsByRow[lastPartSubSection] : undefined;
             const rowName = groupsByRow ? lastPartSubSection ?? "" : subsection.name;
 
@@ -463,7 +462,7 @@ export class GridViewModel {
         priorityByCode,
     }: ColumnScoreInput): number {
         const candidates = allDataElements.filter(de => {
-            const last = _.last(_.split(de.name, separator));
+            const last = _.last(splitDataElementName(de.name));
             return last === columnName;
         });
 
@@ -477,8 +476,7 @@ export class GridViewModel {
         //  - [Row, Column]
         //  - [Group, SubGroup, Row, Column]
 
-        const parts = _(fullName)
-            .split(separator)
+        const parts = _(splitDataElementName(fullName))
             .map(s => s.trim())
             .value();
 
@@ -493,7 +491,7 @@ export class GridViewModel {
         }
 
         // Fallback to original pattern [Row - Column]
-        const rowName = parts.join(separator).trim();
+        const rowName = joinDataElementName(parts).trim();
         return { rowName, columnName: "", group: undefined, subGroup: undefined };
     }
 
@@ -596,8 +594,8 @@ function getDataElementsWithIndexProccessing(section: Section) {
         if (!index) {
             return dataElement;
         } else {
-            const parts = dataElement.name.split(separator);
-            const initial = _.initial(parts).join(separator);
+            const parts = splitDataElementName(dataElement.name);
+            const initial = joinDataElementName(_.initial(parts));
             const last = _.last(parts);
             if (!last) return dataElement;
             const lastWithoutIndex = last.replace(/\s*\(\d+\)$/, "");
@@ -610,7 +608,7 @@ function getDataElementsWithIndexProccessing(section: Section) {
 function getSubsectionName(dataElement: DataElement): string {
     // Remove index from enumerated data elements (example: `Chemical name (1)` -> `Chemical name`)
     // so they are grouped with no need to edit each name in the metadata.
-    return _(dataElement.name).split(separator).initial().join(separator);
+    return joinDataElementName(_.initial(splitDataElementName(dataElement.name)));
 }
 
 export function isSourceTypeColumn(widget: Maybe<DataElementWidget>): boolean {

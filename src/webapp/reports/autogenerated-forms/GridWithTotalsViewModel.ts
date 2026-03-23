@@ -2,6 +2,12 @@ import _ from "lodash";
 import { DataElementWidget, Section, SectionWithTotals } from "../../../domain/common/entities/DataForm";
 import { DataElement } from "../../../domain/common/entities/DataElement";
 import { isSourceTypeColumn } from "./GridFormViewModel";
+import {
+    DATA_ELEMENT_NAME_SEPARATOR,
+    joinDataElementName,
+    splitDataElementName,
+    hasIndexedSubRowPrefix,
+} from "./utils/dataElementNameSeparator";
 
 export interface Grid {
     id: string;
@@ -47,8 +53,6 @@ type ParentColumn = {
     colSpan: number;
 };
 
-const separator = " - ";
-
 export class GridWithTotalsViewModel {
     static get(
         section: SectionWithTotals,
@@ -72,10 +76,11 @@ export class GridWithTotalsViewModel {
                 const categoryOptionCombos = de.categoryCombos.categoryOptionCombos;
                 const config = dataElementsConfig[de.id];
                 if (categoryOptionCombos.length !== 1 && categoryOptionCombos[0]?.name !== "default") {
+                    const nameParts = splitDataElementName(de.name);
                     return {
                         name: de.name,
-                        deName: _(de.name).split(separator).head(),
-                        cocName: _(de.name).split(separator).last(),
+                        deName: nameParts[0],
+                        cocName: _.last(nameParts),
                         isSourceType: false,
                     };
                 } else {
@@ -102,9 +107,11 @@ export class GridWithTotalsViewModel {
             }))
             .value();
 
+        const separatorTotalRegex = new RegExp(`${DATA_ELEMENT_NAME_SEPARATOR.source}Total$`);
+
         const rows = subsections.map(subsection => {
-            const total = sectionDataElements.find(de => de.name.replace(" - Total", "") === subsection.name);
-            const index = subsection.name.split(separator)[0];
+            const total = sectionDataElements.find(de => de.name.replace(separatorTotalRegex, "") === subsection.name);
+            const index = splitDataElementName(subsection.name)[0];
             const totalRowIndex = index?.split(".")[0];
 
             const indexedDEs = dataElements.filter(de => {
@@ -112,6 +119,9 @@ export class GridWithTotalsViewModel {
             });
 
             const hasTotals = index?.split(".").length === 2 && !_.isEmpty(totalRowIndex);
+            const totalRowIndexRegex = totalRowIndex
+                ? new RegExp(`^${_.escapeRegExp(totalRowIndex)}${DATA_ELEMENT_NAME_SEPARATOR.source}`)
+                : undefined;
             const items = columns.map(column => {
                 const dataElement = subsection.dataElements.find(de => de.name === column.name);
                 let columnTotal;
@@ -125,13 +135,11 @@ export class GridWithTotalsViewModel {
                         ? dataElements.find(de => de.code === deCalculateTotal?.totalDeCode)
                         : undefined;
 
+                    const deNameFirstPart = splitDataElementName(dataElement?.name || "")[0];
                     columnTotal =
                         parentTotal ||
                         dataElements.find(de => {
-                            return (
-                                de.name.startsWith(`${totalRowIndex}${separator}`) &&
-                                de.name.endsWith(`${dataElement?.name.split(separator)[0]}`)
-                            );
+                            return totalRowIndexRegex?.test(de.name) && de.name.endsWith(`${deNameFirstPart}`);
                         });
 
                     if (columnTotal) {
@@ -148,10 +156,7 @@ export class GridWithTotalsViewModel {
                               .map(de => ({ ...de, cocId: dataElement?.cocId }))
                         : indexedDEs
                               .filter(de => {
-                                  return (
-                                      de.name.match(/^\d+\.\d+ - /g) &&
-                                      de.name.endsWith(`${dataElement?.name.split(separator)[0]}`)
-                                  );
+                                  return hasIndexedSubRowPrefix(de.name) && de.name.endsWith(`${deNameFirstPart}`);
                               })
                               .map(de => ({ ...de, cocId: dataElement?.cocId }));
                 }
@@ -206,8 +211,8 @@ function getDataElementsWithIndexProccessing(section: Section) {
         if (!index) {
             return dataElement;
         } else {
-            const parts = dataElement.name.split(separator);
-            const initial = _.initial(parts).join(separator);
+            const parts = splitDataElementName(dataElement.name);
+            const initial = joinDataElementName(_.initial(parts));
             const last = _.last(parts);
             if (!last) return dataElement;
             const lastWithoutIndex = last.replace(/\s*\(\d+\)$/, "");
@@ -220,7 +225,7 @@ function getDataElementsWithIndexProccessing(section: Section) {
 function getSubsectionName(dataElement: DataElement): string {
     // Remove index from enumerated data elements (example: `Chemical name (1)` -> `Chemical name`)
     // so they are grouped with no need to edit each name in the metadata.
-    return _(dataElement.name).split(separator).initial().join(separator);
+    return joinDataElementName(_.initial(splitDataElementName(dataElement.name)));
 }
 
 function getSubsections(groupName: string, groupDataElements: DataElement[]): SubSectionGrid {
@@ -233,14 +238,14 @@ function getSubsections(groupName: string, groupDataElements: DataElement[]): Su
                 return [
                     {
                         ...dataElement,
-                        name: _(dataElement.name).split(separator).last() || "-",
+                        name: _.last(splitDataElementName(dataElement.name)) || "-",
                     },
                 ];
             } else {
                 return cocNames.map(coc => ({
                     ...dataElement,
                     cocId: dataElement.categoryCombos.categoryOptionCombos.find(c => c.name === coc)?.id || "cocId",
-                    name: `${_(dataElement.name).split(separator).last()} - ${coc}` || "-",
+                    name: `${_.last(splitDataElementName(dataElement.name))} - ${coc}` || "-",
                 }));
             }
         }),

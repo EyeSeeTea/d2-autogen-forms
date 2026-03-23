@@ -9,7 +9,6 @@ import { Maybe } from "../../../../utils/ts-utils";
 
 export interface VisibleTab {
     readonly primaryIndex: number;
-    readonly label: string;
 }
 
 type TabVisibilityState = {
@@ -67,18 +66,16 @@ export function useTabVisibility(props: TabPanelProps): TabVisibilityState {
             tabbedSections.flatMap(section => {
                 if (!isTabHeader(section.tabs.order)) return [];
 
-                const primaryValue = _(section.tabs.order).split(".").first() ?? "0";
-                const primaryIndex = Number(primaryValue);
-                if (!Number.isFinite(primaryIndex) || primaryIndex === -1) return [];
-                if (!tabVisibilityByIndex[primaryIndex]) return [];
+                const [primaryTabIndex] = getTabIndices(section.tabs.order);
+                if (!Number.isFinite(primaryTabIndex) || primaryTabIndex === -1) return [];
+                if (!tabVisibilityByIndex[primaryTabIndex]) return [];
 
-                const label = section.texts.tabLabel || section.name;
-                return [{ primaryIndex, label }];
+                return [{ primaryIndex: primaryTabIndex }];
             }),
             tab => tab.primaryIndex
         );
 
-        const othersTab: VisibleTab[] = tabVisibilityByIndex[-1] ? [{ primaryIndex: -1, label: "Others" }] : [];
+        const othersTab: VisibleTab[] = tabVisibilityByIndex[-1] ? [{ primaryIndex: -1 }] : [];
 
         return [...tabbedVisible, ...othersTab];
     }, [tabbedSections, tabVisibilityByIndex]);
