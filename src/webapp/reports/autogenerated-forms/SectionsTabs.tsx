@@ -33,6 +33,7 @@ import { calculateFormula } from "./datatables/InputFormula";
 import GridWithCategoryColumns from "./GridWithCategoryColumns";
 import { useTabVisibility } from "./hooks/useTabVisibility";
 import { DebugLabel } from "../../components/debug/DebugLabel";
+import PrintContent from "./PrintContent";
 
 export interface TabPanelProps {
     tabbedSections: Section[];
@@ -293,7 +294,16 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
             }),
         [allSections, dataFormInfo, tabbedSections]
     );
-    const printTabHeaders = useMemo(() => _.uniqBy(tabHeaders, "primaryIndex"), [tabHeaders]);
+
+    const renderSection = useCallback(
+        (section: Section, key: string) => (
+            <React.Fragment key={section.id + key}>
+                <DebugLabel>{section.code}</DebugLabel>
+                <AutoFormComponent dataFormInfo={dataFormInfo} section={section} viewType={section.viewType} />
+            </React.Fragment>
+        ),
+        [dataFormInfo]
+    );
 
     const tabContainer = document.querySelector(".MuiTabs-scroller.MuiTabs-scrollable");
     const handleScroll = useCallback(
@@ -404,59 +414,16 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
                     />
                 ))}
                 <div role="tabpanel" hidden={activeTab !== -1} id="tabpanel-others" aria-labelledby="tab-others">
-                    {untabbedSections.map(section => (
-                        <React.Fragment key={section.id + "UntabbedSection"}>
-                            <DebugLabel>{section.code}</DebugLabel>
-                            <AutoFormComponent
-                                dataFormInfo={dataFormInfo}
-                                section={section}
-                                viewType={section.viewType}
-                            />
-                        </React.Fragment>
-                    ))}
+                    {untabbedSections.map(section => renderSection(section, "untabbedSection"))}
                 </div>
             </ScreenOnlyContent>
 
-            <PrintOnlyContent>
-                {printTabHeaders.map(tabHeader => {
-                    const sectionsByTab = tabbedSections.filter(section => {
-                        const [primaryTabIndex] = getTabIndices(section.tabs.order);
-                        return primaryTabIndex === tabHeader.primaryIndex;
-                    });
-
-                    return (
-                        <div key={`print-tab-${tabHeader.primaryIndex}`}>
-                            <PrintTabLabel>{tabHeader.label}</PrintTabLabel>
-                            {sectionsByTab.map(section => (
-                                <React.Fragment key={section.id + "PrintSection"}>
-                                    <DebugLabel>{section.code}</DebugLabel>
-                                    <AutoFormComponent
-                                        dataFormInfo={dataFormInfo}
-                                        section={section}
-                                        viewType={section.viewType}
-                                    />
-                                </React.Fragment>
-                            ))}
-                        </div>
-                    );
-                })}
-
-                {untabbedSections.length > 0 && (
-                    <div>
-                        <PrintTabLabel>Others</PrintTabLabel>
-                        {untabbedSections.map(section => (
-                            <React.Fragment key={section.id + "PrintUntabbedSection"}>
-                                <DebugLabel>{section.code}</DebugLabel>
-                                <AutoFormComponent
-                                    dataFormInfo={dataFormInfo}
-                                    section={section}
-                                    viewType={section.viewType}
-                                />
-                            </React.Fragment>
-                        ))}
-                    </div>
-                )}
-            </PrintOnlyContent>
+            <PrintContent
+                tabbedSections={tabbedSections}
+                untabbedSections={untabbedSections}
+                tabHeaders={tabHeaders}
+                renderSection={renderSection}
+            />
         </Box>
     );
 });
@@ -477,25 +444,6 @@ const ScreenOnlyContent = styled.div`
     @media print {
         display: none;
     }
-`;
-
-const PrintOnlyContent = styled.div`
-    display: none;
-    @media print {
-        display: block;
-    }
-`;
-
-const PrintTabLabel = styled.h3`
-    margin: 1.5rem 0 0.75rem 0;
-    padding: 0.75rem 1rem;
-    background: #ffffff;
-    font-size: 1rem;
-    font-weight: 700;
-    line-height: 1.25;
-    text-transform: uppercase;
-    letter-spacing: 0.02857em;
-    page-break-after: avoid;
 `;
 
 const StyledTabs = styled(Tabs)`
