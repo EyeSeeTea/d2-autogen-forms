@@ -35,6 +35,7 @@ export type DataSetConfig = {
     sections: Record<Id, SectionConfig>;
     rules: Maybe<DataFormRule[]>;
     customCss: Maybe<string>;
+    showNavigation: boolean;
 };
 
 type DataElementRule = Record<RuleType | "delete", ConditionRule>;

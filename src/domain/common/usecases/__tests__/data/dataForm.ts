@@ -29,4 +29,5 @@ export const dataForm: Omit<DataForm, "id"> = {
     periodType: PeriodType.DAILY,
     removePrefix: undefined,
     customCss: undefined,
+    showNavigation: false,
 };

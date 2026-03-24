@@ -304,6 +304,7 @@ export const DataStoreConfigCodec = Codec.interface({
         texts: optional(textsCodec),
         customCss: optional(string),
         showIndex: optional(boolean),
+        showNavigation: optional(boolean),
         rules: optional(array(dataSetRuleCodec)),
         sections: optional(
             optionalRecord({
@@ -1111,6 +1112,7 @@ export class Dhis2DataStoreDataForm {
             sections: sections,
             rules: this.getDataFormRules(dataSetConfig?.rules),
             customCss: dataSetConfig?.customCss,
+            showNavigation: dataSetConfig?.showNavigation ?? false,
         };
     }
 

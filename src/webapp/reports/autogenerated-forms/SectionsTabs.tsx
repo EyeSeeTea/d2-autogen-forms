@@ -29,10 +29,10 @@ import { IconButton } from "material-ui";
 import { ChevronLeft, ChevronRight } from "@material-ui/icons";
 import DisaggregatedCOCsGrid from "./DisaggregatedCOCsGrid";
 import GridIndicatorsCalculated from "./GridIndicatorsCalculated";
-import { calculateFormula } from "./datatables/InputFormula";
 import GridWithCategoryColumns from "./GridWithCategoryColumns";
 import { useTabVisibility } from "./hooks/useTabVisibility";
 import { DebugLabel } from "../../components/debug/DebugLabel";
+import TabNavigation from "./TabNavigation";
 import PrintContent from "./PrintContent";
 
 export interface TabPanelProps {
@@ -186,8 +186,8 @@ export function getTabIndices(
     return [adjustedPrimary, adjustedSecondary];
 }
 
-function isTabHeader(order: Maybe<string>) {
-    const [_, secondaryTabIndex] = getTabIndices(order);
+export function isTabHeader(order: Maybe<string>) {
+    const [_primaryTabIndex, secondaryTabIndex] = getTabIndices(order);
     return isNaN(secondaryTabIndex) || secondaryTabIndex === 0 || secondaryTabIndex === 1;
 }
 
@@ -211,7 +211,7 @@ const AutoFormComponent = React.memo(TypeSwitch);
 const TabPanel: React.FC<TabProps> = React.memo(props => {
     const { section, dataFormInfo, value } = props;
     const { viewType, tabs } = section;
-    const [index, _] = getTabIndices(tabs.order);
+    const [index, _secondaryTabIndex] = getTabIndices(tabs.order);
 
     return (
         <div role="tabpanel" hidden={value !== index} id={`tabpanel-${index}`} aria-labelledby={`tab-${index}`}>
@@ -247,15 +247,18 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
     const [activeTab, setActiveTab] = useState(0);
     const [showLeftFade, setShowLeftFade] = useState(false);
     const [showRightFade, setShowRightFade] = useState(true);
-    const { tabVisibilityByIndex, firstVisibleTabIndex } = useTabVisibility(props);
+    const { tabVisibilityByIndex, firstVisibleTabIndex, visiblePrimaryTabs } = useTabVisibility(props);
+    const showNavigation = dataFormInfo.metadata.dataForm.showNavigation;
 
     const handleChange = (_event: React.ChangeEvent<{}>, value: number) => {
         if (value === -1 || tabVisibilityByIndex[value]) {
             setActiveTab(value);
+            window.scrollTo(0, 0);
             return;
         }
         if (firstVisibleTabIndex !== undefined) {
             setActiveTab(firstVisibleTabIndex);
+            window.scrollTo(0, 0);
         }
     };
 
@@ -267,6 +270,8 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
                 if (!isTabHeader(order)) return [];
 
                 const [primaryTabIndex] = getTabIndices(section.tabs.order, allSections, section.showIndex);
+                if (!tabVisibilityByIndex[primaryTabIndex]) return [];
+
                 const sectionTabLabel = section.texts.tabLabel || section.name;
                 const shouldShowIndex = tabHeaderShouldShowIndex(section, allSections);
                 const tabLabel =
@@ -274,25 +279,9 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
                         ? `${primaryTabIndex + 1} - ${sectionTabLabel}`
                         : sectionTabLabel;
 
-                const visibleRule = section.tabs.rules?.visible;
-                const dataElementCodes = visibleRule?.dataElements.map(de => de.code) || [];
-                const value =
-                    visibleRule && dataElementCodes.length > 0
-                        ? calculateFormula({
-                              dataElementCodes,
-                              dataFormInfo,
-                              formula: visibleRule.formula.value,
-                          })
-                        : undefined;
-
-                if (visibleRule && value !== visibleRule.formula.condition) return [];
-
-                const primaryValue = _(order).split(".").first() ?? "0";
-                const primaryIndex = Number(primaryValue);
-
-                return [{ key: section.id, order, label: tabLabel, primaryIndex }];
+                return [{ key: section.id, order, label: tabLabel, primaryIndex: primaryTabIndex }];
             }),
-        [allSections, dataFormInfo, tabbedSections]
+        [allSections, tabbedSections, tabVisibilityByIndex]
     );
 
     const renderSection = useCallback(
@@ -416,6 +405,14 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
                 <div role="tabpanel" hidden={activeTab !== -1} id="tabpanel-others" aria-labelledby="tab-others">
                     {untabbedSections.map(section => renderSection(section, "untabbedSection"))}
                 </div>
+
+                {showNavigation && visiblePrimaryTabs.length > 0 && (
+                    <TabNavigation
+                        activeTabIndex={activeTab}
+                        visibleTabs={visiblePrimaryTabs}
+                        onTabChange={setActiveTab}
+                    />
+                )}
             </ScreenOnlyContent>
 
             <PrintContent

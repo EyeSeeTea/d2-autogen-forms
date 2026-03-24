@@ -76,6 +76,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
             rules: getApplicableDataFormRules(dataSetConfig.rules, { period: options.period }),
             removePrefix: dataSetConfig.removePrefix,
             customCss: dataSetConfig.customCss,
+            showNavigation: dataSetConfig.showNavigation,
         };
     }
 
