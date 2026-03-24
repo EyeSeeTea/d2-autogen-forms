@@ -1,5 +1,5 @@
 import _ from "lodash";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Tabs, Tab, Box, makeStyles } from "@material-ui/core";
 import {
     Section,
@@ -8,6 +8,7 @@ import {
     SectionWithTotals,
     SectionWithSubnationals,
     SectionSimple,
+    SectionDisaggregatedCocs,
     SectionGrid,
     SectionWithIndicatorsCalculated,
     SectionWithCategoryColumns,
@@ -28,9 +29,11 @@ import { IconButton } from "material-ui";
 import { ChevronLeft, ChevronRight } from "@material-ui/icons";
 import DisaggregatedCOCsGrid from "./DisaggregatedCOCsGrid";
 import GridIndicatorsCalculated from "./GridIndicatorsCalculated";
-import { calculateFormula } from "./datatables/InputFormula";
 import GridWithCategoryColumns from "./GridWithCategoryColumns";
+import { useTabVisibility } from "./hooks/useTabVisibility";
 import { DebugLabel } from "../../components/debug/DebugLabel";
+import TabNavigation from "./TabNavigation";
+import PrintContent from "./PrintContent";
 
 export interface TabPanelProps {
     tabbedSections: Section[];
@@ -98,7 +101,7 @@ function TypeSwitch(props: TypeSwitchProps) {
                 <DisaggregatedCOCsGrid
                     key={`${section.id}+tab`}
                     dataFormInfo={dataFormInfo}
-                    section={section as SectionSimple}
+                    section={section as SectionDisaggregatedCocs}
                 />
             );
 
@@ -140,20 +143,67 @@ function TypeSwitch(props: TypeSwitchProps) {
 }
 
 // Default tab indices: -1 means no primary tab, 0 means first secondary tab
-const DEFAULT_PRIMARY_TAB_INDEX = -1;
-const DEFAULT_SECONDARY_TAB_INDEX = 0;
+const DEFAULT_PRIMARY_TAB_INDEX = "-1";
+const DEFAULT_SECONDARY_TAB_INDEX = "0";
 
-export function getTabIndices(order: Maybe<string>): [number, number] {
+export function getTabIndices(
+    order: Maybe<string>,
+    allSections?: {
+        tabs: { order?: string };
+        showIndex: boolean;
+    }[],
+    showIndex = false
+): [number, number] {
     const [primaryTabIndex, secondaryTabIndex] = order ? order.split(".") : ["", ""];
-    return [
-        parseInt(primaryTabIndex ?? `${DEFAULT_PRIMARY_TAB_INDEX}`),
-        parseInt(secondaryTabIndex ?? `${DEFAULT_SECONDARY_TAB_INDEX}`),
-    ];
+    const currentPrimary = parseInt(primaryTabIndex ?? DEFAULT_PRIMARY_TAB_INDEX);
+    const currentSecondary = parseInt(secondaryTabIndex ?? DEFAULT_SECONDARY_TAB_INDEX);
+
+    if (!allSections || !showIndex) {
+        return [currentPrimary, currentSecondary];
+    }
+
+    if (currentPrimary === -1) {
+        return [-1, currentSecondary];
+    }
+
+    const visibleSections = allSections.filter(
+        (s): s is typeof s & { tabs: { order: string } } => s.showIndex && !!s.tabs.order
+    );
+
+    const adjustedPrimary = _(visibleSections)
+        .map(s => parseInt(s.tabs.order.split(".")[0] ?? "-1"))
+        .filter(primary => primary !== -1 && primary < currentPrimary)
+        .uniq()
+        .value().length;
+
+    const adjustedSecondary = visibleSections
+        .map(s => {
+            const [p, sec] = s.tabs.order.split(".");
+            return [parseInt(p ?? "-1"), parseInt(sec ?? "0")] as const;
+        })
+        .filter(([primary, secondary]) => primary === currentPrimary && secondary < currentSecondary).length;
+
+    return [adjustedPrimary, adjustedSecondary];
 }
 
-function isTabHeader(order: Maybe<string>) {
-    const [_, secondaryTabIndex] = getTabIndices(order);
+export function isTabHeader(order: Maybe<string>) {
+    const [_primaryTabIndex, secondaryTabIndex] = getTabIndices(order);
     return isNaN(secondaryTabIndex) || secondaryTabIndex === 0 || secondaryTabIndex === 1;
+}
+
+function tabHeaderShouldShowIndex(section: Section, sections: Section[]): boolean {
+    if (section.showIndex) return true;
+    if (!section.tabs.order) return false;
+
+    const [rawPrimaryIndex] = getTabIndices(section.tabs.order);
+    const hasSiblingsWithShowIndex = sections.some(s => {
+        const siblingOrder = s.tabs.order;
+        if (!siblingOrder) return false;
+        const [siblingPrimaryIndex] = getTabIndices(siblingOrder);
+        return siblingPrimaryIndex === rawPrimaryIndex && s.showIndex;
+    });
+
+    return hasSiblingsWithShowIndex;
 }
 
 const AutoFormComponent = React.memo(TypeSwitch);
@@ -161,11 +211,13 @@ const AutoFormComponent = React.memo(TypeSwitch);
 const TabPanel: React.FC<TabProps> = React.memo(props => {
     const { section, dataFormInfo, value } = props;
     const { viewType, tabs } = section;
-    const [index, _] = getTabIndices(tabs.order);
+    const [index, _secondaryTabIndex] = getTabIndices(tabs.order);
 
     return (
         <div role="tabpanel" hidden={value !== index} id={`tabpanel-${index}`} aria-labelledby={`tab-${index}`}>
-            <DebugLabel>{section.code}</DebugLabel>
+            <DebugLabel>
+                {section.code} - {section.viewType}
+            </DebugLabel>
             <AutoFormComponent dataFormInfo={dataFormInfo} section={section} viewType={viewType} />
         </div>
     );
@@ -195,10 +247,52 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
     const [activeTab, setActiveTab] = useState(0);
     const [showLeftFade, setShowLeftFade] = useState(false);
     const [showRightFade, setShowRightFade] = useState(true);
+    const { tabVisibilityByIndex, firstVisibleTabIndex, visiblePrimaryTabs } = useTabVisibility(props);
+    const showNavigation = dataFormInfo.metadata.dataForm.showNavigation;
 
     const handleChange = (_event: React.ChangeEvent<{}>, value: number) => {
-        setActiveTab(value);
+        if (value === -1 || tabVisibilityByIndex[value]) {
+            setActiveTab(value);
+            window.scrollTo(0, 0);
+            return;
+        }
+        if (firstVisibleTabIndex !== undefined) {
+            setActiveTab(firstVisibleTabIndex);
+            window.scrollTo(0, 0);
+        }
     };
+
+    const allSections = useMemo(() => [...tabbedSections, ...untabbedSections], [tabbedSections, untabbedSections]);
+    const tabHeaders = useMemo(
+        () =>
+            tabbedSections.flatMap(section => {
+                const order = section.tabs.order;
+                if (!isTabHeader(order)) return [];
+
+                const [primaryTabIndex] = getTabIndices(section.tabs.order, allSections, section.showIndex);
+                if (!tabVisibilityByIndex[primaryTabIndex]) return [];
+
+                const sectionTabLabel = section.texts.tabLabel || section.name;
+                const shouldShowIndex = tabHeaderShouldShowIndex(section, allSections);
+                const tabLabel =
+                    shouldShowIndex && primaryTabIndex !== -1
+                        ? `${primaryTabIndex + 1} - ${sectionTabLabel}`
+                        : sectionTabLabel;
+
+                return [{ key: section.id, order, label: tabLabel, primaryIndex: primaryTabIndex }];
+            }),
+        [allSections, tabbedSections, tabVisibilityByIndex]
+    );
+
+    const renderSection = useCallback(
+        (section: Section, key: string) => (
+            <React.Fragment key={section.id + key}>
+                <DebugLabel>{section.code}</DebugLabel>
+                <AutoFormComponent dataFormInfo={dataFormInfo} section={section} viewType={section.viewType} />
+            </React.Fragment>
+        ),
+        [dataFormInfo]
+    );
 
     const tabContainer = document.querySelector(".MuiTabs-scroller.MuiTabs-scrollable");
     const handleScroll = useCallback(
@@ -212,6 +306,14 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
         },
         [tabContainer]
     );
+
+    useEffect(() => {
+        if (firstVisibleTabIndex === undefined) return;
+        if (activeTab === -1) return;
+        if (!tabVisibilityByIndex[activeTab]) {
+            setActiveTab(firstVisibleTabIndex);
+        }
+    }, [activeTab, tabVisibilityByIndex, firstVisibleTabIndex]);
 
     useEffect(() => {
         const scrollButtons = document.querySelectorAll(".MuiTabs-scrollButtons");
@@ -246,103 +348,79 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
 
     return (
         <Box sx={{ width: "100%" }}>
-            <StyledAppBar position="sticky" color="default">
-                <ScrollButton
-                    direction="left"
-                    showLeftFade={showLeftFade}
-                    showRightFade={showRightFade}
-                    handleScroll={handleScroll}
-                />
-                <ScrollButton
-                    direction="right"
-                    showLeftFade={showLeftFade}
-                    showRightFade={showRightFade}
-                    handleScroll={handleScroll}
-                />
-                <StyledTabs
-                    value={activeTab}
-                    onChange={handleChange}
-                    indicatorColor="primary"
-                    textColor="primary"
-                    variant="scrollable"
-                    scrollButtons="auto"
-                    TabScrollButtonProps={{ style: { opacity: 0 } }}
-                >
-                    {tabbedSections.flatMap(section => {
-                        const order = section.tabs.order;
+            <ScreenOnlyContent>
+                <StyledAppBar position="sticky" color="default">
+                    <ScrollButton
+                        direction="left"
+                        showLeftFade={showLeftFade}
+                        showRightFade={showRightFade}
+                        handleScroll={handleScroll}
+                    />
+                    <ScrollButton
+                        direction="right"
+                        showLeftFade={showLeftFade}
+                        showRightFade={showRightFade}
+                        handleScroll={handleScroll}
+                    />
+                    <StyledTabs
+                        value={activeTab}
+                        onChange={handleChange}
+                        indicatorColor="primary"
+                        textColor="primary"
+                        variant="scrollable"
+                        scrollButtons="auto"
+                        TabScrollButtonProps={{ style: { opacity: 0 } }}
+                    >
+                        {tabHeaders.map(tabHeader => (
+                            <Tab
+                                key={tabHeader.key + "Tab"}
+                                label={tabHeader.label}
+                                id={`tab-${tabHeader.order}`}
+                                aria-controls={`tabpanel-${tabHeader.order}`}
+                                value={tabHeader.primaryIndex}
+                            />
+                        ))}
+                        {untabbedSections.length > 0 && (
+                            <Tab
+                                key="others-tab"
+                                label="Others"
+                                id="tab-others"
+                                aria-controls="tabpanel-others"
+                                value={-1}
+                            />
+                        )}
+                    </StyledTabs>
 
-                        if (isTabHeader(order)) {
-                            const [primaryTabIndex] = getTabIndices(order);
-                            const sectionTabLabel = section.texts.tabLabel || section.name;
-                            const tabLabel =
-                                section.showIndex && primaryTabIndex !== -1
-                                    ? `${primaryTabIndex + 1} - ${sectionTabLabel}`
-                                    : sectionTabLabel;
-
-                            const visibleRule = section.tabs.rules?.visible;
-                            const dataElementCodes = visibleRule?.dataElements.map(de => de.code) || [];
-                            const value =
-                                visibleRule && dataElementCodes.length > 0
-                                    ? calculateFormula({
-                                          dataElementCodes: dataElementCodes,
-                                          dataFormInfo: dataFormInfo,
-                                          formula: visibleRule.formula.value,
-                                      })
-                                    : undefined;
-
-                            const isConditionMet = value === visibleRule?.formula.condition;
-
-                            if (visibleRule && !isConditionMet) {
-                                return null;
-                            }
-
-                            const primaryValue = _(order).split(".").first() ?? "0";
-
-                            return (
-                                <Tab
-                                    key={section.id + "Tab"}
-                                    label={tabLabel}
-                                    id={`tab-${order}`}
-                                    aria-controls={`tabpanel-${order}`}
-                                    value={Number(primaryValue)}
-                                />
-                            );
-                        } else {
-                            return [];
-                        }
-                    })}
-                    {untabbedSections.length > 0 && (
-                        <Tab
-                            key="others-tab"
-                            label="Others"
-                            id="tab-others"
-                            aria-controls="tabpanel-others"
-                            value={-1}
-                        />
-                    )}
-                </StyledTabs>
-
-                <FadedOverlay hidden={!showLeftFade} style={{ insetInlineStart: 0, transform: "rotate(180deg)" }} />
-                <FadedOverlay hidden={!showRightFade} style={{ insetInlineEnd: 0 }} />
-            </StyledAppBar>
-            {tabbedSections.map(section => {
-                return (
+                    <FadedOverlay hidden={!showLeftFade} style={{ insetInlineStart: 0, transform: "rotate(180deg)" }} />
+                    <FadedOverlay hidden={!showRightFade} style={{ insetInlineEnd: 0 }} />
+                </StyledAppBar>
+                {tabbedSections.map(section => (
                     <TabPanel
                         key={section.id + "TabPanel"}
                         value={activeTab}
                         dataFormInfo={dataFormInfo}
                         section={section}
                     />
-                );
-            })}
-            <div role="tabpanel" hidden={activeTab !== -1} id="tabpanel-others" aria-labelledby="tab-others">
-                {untabbedSections.map(section => (
-                    <React.Fragment key={section.id + "UntabbedSection"}>
-                        <DebugLabel>{section.code}</DebugLabel>
-                        <AutoFormComponent dataFormInfo={dataFormInfo} section={section} viewType={section.viewType} />
-                    </React.Fragment>
                 ))}
-            </div>
+                <div role="tabpanel" hidden={activeTab !== -1} id="tabpanel-others" aria-labelledby="tab-others">
+                    {untabbedSections.map(section => renderSection(section, "untabbedSection"))}
+                </div>
+
+                {showNavigation && visiblePrimaryTabs.length > 0 && (
+                    <TabNavigation
+                        activeTabIndex={activeTab}
+                        visibleTabs={visiblePrimaryTabs}
+                        onTabChange={setActiveTab}
+                    />
+                )}
+            </ScreenOnlyContent>
+
+            <PrintContent
+                tabbedSections={tabbedSections}
+                untabbedSections={untabbedSections}
+                tabHeaders={tabHeaders}
+                renderSection={renderSection}
+            />
         </Box>
     );
 });
@@ -357,6 +435,12 @@ const useStyles = makeStyles({
 
 const StyledAppBar = styled(AppBar)`
     z-index: 100 !important;
+`;
+
+const ScreenOnlyContent = styled.div`
+    @media print {
+        display: none;
+    }
 `;
 
 const StyledTabs = styled(Tabs)`

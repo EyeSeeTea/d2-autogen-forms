@@ -11,15 +11,14 @@ import {
     DataTableRow,
     TableBody, // @ts-ignore
 } from "@dhis2/ui";
-import { makeStyles } from "@material-ui/core";
 import DataTableSection from "./DataTableSection";
 import { CustomDataTableCell, CustomDataTableColumnHeader } from "./datatables/CustomDataTables";
 import { DataTableCellRowName } from "./datatables/DataTableCellRowName";
-import _ from "lodash";
 import { checkIndicatorDirection } from "../../../domain/common/entities/Indicator";
 import { RowIndicatorItem } from "../../components/IndicatorItem/IndicatorItem";
 import { DataTableCellFormula } from "./datatables/DataTableCellFormula";
 import i18n from "../../../locales";
+import { makeStyles } from "@material-ui/core";
 
 export interface TableFormProps {
     dataFormInfo: DataFormInfo;
@@ -28,33 +27,40 @@ export interface TableFormProps {
 
 const TableForm: React.FC<TableFormProps> = React.memo(props => {
     const { dataFormInfo } = props;
+    const styles = useStyles();
     const section = React.useMemo(
         () => GridViewModel.get(props.section, dataFormInfo, "table"),
         [props.section, dataFormInfo]
     );
-    const classes = useStyles();
 
+    const Indicators = section.indicators.map(indicator => {
+        return (
+            <RowIndicatorItem
+                key={`parent_${indicator.id}`}
+                indicator={indicator}
+                colSpan={section.dataEntryPeriod ? "2" : "1"}
+                dataFormInfo={dataFormInfo}
+                periods={[section.dataEntryPeriod?.id || dataFormInfo.period]}
+            />
+        );
+    });
     return (
         <DataTableSection section={section} sectionStyles={props.section.styles} dataFormInfo={dataFormInfo}>
             <DataTable>
                 <TableHead>
                     <DataTableRow>
-                        {!_.isEmpty(section.columns) && (
-                            <CustomDataTableColumnHeader
-                                backgroundColor={props.section.styles.columns.backgroundColor}
-                                colSpan={section.dataEntryPeriod ? "1" : "2"}
-                            >
-                                <span className={classes.header}>{section.name}</span>
-                            </CustomDataTableColumnHeader>
-                        )}
-
                         {section.dataEntryPeriod && (
                             <>
                                 <CustomDataTableColumnHeader
                                     backgroundColor={props.section.styles.columns.backgroundColor}
-                                    width="50px"
+                                ></CustomDataTableColumnHeader>
+                                <CustomDataTableColumnHeader
+                                    backgroundColor={props.section.styles.columns.backgroundColor}
+                                    className={styles.periodColumnHeader}
                                 >
-                                    {i18n.t("Period")}
+                                    <span className={styles.header}>
+                                        {props.section.texts.periodHeader ?? i18n.t("Period")}
+                                    </span>
                                 </CustomDataTableColumnHeader>
                                 <CustomDataTableColumnHeader
                                     backgroundColor={props.section.styles.columns.backgroundColor}
@@ -66,13 +72,15 @@ const TableForm: React.FC<TableFormProps> = React.memo(props => {
                 </TableHead>
 
                 <TableBody>
+                    {section.indicatorsConfig.position === "start" && Indicators}
+
                     {section.dataElements.map(dataElement => {
                         return (
                             <React.Fragment key={dataElement.id}>
                                 {dataElement.indicator && checkIndicatorDirection(dataElement.indicator, "before") && (
                                     <RowIndicatorItem
                                         indicator={dataElement.indicator}
-                                        colSpan="0"
+                                        colSpan={section.dataEntryPeriod ? "2" : "1"}
                                         dataFormInfo={dataFormInfo}
                                         periods={[section.dataEntryPeriod?.id || dataFormInfo.period]}
                                     />
@@ -101,7 +109,7 @@ const TableForm: React.FC<TableFormProps> = React.memo(props => {
                                             noComment={dataElement.disabledComments}
                                             period={section.dataEntryPeriod?.id}
                                             lockException={section.dataEntryPeriod !== undefined}
-                                            manualyDisabled={dataElement.disabled}
+                                            manualyDisabled={dataElement.disabled || props.section.disabled}
                                         />
                                     </CustomDataTableCell>
                                 </DataTableRow>
@@ -109,7 +117,7 @@ const TableForm: React.FC<TableFormProps> = React.memo(props => {
                                 {dataElement.indicator && checkIndicatorDirection(dataElement.indicator, "after") && (
                                     <RowIndicatorItem
                                         indicator={dataElement.indicator}
-                                        colSpan="0"
+                                        colSpan={section.dataEntryPeriod ? "2" : "1"}
                                         dataFormInfo={dataFormInfo}
                                         periods={[section.dataEntryPeriod?.id || dataFormInfo.period]}
                                     />
@@ -140,17 +148,7 @@ const TableForm: React.FC<TableFormProps> = React.memo(props => {
                         </DataTableRow>
                     ))}
 
-                    {section.indicators.map(indicator => {
-                        return (
-                            <RowIndicatorItem
-                                key={`parent_${indicator.id}`}
-                                indicator={indicator}
-                                colSpan="0"
-                                dataFormInfo={dataFormInfo}
-                                periods={[section.dataEntryPeriod?.id || dataFormInfo.period]}
-                            />
-                        );
-                    })}
+                    {section.indicatorsConfig.position === "end" && Indicators}
                 </TableBody>
             </DataTable>
         </DataTableSection>
@@ -158,10 +156,18 @@ const TableForm: React.FC<TableFormProps> = React.memo(props => {
 });
 
 const useStyles = makeStyles({
-    wrapper: { margin: 10 },
-    header: { fontSize: "1.4em", fontWeight: "bold" as const },
-    center: { display: "table", margin: "0 auto" },
-    tableStyles: { backgroundColor: "aqua !important" },
+    header: {
+        fontSize: "1.2em",
+        fontWeight: "bold",
+        flexDirection: "column",
+        textAlign: "center",
+        display: "flex",
+        padding: "4px",
+    },
+    periodColumnHeader: {
+        minWidth: "50px",
+        maxWidth: "100px",
+    },
 });
 
 export default React.memo(TableForm);

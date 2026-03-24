@@ -1,0 +1,139 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: i18next-conv\n"
+"POT-Creation-Date: 2026-03-13T13:24:24.302Z\n"
+"PO-Revision-Date: 2018-10-25T09:02:35.143Z\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2)\n"
+
+msgid "Mark all notifications as read"
+msgstr "Отметить все уведомления как прочитанные"
+
+msgid "<No value>"
+msgstr ""
+
+msgid "- All -"
+msgstr ""
+
+msgid "Accept"
+msgstr ""
+
+msgid "Loading..."
+msgstr ""
+
+msgid "Organisation unit"
+msgstr ""
+
+msgid "Select parent organisation unit"
+msgstr ""
+
+msgid "Close"
+msgstr ""
+
+msgid "Clear"
+msgstr ""
+
+msgid "Back"
+msgstr ""
+
+msgid "Help"
+msgstr ""
+
+msgid "There are no sections in this data set. Check README for more details"
+msgstr ""
+
+msgid "View comment and audit history"
+msgstr ""
+
+msgid "Period"
+msgstr ""
+
+msgid "Occupation"
+msgstr ""
+
+msgid "Subnational level name"
+msgstr ""
+
+msgid "Previous tab"
+msgstr ""
+
+msgid "Previous"
+msgstr ""
+
+msgid "Tab position indicator"
+msgstr ""
+
+msgid "Next tab"
+msgstr ""
+
+msgid "Next"
+msgstr ""
+
+msgid "Upload file"
+msgstr ""
+
+msgid "Apply to all"
+msgstr ""
+
+msgid "Please enter a valid email address"
+msgstr ""
+
+msgid "Add new data form configuration"
+msgstr ""
+
+msgid "Save"
+msgstr ""
+
+msgid "Delete config"
+msgstr ""
+
+msgid "Cancel"
+msgstr ""
+
+msgid "Create config"
+msgstr ""
+
+msgid "Only datasets with codes are listed here."
+msgstr ""
+
+msgid "An empty configuration will be created for the dataset"
+msgstr ""
+
+msgid "{{dataSet}}."
+msgstr ""
+
+msgid "Delete data form configuration"
+msgstr ""
+
+msgid "Are you sure you want to delete the configuration for dataset"
+msgstr ""
+
+msgid "{{dataSet}}"
+msgstr ""
+
+msgid "? This action cannot be undone."
+msgstr ""
+
+msgid "Select dataset"
+msgstr ""
+
+msgid "Processing Error: {{error}}"
+msgstr ""
+
+msgid "Processing large JSON..."
+msgstr ""
+
+msgid "Large file detected. Some features are disabled for better performance."
+msgstr ""
+
+msgid "New configuration created"
+msgstr ""
+
+msgid "Configuration deleted"
+msgstr ""
+
+msgid "Configuration saved"
+msgstr ""

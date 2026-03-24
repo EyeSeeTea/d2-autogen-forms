@@ -27,6 +27,7 @@ interface DataElementBase {
     deleteRules: DeleteRule[];
     htmlText: Maybe<string>;
     disabled: boolean;
+    mirrorFrom?: Code;
 }
 
 export interface DataElementBoolean extends DataElementBase {

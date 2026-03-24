@@ -15,14 +15,18 @@ import { getDescription } from "../../../utils/viewTypes";
 import {
     checkIndicatorDirection,
     getIndicatorRelatedToDataElement,
+    getNonDirectionalIndicatorsCountAtSectionStart,
     Indicator,
     IndicatorDirection,
+    isNonDirectionalIndicator,
 } from "../../../domain/common/entities/Indicator";
 import { Code } from "../../../domain/common/entities/Base";
 import { calculateFormula } from "./datatables/InputFormula";
 import { getIndexedLabel } from "./DataTableSection";
 import { Period } from "../../../domain/common/entities/Period";
 import { isToggleMultipleDeDisabled } from "../../../domain/common/entities/ToggleMultiple";
+import { getIndexedIndicator } from "./utils/indicatorIndexing";
+import { joinDataElementName, splitDataElementName } from "./utils/dataElementNameSeparator";
 
 export type Grid = GridComponents & {
     dataElements: Array<DataElement & { indicator: Maybe<Indicator> }>;
@@ -45,6 +49,10 @@ export type Grid = GridComponents & {
     subGroupInfo: Record<string, GroupInfo>;
     dataEntryPeriod: Maybe<Period>;
     hidden: boolean;
+    hasIndicatorsBefore: boolean;
+    hasIndicatorsAfter: boolean;
+    nonDirectionalIndicators: Indicator[];
+    indicatorsConfig: Section["indicatorsConfig"];
 };
 
 type GridComponents = {
@@ -82,9 +90,11 @@ export interface Row {
         disabled: boolean;
         disableComments: boolean;
     }>;
+    indicators: {
+        before: Indicator[];
+        after: Indicator[];
+    };
 }
-
-const separator = " - ";
 
 type ColumnScoreInput = {
     columnName: string;
@@ -109,7 +119,11 @@ export class GridViewModel {
     static get(section: SectionGrid, dataFormInfo: DataFormInfo, viewType: SectionGrid["viewType"]): Grid {
         const dataElements = getDataElementsWithIndexProccessing(section);
         const { columns, rows, summary } = this.getGridComponents(section, dataFormInfo, dataElements, viewType);
-        const indicators = this.getIndicators(section);
+        const indicatorIndexOffset =
+            section.indicatorsConfig.position === "start" ? 0 : viewType === "grid" ? rows.length : dataElements.length;
+        const indicators = this.getIndicators(section).map((indicator, index) =>
+            getIndexedIndicator(section, dataFormInfo, indicator, indicatorIndexOffset + index + 1)
+        );
 
         const useIndexes =
             _(rows).every(row => Boolean(row.name.match(/\(\d+\)$/))) &&
@@ -121,6 +135,10 @@ export class GridViewModel {
 
         const groupInfo = this.buildGroupInfo(rows, "group");
         const subGroupInfo = this.buildGroupInfo(rows, "subGroup");
+
+        const hasIndicatorsBefore = rows.some(row => row.indicators.before.length > 0);
+        const hasIndicatorsAfter = rows.some(row => row.indicators.after.length > 0);
+        const nonDirectionalIndicators = indicators.filter(indicator => isNonDirectionalIndicator(indicator));
 
         return {
             id: section.id,
@@ -137,14 +155,15 @@ export class GridViewModel {
             showIndex: section.showIndex,
             tabs: section.tabs,
             dataElements: dataElements.map(dataElement => {
-                const indicator = getIndicatorRelatedToDataElement(section.indicators, dataElement.code);
+                const indicatorBase = getIndicatorRelatedToDataElement(section.indicators, dataElement.code);
+                const indicator = indicatorBase ? getIndexedIndicator(section, dataFormInfo, indicatorBase) : undefined;
                 const orgUnitCode = dataFormInfo.orgUnit.code;
                 return {
                     ...dataElement,
                     indicator,
-                    name: getDataElementLabel(section, dataElement, dataElement.name),
+                    name: getDataElementLabel(section, dataFormInfo, dataElement, dataElement.name),
                     htmlText: dataElement.htmlText
-                        ? getDataElementLabel(section, dataElement, dataElement.htmlText)
+                        ? getDataElementLabel(section, dataFormInfo, dataElement, dataElement.htmlText)
                         : undefined,
                     disabled: dataElement.disabled || isToggleMultipleDeDisabled(section, dataElement, orgUnitCode),
                 };
@@ -155,6 +174,10 @@ export class GridViewModel {
             hasGroups: section.enableGroups && rowGroups.length > 0,
             groupInfo: groupInfo,
             subGroupInfo: subGroupInfo,
+            hasIndicatorsBefore,
+            hasIndicatorsAfter,
+            nonDirectionalIndicators,
+            indicatorsConfig: section.indicatorsConfig,
         };
     }
 
@@ -172,7 +195,7 @@ export class GridViewModel {
                     name: groupName,
                     dataElements: dataElementsForGroup.map(dataElement => ({
                         ...dataElement,
-                        name: _(dataElement.name).split(separator).last() || "-",
+                        name: _.last(splitDataElementName(dataElement.name)) || "-",
                     })),
                 })
             )
@@ -195,7 +218,7 @@ export class GridViewModel {
         const columns = this.addVisibleToColumns({ columns: columnsOrders, dataFormInfo, section });
 
         const rows = GridViewModel.getRows(subsections, section, columns, dataElements, dataFormInfo);
-        const summary = GridViewModel.getSummary(subsections, section, columns, viewType);
+        const summary = GridViewModel.getSummary(dataFormInfo, section, columns, viewType);
 
         return { columns: columns, rows: rows, summary: summary };
     }
@@ -282,30 +305,37 @@ export class GridViewModel {
 
             const firstItemWithHtmlText = _(itemsWithHtmlText).first() || "";
 
-            const lastPartSubSection = groupsByRow ? _(subsection.name).split(separator).last() ?? "" : undefined;
+            const lastPartSubSection = groupsByRow ? _.last(splitDataElementName(subsection.name)) ?? "" : undefined;
             const groupMeta = lastPartSubSection && groupsByRow ? groupsByRow[lastPartSubSection] : undefined;
             const rowName = groupsByRow ? lastPartSubSection ?? "" : subsection.name;
+
+            const rowIndex = index + 1 + getNonDirectionalIndicatorsCountAtSectionStart(section);
 
             return {
                 includePadding: 0,
                 indicator: indicator,
-                name: getIndexedLabel(section, rowName, index + 1),
-                htmlText: firstItemWithHtmlText ? getIndexedLabel(section, firstItemWithHtmlText, index + 1) : "",
+                name: getIndexedLabel(section, dataFormInfo, rowName, rowIndex),
+                htmlText: firstItemWithHtmlText
+                    ? getIndexedLabel(section, dataFormInfo, firstItemWithHtmlText, rowIndex)
+                    : "",
                 items: items,
                 group: groupMeta ? groupMeta.group : undefined,
                 subGroup: groupMeta ? groupMeta.subGroup : undefined,
+                indicators: {
+                    before: getFilteredIndicators(section.indicators, items, "before"),
+                    after: getFilteredIndicators(section.indicators, items, "after"),
+                },
             };
         });
     }
 
     private static getSummary(
-        subsections: SubSectionGrid[],
+        dataFormInfo: DataFormInfo,
         section: SectionGrid,
         columns: Column[],
         viewType: SectionGrid["viewType"]
     ): Summary[] {
-        const allDataElements = subsections.flatMap(subSection => subSection.dataElements);
-
+        const allDataElements = dataFormInfo.metadata.dataForm.sections.flatMap(section => section.dataElements);
         switch (viewType) {
             case "table":
                 return _(section.totals)
@@ -319,8 +349,9 @@ export class GridViewModel {
                             cells: [
                                 {
                                     columnName: key,
-                                    formula: sectionTotal.formula || "",
+                                    formula: sectionTotal.formulas?.[key]?.formula || sectionTotal.formula || "",
                                     items: this.getColumnWithDataElements(selectedDataElements, key),
+                                    strict: sectionTotal.strict,
                                 },
                             ],
                         };
@@ -343,6 +374,7 @@ export class GridViewModel {
                                 columnName: column.name,
                                 formula: getFormulaByColumnName(section, column.name) || sectionTotal.formula || "",
                                 items: columnWithDataElements,
+                                strict: sectionTotal.strict,
                             };
                         });
 
@@ -430,7 +462,7 @@ export class GridViewModel {
         priorityByCode,
     }: ColumnScoreInput): number {
         const candidates = allDataElements.filter(de => {
-            const last = _.last(_.split(de.name, separator));
+            const last = _.last(splitDataElementName(de.name));
             return last === columnName;
         });
 
@@ -444,8 +476,7 @@ export class GridViewModel {
         //  - [Row, Column]
         //  - [Group, SubGroup, Row, Column]
 
-        const parts = _(fullName)
-            .split(separator)
+        const parts = _(splitDataElementName(fullName))
             .map(s => s.trim())
             .value();
 
@@ -460,7 +491,7 @@ export class GridViewModel {
         }
 
         // Fallback to original pattern [Row - Column]
-        const rowName = parts.join(separator).trim();
+        const rowName = joinDataElementName(parts).trim();
         return { rowName, columnName: "", group: undefined, subGroup: undefined };
     }
 
@@ -525,9 +556,19 @@ type GroupInfo = {
     rowName: string;
 };
 
-export function getDataElementLabel(section: SectionBase, dataElement: DataElement, name: string): string {
+export function getDataElementLabel(
+    section: SectionBase,
+    dataFormInfo: DataFormInfo,
+    dataElement: DataElement,
+    name: string
+): string {
     const deIndex = section.dataElements.findIndex(de => dataElement.id === de.id) + 1;
-    return getIndexedLabel(section, name, deIndex);
+    return getIndexedLabel(
+        section,
+        dataFormInfo,
+        name,
+        deIndex + getNonDirectionalIndicatorsCountAtSectionStart(section)
+    );
 }
 
 /** Move the data element index to the row name, so indexed data elements are automatically grouped 
@@ -553,8 +594,8 @@ function getDataElementsWithIndexProccessing(section: Section) {
         if (!index) {
             return dataElement;
         } else {
-            const parts = dataElement.name.split(separator);
-            const initial = _.initial(parts).join(separator);
+            const parts = splitDataElementName(dataElement.name);
+            const initial = joinDataElementName(_.initial(parts));
             const last = _.last(parts);
             if (!last) return dataElement;
             const lastWithoutIndex = last.replace(/\s*\(\d+\)$/, "");
@@ -567,7 +608,7 @@ function getDataElementsWithIndexProccessing(section: Section) {
 function getSubsectionName(dataElement: DataElement): string {
     // Remove index from enumerated data elements (example: `Chemical name (1)` -> `Chemical name`)
     // so they are grouped with no need to edit each name in the metadata.
-    return _(dataElement.name).split(separator).initial().join(separator);
+    return joinDataElementName(_.initial(splitDataElementName(dataElement.name)));
 }
 
 export function isSourceTypeColumn(widget: Maybe<DataElementWidget>): boolean {
@@ -578,15 +619,15 @@ export function getCategoryOptionComboByColumnName(dataElement: DataElementNumbe
     return dataElement.categoryOptionCombos[0];
 }
 
-export function getFilteredIndicators(
+function getFilteredIndicators(
     indicators: Indicator[],
-    row: Row,
+    items: Row["items"],
     direction: IndicatorDirection
-): Maybe<Indicator>[] {
-    return indicators.map(indicator => {
-        return row.items.map(item => item.dataElement?.code).includes(indicator.dataElement?.code) &&
+): Indicator[] {
+    return indicators.filter(indicator => {
+        return (
+            items.map(item => item.dataElement?.code).includes(indicator.dataElement?.code) &&
             checkIndicatorDirection(indicator, direction)
-            ? indicator
-            : undefined;
+        );
     });
 }

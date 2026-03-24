@@ -38,8 +38,8 @@ bak
 NOTES*
 datastore
 
-# Claude Code
+# Claude
 .claude/
 
-# OpenSpec changes (local workflow state)
+# OpenSpec (changes are local, specs are committed)
 openspec/changes/

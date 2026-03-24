@@ -48,13 +48,20 @@ export const sectionBase: Omit<SectionBase, "id" | "name" | "viewType"> = {
     toggleMultiple: {
         logicalOperator: "AND",
         toggleDataElements: [],
+        orgUnitConditions: [],
     },
     indicators: [],
     dataElements: [dataElementText],
     code: "",
+    indicatorsConfig: {
+        position: "start",
+        before: undefined,
+        after: undefined,
+    },
     fixedHeaders: false,
     enableTopScroll: false,
     fixedRowNames: false,
+    rules: [],
 };
 
 export const dataFormBase: Omit<DataForm, "sections"> = {
@@ -74,6 +81,8 @@ export const dataFormBase: Omit<DataForm, "sections"> = {
     compulsoryDataValues: [],
     showErrorOnCompulsory: false,
     removePrefix: undefined,
+    customCss: undefined,
+    showNavigation: false,
 };
 
 export const dataValueBase: DataValueBase = {

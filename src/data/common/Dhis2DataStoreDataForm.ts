@@ -25,7 +25,32 @@ import {
 } from "../../domain/common/entities/ToggleMultiple";
 import { Period, PeriodType, validatePeriodType } from "../../domain/common/entities/Period";
 import { DataFormRule } from "../../domain/common/entities/DataFormRule";
+import { SectionRule } from "../../domain/common/entities/SectionRule";
 import { rulesFormulaCodec } from "./RulesFormula";
+
+export type OrgUnitToggle = {
+    type: "orgUnit";
+    orgUnits: string[];
+    dataElements: string[];
+    condition: "show" | "hide";
+    disabled: boolean;
+};
+
+export type GridIndicatorsCalculatedRow = {
+    code: Code;
+    denominator: Maybe<{ text: { code: Code }; dataElementCode: Code }>;
+    value: Maybe<{
+        dataElementCodes: Code[];
+        formula: { value: string };
+    }>;
+};
+
+export type CalculateTotalConfig = {
+    totalDeCode: Code | undefined;
+    disabled: boolean | undefined;
+};
+
+export type CalculateTotalType = Record<string, CalculateTotalConfig | undefined> | undefined;
 
 const defaultViewType = "table";
 
@@ -102,6 +127,7 @@ const totalsType = Codec.interface({
     formula: optional(string),
     rules: optional(dataElementRuleCodec),
     texts: optional(Codec.interface({ name: optional(string), code: optional(string) })),
+    strict: optional(boolean),
 });
 
 const stylesType = Codec.interface({
@@ -144,6 +170,7 @@ const textsCodec = Codec.interface(textCodecModel);
 const sectionTextCodec = Codec.interface({
     ...textCodecModel,
     tabLabel: optional(oneOf([string, selector])),
+    periodHeader: optional(oneOf([string, selector])),
 });
 
 const categoryOptionFilterConfigCodec = Codec.interface({
@@ -219,20 +246,42 @@ const dataSetRuleCodec = Codec.interface({
     }),
 });
 
+const indicatorsDirectionalConfigCodec = Codec.interface({
+    headers: array(oneOf([string, selector])),
+});
+
+const sectionRuleCodec = Codec.interface({
+    conditions: Codec.interface({
+        orgUnitIn: optional(array(string)),
+    }),
+    action: Codec.interface({
+        type: exactly("showMessage"),
+        text: oneOf([string, selector]),
+    }),
+});
+
+const optionSetCodec = Codec.interface({
+    code: string,
+    options: optionalRecord({
+        hidden: optional(boolean),
+    }),
+});
+
 export const DataStoreConfigCodec = Codec.interface({
-    categoryCombinations: sectionConfig({
+    categoryCombinations: optionalRecord({
         viewType: optional(oneOf([exactly("name"), exactly("shortName"), exactly("formName")])),
     }),
-    categoryOptions: sectionConfig({
+    categoryOptions: optionalRecord({
         visible: optional(boolean),
     }),
-    dataElements: sectionConfig({
+    dataElements: optionalRecord({
         disabled: optional(boolean),
         disableComments: optional(boolean),
+        mirrorFrom: optional(string),
         rules: optional(dataElementRuleCodec),
         selection: optional(
             Codec.interface({
-                optionSet: optional(selector),
+                optionSet: optional(optionSetCodec),
                 isMultiple: optional(boolean),
                 widget: optional(
                     oneOf([exactly("dropdown"), exactly("radio"), exactly("sourceType"), exactly("checkbox")])
@@ -247,27 +296,41 @@ export const DataStoreConfigCodec = Codec.interface({
         ),
         texts: optional(textsCodec),
     }),
-    dataSets: sectionConfig({
+
+    dataSets: optionalRecord({
         disableComments: optional(boolean),
         removePrefix: optional(string),
         viewType: optional(viewType),
         texts: optional(textsCodec),
+        customCss: optional(string),
         showIndex: optional(boolean),
+        showNavigation: optional(boolean),
         rules: optional(array(dataSetRuleCodec)),
         sections: optional(
-            sectionConfig({
+            optionalRecord({
                 dataElementsToExclude: optional(array(dataElementsToExcludeCodec)),
                 categoryOptionFilter: optional(categoryOptionFilterConfigCodec),
-                firstColumnConfig: optional(Codec.interface({ width: number })),
+                firstColumnConfig: optional(
+                    Codec.interface({ width: optional(number), header: optional(oneOf([string, selector])) })
+                ),
                 singleCategoryInColumns: optional(boolean),
                 rowsConfig: optional(
                     record(
                         string,
-                        Codec.interface({ cellsVisible: optional(boolean), rowNameConstant: optional(string) })
+                        Codec.interface({
+                            cellsVisible: optional(boolean),
+                            rowNameConstant: optional(string),
+                            hide: optional(boolean),
+                        })
                     )
                 ),
                 categoriesColumns: optional(array(Codec.interface({ dataElementCode: string, categoryCode: string }))),
-                columnsConfig: optional(record(string, Codec.interface({ rules: optional(rulesFormulaCodec) }))),
+                columnsConfig: optional(
+                    record(
+                        string,
+                        Codec.interface({ rules: optional(rulesFormulaCodec), columnNameConstant: optional(string) })
+                    )
+                ),
                 disabled: optional(boolean),
                 columnsOrder: optional(record(string, number)),
                 fixedHeaders: optional(boolean),
@@ -306,14 +369,22 @@ export const DataStoreConfigCodec = Codec.interface({
                 ),
                 totals: optional(oneOf([totalsType, record(string, totalsType)])),
                 toggleMultiple: optional(toggleMultipleCodec),
+                rules: optional(array(sectionRuleCodec)),
                 indicators: optional(
-                    sectionConfig({
+                    optionalRecord({
                         position: optional(
                             Codec.interface({
                                 direction: oneOf([exactly("after"), exactly("before")]),
                                 dataElement: string,
                             })
                         ),
+                    })
+                ),
+                indicatorsConfig: optional(
+                    Codec.interface({
+                        position: optional(oneOf([exactly("start"), exactly("end")])),
+                        before: optional(indicatorsDirectionalConfigCodec),
+                        after: optional(indicatorsDirectionalConfigCodec),
                     })
                 ),
                 virtualColumns: optional(
@@ -365,6 +436,7 @@ export const DataStoreConfigCodec = Codec.interface({
 type Selector = GetType<typeof selector>;
 type DataFormStoreConfigFromCodec = GetType<typeof DataStoreConfigCodec>;
 type DataSetRuleFromCodec = GetType<typeof dataSetRuleCodec>;
+type SectionRuleFromCodec = GetType<typeof sectionRuleCodec>;
 
 type PeriodInterval = { type: "relative-interval"; startOffset: number; endOffset: number };
 type PeriodSectionOffset = { type: "section-offset"; offset: number };
@@ -625,13 +697,13 @@ export class Dhis2DataStoreDataForm {
     }
 
     private static async getOptionSets(api: D2Api, storeConfig: DataFormStoreConfig["custom"]): Promise<OptionSet[]> {
-        const codes = _(storeConfig.dataElements)
+        const optionSets = _(storeConfig.dataElements)
             .values()
-            .map(obj => obj.selection?.optionSet)
+            .map(de => de.selection?.optionSet)
             .compact()
-            .map(sel => sel.code)
             .value();
 
+        const codes = optionSets.map(sel => sel.code);
         if (_.isEmpty(codes)) return [];
 
         const res = await api.metadata
@@ -648,18 +720,30 @@ export class Dhis2DataStoreDataForm {
             })
             .getData();
 
-        return res.optionSets.map(
-            (optionSet): OptionSet => ({
+        return res.optionSets.map((optionSet): OptionSet => {
+            const matchedOptionSet = optionSets.find(os => os.code === optionSet.code);
+
+            return {
                 ...optionSet,
-                options: optionSet.options.map(option => ({
-                    name: option.displayName,
-                    value: option.code,
-                })),
-            })
-        );
+                options: _(optionSet.options)
+                    .map(option => {
+                        const hidden = matchedOptionSet?.options?.[option.code]?.hidden ?? false;
+                        if (hidden) return undefined;
+
+                        return {
+                            name: option.displayName,
+                            value: option.code,
+                        };
+                    })
+                    .compact()
+                    .value(),
+            };
+        });
     }
 
     private static async getConstants(api: D2Api, storeConfig: DataFormStoreConfig["custom"]): Promise<Constant[]> {
+        const getCode = (text: string | Selector): Maybe<string> => (typeof text === "string" ? undefined : text.code);
+
         const dataElementTexts = _(storeConfig.dataElements)
             .values()
             .map(x => (x.texts ? x.texts : undefined))
@@ -736,16 +820,49 @@ export class Dhis2DataStoreDataForm {
             .compact()
             .value();
 
-        const virtualCodes = virtualColumnsCodes.concat(virtualRowsCodes).concat(rowNamesKeys);
+        const firstColumnHeaderCodes = _(storeConfig.dataSets)
+            .values()
+            .flatMap(dataSet => _.values(dataSet.sections))
+            .map(section => section.firstColumnConfig?.header)
+            .compact()
+            .map(getCode)
+            .compact()
+            .value();
+
+        const columnNameKeys = _(storeConfig.dataSets)
+            .values()
+            .flatMap(dataSet => _.values(dataSet.sections))
+            .flatMap(section => _.values(section.columnsConfig))
+            .map(colConfig => colConfig.columnNameConstant)
+            .compact()
+            .value();
+
+        const virtualCodes = virtualColumnsCodes.concat(virtualRowsCodes).concat(rowNamesKeys).concat(columnNameKeys);
 
         const dataSetRulesCodes = _(storeConfig.dataSets)
             .values()
-            .flatMap(dataSet => dataSet.rules)
+            .flatMap(dataSet => dataSet.rules ?? [])
+            .flatMap(rule => getCode(rule.action.text))
             .compact()
-            .flatMap(rule => {
-                const warningText = rule.action.text;
-                return typeof warningText !== "string" ? warningText.code : undefined;
+            .value();
+
+        const indicatorsConfigHeadersCodes = _(storeConfig.dataSets)
+            .values()
+            .flatMap(dataSet => _.values(dataSet.sections))
+            .flatMap(section => {
+                const before = section.indicatorsConfig?.before?.headers || [];
+                const after = section.indicatorsConfig?.after?.headers || [];
+                return [...before, ...after];
             })
+            .map(getCode)
+            .compact()
+            .value();
+
+        const sectionRulesCodes = _(storeConfig.dataSets)
+            .values()
+            .flatMap(dataSet => _.values(dataSet.sections))
+            .flatMap(section => section.rules ?? [])
+            .flatMap(rule => getCode(rule.action.text))
             .compact()
             .value();
 
@@ -756,7 +873,14 @@ export class Dhis2DataStoreDataForm {
         ])
             .map(v => (typeof v !== "string" && !Array.isArray(v) ? v?.code : undefined))
             .compact()
-            .concat([...descriptionCodes, ...totalsCodes, ...dataSetRulesCodes])
+            .concat([
+                ...descriptionCodes,
+                ...totalsCodes,
+                ...dataSetRulesCodes,
+                ...firstColumnHeaderCodes,
+                ...indicatorsConfigHeadersCodes,
+                ...sectionRulesCodes,
+            ])
             .uniq()
             .value();
 
@@ -847,6 +971,7 @@ export class Dhis2DataStoreDataForm {
                         totals: this.getTextFromConstants(sectionConfig?.texts?.totals, constantsByCode),
                         name: this.getTextFromConstants(sectionConfig?.texts?.name, constantsByCode),
                         tabLabel: this.getTextFromConstants(sectionConfig?.texts?.tabLabel, constantsByCode),
+                        periodHeader: this.getTextFromConstants(sectionConfig?.texts?.periodHeader, constantsByCode),
                     },
                     showIndex: this.getEffectiveBooleanValue(dataSetConfig?.showIndex, sectionConfig.showIndex),
                     sortRowsBy: sectionConfig.sortRowsBy || "",
@@ -867,10 +992,30 @@ export class Dhis2DataStoreDataForm {
                     totals: this.getSectionTotals(sectionConfig, constantsByCode),
                     toggleMultiple: this.getToggleMultipleConfig(sectionConfig),
                     indicators: sectionConfig.indicators,
+                    indicatorsConfig: {
+                        position: sectionConfig.indicatorsConfig?.position ?? DEFAULT_INDICATORS_POSITION,
+                        before: sectionConfig.indicatorsConfig?.before
+                            ? {
+                                  headers: _(sectionConfig.indicatorsConfig.before.headers)
+                                      .map(header => this.getTextFromConstants(header, constantsByCode))
+                                      .compact()
+                                      .value(),
+                              }
+                            : undefined,
+                        after: sectionConfig.indicatorsConfig?.after
+                            ? {
+                                  headers: _(sectionConfig.indicatorsConfig.after.headers)
+                                      .map(header => this.getTextFromConstants(header, constantsByCode))
+                                      .compact()
+                                      .value(),
+                              }
+                            : undefined,
+                    },
                     fixedHeaders: sectionConfig.fixedHeaders || false,
                     fixedRowNames: sectionConfig.fixedRowNames || false,
                     enableTopScroll: sectionConfig.enableTopScroll || false,
                     columnsConfig: sectionConfig.columnsConfig,
+                    rules: this.getSectionRules(sectionConfig.rules, constantsByCode),
                 };
 
                 const baseConfig = { ...base, viewType };
@@ -888,6 +1033,15 @@ export class Dhis2DataStoreDataForm {
                     case "table":
                     case "grid":
                     case "grid-with-totals": {
+                        const firstColumnConfig = sectionConfig.firstColumnConfig
+                            ? {
+                                  ...sectionConfig.firstColumnConfig,
+                                  header: this.getTextFromConstants(
+                                      sectionConfig.firstColumnConfig.header,
+                                      constantsByCode
+                                  ),
+                              }
+                            : undefined;
                         const config = {
                             ...baseConfig,
                             viewType,
@@ -895,7 +1049,7 @@ export class Dhis2DataStoreDataForm {
                             columnsOrder: sectionConfig.columnsOrder,
                             enableGroups: sectionConfig.enableGroups || false,
                             columnsConfig: sectionConfig.columnsConfig,
-                            firstColumnConfig: sectionConfig.firstColumnConfig,
+                            firstColumnConfig: firstColumnConfig,
                             periods: getSectionPeriods(viewType, period, sectionConfig.periods, periodType),
                         };
                         return [section.id, config] as [typeof section.id, typeof config];
@@ -932,6 +1086,10 @@ export class Dhis2DataStoreDataForm {
                         };
                         return [section.id, config] as [typeof section.id, typeof config];
                     }
+                    case "grid-disaggregated-cocs": {
+                        const config = { ...baseConfig, viewType, rowsConfig: sectionConfig.rowsConfig };
+                        return [section.id, config] as [typeof section.id, typeof config];
+                    }
                     default: {
                         const config = { ...baseConfig, viewType };
                         return [section.id, config] as [typeof section.id, typeof config];
@@ -953,6 +1111,8 @@ export class Dhis2DataStoreDataForm {
             removePrefix: removePrefix,
             sections: sections,
             rules: this.getDataFormRules(dataSetConfig?.rules),
+            customCss: dataSetConfig?.customCss,
+            showNavigation: dataSetConfig?.showNavigation ?? false,
         };
     }
 
@@ -1025,7 +1185,8 @@ export class Dhis2DataStoreDataForm {
         if (!totals) return undefined;
 
         if (Dhis2DataStoreDataForm.isSectionTotals(totals)) {
-            const sectionTotalsText = texts?.totals || totals.texts?.name;
+            const sectionTotalsText =
+                texts?.totals || totals.texts?.name || (totals.texts?.code ? { code: totals.texts.code } : undefined);
             const totalsText = this.getTextFromConstants(sectionTotalsText, constantsByCode);
 
             return {
@@ -1044,15 +1205,21 @@ export class Dhis2DataStoreDataForm {
         } else {
             return _(totals)
                 .map((sectionTotals, key) => {
-                    const constantCodeOrValue = sectionTotals.texts?.name || { code: sectionTotals.texts?.code ?? "" };
+                    const constantCodeOrValue =
+                        sectionTotals.texts?.name ||
+                        (sectionTotals.texts?.code ? { code: sectionTotals.texts.code } : undefined);
                     const constantValue = this.getTextFromConstants(constantCodeOrValue, constantsByCode) ?? key;
+
+                    const nameText =
+                        sectionTotals.texts?.name ||
+                        (sectionTotals.texts?.code ? { code: sectionTotals.texts.code } : undefined);
 
                     return [
                         constantValue,
                         {
                             ...sectionTotals,
                             texts: {
-                                name: this.getTextFromConstants(sectionTotals.texts?.name, constantsByCode) || "",
+                                name: this.getTextFromConstants(nameText, constantsByCode) || "",
                             },
                         },
                     ] as [string, SectionTotals];
@@ -1084,6 +1251,7 @@ export class Dhis2DataStoreDataForm {
                 const dataElementConfig: DataElementConfig = {
                     disabled: config.disabled,
                     disableComments: config.disableComments,
+                    mirrorFrom: config.mirrorFrom,
                     rules: config.rules,
                     texts: {
                         header: this.getTextFromConstants(config.texts?.header, constantsByCode),
@@ -1139,6 +1307,29 @@ export class Dhis2DataStoreDataForm {
             throw new Error(`Unsupported custom rule action type: ${ruleConfig.action.type}`);
         });
     }
+
+    private getSectionRules(
+        rulesConfig: Maybe<SectionRuleFromCodec[]>,
+        constantsByCode: Record<string, Constant>
+    ): Maybe<SectionRule[]> {
+        if (!rulesConfig) return undefined;
+
+        return rulesConfig.map(ruleConfig => {
+            if (ruleConfig.action.type === "showMessage") {
+                return {
+                    ...ruleConfig,
+                    action: {
+                        ...ruleConfig.action,
+                        text:
+                            typeof ruleConfig.action.text === "string"
+                                ? ruleConfig.action.text
+                                : this.getTextFromConstants(ruleConfig.action.text, constantsByCode) || "",
+                    },
+                };
+            }
+            throw new Error(`Unsupported custom section rule action type: ${ruleConfig.action.type}`);
+        });
+    }
 }
 
 type ToggleConfig = GetType<typeof toggleCodec>;
@@ -1157,6 +1348,8 @@ interface Constant {
     displayDescription: string;
 }
 
-function sectionConfig<T extends Record<string, Codec<any>>>(properties: T) {
+function optionalRecord<T extends Record<string, Codec<any>>>(properties: T) {
     return optional(record(string, Codec.interface(properties)));
 }
+
+export const DEFAULT_INDICATORS_POSITION = "end" as const;

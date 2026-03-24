@@ -10,26 +10,29 @@ import { DataElementRuleOptions, SectionRuleOptions, TotalDataElementRuleOptions
 import { CalculateTotalType, GridIndicatorsCalculatedRow } from "./AutogenConfig";
 import { RulesFormula } from "../../../data/common/RulesFormula";
 import { DataFormRule } from "./DataFormRule";
+import { SectionRule } from "./SectionRule";
 import { CompulsoryDataValue } from "./CompulsoryDataValue";
 import { Period, PeriodType } from "./Period";
 
 export interface DataForm {
-    id: Id;
-    expiryDays: number;
-    dataInputPeriods: dataInputPeriodsType;
-    dataElements: DataElement[];
-    sections: Section[];
-    texts: Texts;
-    options: {
-        dataElements: Record<Id, { widget: DataElementWidget }>;
+    readonly id: Id;
+    readonly expiryDays: number;
+    readonly dataInputPeriods: dataInputPeriodsType;
+    readonly dataElements: DataElement[];
+    readonly sections: Section[];
+    readonly texts: Texts;
+    readonly options: {
+        readonly dataElements: Record<Id, { readonly widget: DataElementWidget }>;
     };
-    indicators: Indicator[];
-    totalRules: TotalRules;
-    compulsoryDataValues: CompulsoryDataValue[];
-    showErrorOnCompulsory: boolean;
-    periodType: PeriodType;
-    rules: Maybe<DataFormRule[]>;
-    removePrefix: Maybe<string>;
+    readonly indicators: Indicator[];
+    readonly totalRules: TotalRules;
+    readonly compulsoryDataValues: CompulsoryDataValue[];
+    readonly showErrorOnCompulsory: boolean;
+    readonly periodType: PeriodType;
+    readonly rules: Maybe<DataFormRule[]>;
+    readonly removePrefix: Maybe<string>;
+    readonly customCss: Maybe<string>;
+    readonly showNavigation: boolean;
 }
 
 export type Texts = {
@@ -42,6 +45,7 @@ export type Texts = {
 
 export type SectionTexts = Texts & {
     tabLabel: Maybe<string>;
+    periodHeader: Maybe<string>;
 };
 
 export const defaultTexts: SectionTexts = {
@@ -51,6 +55,7 @@ export const defaultTexts: SectionTexts = {
     totals: undefined,
     name: undefined,
     tabLabel: undefined,
+    periodHeader: undefined,
 };
 
 const viewTypes = [
@@ -69,6 +74,12 @@ const viewTypes = [
 export type ViewType = UnionFromValues<typeof DataFormM.viewTypes>;
 
 export type DescriptionText = Maybe<Record<string, Maybe<string>>>;
+
+export type IndicatorsConfig = {
+    position: "start" | "end";
+    before?: { headers: string[] };
+    after?: { headers: string[] };
+};
 
 type FormulaRules = {
     formula?: string;
@@ -89,6 +100,7 @@ export type TotalsRule = (
 export type Totals = FormulaRules & {
     dataElementsCodes: string[];
     formulas: Record<string, TotalsRule> | undefined;
+    strict?: boolean;
 };
 
 export interface SectionBase {
@@ -115,15 +127,22 @@ export interface SectionBase {
     showRowTotals: boolean;
     toggleMultiple?: DataElementToggle;
     indicators: Indicator[];
+    indicatorsConfig: IndicatorsConfig;
     fixedHeaders: boolean;
     enableTopScroll: boolean;
     fixedRowNames: boolean;
     hidden?: boolean;
-    columnsConfig?: Record<string, { rules?: RulesFormula }>;
+    columnsConfig?: Record<string, { rules?: RulesFormula; columnName?: string }>;
+    rules: SectionRule[];
 }
 
 export interface SectionSimple extends SectionBase {
-    viewType: "grid-with-combos" | "matrix-grid" | "grid-disaggregated-cocs";
+    viewType: "grid-with-combos" | "matrix-grid";
+}
+
+export interface SectionDisaggregatedCocs extends SectionBase {
+    viewType: "grid-disaggregated-cocs";
+    rowsConfig: Maybe<RowConfig>;
 }
 
 export interface SectionWithPeriods extends SectionBase {
@@ -136,9 +155,10 @@ export interface SectionGrid extends SectionBase {
     enableGroups: boolean;
     calculateTotals: CalculateTotalType;
     columnsOrder: Maybe<ColumnOrder>;
-    columnsConfig?: Record<string, { rules?: RulesFormula }>;
+    columnsConfig?: Record<string, { rules?: RulesFormula; columnName?: string }>;
     firstColumnConfig: Maybe<{
-        width: number;
+        width: Maybe<number>;
+        header: Maybe<string>;
     }>;
     periods: Period[];
 }
@@ -201,7 +221,7 @@ export type TypeCategoryOptionFilterConfig = {
 };
 
 export type RowConfig = Record<string, RowConfigDetails>;
-export type RowConfigDetails = { cellsVisible: boolean; rowName: Maybe<string> };
+export type RowConfigDetails = { cellsVisible: boolean; rowName: Maybe<string>; hide?: boolean };
 
 export type CategoryColumnConfig = { dataElementCode: Code; categoryCode: Code };
 
@@ -226,6 +246,7 @@ export type VirtualColumnCalculated = BaseVirtualColumn & {
 
 export type Section =
     | SectionSimple
+    | SectionDisaggregatedCocs
     | SectionGrid
     | SectionWithPeriods
     | SectionWithTotals

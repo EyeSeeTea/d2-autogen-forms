@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-02-06T20:53:05.491Z\n"
-"PO-Revision-Date: 2026-02-06T20:53:05.491Z\n"
+"POT-Creation-Date: 2026-03-13T13:24:24.302Z\n"
+"PO-Revision-Date: 2026-03-13T13:24:24.302Z\n"
 
 msgid "Mark all notifications as read"
 msgstr ""
@@ -54,6 +54,21 @@ msgid "Occupation"
 msgstr ""
 
 msgid "Subnational level name"
+msgstr ""
+
+msgid "Previous tab"
+msgstr ""
+
+msgid "Previous"
+msgstr ""
+
+msgid "Tab position indicator"
+msgstr ""
+
+msgid "Next tab"
+msgstr ""
+
+msgid "Next"
 msgstr ""
 
 msgid "Upload file"

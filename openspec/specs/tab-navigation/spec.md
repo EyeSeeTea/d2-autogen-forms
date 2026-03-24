@@ -69,3 +69,17 @@ The "Others" tab (untabbed sections) SHALL NOT be included in the navigation seq
 #### Scenario: Others tab present
 - **WHEN** the form has 3 primary tabs and an "Others" tab, and the user is on tab 3
 - **THEN** the Next button is disabled (tab 3 is the last navigable tab) and the indicator shows "3/3"
+
+### Requirement: Scroll to top on tab change
+When the user navigates to a different tab by any means (clicking a tab in the top bar, or clicking Previous/Next in the bottom navigation bar), the page SHALL scroll to the top so the user sees the beginning of the new tab content.
+
+#### Scenario: Navigate via top tab bar
+- **WHEN** the user clicks a tab in the top tab bar
+- **THEN** the page scrolls to the top of the viewport
+
+#### Scenario: Navigate via bottom bar
+- **WHEN** the user clicks Next or Previous in the bottom navigation bar
+- **THEN** the page scrolls to the top of the viewport
+
+### Implementation constraint: Reuse existing tab visibility hook
+The list of visible primary tabs used by the navigation component SHALL be computed inside the `useTabVisibility` hook, reusing its existing `tabVisibilityByIndex` and `sortedVisibleTabIndices` state. Tab visibility logic (including formula-based visibility rules) MUST NOT be duplicated between the navigation component and the tab rendering logic.

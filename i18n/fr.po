@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: i18next-conv\n"
-"POT-Creation-Date: 2026-02-06T20:53:05.491Z\n"
+"POT-Creation-Date: 2026-03-13T13:24:24.302Z\n"
 "PO-Revision-Date: 2018-10-25T09:02:35.143Z\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -9,7 +9,7 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
 
 msgid "Mark all notifications as read"
-msgstr ""
+msgstr "Marquer toutes les notifications comme lues"
 
 msgid "<No value>"
 msgstr ""
@@ -55,6 +55,21 @@ msgstr "Profession"
 
 msgid "Subnational level name"
 msgstr "Nom du niveau infranational"
+
+msgid "Previous tab"
+msgstr ""
+
+msgid "Previous"
+msgstr ""
+
+msgid "Tab position indicator"
+msgstr ""
+
+msgid "Next tab"
+msgstr ""
+
+msgid "Next"
+msgstr ""
 
 msgid "Upload file"
 msgstr "Téléverser fichier"
