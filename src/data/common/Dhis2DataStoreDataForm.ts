@@ -324,7 +324,12 @@ export const DataStoreConfigCodec = Codec.interface({
                     )
                 ),
                 categoriesColumns: optional(array(Codec.interface({ dataElementCode: string, categoryCode: string }))),
-                columnsConfig: optional(record(string, Codec.interface({ rules: optional(rulesFormulaCodec) }))),
+                columnsConfig: optional(
+                    record(
+                        string,
+                        Codec.interface({ rules: optional(rulesFormulaCodec), columnNameConstant: optional(string) })
+                    )
+                ),
                 disabled: optional(boolean),
                 columnsOrder: optional(record(string, number)),
                 fixedHeaders: optional(boolean),
@@ -823,7 +828,15 @@ export class Dhis2DataStoreDataForm {
             .compact()
             .value();
 
-        const virtualCodes = virtualColumnsCodes.concat(virtualRowsCodes).concat(rowNamesKeys);
+        const columnNameKeys = _(storeConfig.dataSets)
+            .values()
+            .flatMap(dataSet => _.values(dataSet.sections))
+            .flatMap(section => _.values(section.columnsConfig))
+            .map(colConfig => colConfig.columnNameConstant)
+            .compact()
+            .value();
+
+        const virtualCodes = virtualColumnsCodes.concat(virtualRowsCodes).concat(rowNamesKeys).concat(columnNameKeys);
 
         const dataSetRulesCodes = _(storeConfig.dataSets)
             .values()

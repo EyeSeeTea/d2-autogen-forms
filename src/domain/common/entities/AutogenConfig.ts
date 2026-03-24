@@ -179,7 +179,7 @@ type GridIndicatorsCalculated = BaseSectionConfig & {
     virtualColumns: (VirtualColumnDataElement | VirtualColumnCalculated)[];
 };
 
-type GridColumnsConfig = Record<string, { rules?: FromRulesFormulaCodec }>;
+type GridColumnsConfig = Record<string, { rules?: FromRulesFormulaCodec; columnNameConstant?: string }>;
 
 type RowsConfig = Record<string, { cellsVisible?: boolean; rowNameConstant?: string; hide?: boolean }>;
 

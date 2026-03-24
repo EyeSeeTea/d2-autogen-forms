@@ -131,7 +131,7 @@ export interface SectionBase {
     enableTopScroll: boolean;
     fixedRowNames: boolean;
     hidden?: boolean;
-    columnsConfig?: Record<string, { rules?: RulesFormula }>;
+    columnsConfig?: Record<string, { rules?: RulesFormula; columnName?: string }>;
     rules: SectionRule[];
 }
 
@@ -154,7 +154,7 @@ export interface SectionGrid extends SectionBase {
     enableGroups: boolean;
     calculateTotals: CalculateTotalType;
     columnsOrder: Maybe<ColumnOrder>;
-    columnsConfig?: Record<string, { rules?: RulesFormula }>;
+    columnsConfig?: Record<string, { rules?: RulesFormula; columnName?: string }>;
     firstColumnConfig: Maybe<{
         width: Maybe<number>;
         header: Maybe<string>;

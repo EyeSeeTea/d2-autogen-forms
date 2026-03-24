@@ -37,12 +37,14 @@ export class DisaggregatedCOCsGridViewModel {
             const columnItems = _(dataElement.categoryOptionCombos)
                 .map((coc): ColumnItem => {
                     const categoryOption = getCocOption(coc);
-                    const columnName = categoryOption.formName;
+                    const columnCode = `${dataElement.code}${COLUMNS_CONFIG_SEPARATOR}${categoryOption.code}`;
+                    const overrideName = section.columnsConfig?.[columnCode]?.columnName;
+                    const columnName = overrideName ?? categoryOption.formName;
 
                     const columnItem: ColumnItem = {
-                        name: _(columnName).capitalize(),
-                        code: `${dataElement.code}${COLUMNS_CONFIG_SEPARATOR}${categoryOption.code}`,
-                        description: getDescription(section.columnsDescriptions, dataFormInfo, columnName),
+                        name: overrideName ? columnName : _(columnName).capitalize(),
+                        code: columnCode,
+                        description: getDescription(section.columnsDescriptions, dataFormInfo, categoryOption.formName),
                         isVisible: true,
                     };
 
@@ -93,11 +95,12 @@ export class DisaggregatedCOCsGridViewModel {
                         const rowItems = _(dataElement.categoryOptionCombos)
                             .filter(item => getRowCategoryOptionCodeFromCoc(item) === rowCatOptionCode)
                             .map(coc => {
+                                const cocOption = getCocOption(coc);
+                                const cocColumnCode = `${dataElement.code}${COLUMNS_CONFIG_SEPARATOR}${cocOption.code}`;
                                 const columnName =
                                     columns
                                         .find(column => column.dataElement.id === dataElement.id)
-                                        ?.columnItems.find(columnItem => columnItem.name === getColumnNameFromCoc(coc))
-                                        ?.name || "";
+                                        ?.columnItems.find(columnItem => columnItem.code === cocColumnCode)?.name || "";
 
                                 if (!columnName) return undefined;
 
@@ -199,7 +202,7 @@ export class DisaggregatedCOCsGridViewModel {
         const { section, column, dataFormInfo } = options;
 
         const config = section.columnsConfig ? section.columnsConfig[column.code] : undefined;
-        if (!config) return { ...column, isVisible: true };
+        if (!config || !config.rules?.visible) return { ...column, isVisible: true };
 
         const dataElementCodes = _(config.rules?.visible?.dataElements)
             .map(dataElement => dataElement.code)
@@ -300,11 +303,6 @@ const sortItems = <T extends { name: string }>(items: T[], unknownPatterns: stri
 
     return sortedItems.map(x => x.item);
 };
-
-function getColumnNameFromCoc(categoryOptionCombo: CategoryOptionCombo): Maybe<string> {
-    const cocName = categoryOptionCombo.name.split(separator)[0];
-    return getCocFormName(categoryOptionCombo, cocName);
-}
 
 function getRowCategoryOptionCodeFromCoc(categoryOptionCombo: CategoryOptionCombo): Maybe<string> {
     return categoryOptionCombo.name.split(separator)[1];
