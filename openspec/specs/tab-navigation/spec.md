@@ -1,4 +1,4 @@
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Navigation bar visibility controlled by DataStore config
 The system SHALL display a tab navigation bar at the bottom of the tabbed form content only when the dataset's DataStore config includes `showNavigation: true`. When `showNavigation` is absent or set to any value other than `true`, the navigation bar SHALL NOT be rendered.
