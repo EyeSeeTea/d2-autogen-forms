@@ -47,15 +47,18 @@ export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props 
     const elId = _([dataElement.id, period]).compact().join("-");
     const dataElementCocId = dataElement.cocId ?? dataFormInfo.categoryOptionComboId;
     const auditId = _([dataElement.orgUnit, dataElement.id, dataElementCocId, "val"]).compact().join("-");
-    const hasComment =
-        !noComment &&
-        dataValueHasComment(
-            dataFormInfo.data.values.getOrEmpty(dataElement, {
-                orgUnitId: dataFormInfo.orgUnitId,
-                period: period || dataFormInfo.period,
-                categoryOptionComboId: dataElementCocId,
-            })
-        );
+    const hasComment = React.useMemo(
+        () =>
+            !noComment &&
+            dataValueHasComment(
+                dataFormInfo.data.values.getOrEmpty(dataElement, {
+                    orgUnitId: dataElement.orgUnit || dataFormInfo.orgUnitId,
+                    period: period || dataFormInfo.period,
+                    categoryOptionComboId: dataElementCocId,
+                })
+            ),
+        [noComment, dataFormInfo.data.values, dataElement, dataFormInfo.orgUnitId, period, dataFormInfo.period, dataElementCocId]
+    );
     const notifyParent = React.useCallback<DataEntryItemProps["onValueChange"]>(
         async dataValue => {
             if (onChange) onChange(dataValue);

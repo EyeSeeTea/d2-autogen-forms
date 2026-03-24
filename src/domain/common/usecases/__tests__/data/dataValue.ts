@@ -42,6 +42,7 @@ export const dataValueText: DataValueTextSingle = {
     type: "TEXT",
     value: "10",
     isRequired: false,
+    comment: "",
 };
 
 export const dataValueTextMultiple: DataValueTextMultiple = {
@@ -52,6 +53,7 @@ export const dataValueTextMultiple: DataValueTextMultiple = {
     values: ["value1", "value2"],
     type: "TEXT",
     isMultiple: true,
+    comment: "",
 };
 
 export const dataValueNumberSingle: DataValueNumberSingle = {
@@ -70,6 +72,7 @@ export const dataValueNumberSingle: DataValueNumberSingle = {
     type: "NUMBER",
     isMultiple: false,
     isRequired: false,
+    comment: "",
 };
 
 export const dataValueFile: DataValueFile = {
@@ -86,4 +89,5 @@ export const dataValueFile: DataValueFile = {
         url: "/path/to/file",
     },
     isRequired: false,
+    comment: "",
 };

@@ -21,7 +21,7 @@ export function getMirrorDataValue(
     base: Pick<DataValueBase, "period" | "categoryOptionComboId" | "isRequired">
 ): DataValue {
     const resolvedDataElement = resolveDataElement(dataFormInfo, dataElement);
-    const dataValueBase: DataValueBase = {
+    const dataValueBase = {
         orgUnitId: dataFormInfo.orgUnitId,
         period: base.period,
         categoryOptionComboId: base.categoryOptionComboId,

@@ -3,8 +3,8 @@ import { dataElementText, dataValueBase, dataValueTextSingle, dataValueTextWithC
 
 describe("Comment indicator", () => {
     describe("DataValue comment field", () => {
-        it("should be undefined when data value has no comment", () => {
-            expect(dataValueTextSingle.comment).toBeUndefined();
+        it("should be an empty string when data value has no comment", () => {
+            expect(dataValueTextSingle.comment).toEqual("");
         });
 
         it("should contain the comment string when data value has a comment", () => {
@@ -19,16 +19,16 @@ describe("Comment indicator", () => {
             expect(retrieved?.comment).toEqual("This value needs review");
         });
 
-        it("should return undefined comment for data values without comments", () => {
+        it("should return empty string comment for data values without comments", () => {
             const store = DataValueStore.from([dataValueTextSingle]);
             const retrieved = store.get(dataElementText, dataValueBase);
-            expect(retrieved?.comment).toBeUndefined();
+            expect(retrieved?.comment).toEqual("");
         });
 
-        it("should return undefined comment for empty data values", () => {
+        it("should return empty string comment for empty data values", () => {
             const store = new DataValueStore({});
             const retrieved = store.getOrEmpty(dataElementText, dataValueBase);
-            expect(retrieved.comment).toBeUndefined();
+            expect(retrieved.comment).toEqual("");
         });
     });
 
@@ -37,13 +37,8 @@ describe("Comment indicator", () => {
             expect(hasComment(dataValueTextWithComment)).toBe(true);
         });
 
-        it("should return false when comment is undefined", () => {
-            expect(hasComment(dataValueTextSingle)).toBe(false);
-        });
-
         it("should return false when comment is an empty string", () => {
-            const dvEmptyComment = { ...dataValueTextSingle, comment: "" };
-            expect(hasComment(dvEmptyComment)).toBe(false);
+            expect(hasComment(dataValueTextSingle)).toBe(false);
         });
     });
 });

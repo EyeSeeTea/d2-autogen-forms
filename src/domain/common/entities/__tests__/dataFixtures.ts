@@ -88,6 +88,7 @@ export const dataValueBase: DataValueBase = {
     orgUnitId: "org1",
     period: "202101",
     categoryOptionComboId: "coc1",
+    comment: "",
 };
 
 export const dataValueTextSingle: DataValueTextSingle = {
