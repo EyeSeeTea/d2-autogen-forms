@@ -62,7 +62,8 @@ interface Period {
 
 declare global {
     interface Window {
-        viewHist: (dataElementId: string, cocId: string) => void;
+        autogenFormCurrentPeriodId: string;
+        viewHist: (dataElementId: string, cocId: string, period: string) => void;
         // It should be set when rendered in Data Entry App, but not on development.
         dhis2?: {
             de: {
@@ -71,6 +72,7 @@ declare global {
                 getSelectedPeriod(): Maybe<Period>;
                 addEventListeners(): void;
                 event: { dataValuesLoaded: string };
+                displayValidationDialog: (html: string, width: number) => void;
             };
             util: {
                 on: (event: string, action: () => void) => void;

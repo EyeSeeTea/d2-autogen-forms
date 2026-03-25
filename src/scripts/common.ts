@@ -6,3 +6,7 @@ export function build(variant: string): void {
     console.debug(`Run: ${cmd}`);
     execSync(cmd, { stdio: [0, 1, 2] });
 }
+
+export const defaultOptions = {
+    autogenFormOutput: "dist/custom-data-form.html",
+};

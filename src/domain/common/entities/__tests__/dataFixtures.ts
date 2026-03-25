@@ -1,0 +1,102 @@
+import { DataForm, SectionBase, defaultTexts } from "../DataForm";
+import { DataElementText } from "../DataElement";
+import { DataValue, DataValueBase, DataValueTextSingle } from "../DataValue";
+import { PeriodType } from "../Period";
+
+export const dataElementText: DataElementText = {
+    id: "1",
+    code: "DE1",
+    name: "Element 1",
+    type: "TEXT",
+    categoryCombos: {
+        id: "1",
+        name: "Combo",
+        categoryOptionCombos: [
+            {
+                id: "1",
+                name: "Option Combo",
+                shortName: "OC",
+                formName: undefined,
+                categoryOptions: [],
+                originalName: "",
+            },
+        ],
+        categories: [],
+    },
+    categoryOptionCombos: [],
+    rules: [],
+    htmlText: undefined,
+    related: undefined,
+    isLongText: false,
+    deleteRules: [],
+    disabled: false,
+};
+
+export const sectionBase: Omit<SectionBase, "id" | "name" | "viewType"> = {
+    toggle: { type: "none" },
+    texts: defaultTexts,
+    tabs: { active: true },
+    sortRowsBy: "name",
+    titleVariant: "h1",
+    styles: { title: {}, columns: {}, rows: {}, totals: {} },
+    columnsDescriptions: undefined,
+    groupDescriptions: undefined,
+    disableComments: false,
+    disabled: false,
+    showIndex: false,
+    showRowTotals: false,
+    toggleMultiple: {
+        logicalOperator: "AND",
+        toggleDataElements: [],
+        orgUnitConditions: [],
+    },
+    indicators: [],
+    dataElements: [dataElementText],
+    code: "",
+    indicatorsConfig: {
+        position: "start",
+        before: undefined,
+        after: undefined,
+    },
+    fixedHeaders: false,
+    enableTopScroll: false,
+    fixedRowNames: false,
+    rules: [],
+};
+
+export const dataFormBase: Omit<DataForm, "sections"> = {
+    id: "1",
+    expiryDays: 0,
+    dataInputPeriods: [],
+    dataElements: [],
+    texts: defaultTexts,
+    options: { dataElements: {} },
+    indicators: [],
+    totalRules: {
+        dataElementTotalRules: [],
+        sectionTotalRules: [],
+    },
+    periodType: PeriodType.YEARLY,
+    rules: undefined,
+    compulsoryDataValues: [],
+    showErrorOnCompulsory: false,
+    removePrefix: undefined,
+    customCss: undefined,
+    showNavigation: false,
+};
+
+export const dataValueBase: DataValueBase = {
+    orgUnitId: "org1",
+    period: "202101",
+    categoryOptionComboId: "coc1",
+};
+
+export const dataValueTextSingle: DataValueTextSingle = {
+    ...dataValueBase,
+    type: "TEXT",
+    isMultiple: false,
+    dataElement: dataElementText,
+    value: "Sample text",
+};
+
+export const dataValues: DataValue[] = [dataValueTextSingle];

@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { Id } from "../../domain/common/entities/Base";
-import { DataElement } from "../../domain/common/entities/DataElement";
+import { CategoryOptionCombo, DataElement } from "../../domain/common/entities/DataElement";
 import { D2Api, MetadataPick } from "../../types/d2-api";
 import { promiseMap } from "../../utils/promises";
 import { Dhis2DataStoreDataForm } from "./Dhis2DataStoreDataForm";
@@ -8,8 +8,8 @@ import { Dhis2DataStoreDataForm } from "./Dhis2DataStoreDataForm";
 export class Dhis2DataElement {
     constructor(private api: D2Api) {}
 
-    async get(ids: Id[]): Promise<Record<Id, DataElement>> {
-        const config = await Dhis2DataStoreDataForm.build(this.api);
+    async get(ids: Id[], dataSetCode: string): Promise<Record<Id, DataElement>> {
+        const config = await Dhis2DataStoreDataForm.build(this.api, dataSetCode);
         const idGroups = _(ids).uniq().chunk(100).value();
 
         const resList = await promiseMap(idGroups, idsGroup =>
@@ -46,11 +46,13 @@ const dataElementFields = {
         categories: {
             id: true,
             name: true,
+            code: true,
             categoryOptions: {
                 id: true,
                 code: true,
                 name: true,
-                shortName: true,
+                displayName: true,
+                displayShortName: true,
                 displayFormName: true,
             },
         },
@@ -61,6 +63,10 @@ const dataElementFields = {
             categoryOptions: {
                 id: true,
                 code: true,
+                name: true,
+                displayName: true,
+                displayFormName: true,
+                displayShortName: true,
             },
         },
     },
@@ -70,7 +76,13 @@ type D2DataElement = MetadataPick<{
     dataElements: { fields: typeof dataElementFields };
 }>["dataElements"][number];
 
-function makeCocOrderArray(namesArray: string[][]): string[] {
+type D2DataElementTypes = D2DataElement["valueType"] | "MULTI_TEXT";
+
+type D2DataElementNewType = Omit<D2DataElement, "valueType"> & {
+    valueType: D2DataElementTypes;
+};
+
+export function makeCocOrderArray(namesArray: string[][]): string[] {
     return namesArray.reduce((prev, current) => {
         return prev
             .map(prevValue => {
@@ -84,21 +96,36 @@ function makeCocOrderArray(namesArray: string[][]): string[] {
     });
 }
 
-function getCocOrdered(categoryCombo: D2DataElement["categoryCombo"], config: Dhis2DataStoreDataForm) {
-    const allCategoryOptions = categoryCombo.categories
-        .map(c => {
-            return c.categoryOptions.flatMap(co => ({
-                name: co.name,
-                shortName: co.shortName,
-                formName: co.displayFormName,
-            }));
-        })
-        .flatMap(categoriesOptions => {
-            return categoriesOptions.map(co => co);
-        });
+function getCocOrdered(
+    categoryCombo: D2DataElement["categoryCombo"],
+    config: Dhis2DataStoreDataForm
+): CategoryOptionCombo[] {
+    const keyName = config.categoryCombinationsConfig[categoryCombo.code]?.viewType || "formName";
+    const allCategoryOptions = categoryCombo.categories.flatMap(c =>
+        _(c.categoryOptions)
+            .flatMap(co => {
+                if (isCategoryOptionHidden(co.code, config)) return undefined;
+
+                return {
+                    name: co.name,
+                    displayName: co.displayName,
+                    shortName: co.displayShortName,
+                    formName: co.displayFormName,
+                    code: co.code,
+                };
+            })
+            .compact()
+            .value()
+    );
 
     const categoryOptionsNamesArray = categoryCombo.categories.map(c => {
-        return c.categoryOptions.flatMap(co => co.name);
+        return _(c.categoryOptions)
+            .flatMap(co => {
+                if (isCategoryOptionHidden(co.code, config)) return undefined;
+                return co.name;
+            })
+            .compact()
+            .value();
     });
 
     const cocOrderArray = makeCocOrderArray(categoryOptionsNamesArray);
@@ -106,15 +133,70 @@ function getCocOrdered(categoryCombo: D2DataElement["categoryCombo"], config: Dh
         const match = categoryCombo.categoryOptionCombos.find(coc => {
             return coc.name === cocOrdered;
         });
-        const categoryOption = allCategoryOptions.find(c => c.name === match?.name);
-        return match ? { ...match, shortName: categoryOption?.shortName, formName: categoryOption?.formName } : [];
+
+        const orderedOptions = categoryCombo.categories.map(category => {
+            return match?.categoryOptions.find(co => category.categoryOptions.some(catOpt => catOpt.id === co.id));
+        });
+
+        const optionsNames = orderedOptions.map(co => co?.displayName);
+        const optionsShortNames = orderedOptions.map(co => co?.displayShortName);
+        const optionsFormNames = orderedOptions.map(co => co?.displayFormName);
+
+        const categoryOption =
+            categoryCombo.categories.length === 1
+                ? allCategoryOptions.find(c => c.name === match?.name)
+                : {
+                      displayName: optionsNames?.join(", "),
+                      shortName: optionsShortNames?.join(", "),
+                      formName: optionsFormNames?.join(", "),
+                  };
+
+        return match
+            ? {
+                  ...match,
+                  name: categoryOption?.displayName || match.name,
+                  shortName: categoryOption?.shortName,
+                  formName: categoryOption?.formName,
+              }
+            : [];
     });
 
-    const keyName = config.categoryCombinationsConfig[categoryCombo.code]?.viewType || "name";
-    return result.map(x => ({ ...x, name: x[keyName] || "" }));
+    return result.map(x => ({
+        ...x,
+        originalName: x.name,
+        name: x[keyName] || x.name || "",
+        categoryOptions: x.categoryOptions.map(co => ({ ...co, originalName: co.name })),
+    }));
 }
 
-function getDataElement(dataElement: D2DataElement, config: Dhis2DataStoreDataForm): DataElement | null {
+function isCategoryOptionHidden(code: string, config: Dhis2DataStoreDataForm) {
+    return config.categoryOptionsConfig[code]?.visible === false;
+}
+
+function getVisibleCategoryOptionCombos(
+    categoryOptionCombos: D2DataElement["categoryCombo"]["categoryOptionCombos"],
+    config: Dhis2DataStoreDataForm
+): CategoryOptionCombo[] {
+    const hiddenCategoryOptions = _(config.categoryOptionsConfig)
+        .pickBy(value => value.visible === false)
+        .keys()
+        .value();
+
+    return categoryOptionCombos
+        .filter(coc => !coc.categoryOptions.some(co => hiddenCategoryOptions.includes(co.code)))
+        .map((item): CategoryOptionCombo => {
+            return {
+                ...item,
+                originalName: item.name,
+                categoryOptions: item.categoryOptions.map(co => ({
+                    ...co,
+                    originalName: co.name,
+                })),
+            };
+        });
+}
+
+function getDataElement(dataElement: D2DataElementNewType, config: Dhis2DataStoreDataForm): DataElement | null {
     const { valueType } = dataElement;
     const deConfig = config.dataElementsConfig[dataElement.code];
     const optionSetFromDataElement = dataElement.optionSet
@@ -131,9 +213,31 @@ function getDataElement(dataElement: D2DataElement, config: Dhis2DataStoreDataFo
     const categoryCombination = {
         id: dataElement.categoryCombo?.id,
         name: dataElement.categoryCombo?.name,
+        categories: dataElement.categoryCombo?.categories.map(cat => {
+            const keyName = config.categoryCombinationsConfig[dataElement.categoryCombo.code]?.viewType || "formName";
+            return {
+                ...cat,
+                categoryOptions: cat.categoryOptions.map(co => {
+                    const record = {
+                        id: co.id,
+                        name: co.displayName,
+                        formName: co.displayFormName,
+                        shortName: co.displayShortName,
+                        code: co.code,
+                    };
+                    return {
+                        id: record.id,
+                        originalName: co.displayName,
+                        code: co.code,
+                        name: record[keyName] ?? record.name,
+                        displayFormName: record.formName,
+                    };
+                }),
+            };
+        }),
         categoryOptionCombos: getCocOrdered(dataElement.categoryCombo, config),
     };
-    const categoryOptionCombos = dataElement.categoryCombo.categoryOptionCombos;
+    const categoryOptionCombos = getVisibleCategoryOptionCombos(dataElement.categoryCombo.categoryOptionCombos, config);
 
     const base = {
         id: dataElement.id,
@@ -146,13 +250,18 @@ function getDataElement(dataElement: D2DataElement, config: Dhis2DataStoreDataFo
             ? { isMultiple: Boolean(deConfig?.selection?.isMultiple), items: optionSet.options }
             : undefined,
         rules: [],
+        deleteRules: [],
         htmlText: undefined,
+        disabled: deConfig?.disabled || false,
     };
 
     switch (valueType) {
         case "TEXT":
+            return { type: "TEXT", isLongText: false, related: undefined, ...base };
         case "LONG_TEXT":
-            return { type: "TEXT", related: undefined, ...base };
+            return { type: "TEXT", isLongText: true, related: undefined, ...base };
+        case "MULTI_TEXT":
+            return { type: "MULTI_TEXT", related: undefined, ...base };
         case "INTEGER":
         case "INTEGER_NEGATIVE":
         case "INTEGER_POSITIVE":
@@ -169,6 +278,8 @@ function getDataElement(dataElement: D2DataElement, config: Dhis2DataStoreDataFo
             return { type: "DATE", related: undefined, ...base };
         case "PERCENTAGE":
             return { type: "PERCENTAGE", numberType: "NUMBER", related: undefined, ...base };
+        case "EMAIL":
+            return { type: "TEXT", isLongText: false, isEmail: true, related: undefined, ...base };
         default:
             console.error(
                 `Data element [name=${dataElement.displayName}, id=${dataElement.id}, valueType=${dataElement.valueType}] skipped, valueType not supported`

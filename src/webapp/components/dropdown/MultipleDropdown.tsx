@@ -14,10 +14,11 @@ interface MultipleDropdownProps {
     values: Value[];
     multiple?: boolean;
     hideEmpty?: boolean;
+    helperText?: string;
 }
 
 const MultipleDropdown: React.FC<MultipleDropdownProps> = props => {
-    const { items, values, onChange, label, className, multiple = true, hideEmpty } = props;
+    const { items, values, onChange, label, className, multiple = true, hideEmpty, helperText } = props;
     const notifyChange = useCallback(
         ev => {
             const items = _.flatten([ev.target.value || undefined]);
@@ -28,7 +29,7 @@ const MultipleDropdown: React.FC<MultipleDropdownProps> = props => {
     );
 
     return (
-        <DropdownForm label={label} className={className}>
+        <DropdownForm label={label} className={className} helperText={helperText}>
             <Select
                 multiple={multiple}
                 data-test-multiple-dropdown={label}

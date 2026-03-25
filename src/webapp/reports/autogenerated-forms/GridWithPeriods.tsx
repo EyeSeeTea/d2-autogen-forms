@@ -3,9 +3,7 @@ import {
     DataTable,
     TableHead,
     DataTableRow,
-    DataTableColumnHeader,
     TableBody,
-    DataTableCell,
     // @ts-ignore
 } from "@dhis2/ui";
 import { GridWithPeriodsI, DataElementSubGroupRow, GridWithPeriodsViewModel } from "./GridWithPeriodsViewModel";
@@ -17,7 +15,7 @@ import { DataElement } from "../../../domain/common/entities/DataElement";
 import DataTableSection from "./DataTableSection";
 import { Html } from "./Html";
 import { DataTableCellRowName } from "./datatables/DataTableCellRowName";
-import { CustomDataTableCell } from "./datatables/CustomDataTables";
+import { CustomDataTableCell, CustomDataTableColumnHeader } from "./datatables/CustomDataTables";
 import { DataTableCellFormula } from "./datatables/DataTableCellFormula";
 import { RowIndicatorItem } from "../../components/IndicatorItem/IndicatorItem";
 import { checkIndicatorDirection } from "../../../domain/common/entities/Indicator";
@@ -55,18 +53,18 @@ const GridWithPeriods: React.FC<GridWithPeriodsProps> = props => {
         setActiveTab(value);
     };
 
-    const categoryOptionCombination = grid.tabs[activeTab]?.id;
+    const categoryOptionCombination = grid.periodTabs[activeTab]?.id;
 
     return (
-        <DataTableSection section={grid} dataFormInfo={dataFormInfo}>
-            {grid.tabs.length > 0 ? (
+        <DataTableSection section={grid} sectionStyles={props.section.styles} dataFormInfo={dataFormInfo}>
+            {grid.periodTabs.length > 0 ? (
                 <>
                     <Tabs value={activeTab} onChange={handleChange}>
-                        {grid.tabs.map(tabPeriod => {
+                        {grid.periodTabs.map(tabPeriod => {
                             return <Tab key={tabPeriod.id + "Tab"} label={tabPeriod.name} />;
                         })}
                     </Tabs>
-                    {grid.tabs.map(tabPeriod => {
+                    {grid.periodTabs.map(tabPeriod => {
                         if (tabPeriod.id !== categoryOptionCombination) return null;
                         return (
                             <PeriodTable
@@ -98,24 +96,43 @@ const PeriodTable: React.FC<PeriodTableProps> = props => {
     const classes = useStyles();
 
     const hasRowsWithSubGroups = grid.rows.some(row => row.type === "subGroup");
+    const periodIds = grid.periods.map(period => period.id);
+
+    const Indicators = grid.indicators.map(indicator => {
+        return (
+            <RowIndicatorItem
+                key={`parent_${indicator.id}`}
+                indicator={indicator}
+                colSpan={hasRowsWithSubGroups ? "3" : "2"}
+                dataFormInfo={dataFormInfo}
+                periods={periodIds}
+            />
+        );
+    });
 
     return (
         <DataTable className={classes.table}>
             <TableHead>
                 <DataTableRow>
-                    <DataTableColumnHeader
+                    <CustomDataTableColumnHeader
                         width="400px"
                         colSpan={hasRowsWithSubGroups ? "3" : "2"}
-                    ></DataTableColumnHeader>
+                        backgroundColor={props.section.styles.columns.backgroundColor}
+                    ></CustomDataTableColumnHeader>
                     {grid.periods.map(period => (
-                        <DataTableColumnHeader key={period}>
-                            <span>{period}</span>
-                        </DataTableColumnHeader>
+                        <CustomDataTableColumnHeader
+                            backgroundColor={props.section.styles.columns.backgroundColor}
+                            key={period.id}
+                        >
+                            <span>{period.label}</span>
+                        </CustomDataTableColumnHeader>
                     ))}
                 </DataTableRow>
             </TableHead>
 
             <TableBody>
+                {grid.indicatorsConfig.position === "start" && Indicators}
+
                 {grid.rows.map(row => {
                     switch (row.type) {
                         case "dataElement":
@@ -126,19 +143,26 @@ const PeriodTable: React.FC<PeriodTableProps> = props => {
                                             indicator={row.indicator}
                                             colSpan={hasRowsWithSubGroups ? "3" : "2"}
                                             dataFormInfo={dataFormInfo}
-                                            periods={grid.periods}
+                                            periods={periodIds}
                                         />
                                     )}
                                     <DataTableRow>
-                                        <DataTableCell colSpan={hasRowsWithSubGroups ? "3" : "2"}>
-                                            <span>{row.dataElement.name}</span>
-                                        </DataTableCell>
+                                        <CustomDataTableCell
+                                            backgroundColor={props.section.styles.rows.backgroundColor}
+                                            colSpan={hasRowsWithSubGroups ? "3" : "2"}
+                                        >
+                                            <DataTableCellRowName
+                                                html={row.dataElement.htmlText}
+                                                name={row.dataElement.name}
+                                            />
+                                        </CustomDataTableCell>
 
                                         <DataTableDataElementCell
-                                            periods={grid.periods}
+                                            grid={grid}
                                             dataElement={row.dataElement}
                                             dataFormInfo={dataFormInfo}
                                             categoryOptionComboId={categoryOptionComboId}
+                                            section={section}
                                         />
                                     </DataTableRow>
                                     {row.indicator && checkIndicatorDirection(row.indicator, "after") && (
@@ -146,7 +170,7 @@ const PeriodTable: React.FC<PeriodTableProps> = props => {
                                             indicator={row.indicator}
                                             colSpan={hasRowsWithSubGroups ? "3" : "2"}
                                             dataFormInfo={dataFormInfo}
-                                            periods={grid.periods}
+                                            periods={periodIds}
                                         />
                                     )}
                                 </React.Fragment>
@@ -154,20 +178,27 @@ const PeriodTable: React.FC<PeriodTableProps> = props => {
                         case "dataElementFile":
                             return (
                                 <DataTableRow key={row.dataElement.id}>
-                                    <DataTableCell colSpan="2">
+                                    <CustomDataTableCell
+                                        backgroundColor={props.section.styles.rows.backgroundColor}
+                                        colSpan="2"
+                                    >
                                         <span>{row.dataElement.name}</span>
                                         <Html content={row.dataElement.description}></Html>
-                                    </DataTableCell>
+                                    </CustomDataTableCell>
 
-                                    <DataTableCell colSpan={grid.periods.length.toString()}>
-                                        <DataTableCell>
+                                    <CustomDataTableCell
+                                        backgroundColor={props.section.styles.rows.backgroundColor}
+                                        colSpan={grid.periods.length.toString()}
+                                    >
+                                        <CustomDataTableCell>
                                             <DataElementItem
                                                 noComment={row.dataElement.disabledComments}
                                                 dataElement={{ ...row.dataElement, cocId: categoryOptionComboId }}
                                                 dataFormInfo={dataFormInfo}
+                                                lockException={grid.lockException}
                                             />
-                                        </DataTableCell>
-                                    </DataTableCell>
+                                        </CustomDataTableCell>
+                                    </CustomDataTableCell>
                                 </DataTableRow>
                             );
 
@@ -179,35 +210,38 @@ const PeriodTable: React.FC<PeriodTableProps> = props => {
                                             indicator={row2.indicator}
                                             colSpan=""
                                             dataFormInfo={dataFormInfo}
-                                            periods={grid.periods}
+                                            periods={periodIds}
                                         />
                                     )}
                                     <DataTableRow>
                                         {idx === 0 && (
-                                            <DataTableCell
+                                            <CustomDataTableCell
+                                                backgroundColor={props.section.styles.rows.backgroundColor}
                                                 rowSpan={String(
                                                     row.rows.length + row.rows.filter(x => Boolean(x.indicator)).length
                                                 )}
                                             >
                                                 <span className={classes.rowTitle}>{row.name}</span>
                                                 <Html content={row.groupDescription} />
-                                            </DataTableCell>
+                                            </CustomDataTableCell>
                                         )}
 
-                                        <DataTableCell
+                                        <CustomDataTableCell
+                                            backgroundColor={props.section.styles.rows.backgroundColor}
                                             colSpan={grid.rows.some(row => row.type === "subGroup") ? "2" : "0"}
                                         >
                                             <DataTableCellRowName
                                                 html={row2.dataElement.htmlText}
                                                 name={row2.dataElement.name}
                                             />
-                                        </DataTableCell>
+                                        </CustomDataTableCell>
 
                                         <DataTableDataElementCell
-                                            periods={grid.periods}
+                                            grid={grid}
                                             dataElement={row2.dataElement}
                                             dataFormInfo={dataFormInfo}
                                             categoryOptionComboId={categoryOptionComboId}
+                                            section={section}
                                         />
                                     </DataTableRow>
                                     {row2.indicator && checkIndicatorDirection(row2.indicator, "after") && (
@@ -215,7 +249,7 @@ const PeriodTable: React.FC<PeriodTableProps> = props => {
                                             indicator={row2.indicator}
                                             colSpan=""
                                             dataFormInfo={dataFormInfo}
-                                            periods={grid.periods}
+                                            periods={periodIds}
                                         />
                                     )}
                                 </React.Fragment>
@@ -230,36 +264,42 @@ const PeriodTable: React.FC<PeriodTableProps> = props => {
                                                     indicator={subGroupRow.indicator}
                                                     colSpan={subGroupRow.colSpan}
                                                     dataFormInfo={dataFormInfo}
-                                                    periods={grid.periods}
+                                                    periods={periodIds}
                                                 />
                                             )}
                                         <DataTableRow>
                                             {subGroupRow.groupName && (
-                                                <DataTableCell
+                                                <CustomDataTableCell
+                                                    backgroundColor={props.section.styles.rows.backgroundColor}
                                                     rowSpan={row.rows.length.toString()}
                                                     className={classes.rowTitle}
                                                 >
                                                     <span>{subGroupRow.groupName}</span>
-                                                </DataTableCell>
+                                                </CustomDataTableCell>
                                             )}
 
                                             {subGroupRow.subGroup && (
-                                                <DataTableCell
+                                                <CustomDataTableCell
+                                                    backgroundColor={props.section.styles.rows.backgroundColor}
                                                     rowSpan={subGroupRow.dataElementsPerSubGroup.toString()}
                                                     className={classes.rowTitle}
                                                 >
                                                     <span>{subGroupRow.subGroup}</span>
-                                                </DataTableCell>
+                                                </CustomDataTableCell>
                                             )}
 
-                                            <DataTableCell colSpan={subGroupRow.colSpan}>
+                                            <CustomDataTableCell
+                                                backgroundColor={props.section.styles.rows.backgroundColor}
+                                                colSpan={subGroupRow.colSpan}
+                                            >
                                                 <span>{subGroupRow.dataElement.name}</span>
-                                            </DataTableCell>
+                                            </CustomDataTableCell>
 
                                             <DataTableDataElementCell
-                                                periods={grid.periods}
+                                                grid={grid}
                                                 dataElement={subGroupRow.dataElement}
                                                 dataFormInfo={dataFormInfo}
+                                                section={section}
                                             />
                                         </DataTableRow>
                                         {subGroupRow.indicator &&
@@ -268,7 +308,7 @@ const PeriodTable: React.FC<PeriodTableProps> = props => {
                                                     indicator={subGroupRow.indicator}
                                                     colSpan={subGroupRow.colSpan}
                                                     dataFormInfo={dataFormInfo}
-                                                    periods={grid.periods}
+                                                    periods={periodIds}
                                                 />
                                             )}
                                     </React.Fragment>
@@ -276,16 +316,16 @@ const PeriodTable: React.FC<PeriodTableProps> = props => {
                             });
                     }
                 })}
-                {grid.summary && (
+                {grid.summary.map(summary => (
                     <DataTableRow key="total-custom-row">
                         <CustomDataTableCell
                             backgroundColor={section.styles.totals.backgroundColor}
                             key="total-column-name-periods"
                             colSpan={hasRowsWithSubGroups ? "3" : "2"}
                         >
-                            <Html content={grid.summary.cellName} />
+                            <Html content={summary.cellName} />
                         </CustomDataTableCell>
-                        {grid.summary.cells.map(itemTotal => {
+                        {summary.cells.map(itemTotal => {
                             return (
                                 <DataTableCellFormula
                                     key={itemTotal.columnName}
@@ -298,19 +338,9 @@ const PeriodTable: React.FC<PeriodTableProps> = props => {
                             );
                         })}
                     </DataTableRow>
-                )}
+                ))}
 
-                {grid.indicators.map(indicator => {
-                    return (
-                        <RowIndicatorItem
-                            key={`parent_${indicator.id}`}
-                            indicator={indicator}
-                            colSpan={hasRowsWithSubGroups ? "3" : "2"}
-                            dataFormInfo={dataFormInfo}
-                            periods={grid.periods}
-                        />
-                    );
-                })}
+                {grid.indicatorsConfig.position === "end" && Indicators}
             </TableBody>
         </DataTable>
     );
@@ -319,25 +349,37 @@ const PeriodTable: React.FC<PeriodTableProps> = props => {
 interface DataTableDataElementCellProps {
     dataElement: DataElement;
     dataFormInfo: DataFormInfo;
-    periods: string[];
     categoryOptionComboId?: string;
+    section: SectionWithPeriods;
+    grid: GridWithPeriodsI;
 }
 
 const DataTableDataElementCell: React.FC<DataTableDataElementCellProps> = props => {
-    const { dataElement, dataFormInfo, periods, categoryOptionComboId } = props;
+    const {
+        dataElement,
+        dataFormInfo,
+        categoryOptionComboId,
+        section,
+        grid: { lockException, periods },
+    } = props;
     const cocId = categoryOptionComboId || dataElement.cocId;
 
     return (
         <>
             {periods.map(period => (
-                <DataTableCell key={[dataElement.id, period].join("-")}>
+                <CustomDataTableCell
+                    backgroundColor={section.styles.rows.backgroundColor}
+                    key={[dataElement.id, period.id].join("-")}
+                >
                     <DataElementItem
                         noComment={dataElement.disabledComments}
                         dataElement={{ ...dataElement, cocId: cocId }}
                         dataFormInfo={dataFormInfo}
-                        period={period}
+                        period={period.id}
+                        lockException={lockException}
+                        manualyDisabled={dataElement.disabled || section.disabled}
                     />
-                </DataTableCell>
+                </CustomDataTableCell>
             ))}
         </>
     );

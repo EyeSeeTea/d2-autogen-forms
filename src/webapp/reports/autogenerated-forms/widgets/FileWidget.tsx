@@ -5,6 +5,7 @@ import { WidgetFeedback } from "../WidgetFeedback";
 import { DataValueFile } from "../../../../domain/common/entities/DataValue";
 import { WidgetProps } from "./WidgetBase";
 import { sizeFormatter } from "human-readable";
+import i18n from "../../../../locales";
 
 export interface FileWidgetProps extends WidgetProps {
     dataValue: DataValueFile;
@@ -31,7 +32,7 @@ const FileWidget: React.FC<FileWidgetProps> = props => {
         <WidgetFeedback state={props.state}>
             <FileInput
                 disabled={disabled}
-                buttonLabel="Upload file"
+                buttonLabel={i18n.t("Upload file")}
                 name="upload"
                 onChange={notifyChange} //
             />

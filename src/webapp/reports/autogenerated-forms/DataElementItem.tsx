@@ -9,6 +9,8 @@ import { DataValue } from "../../../domain/common/entities/DataValue";
 import { Row } from "./GridWithTotalsViewModel";
 import { isDev } from "../../..";
 import { Maybe } from "../../../utils/ts-utils";
+import { DebugLabel } from "../../components/debug/DebugLabel";
+import { MirrorDataElementItem } from "./MirrorDataElementItem";
 
 export interface DataElementItemProps {
     dataElement: DataElement;
@@ -19,10 +21,10 @@ export interface DataElementItemProps {
     manualyDisabled?: boolean;
     total?: DataElement;
     columnTotal?: DataElement;
-    rowDataElements?: DataElement[];
     columnDataElements?: DataElement[];
     rows?: Row[];
     rowName?: string;
+    lockException?: boolean;
 }
 
 export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props => {
@@ -35,17 +37,16 @@ export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props 
         manualyDisabled,
         total,
         columnTotal,
-        rowDataElements,
         columnDataElements,
         rows,
         rowName,
+        lockException,
     } = props;
 
     const classes = useStyles();
     const elId = _([dataElement.id, period]).compact().join("-");
     const dataElementCocId = dataElement.cocId ?? dataFormInfo.categoryOptionComboId;
     const auditId = _([dataElement.orgUnit, dataElement.id, dataElementCocId, "val"]).compact().join("-");
-
     const notifyParent = React.useCallback<DataEntryItemProps["onValueChange"]>(
         async dataValue => {
             if (onChange) onChange(dataValue);
@@ -56,7 +57,8 @@ export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props 
 
     const onDoubleClick = () => {
         if (!isDev) {
-            window.viewHist(dataElement.id, dataElementCocId);
+            const historyPeriod = (window.autogenFormCurrentPeriodId = period || dataFormInfo.period);
+            window.viewHist(dataElement.id, dataElementCocId, historyPeriod);
         }
     };
 
@@ -78,14 +80,20 @@ export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props 
         }
     };
 
+    if (dataElement.mirrorFrom) {
+        return <MirrorDataElementItem dataElement={dataElement} dataFormInfo={dataFormInfo} period={period} />;
+    }
+
     return !noComment ? (
         <div id={elId} className={classes.valueWrapper}>
             <div
                 onClick={() => onClick(dataElement, rowName)}
                 onBlur={() => onBlur()}
+                onDoubleClick={() => onDoubleClick()}
                 className={`${classes.valueInput} sourcetype`}
                 id={auditId}
             >
+                <DebugLabel>{dataElement.code}</DebugLabel>
                 <DataEntryItem
                     dataElement={dataElement}
                     dataFormInfo={dataFormInfo}
@@ -94,13 +102,17 @@ export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props 
                     manualyDisabled={manualyDisabled}
                     total={total}
                     columnTotal={columnTotal}
-                    rowDataElements={rowDataElements}
                     columnDataElements={columnDataElements}
-                    cocId=""
+                    cocId={dataElementCocId}
                     rows={rows}
+                    lockException={lockException}
                 />
             </div>
-            <CommentIcon dataElementId={dataElement.id} categoryOptionComboId={dataElementCocId} />
+            <CommentIcon
+                dataElementId={dataElement.id}
+                categoryOptionComboId={dataElementCocId}
+                period={period || dataFormInfo.period}
+            />
         </div>
     ) : (
         <div id={elId} className={classes.valueWrapper}>
@@ -119,9 +131,9 @@ export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props 
                     manualyDisabled={manualyDisabled}
                     total={total}
                     columnTotal={columnTotal}
-                    rowDataElements={rowDataElements}
                     columnDataElements={columnDataElements}
                     cocId={dataElementCocId}
+                    lockException={lockException}
                 />
             </div>
         </div>
@@ -132,3 +144,7 @@ const useStyles = makeStyles({
     valueInput: { flexGrow: 1, border: "0 !important" },
     valueWrapper: { display: "flex" },
 });
+
+export function isDataValueEnabled(dataValue: DataValue): boolean {
+    return dataValue.type === "BOOLEAN" ? Boolean(dataValue.value) : false;
+}

@@ -17,5 +17,9 @@ table td {
 }
 
 [data-test="dhis2-uicore-singleselect-clear"] {
-    margin-left: 5px;
+    margin-inline-start: 5px;
+}
+
+body > iframe {
+    pointer-events: none;
 }

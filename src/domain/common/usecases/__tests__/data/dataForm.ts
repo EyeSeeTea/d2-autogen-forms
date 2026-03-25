@@ -1,0 +1,33 @@
+import { DataForm } from "../../../entities/DataForm";
+import { PeriodType } from "../../../entities/Period";
+
+export const dataForm: Omit<DataForm, "id"> = {
+    expiryDays: 30,
+    dataInputPeriods: [],
+    dataElements: [],
+    sections: [],
+    texts: {
+        header: undefined,
+        footer: undefined,
+        rowTotals: undefined,
+        totals: undefined,
+        name: undefined,
+    },
+    options: {
+        dataElements: {
+            de1: { widget: "dropdown" },
+        },
+    },
+    indicators: [],
+    totalRules: {
+        dataElementTotalRules: [],
+        sectionTotalRules: [],
+    },
+    rules: undefined,
+    compulsoryDataValues: [],
+    showErrorOnCompulsory: false,
+    periodType: PeriodType.DAILY,
+    removePrefix: undefined,
+    customCss: undefined,
+    showNavigation: false,
+};

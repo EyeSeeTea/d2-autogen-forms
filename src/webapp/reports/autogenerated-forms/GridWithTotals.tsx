@@ -4,8 +4,6 @@ import {
     DataTable,
     TableHead,
     DataTableRow,
-    DataTableColumnHeader,
-    DataTableCell,
     TableBody,
     // @ts-ignore
 } from "@dhis2/ui";
@@ -15,7 +13,7 @@ import { SectionWithTotals } from "../../../../src/domain/common/entities/DataFo
 import { DataElementItem } from "./DataElementItem";
 import { makeStyles } from "@material-ui/core";
 import DataTableSection from "./DataTableSection";
-import { fixHeaderClasses } from "./datatables/CustomDataTables";
+import { CustomDataTableCell, CustomDataTableColumnHeader, fixHeaderClasses } from "./datatables/CustomDataTables";
 
 export interface GridWithTotalsProps {
     dataFormInfo: DataFormInfo;
@@ -26,66 +24,94 @@ const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
     const { dataFormInfo, section } = props;
 
     const grid = React.useMemo(
-        () => GridWithTotalsViewModel.get(section, dataFormInfo.metadata.dataForm.dataElements),
-        [section, dataFormInfo.metadata.dataForm.dataElements]
+        () =>
+            GridWithTotalsViewModel.get(
+                section,
+                dataFormInfo.metadata.dataForm.dataElements,
+                dataFormInfo.metadata.dataForm.options.dataElements
+            ),
+        [section, dataFormInfo.metadata.dataForm.dataElements, dataFormInfo.metadata.dataForm.options.dataElements]
     );
     const classes = useStyles();
 
-    const fistSection = section.id !== "yzMn16Bp1wV";
+    const currentSectionIndex = dataFormInfo.metadata.dataForm.sections.findIndex(
+        allSections => allSections.id === section.id
+    );
+    const notFirstSection = currentSectionIndex !== 0;
 
     return (
-        <DataTableSection section={grid} dataFormInfo={dataFormInfo}>
+        <DataTableSection section={grid} sectionStyles={props.section.styles} dataFormInfo={dataFormInfo}>
             <div className={classes.fixedHeaders}>
                 <DataTable className={classes.table} layout="fixed" width="initial">
                     <TableHead className={classes.tableHeader}>
                         {grid.parentColumns.length > 0 && (
                             <DataTableRow>
-                                <DataTableColumnHeader></DataTableColumnHeader>
-                                <DataTableColumnHeader></DataTableColumnHeader>
+                                <CustomDataTableColumnHeader
+                                    backgroundColor={props.section.styles.columns.backgroundColor}
+                                ></CustomDataTableColumnHeader>
+                                <CustomDataTableColumnHeader
+                                    backgroundColor={props.section.styles.columns.backgroundColor}
+                                ></CustomDataTableColumnHeader>
                                 {grid.parentColumns.map(column => {
                                     return (
-                                        <DataTableColumnHeader
+                                        <CustomDataTableColumnHeader
+                                            backgroundColor={props.section.styles.columns.backgroundColor}
                                             key={column.name}
                                             className={classes.centerSpan}
                                             colSpan={String(column.colSpan)}
                                         >
                                             <span>{column.name}</span>
-                                        </DataTableColumnHeader>
+                                        </CustomDataTableColumnHeader>
                                     );
                                 })}
-                                {section.id === "yzMn16Bp1wV" && <DataTableColumnHeader></DataTableColumnHeader>}
+                                {!notFirstSection && (
+                                    <CustomDataTableColumnHeader
+                                        backgroundColor={props.section.styles.columns.backgroundColor}
+                                    ></CustomDataTableColumnHeader>
+                                )}
                             </DataTableRow>
                         )}
                         <DataTableRow>
                             {grid.useIndexes ? (
-                                <DataTableColumnHeader width="30px">
+                                <CustomDataTableColumnHeader
+                                    backgroundColor={props.section.styles.columns.backgroundColor}
+                                    width="30px"
+                                >
                                     <span className={classes.header}>#</span>{" "}
-                                </DataTableColumnHeader>
+                                </CustomDataTableColumnHeader>
                             ) : (
-                                <DataTableColumnHeader></DataTableColumnHeader>
+                                <CustomDataTableColumnHeader
+                                    backgroundColor={props.section.styles.columns.backgroundColor}
+                                ></CustomDataTableColumnHeader>
                             )}
 
-                            {fistSection ? (
-                                <DataTableColumnHeader className={classes.columnWidth} key={`column-Total`}>
+                            {notFirstSection ? (
+                                <CustomDataTableColumnHeader
+                                    backgroundColor={props.section.styles.columns.backgroundColor}
+                                    className={classes.columnWidth}
+                                    key={`column-Total`}
+                                >
                                     <span>Total</span>
-                                </DataTableColumnHeader>
+                                </CustomDataTableColumnHeader>
                             ) : null}
 
                             {grid.columns.map(column =>
                                 column.deName && column.cocName ? (
-                                    <DataTableColumnHeader
+                                    <CustomDataTableColumnHeader
+                                        backgroundColor={props.section.styles.columns.backgroundColor}
                                         key={`column-${column.name}`}
                                         className={classes.columnWidth}
                                     >
                                         <span>{column.cocName}</span>
-                                    </DataTableColumnHeader>
+                                    </CustomDataTableColumnHeader>
                                 ) : (
-                                    <DataTableColumnHeader
+                                    <CustomDataTableColumnHeader
+                                        backgroundColor={props.section.styles.columns.backgroundColor}
                                         key={`column-${column.name}`}
-                                        className={column.name === "Source Type" ? classes.source : classes.columnWidth}
+                                        className={column.isSourceType ? classes.source : classes.columnWidth}
                                     >
                                         <span>{column.name}</span>
-                                    </DataTableColumnHeader>
+                                    </CustomDataTableColumnHeader>
                                 )
                             )}
                         </DataTableRow>
@@ -94,31 +120,42 @@ const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
                     <TableBody>
                         {grid.rows.map((row, idx) => (
                             <DataTableRow key={`policy-${row.name}`}>
-                                <DataTableCell className={classes.td}>
+                                <CustomDataTableCell
+                                    backgroundColor={props.section.styles.rows.backgroundColor}
+                                    className={classes.td}
+                                >
                                     <p
                                         style={{
-                                            paddingLeft: row.includePadding ? `${row.includePadding * 10}px` : "0",
+                                            paddingInlineStart: row.includePadding
+                                                ? `${row.includePadding * 10}px`
+                                                : "0",
                                         }}
                                     >
                                         {grid.useIndexes ? (idx + 1).toString() : row.name}
                                     </p>
-                                </DataTableCell>
+                                </CustomDataTableCell>
 
-                                {fistSection && row.total ? (
-                                    <DataTableCell key={row.total.id + row.total.cocId}>
+                                {notFirstSection && row.total ? (
+                                    <CustomDataTableCell
+                                        backgroundColor={props.section.styles.rows.backgroundColor}
+                                        key={row.total.id + row.total.cocId}
+                                    >
                                         <DataElementItem
                                             dataElement={row.total}
                                             dataFormInfo={dataFormInfo}
                                             manualyDisabled={true}
                                             noComment={true}
                                         />
-                                    </DataTableCell>
+                                    </CustomDataTableCell>
                                 ) : null}
 
                                 {row.items.map((item, idx) => {
-                                    if (item.column.name === "Source Type") {
+                                    if (item.column.isSourceType) {
                                         return item.dataElement ? (
-                                            <DataTableCell key={item.dataElement.id + item.dataElement.cocId}>
+                                            <CustomDataTableCell
+                                                backgroundColor={props.section.styles.rows.backgroundColor}
+                                                key={item.dataElement.id + item.dataElement.cocId}
+                                            >
                                                 <DataElementItem
                                                     dataElement={item.dataElement}
                                                     dataFormInfo={dataFormInfo}
@@ -126,13 +163,19 @@ const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
                                                     columnTotal={item.columnTotal}
                                                     rows={grid.rows}
                                                 />
-                                            </DataTableCell>
+                                            </CustomDataTableCell>
                                         ) : (
-                                            <DataTableCell key={`cell-${idx}`}></DataTableCell>
+                                            <CustomDataTableCell
+                                                backgroundColor={props.section.styles.rows.backgroundColor}
+                                                key={`cell-${idx}`}
+                                            ></CustomDataTableCell>
                                         );
                                     } else {
                                         return item.dataElement ? (
-                                            <DataTableCell key={item.dataElement.id + item.dataElement.cocId}>
+                                            <CustomDataTableCell
+                                                backgroundColor={props.section.styles.rows.backgroundColor}
+                                                key={item.dataElement.id + item.dataElement.cocId}
+                                            >
                                                 <DataElementItem
                                                     dataElement={item.dataElement}
                                                     dataFormInfo={dataFormInfo}
@@ -140,13 +183,15 @@ const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
                                                     manualyDisabled={item.disabled}
                                                     total={row.total}
                                                     columnTotal={item.columnTotal}
-                                                    rowDataElements={row.rowDataElements}
                                                     columnDataElements={item.columnDataElements}
                                                     rowName={row.name}
                                                 />
-                                            </DataTableCell>
+                                            </CustomDataTableCell>
                                         ) : (
-                                            <DataTableCell key={`cell-${idx}`}></DataTableCell>
+                                            <CustomDataTableCell
+                                                backgroundColor={props.section.styles.rows.backgroundColor}
+                                                key={`cell-${idx}`}
+                                            ></CustomDataTableCell>
                                         );
                                     }
                                 })}
@@ -171,7 +216,7 @@ const useStyles = makeStyles({
             alignItems: "center",
         },
     },
-    tableHeader: { position: "sticky", top: 0, zIndex: 2 },
+    tableHeader: { position: "sticky", insetBlockStart: 0, zIndex: 2 },
     fixedHeaders: fixHeaderClasses.fixedHeaders,
 });
 

@@ -5,6 +5,7 @@ import styled from "styled-components";
 import { WidgetFeedback } from "../WidgetFeedback";
 import { DataValueNumberSingle } from "../../../../domain/common/entities/DataValue";
 import { WidgetProps } from "./WidgetBase";
+import { useInputState } from "../hooks/useInputState";
 
 export interface NumberWidgetProps extends WidgetProps {
     dataValue: DataValueNumberSingle;
@@ -12,6 +13,8 @@ export interface NumberWidgetProps extends WidgetProps {
 
 const NumberWidget: React.FC<NumberWidgetProps> = props => {
     const { onValueChange, dataValue, disabled } = props;
+
+    const { value, onChange } = useInputState(dataValue.value);
 
     const notifyChange = React.useCallback(
         ({ value: newValue }: { value: string }) => {
@@ -21,6 +24,12 @@ const NumberWidget: React.FC<NumberWidgetProps> = props => {
         },
         [onValueChange, dataValue]
     );
+
+    const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+            e.preventDefault();
+        }
+    };
 
     return (
         <WidgetFeedback state={props.state}>
@@ -35,7 +44,10 @@ const NumberWidget: React.FC<NumberWidgetProps> = props => {
                 <CustomInput
                     type="number"
                     onBlur={e => notifyChange({ value: e.target.value })}
-                    defaultValue={dataValue.value}
+                    value={value}
+                    onChange={onChange}
+                    onKeyDown={onKeyDown}
+                    className="noscroll"
                 />
             )}
         </WidgetFeedback>
