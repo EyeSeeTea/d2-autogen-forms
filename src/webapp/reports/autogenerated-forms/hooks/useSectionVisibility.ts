@@ -1,4 +1,3 @@
-import _ from "lodash";
 import { useMemo } from "react";
 import { Section } from "../../../../domain/common/entities/DataForm";
 import { DataElementToggle } from "../../../../domain/common/entities/ToggleMultiple";
@@ -117,16 +116,12 @@ function getConditionsByType(dataFormInfo: DataFormInfo, toggleMultiple: DataEle
     const { toggleDataElements, orgUnitConditions } = toggleMultiple;
 
     const getToggleConditions = (toggleType: "dataElement" | "orgUnit") =>
-        _(toggleDataElements)
-            .map(toggle => {
-                if (toggle.type !== toggleType) return undefined;
-                return {
-                    isVisible: evaluateToggleCondition(toggle, dataFormInfo, currentOrgUnitCode),
-                    isDisabled: toggle.dataElement.disabled,
-                };
-            })
-            .compact()
-            .value();
+        toggleDataElements
+            .filter(toggle => toggle.type === toggleType)
+            .map(toggle => ({
+                isVisible: evaluateToggleCondition(toggle, dataFormInfo, currentOrgUnitCode),
+                isDisabled: toggle.dataElement.disabled,
+            }));
 
     const orgUnitConditionResults = orgUnitConditions.map(condition => ({
         isVisible: evaluateOrgUnitCondition(condition.orgUnitCodes, condition.condition, currentOrgUnitCode),
@@ -176,8 +171,8 @@ function evaluateConditions(
     if (conditions.length === 0) return undefined;
 
     return logicalOperator === "AND"
-        ? _(conditions).every(condition => evalFunction(condition))
-        : _(conditions).some(condition => evalFunction(condition));
+        ? conditions.every(condition => evalFunction(condition))
+        : conditions.some(condition => evalFunction(condition));
 }
 
 function evaluateToggleCondition(
