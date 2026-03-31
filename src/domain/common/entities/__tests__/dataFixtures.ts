@@ -83,6 +83,7 @@ export const dataFormBase: Omit<DataForm, "sections"> = {
     removePrefix: undefined,
     customCss: undefined,
     showNavigation: false,
+    disableAutoValidation: false,
 };
 
 export const dataValueBase: DataValueBase = {
