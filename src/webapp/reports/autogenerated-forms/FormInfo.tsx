@@ -3,11 +3,12 @@ import { Tooltip } from "@material-ui/core";
 import { version } from "../../../../package.json";
 import styled from "styled-components";
 import { InfoOutlined } from "@material-ui/icons";
+import i18n from "../../../locales";
 
 export const FormInfo: React.FC = () => {
     return (
         <Container>
-            <Tooltip title={`Version: ${version}`} arrow placement="left">
+            <Tooltip title={i18n.t("Version: {version}", { version, nsSeparator: false })} arrow placement="left">
                 <StyledInfoIcon />
             </Tooltip>
         </Container>

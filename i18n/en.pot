@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-03-13T13:24:24.302Z\n"
-"PO-Revision-Date: 2026-03-13T13:24:24.302Z\n"
+"POT-Creation-Date: 2026-03-31T17:32:04.356Z\n"
+"PO-Revision-Date: 2026-03-31T17:32:04.356Z\n"
 
 msgid "Mark all notifications as read"
 msgstr ""
@@ -45,6 +45,9 @@ msgid "There are no sections in this data set. Check README for more details"
 msgstr ""
 
 msgid "View comment and audit history"
+msgstr ""
+
+msgid "Version: {version}"
 msgstr ""
 
 msgid "Period"
