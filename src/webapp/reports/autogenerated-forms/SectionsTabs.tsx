@@ -444,6 +444,7 @@ const ScreenOnlyContent = styled.div`
 `;
 
 const StyledTabs = styled(Tabs)`
+    font-size: 14px;
     position: relative;
 `;
 
