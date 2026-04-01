@@ -30,4 +30,5 @@ export const dataForm: Omit<DataForm, "id"> = {
     removePrefix: undefined,
     customCss: undefined,
     showNavigation: false,
+    disableAutoValidation: false,
 };

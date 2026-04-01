@@ -309,9 +309,11 @@ function useDataFormInfo() {
                         return prev.set(savedValue);
                     });
                 });
-            checkValidationRules(dataValue);
+            if (!dataForm?.disableAutoValidation) {
+                checkValidationRules(dataValue);
+            }
         },
-        [compositionRoot, dataValues, dataForm?.compulsoryDataValues, checkValidationRules]
+        [compositionRoot, dataValues, dataForm?.compulsoryDataValues, dataForm?.disableAutoValidation, checkValidationRules]
     );
 
     const deleteDataValues = useCallback<DataFormInfo["data"]["delete"]>(
@@ -359,10 +361,12 @@ function useDataFormInfo() {
                     });
                 })
                 .then(() => {
-                    checkValidationRules(dataValue);
+                    if (!dataForm?.disableAutoValidation) {
+                        checkValidationRules(dataValue);
+                    }
                 });
         },
-        [compositionRoot, dataValues, checkValidationRules]
+        [compositionRoot, dataValues, dataForm?.disableAutoValidation, checkValidationRules]
     );
 
     const dataFormInfo: Maybe<DataFormInfo> =
