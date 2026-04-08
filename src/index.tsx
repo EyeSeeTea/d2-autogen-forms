@@ -52,7 +52,15 @@ const configI18n = ({ keyUiLocale }: { keyUiLocale: string }) => {
 };
 
 function removeJSDisabledMessage() {
-    document.getElementById("js-disabled-message")?.remove();
+    // The new Data Entry app (DHIS2 v42+) renders a visible "You need to enable JavaScript" text node next to #root
+    const root = document.getElementById("root");
+    if (root?.parentNode) {
+        Array.from(root.parentNode.childNodes).forEach(node => {
+            if (node.nodeType === Node.TEXT_NODE && node.textContent?.includes("You need to enable JavaScript")) {
+                node.remove();
+            }
+        });
+    }
 }
 
 async function main() {
