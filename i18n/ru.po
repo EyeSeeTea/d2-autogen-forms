@@ -9,9 +9,6 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2)\n"
 
-msgid "You need to enable JavaScript"
-msgstr ""
-
 msgid "Mark all notifications as read"
 msgstr "Отметить все уведомления как прочитанные"
 

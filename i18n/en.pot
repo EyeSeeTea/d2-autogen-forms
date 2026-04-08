@@ -8,9 +8,6 @@ msgstr ""
 "POT-Creation-Date: 2026-04-01T22:01:38.532Z\n"
 "PO-Revision-Date: 2026-04-01T22:01:38.532Z\n"
 
-msgid "You need to enable JavaScript"
-msgstr ""
-
 msgid "Mark all notifications as read"
 msgstr ""
 

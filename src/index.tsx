@@ -52,17 +52,7 @@ const configI18n = ({ keyUiLocale }: { keyUiLocale: string }) => {
 };
 
 function removeJSDisabledMessage() {
-    const root = document.getElementById("root");
-    if (root?.parentNode) {
-        Array.from(root.parentNode.childNodes).forEach(node => {
-            if (
-                node.nodeType === Node.TEXT_NODE &&
-                node.textContent?.includes(i18n.t("You need to enable JavaScript"))
-            ) {
-                node.remove();
-            }
-        });
-    }
+    document.getElementById("js-disabled-message")?.remove();
 }
 
 async function main() {
