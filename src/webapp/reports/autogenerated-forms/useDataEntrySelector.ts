@@ -71,7 +71,7 @@ declare global {
                 currentOrganisationUnitId: Id;
                 currentDataSetId: Id;
                 getSelectedPeriod(): Maybe<Period>;
-                currentPeriodId: Id;
+                currentPeriodId?: Id; // Available in DHIS2 v42+
                 addEventListeners(): void;
                 event: { dataValuesLoaded: string };
                 displayValidationDialog: (html: string, width: number) => void;
