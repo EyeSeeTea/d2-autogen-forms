@@ -313,7 +313,13 @@ function useDataFormInfo() {
                 checkValidationRules(dataValue);
             }
         },
-        [compositionRoot, dataValues, dataForm?.compulsoryDataValues, dataForm?.disableAutoValidation, checkValidationRules]
+        [
+            compositionRoot,
+            dataValues,
+            dataForm?.compulsoryDataValues,
+            dataForm?.disableAutoValidation,
+            checkValidationRules,
+        ]
     );
 
     const deleteDataValues = useCallback<DataFormInfo["data"]["delete"]>(

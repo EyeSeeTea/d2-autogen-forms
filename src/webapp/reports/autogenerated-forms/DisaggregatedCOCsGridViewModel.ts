@@ -287,9 +287,12 @@ function getCocFormNameFromCombos(
     };
 }
 
-function getCocOption(
-    categoryOptionCombo: CategoryOptionCombo
-): { code: string; name: string; formName: string; sortOrder: number } {
+function getCocOption(categoryOptionCombo: CategoryOptionCombo): {
+    code: string;
+    name: string;
+    formName: string;
+    sortOrder: number;
+} {
     const cocName = categoryOptionCombo.name.split(separator)[0];
     const cocFormName = categoryOptionCombo.categoryOptions.find(co => cocName?.includes(co.name));
 

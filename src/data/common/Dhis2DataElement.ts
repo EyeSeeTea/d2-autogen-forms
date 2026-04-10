@@ -124,9 +124,7 @@ export function makeCocOrderArray(namesArray: string[][]): string[] {
 // canonical sort order (set in the maintenance app), so the array index is
 // the sortOrder. Used to populate `CategoryOption.sortOrder` independently of
 // the (translated) display label.
-function buildSortOrderByCode(
-    categories: D2DataElement["categoryCombo"]["categories"]
-): Record<string, number> {
+function buildSortOrderByCode(categories: D2DataElement["categoryCombo"]["categories"]): Record<string, number> {
     return _(categories)
         .flatMap(cat => cat.categoryOptions.map((co, index) => [co.code, index] as const))
         .fromPairs()
