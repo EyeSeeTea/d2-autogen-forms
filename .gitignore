@@ -43,3 +43,6 @@ datastore
 
 # OpenSpec (changes are local, specs are committed)
 openspec/changes/
+
+# Claude Code local settings (per-user permissions, not shared)
+.claude/settings.local.json
