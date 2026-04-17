@@ -108,8 +108,7 @@ export type DataValue =
     | DataValueDate
     | DataValueMultiText;
 
-export type DataValueLookup = Pick<DataValueBase, "orgUnitId" | "period" | "categoryOptionComboId"> &
-    Partial<Pick<DataValueBase, "comment" | "isRequired">>;
+export type DataValueLookup = Pick<DataValueBase, "orgUnitId" | "period" | "categoryOptionComboId">;
 
 export type Period = string;
 
