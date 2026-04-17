@@ -48,7 +48,7 @@ msgstr ""
 msgid "View comment and audit history"
 msgstr ""
 
-msgid "Version: {version}"
+msgid "D2 Autogen Forms version: {{version}}"
 msgstr ""
 
 msgid "Period"
