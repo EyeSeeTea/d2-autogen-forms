@@ -50,6 +50,7 @@ export function useAutogenEditor(props: AutogenEditorProps): AutogenEditorState 
             folding: !isHugeFile,
             lineNumbers: "on" as const,
             renderWhitespace: isLargeFile ? ("none" as const) : ("selection" as const),
+            quickSuggestions: { other: true, comments: false, strings: true },
             ...(isHugeFile && {
                 renderValidationDecorations: "off" as const,
                 occurrencesHighlight: false,

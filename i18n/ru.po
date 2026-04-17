@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: i18next-conv\n"
-"POT-Creation-Date: 2026-03-13T13:24:24.302Z\n"
+"POT-Creation-Date: 2026-04-17T20:38:16.162Z\n"
 "PO-Revision-Date: 2018-10-25T09:02:35.143Z\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -117,6 +117,45 @@ msgstr ""
 msgid "? This action cannot be undone."
 msgstr ""
 
+msgid "Name is required"
+msgstr ""
+
+msgid "Short name is required"
+msgstr ""
+
+msgid "Short name must be {{max}} characters or fewer"
+msgstr ""
+
+msgid "Code is required"
+msgstr ""
+
+msgid "Description is required"
+msgstr ""
+
+msgid "Create new constant"
+msgstr ""
+
+msgid "Name"
+msgstr ""
+
+msgid "Short name"
+msgstr ""
+
+msgid "Auto-filled from name. Max {{max}} characters."
+msgstr ""
+
+msgid "Code"
+msgstr ""
+
+msgid "Auto-filled with the project prefix {{prefix}}"
+msgstr ""
+
+msgid "Auto-filled from name"
+msgstr ""
+
+msgid "Description"
+msgstr ""
+
 msgid "Select dataset"
 msgstr ""
 
@@ -136,4 +175,17 @@ msgid "Configuration deleted"
 msgstr ""
 
 msgid "Configuration saved"
+msgstr ""
+
+msgid "Open dialog to define a new constant"
+msgstr ""
+
+msgctxt "ADD authority."
+msgid ""
+"You do not have permission to create constants. Ask your administrator for "
+"the F_CONSTANT"
+msgstr ""
+
+msgctxt "ADD authority"
+msgid "Requires F_CONSTANT"
 msgstr ""
