@@ -54,6 +54,34 @@ describe("DataStoreConfigCodec", () => {
             });
         });
     });
+
+    describe("prefix (root)", () => {
+        it("parses prefix when set at the root of the config", () => {
+            const input = { prefix: "TUB_", dataSets: {} };
+
+            const result = DataStoreConfigCodec.decode(input);
+
+            result.caseOf({
+                Left: error => fail(`Decode failed: ${error}`),
+                Right: config => {
+                    expect(config.prefix).toBe("TUB_");
+                },
+            });
+        });
+
+        it("decodes successfully when prefix is absent", () => {
+            const input = { dataSets: {} };
+
+            const result = DataStoreConfigCodec.decode(input);
+
+            result.caseOf({
+                Left: error => fail(`Decode failed: ${error}`),
+                Right: config => {
+                    expect(config.prefix).toBeUndefined();
+                },
+            });
+        });
+    });
 });
 
 function buildConfigWithDataSet(dataSetOverrides: Record<string, unknown>): object {

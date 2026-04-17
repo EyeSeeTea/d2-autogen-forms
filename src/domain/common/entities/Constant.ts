@@ -12,3 +12,20 @@ export type Constant = {
     translations: Translation[];
     value: number;
 };
+
+export const shortNameMaxLength = 50;
+
+export function deriveShortName(name: string): string {
+    return toUpperSnake(name).slice(0, shortNameMaxLength);
+}
+
+export function deriveCode(name: string, prefix: string | undefined): string {
+    return `${prefix ?? ""}${toUpperSnake(name)}`;
+}
+
+function toUpperSnake(input: string): string {
+    return input
+        .replace(/[^a-zA-Z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "")
+        .toUpperCase();
+}

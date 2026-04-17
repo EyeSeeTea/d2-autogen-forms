@@ -268,6 +268,7 @@ const optionSetCodec = Codec.interface({
 });
 
 export const DataStoreConfigCodec = Codec.interface({
+    prefix: optional(string),
     categoryCombinations: optionalRecord({
         viewType: optional(oneOf([exactly("name"), exactly("shortName"), exactly("formName")])),
     }),
@@ -622,6 +623,7 @@ interface DataFormStoreConfig {
 }
 
 const defaultDataStoreConfig: DataFormStoreConfig["custom"] = {
+    prefix: "",
     dataElements: {},
     dataSets: {},
     categoryCombinations: {},
@@ -679,6 +681,7 @@ export class Dhis2DataStoreDataForm {
             },
             Right: async storeConfigFromDataStore => {
                 const storeConfig: DataFormStoreConfig["custom"] = {
+                    prefix: storeConfigFromDataStore.prefix ?? "",
                     dataElements: storeConfigFromDataStore.dataElements || {},
                     dataSets: storeConfigFromDataStore.dataSets || {},
                     categoryCombinations: storeConfigFromDataStore.categoryCombinations || {},

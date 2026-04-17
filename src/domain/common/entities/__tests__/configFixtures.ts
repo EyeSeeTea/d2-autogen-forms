@@ -11,6 +11,7 @@ export const config: Config = {
         orgUnits: orgUnits,
         userRoles: [],
         userGroups: [],
+        authorities: [],
     },
     sqlViews: undefined,
     pairedDataElementsByDataSet: undefined,

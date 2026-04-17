@@ -1,6 +1,6 @@
 import _ from "lodash";
 
-import { D2Api, MetadataResponse } from "../types/d2-api";
+import { D2Api, D2Constant, MetadataResponse, PartialModel } from "../types/d2-api";
 import { Constant } from "../domain/common/entities/Constant";
 import { getImportModeFromOptions, SaveOptions } from "../domain/common/entities/SaveOptions";
 import { Stats } from "../domain/common/entities/Stats";
@@ -12,27 +12,64 @@ import { writeFileSync } from "fs";
 export class ConstantD2Repository implements ConstantRepository {
     constructor(private api: D2Api) {}
 
-    async get(): Promise<Constant[]> {
+    async get(prefix?: string): Promise<Constant[]> {
+        const filter = prefix ? { code: { $like: `${prefix}%` } } : undefined;
         const { objects: constants } = await this.api.models.constants
-            .get({ fields: constantFields, paging: false })
+            .get({ fields: constantFields, paging: false, filter })
             .getData();
 
         return constants;
     }
 
     async save(constants: Constant[], options: SaveOptions): Promise<Stats> {
-        const ids = constants.map(constant => constant.id);
-        const result = await promiseMap(_.chunk(ids, 100), async constantIds => {
+        const constantsToSave = await this.buildConstantPayload(constants);
+
+        const d2PostResponse: Dhis2Response = await this.api.metadata
+            .post({ constants: constantsToSave }, { importMode: getImportModeFromOptions(options.post) })
+            .getData();
+        const response = d2PostResponse.response ? d2PostResponse.response : d2PostResponse;
+        const stats = new Stats({
+            created: response.stats.created,
+            updated: response.stats.updated,
+            ignored: response.stats.ignored,
+            deleted: response.stats.deleted,
+            errorMessage: getErrorFromResponse(response.typeReports),
+        });
+
+        if (options.export) {
+            writeFileSync("constants.json", JSON.stringify({ constants: constantsToSave }, null, 4));
+        }
+        return stats;
+    }
+
+    private async buildConstantPayload(constants: readonly Constant[]): Promise<PartialModel<D2Constant>[]> {
+        const existingConstants = constants.filter(constant => constant.id !== "");
+        const newConstants = constants.filter(constant => constant.id === "");
+
+        const newPayloads: PartialModel<D2Constant>[] = newConstants.map(constant => ({
+            code: constant.code,
+            description: constant.description,
+            name: constant.name,
+            shortName: constant.shortName,
+            value: constant.value,
+            translations: constant.translations,
+        }));
+
+        if (existingConstants.length === 0) return newPayloads;
+
+        const ids = existingConstants.map(constant => constant.id);
+        const existingResult = await promiseMap(_.chunk(ids, 100), async constantIds => {
             const d2Response = await this.api.metadata
                 .get({ constants: { fields: { $owner: true }, filter: { id: { in: constantIds } } } })
                 .getData();
 
-            const constantsToSave = constantIds.map(constantId => {
+            return constantIds.map(constantId => {
                 const existingConstant = d2Response.constants.find(d2Constant => d2Constant.id === constantId);
-                const constant = constants.find(constant => constant.id === constantId);
+                const constant = existingConstants.find(constant => constant.id === constantId);
                 if (!constant) {
-                    throw Error(`Cannot found constant: ${constantId}`);
+                    throw Error(`Cannot find constant: ${constantId}`);
                 }
+
                 return {
                     ...(existingConstant || {}),
                     id: constant.id,
@@ -43,28 +80,9 @@ export class ConstantD2Repository implements ConstantRepository {
                     translations: constant.translations,
                 };
             });
-
-            const d2PostResponse: Dhis2Response = await this.api.metadata
-                .post({ constants: constantsToSave }, { importMode: getImportModeFromOptions(options.post) })
-                .getData();
-            const response = d2PostResponse.response ? d2PostResponse.response : d2PostResponse;
-            const stats = new Stats({
-                created: response.stats.created,
-                updated: response.stats.updated,
-                ignored: response.stats.ignored,
-                deleted: response.stats.deleted,
-                errorMessage: getErrorFromResponse(response.typeReports),
-            });
-            return { stats: stats, constants: constantsToSave };
         });
-        const allStats = result.flatMap(result => result.stats);
-        if (options.export) {
-            writeFileSync(
-                "constants.json",
-                JSON.stringify({ constants: result.flatMap(result => result.constants) }, null, 4)
-            );
-        }
-        return Stats.combine(allStats);
+
+        return [...existingResult.flat(), ...newPayloads];
     }
 }
 
