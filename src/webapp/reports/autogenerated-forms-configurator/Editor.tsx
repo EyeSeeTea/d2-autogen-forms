@@ -14,7 +14,10 @@ import {
 } from "./monaco/registerInlineConstantCompletions";
 
 export type EditorApi = {
-    insertAtRange: (range: { startLineNumber: number; endLineNumber: number; startColumn: number; endColumn: number }, text: string) => void;
+    insertAtRange: (
+        range: { startLineNumber: number; endLineNumber: number; startColumn: number; endColumn: number },
+        text: string
+    ) => void;
 };
 
 export type EditorProps = {

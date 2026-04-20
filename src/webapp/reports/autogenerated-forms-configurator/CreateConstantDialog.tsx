@@ -26,7 +26,9 @@ export const CreateConstantDialog: React.FC<CreateConstantDialogProps> = React.m
     const [description, setDescription] = useState("");
     const [isSaving, setIsSaving] = useState(false);
     const [generalError, setGeneralError] = useState<string | undefined>();
-    const [fieldErrors, setFieldErrors] = useState<Partial<Record<"name" | "shortName" | "code" | "description", string>>>({});
+    const [fieldErrors, setFieldErrors] = useState<
+        Partial<Record<"name" | "shortName" | "code" | "description", string>>
+    >({});
 
     useEffect(() => {
         if (!open) {
@@ -76,7 +78,6 @@ export const CreateConstantDialog: React.FC<CreateConstantDialogProps> = React.m
     const handleSave = useCallback(async () => {
         setGeneralError(undefined);
         if (!validate()) return;
-
 
         const constant: Constant = {
             id: "",
