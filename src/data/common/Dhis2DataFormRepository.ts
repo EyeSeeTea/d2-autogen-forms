@@ -77,6 +77,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
             removePrefix: dataSetConfig.removePrefix,
             customCss: dataSetConfig.customCss,
             showNavigation: dataSetConfig.showNavigation,
+            disableAutoValidation: dataSetConfig.disableAutoValidation,
         };
     }
 

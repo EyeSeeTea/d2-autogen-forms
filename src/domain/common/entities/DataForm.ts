@@ -33,6 +33,7 @@ export interface DataForm {
     readonly removePrefix: Maybe<string>;
     readonly customCss: Maybe<string>;
     readonly showNavigation: boolean;
+    readonly disableAutoValidation: boolean;
 }
 
 export type Texts = {

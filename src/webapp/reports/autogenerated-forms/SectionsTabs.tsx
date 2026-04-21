@@ -467,7 +467,11 @@ const StyledIconButton = styled(IconButton).withConfig({
 })<Omit<ScrollButtonProps, "handleScroll">>`
     opacity: ${props =>
         (!props.showLeftFade && props.direction === "left") || (!props.showRightFade && props.direction === "right")
-            ? 0.5
+            ? 0
+            : undefined};
+    pointer-events: ${props =>
+        (!props.showLeftFade && props.direction === "left") || (!props.showRightFade && props.direction === "right")
+            ? "none"
             : undefined};
     inset-inline-start: ${props => (props.direction === "left" ? "-1rem" : undefined)};
     inset-inline-end: ${props => (props.direction === "right" ? "1rem" : undefined)};
