@@ -69,6 +69,7 @@ export class Dhis2DataValueRepository implements DataValueRepository {
                     period: dv.period,
                     categoryOptionComboId: dv.categoryOptionCombo,
                     isRequired,
+                    comment: dv.comment || "",
                 };
 
                 const { type } = dataElement;
@@ -203,6 +204,7 @@ export class Dhis2DataValueRepository implements DataValueRepository {
                     period: combo.period,
                     categoryOptionComboId: combo.categoryOptionComboId,
                     isRequired: true,
+                    comment: "",
                 };
 
                 const { type } = dataElement;
