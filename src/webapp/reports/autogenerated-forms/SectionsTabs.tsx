@@ -448,7 +448,7 @@ const StyledTabs = styled(Tabs)`
 `;
 
 const StyledTab = styled(Tab)`
-    font-size: 0.875rem;
+    font-size: 12.25px;
 `;
 
 const FadedOverlay = styled.div<{ hidden?: boolean }>`
