@@ -14,6 +14,9 @@ export const CustomDataTableColumnHeader = styled(DataTableColumnHeader)<{
     background-color: ${props => props.backgroundColor} !important;
     ${props => props.position && `position: ${props.position} !important;`}
     ${props => props.left !== undefined && `left: ${props.left} !important;`}
+    & > span {
+        width: 100%;
+    }
 `;
 
 export const CustomDataTableCell = styled(DataTableCell)<{

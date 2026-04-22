@@ -56,7 +56,12 @@ const TabNavigation: React.FC<TabNavigationProps> = React.memo(props => {
                 {positionDisplay}
             </StyledTypography>
 
-            <StyledButton endIcon={<ChevronRight />} disabled={isLast} onClick={handleNext} aria-label={i18n.t("Next tab")}>
+            <StyledButton
+                endIcon={<ChevronRight />}
+                disabled={isLast}
+                onClick={handleNext}
+                aria-label={i18n.t("Next tab")}
+            >
                 {i18n.t("Next")}
             </StyledButton>
         </Box>
@@ -64,11 +69,11 @@ const TabNavigation: React.FC<TabNavigationProps> = React.memo(props => {
 });
 
 const StyledButton = styled(Button)`
-   font-size: 12.25px;
-`
+    font-size: 12.25px;
+`;
 
 const StyledTypography = styled(Typography)`
-    font-size: 12px; 
-`
+    font-size: 12px;
+`;
 
 export default TabNavigation;

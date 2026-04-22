@@ -73,7 +73,7 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
 
     return (
         <DataTableSection section={grid} dataFormInfo={dataFormInfo} sectionStyles={section.styles}>
-            <DataTable className={classes.table} layout="fixed" width="initial">
+            <DataTable className={classes.table} layout="fixed" width="100%">
                 <TableHead>
                     <DataTableRow>
                         <CustomDataTableColumnHeader
@@ -98,7 +98,7 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                         {grid.periods.length > 0 && (
                             <CustomDataTableColumnHeader
                                 backgroundColor={section.styles.columns.backgroundColor}
-                                width="50px"
+                                width="120px"
                             >
                                 <div className={classes.header}>{section.texts.periodHeader ?? i18n.t("Period")}</div>
                             </CustomDataTableColumnHeader>

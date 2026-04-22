@@ -46,7 +46,7 @@ const TableForm: React.FC<TableFormProps> = React.memo(props => {
     });
     return (
         <DataTableSection section={section} sectionStyles={props.section.styles} dataFormInfo={dataFormInfo}>
-            <DataTable>
+            <DataTable layout="fixed" width="100%">
                 <TableHead>
                     <DataTableRow>
                         {section.dataEntryPeriod && (
@@ -56,7 +56,7 @@ const TableForm: React.FC<TableFormProps> = React.memo(props => {
                                 ></CustomDataTableColumnHeader>
                                 <CustomDataTableColumnHeader
                                     backgroundColor={props.section.styles.columns.backgroundColor}
-                                    className={styles.periodColumnHeader}
+                                    width="120px"
                                 >
                                     <span className={styles.header}>
                                         {props.section.texts.periodHeader ?? i18n.t("Period")}
@@ -163,10 +163,6 @@ const useStyles = makeStyles({
         textAlign: "center",
         display: "flex",
         padding: "4px",
-    },
-    periodColumnHeader: {
-        minWidth: "50px",
-        maxWidth: "100px",
     },
 });
 
