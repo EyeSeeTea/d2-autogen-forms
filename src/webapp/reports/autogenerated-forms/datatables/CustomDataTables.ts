@@ -11,7 +11,8 @@ export const CustomDataTableColumnHeader = styled(DataTableColumnHeader)<{
     position?: React.CSSProperties["position"];
     left?: React.CSSProperties["left"];
 }>`
-    background-color: ${props => props.backgroundColor} !important;
+    background-color: #ffffff !important;
+    background-image: linear-gradient(${props => props.backgroundColor}, ${props => props.backgroundColor}) !important;
     ${props => props.position && `position: ${props.position} !important;`}
     ${props => props.left !== undefined && `left: ${props.left} !important;`}
     & > span {
