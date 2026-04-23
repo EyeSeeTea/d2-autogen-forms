@@ -269,6 +269,8 @@ export class DataFormM {
                     case "grid-with-periods":
                     case "grid-indicators-calculated":
                         return section.periods.map(period => period.id);
+                    case "grid-with-cat-option-combos":
+                        return section.periods.map(period => period.id);
                     default:
                         return [];
                 }
