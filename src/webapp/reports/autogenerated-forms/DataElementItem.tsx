@@ -57,7 +57,15 @@ export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props 
                     categoryOptionComboId: dataElementCocId,
                 })
             ),
-        [noComment, dataFormInfo.data.values, dataElement, dataFormInfo.orgUnitId, period, dataFormInfo.period, dataElementCocId]
+        [
+            noComment,
+            dataFormInfo.data.values,
+            dataElement,
+            dataFormInfo.orgUnitId,
+            period,
+            dataFormInfo.period,
+            dataElementCocId,
+        ]
     );
     const notifyParent = React.useCallback<DataEntryItemProps["onValueChange"]>(
         async dataValue => {

@@ -8,7 +8,11 @@ import i18n from "../../../locales";
 export const FormInfo: React.FC = () => {
     return (
         <Container>
-            <Tooltip title={i18n.t("D2 Autogen Forms version: {{version}}", { version, nsSeparator: false })} arrow placement="left">
+            <Tooltip
+                title={i18n.t("D2 Autogen Forms version: {{version}}", { version, nsSeparator: false })}
+                arrow
+                placement="left"
+            >
                 <StyledInfoIcon />
             </Tooltip>
         </Container>

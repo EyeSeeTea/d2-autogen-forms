@@ -3,6 +3,7 @@ import { Button, Box, Typography } from "@material-ui/core";
 import { ChevronLeft, ChevronRight } from "@material-ui/icons";
 import i18n from "@eyeseetea/d2-ui-components/locales";
 import { VisibleTab } from "./hooks/useTabVisibility";
+import styled from "styled-components";
 
 export type { VisibleTab };
 
@@ -42,24 +43,37 @@ const TabNavigation: React.FC<TabNavigationProps> = React.memo(props => {
 
     return (
         <Box display="flex" alignItems="center" justifyContent="space-between" padding={1}>
-            <Button
+            <StyledButton
                 startIcon={<ChevronLeft />}
                 disabled={isFirst}
                 onClick={handlePrevious}
                 aria-label={i18n.t("Previous tab")}
             >
                 {i18n.t("Previous")}
-            </Button>
+            </StyledButton>
 
-            <Typography variant="body1" aria-label={i18n.t("Tab position indicator")}>
+            <StyledTypography variant="body1" aria-label={i18n.t("Tab position indicator")}>
                 {positionDisplay}
-            </Typography>
+            </StyledTypography>
 
-            <Button endIcon={<ChevronRight />} disabled={isLast} onClick={handleNext} aria-label={i18n.t("Next tab")}>
+            <StyledButton
+                endIcon={<ChevronRight />}
+                disabled={isLast}
+                onClick={handleNext}
+                aria-label={i18n.t("Next tab")}
+            >
                 {i18n.t("Next")}
-            </Button>
+            </StyledButton>
         </Box>
     );
 });
+
+const StyledButton = styled(Button)`
+    font-size: 12.25px;
+`;
+
+const StyledTypography = styled(Typography)`
+    font-size: 12px;
+`;
 
 export default TabNavigation;

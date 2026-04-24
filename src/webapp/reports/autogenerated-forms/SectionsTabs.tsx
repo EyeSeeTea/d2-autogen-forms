@@ -372,7 +372,7 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
                         TabScrollButtonProps={{ style: { opacity: 0 } }}
                     >
                         {tabHeaders.map(tabHeader => (
-                            <Tab
+                            <StyledTab
                                 key={tabHeader.key + "Tab"}
                                 label={tabHeader.label}
                                 id={`tab-${tabHeader.order}`}
@@ -381,7 +381,7 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
                             />
                         ))}
                         {untabbedSections.length > 0 && (
-                            <Tab
+                            <StyledTab
                                 key="others-tab"
                                 label="Others"
                                 id="tab-others"
@@ -445,6 +445,10 @@ const ScreenOnlyContent = styled.div`
 
 const StyledTabs = styled(Tabs)`
     position: relative;
+`;
+
+const StyledTab = styled(Tab)`
+    font-size: 12.25px;
 `;
 
 const FadedOverlay = styled.div<{ hidden?: boolean }>`
