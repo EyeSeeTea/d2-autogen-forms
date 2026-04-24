@@ -33,6 +33,7 @@ export interface DataForm {
     readonly removePrefix: Maybe<string>;
     readonly customCss: Maybe<string>;
     readonly showNavigation: boolean;
+    readonly disableAutoValidation: boolean;
 }
 
 export type Texts = {
@@ -267,6 +268,8 @@ export class DataFormM {
                     case "grid":
                     case "grid-with-periods":
                     case "grid-indicators-calculated":
+                        return section.periods.map(period => period.id);
+                    case "grid-with-cat-option-combos":
                         return section.periods.map(period => period.id);
                     default:
                         return [];

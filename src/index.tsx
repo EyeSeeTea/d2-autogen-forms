@@ -10,7 +10,6 @@ import App from "./webapp/components/app/App";
 import { getVariant } from "./webapp/reports/variants";
 import "./webapp/utils/wdyr";
 import "./monkey-patch";
-
 declare global {
     interface Window {
         $: { feedbackDhis2(d2: object, appKey: string, feedbackOptions: object): void };
@@ -52,8 +51,21 @@ const configI18n = ({ keyUiLocale }: { keyUiLocale: string }) => {
     document.documentElement.setAttribute("dir", isLangRTL(keyUiLocale) ? "rtl" : "ltr");
 };
 
+function removeJSDisabledMessage() {
+    // The new Data Entry app (DHIS2 v42+) renders a visible "You need to enable JavaScript" text node next to #root
+    const root = document.getElementById("root");
+    if (root?.parentNode) {
+        Array.from(root.parentNode.childNodes).forEach(node => {
+            if (node.nodeType === Node.TEXT_NODE && node.textContent?.includes("You need to enable JavaScript")) {
+                node.remove();
+            }
+        });
+    }
+}
+
 async function main() {
     const baseUrl = await getBaseUrl();
+    removeJSDisabledMessage();
 
     try {
         const d2 = await init({

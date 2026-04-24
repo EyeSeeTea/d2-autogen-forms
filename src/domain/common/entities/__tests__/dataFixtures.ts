@@ -83,12 +83,14 @@ export const dataFormBase: Omit<DataForm, "sections"> = {
     removePrefix: undefined,
     customCss: undefined,
     showNavigation: false,
+    disableAutoValidation: false,
 };
 
 export const dataValueBase: DataValueBase = {
     orgUnitId: "org1",
     period: "202101",
     categoryOptionComboId: "coc1",
+    comment: "",
 };
 
 export const dataValueTextSingle: DataValueTextSingle = {
@@ -97,6 +99,15 @@ export const dataValueTextSingle: DataValueTextSingle = {
     isMultiple: false,
     dataElement: dataElementText,
     value: "Sample text",
+};
+
+export const dataValueTextWithComment: DataValueTextSingle = {
+    ...dataValueBase,
+    type: "TEXT",
+    isMultiple: false,
+    dataElement: dataElementText,
+    value: "Sample text",
+    comment: "This value needs review",
 };
 
 export const dataValues: DataValue[] = [dataValueTextSingle];

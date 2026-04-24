@@ -305,6 +305,7 @@ export const DataStoreConfigCodec = Codec.interface({
         customCss: optional(string),
         showIndex: optional(boolean),
         showNavigation: optional(boolean),
+        disableAutoValidation: optional(boolean),
         rules: optional(array(dataSetRuleCodec)),
         sections: optional(
             optionalRecord({
@@ -1113,6 +1114,7 @@ export class Dhis2DataStoreDataForm {
             rules: this.getDataFormRules(dataSetConfig?.rules),
             customCss: dataSetConfig?.customCss,
             showNavigation: dataSetConfig?.showNavigation ?? false,
+            disableAutoValidation: dataSetConfig?.disableAutoValidation ?? false,
         };
     }
 

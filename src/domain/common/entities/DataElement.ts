@@ -71,6 +71,10 @@ export type CategoryOption = {
     name: string;
     code: Code;
     displayFormName: string;
+    // DHIS2 metadata sortOrder, used to order columns/rows independently of the
+    // (translated) display label. Falls back to POSITIVE_INFINITY for legacy
+    // category options that pre-date sortOrder so they sort to the end.
+    sortOrder: number;
 };
 
 type CategoryCombos = {

@@ -1,6 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 import { AlertRule } from "./AlertRule";
+import { IframeEscapePortal } from "../iframe-escape-portal/IframeEscapePortal";
 import {
     IgnoreValidationRule,
     isSameValidationRule,
@@ -21,32 +22,32 @@ export const AlertRules: React.FC<AlertRulesProps> = ({ rules, ignoreRules, onCl
     );
 
     const handleMarkAllAsRead = () => {
-        visibleRules.forEach(rule => {
-            onCloseAlert(rule);
-        });
+        visibleRules.forEach(rule => onCloseAlert(rule));
     };
 
     if (rules.length === 0) return null;
 
     return (
-        <AlertContainer>
-            {rules.map(rule => {
-                const isVisible = visibleRules.includes(rule);
-                return (
-                    <AlertRule
-                        onClose={() => onCloseAlert(rule)}
-                        key={rule.validationRuleId}
-                        visible={isVisible}
-                        message={rule.message}
-                    />
-                );
-            })}
-            {visibleRules.length > 1 && (
-                <MarkAllAsReadButton onClick={handleMarkAllAsRead}>
-                    {i18n.t("Mark all notifications as read")}
-                </MarkAllAsReadButton>
-            )}
-        </AlertContainer>
+        <IframeEscapePortal hostId={"autogen-forms-alert-host"}>
+            <AlertContainer>
+                {rules.map(rule => {
+                    const isVisible = visibleRules.includes(rule);
+                    return (
+                        <AlertRule
+                            onClose={() => onCloseAlert(rule)}
+                            key={rule.validationRuleId}
+                            visible={isVisible}
+                            message={rule.message}
+                        />
+                    );
+                })}
+                {visibleRules.length > 1 && (
+                    <MarkAllAsReadButton onClick={handleMarkAllAsRead}>
+                        {i18n.t("Mark all notifications as read")}
+                    </MarkAllAsReadButton>
+                )}
+            </AlertContainer>
+        </IframeEscapePortal>
     );
 };
 
@@ -56,9 +57,9 @@ const AlertContainer = styled.div`
     flex-direction: column;
     gap: 1em;
     max-width: 400px;
-    position: fixed;
+    pointer-events: auto;
+    position: absolute;
     right: 15px;
-    z-index: 1;
 `;
 
 const MarkAllAsReadButton = styled.div`

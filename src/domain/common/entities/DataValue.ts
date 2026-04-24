@@ -17,6 +17,7 @@ export interface DataValueBase {
     period: Period;
     categoryOptionComboId: Id;
     isRequired?: boolean;
+    comment: string;
 }
 
 export interface DataValueBoolean extends DataValueBase {
@@ -107,6 +108,8 @@ export type DataValue =
     | DataValueDate
     | DataValueMultiText;
 
+export type DataValueLookup = Pick<DataValueBase, "orgUnitId" | "period" | "categoryOptionComboId">;
+
 export type Period = string;
 
 type DataValueSelector = string; // `${dataElementId.period.categoryOptionComboId}`
@@ -137,7 +140,7 @@ export class DataValueStore {
         return new DataValueStore({ ...this.store, [key]: dataValue });
     }
 
-    get(dataElement: DataElement, base: DataValueBase): Maybe<DataValue> {
+    get(dataElement: DataElement, base: DataValueLookup): Maybe<DataValue> {
         const key = DataValueStore.getKey({
             dataElementId: dataElement.id,
             period: base.period,
@@ -148,7 +151,7 @@ export class DataValueStore {
         return this.store[key] || getEmpty(dataElement, base);
     }
 
-    getOrEmpty(dataElement: DataElement, base: DataValueBase): DataValue {
+    getOrEmpty(dataElement: DataElement, base: DataValueLookup): DataValue {
         return this.get(dataElement, base) || getEmpty(dataElement, base);
     }
 
@@ -176,32 +179,37 @@ export class DataValueStore {
     }
 }
 
-export function getEmpty(dataElement: DataElement, base: DataValueBase): DataValue {
+export function getEmpty(dataElement: DataElement, base: DataValueLookup): DataValue {
     const { type } = dataElement;
+    const fullBase: DataValueBase = { comment: "", ...base };
 
     switch (type) {
         case "BOOLEAN":
-            return { ...base, dataElement, type: "BOOLEAN", isMultiple: false, value: undefined };
+            return { ...fullBase, dataElement, type: "BOOLEAN", isMultiple: false, value: undefined };
         case "NUMBER":
             return dataElement.options?.isMultiple
-                ? { ...base, dataElement, type: "NUMBER", isMultiple: true, values: [] }
-                : { ...base, dataElement, type: "NUMBER", isMultiple: false, value: "" };
+                ? { ...fullBase, dataElement, type: "NUMBER", isMultiple: true, values: [] }
+                : { ...fullBase, dataElement, type: "NUMBER", isMultiple: false, value: "" };
         case "TEXT":
             return dataElement.options?.isMultiple
-                ? { ...base, dataElement, type: "TEXT", isMultiple: true, values: [] }
-                : { ...base, dataElement, type: "TEXT", isMultiple: false, value: "" };
+                ? { ...fullBase, dataElement, type: "TEXT", isMultiple: true, values: [] }
+                : { ...fullBase, dataElement, type: "TEXT", isMultiple: false, value: "" };
         case "MULTI_TEXT":
-            return { ...base, dataElement, type: "MULTI_TEXT", isMultiple: true, values: [] };
+            return { ...fullBase, dataElement, type: "MULTI_TEXT", isMultiple: true, values: [] };
         case "PERCENTAGE":
-            return { ...base, dataElement, type: "PERCENTAGE", isMultiple: false, value: "" };
+            return { ...fullBase, dataElement, type: "PERCENTAGE", isMultiple: false, value: "" };
         case "FILE":
-            return { ...base, dataElement, type: "FILE", file: undefined, isMultiple: false };
+            return { ...fullBase, dataElement, type: "FILE", file: undefined, isMultiple: false };
         case "DATE":
-            return { ...base, dataElement, type: "DATE", value: undefined, isMultiple: false };
+            return { ...fullBase, dataElement, type: "DATE", value: undefined, isMultiple: false };
 
         default:
             assertUnreachable(type);
     }
+}
+
+export function hasComment(dataValue: Pick<DataValueBase, "comment">): boolean {
+    return dataValue.comment.length > 0;
 }
 
 export const MULTI_TEXT_SEPARATOR = ",";

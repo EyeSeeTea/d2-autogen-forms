@@ -51,7 +51,7 @@ const GridForm: React.FC<GridFormProps> = props => {
     const fixColumns = section.fixedHeaders;
     const fixRows = section.fixedRowNames;
     const mainContentStyles = fixColumns ? fixHeaderClasses.fixedHeaders : {};
-    const firstColumnWidth = section.firstColumnConfig?.width || 800;
+    const firstColumnWidth = section.firstColumnConfig?.width || "auto";
 
     const NonDirectionalIndicators = grid.nonDirectionalIndicators.map(indicator => (
         <RowIndicatorItem
@@ -71,7 +71,7 @@ const GridForm: React.FC<GridFormProps> = props => {
             )}
 
             <div ref={wrapper2Ref} style={mainContentStyles}>
-                <DataTable className={classes.table}>
+                <DataTable className={classes.table} layout="fixed">
                     <TableHead className={fixColumns ? classes.tableHeader : ""}>
                         <DataTableRow>
                             {grid.hasGroups && (
@@ -113,7 +113,7 @@ const GridForm: React.FC<GridFormProps> = props => {
                             {grid.dataEntryPeriod && (
                                 <CustomDataTableColumnHeader
                                     backgroundColor={props.section.styles.columns.backgroundColor}
-                                    width="50px"
+                                    width="120px"
                                 >
                                     <span className={classes.header}>
                                         {props.section.texts.periodHeader ?? i18n.t("Period")}
@@ -219,31 +219,33 @@ const GridForm: React.FC<GridFormProps> = props => {
                                         />
                                     ))}
 
-                                    {row.items.map((item, idx) =>
-                                        item.dataElement ? (
-                                            <CustomDataTableCell
-                                                backgroundColor={props.section.styles.rows.backgroundColor}
-                                                key={item.dataElement.id}
-                                            >
-                                                <DataElementItem
-                                                    columnTotal={item.columnTotal}
-                                                    columnDataElements={item.columnDataElements}
-                                                    manualyDisabled={item.disabled}
-                                                    noComment={item.disableComments}
-                                                    dataElement={item.dataElement}
-                                                    dataFormInfo={dataFormInfo}
-                                                    rows={grid.rows}
-                                                    period={grid.dataEntryPeriod?.id || dataFormInfo.period}
-                                                    lockException={grid.dataEntryPeriod !== undefined}
-                                                />
-                                            </CustomDataTableCell>
-                                        ) : (
-                                            <CustomDataTableCell
-                                                backgroundColor={props.section.styles.rows.backgroundColor}
-                                                key={`cell-${idx}`}
-                                            ></CustomDataTableCell>
-                                        )
-                                    )}
+                                    {row.items
+                                        .filter(item => item.isVisible)
+                                        .map((item, idx) =>
+                                            item.dataElement ? (
+                                                <CustomDataTableCell
+                                                    backgroundColor={props.section.styles.rows.backgroundColor}
+                                                    key={item.dataElement.id}
+                                                >
+                                                    <DataElementItem
+                                                        columnTotal={item.columnTotal}
+                                                        columnDataElements={item.columnDataElements}
+                                                        manualyDisabled={item.disabled}
+                                                        noComment={item.disableComments}
+                                                        dataElement={item.dataElement}
+                                                        dataFormInfo={dataFormInfo}
+                                                        rows={grid.rows}
+                                                        period={grid.dataEntryPeriod?.id || dataFormInfo.period}
+                                                        lockException={grid.dataEntryPeriod !== undefined}
+                                                    />
+                                                </CustomDataTableCell>
+                                            ) : (
+                                                <CustomDataTableCell
+                                                    backgroundColor={props.section.styles.rows.backgroundColor}
+                                                    key={`cell-${idx}`}
+                                                ></CustomDataTableCell>
+                                            )
+                                        )}
 
                                     {row.indicators.after.map(indicator => (
                                         <IndicatorItem
