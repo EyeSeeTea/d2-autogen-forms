@@ -82,7 +82,7 @@ function getValueAndVerifyCondition(
         return rules.some(rule => {
             const dataValue = dataFormInfo.data.values.getOrEmpty(rule.relatedDataElement, {
                 orgUnitId: rule.relatedDataElement.orgUnit || dataFormInfo.orgUnitId,
-                period: period || dataFormInfo.period,
+                period: dataFormInfo.period,
                 categoryOptionComboId: dataFormInfo.categoryOptionComboId,
             });
 
