@@ -1,8 +1,10 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import ReactDOM from "react-dom";
 import { StyleSheetManager } from "styled-components";
 import { StylesProvider, jssPreset } from "@material-ui/core/styles";
 import { create, Jss } from "jss";
+import { getTopAccessibleWindow } from "../../utils/topAccessibleWindow";
+import { Maybe } from "../../../utils/ts-utils";
 
 /**
  * Portals `children` into the topmost same-origin document and rewires styled-components
@@ -16,8 +18,8 @@ type IframeEscapePortalProps = {
     hostStyles?: Partial<CSSStyleDeclaration>;
     children: React.ReactNode;
 };
-
 type MuiProviders = { jss: Jss; sheetsManager: Map<unknown, unknown> };
+type PortalTarget = { host: HTMLElement; mui: MuiProviders };
 
 const muiProvidersCache = new WeakMap<Document, MuiProviders>();
 
@@ -26,61 +28,62 @@ export const IframeEscapePortal: React.FC<IframeEscapePortalProps> = ({
     hostStyles = DEFAULT_HOST_STYLES,
     children,
 }) => {
-    const host = useMemo<HTMLElement>(() => {
-        let win: Window = window;
-        try {
-            while (win.parent && win.parent !== win) {
-                const parentDoc = win.parent.document;
-                if (!parentDoc) break;
-                win = win.parent;
-            }
-        } catch {
-            // Cross-origin ancestor — stop at the last accessible window.
-        }
-        const targetDoc = win.document;
+    const [target, setTarget] = useState<Maybe<PortalTarget>>();
+    const hostStylesRef = useRef(hostStyles);
 
-        const existing = targetDoc.getElementById(hostId);
-        if (existing) return existing;
+    useEffect(() => {
+        const targetDoc = getTopAccessibleWindow().document;
+        const existingHost = targetDoc.getElementById(hostId);
+        const host = existingHost ?? createHostElement(targetDoc, hostId, hostStylesRef.current);
+        const mui = getOrCreateMuiProviders(targetDoc);
+        setTarget({ host: host, mui: mui });
 
-        const element = targetDoc.createElement("div");
-        element.id = hostId;
-        Object.assign(element.style, hostStyles);
-        targetDoc.documentElement.appendChild(element);
-
-        return element;
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [hostId]); // hostStyles is intentionally omitted so a changing style object does not trigger this
-
-    const { jss, sheetsManager } = useMemo<MuiProviders>(() => {
-        const targetDoc = host.ownerDocument;
-        const cached = muiProvidersCache.get(targetDoc);
-        if (cached) return cached;
-
-        const head = targetDoc.head ?? targetDoc.documentElement;
-        const insertionPoint = targetDoc.createElement("style");
-        insertionPoint.setAttribute("data-autogen-forms-jss", "");
-        head.appendChild(insertionPoint);
-
-        const providers: MuiProviders = {
-            jss: create({ ...jssPreset(), insertionPoint }),
-            sheetsManager: new Map(),
+        return () => {
+            if (!existingHost) host.remove();
         };
-        muiProvidersCache.set(targetDoc, providers);
+    }, [hostId]);
 
-        return providers;
-    }, [host]);
+    if (!target) return null;
 
+    const { host, mui } = target;
     const styleSheetTarget = host.ownerDocument.head ?? host.ownerDocument.documentElement;
 
     return ReactDOM.createPortal(
         <StyleSheetManager target={styleSheetTarget}>
-            <StylesProvider jss={jss} sheetsManager={sheetsManager}>
+            <StylesProvider jss={mui.jss} sheetsManager={mui.sheetsManager}>
                 {children}
             </StylesProvider>
         </StyleSheetManager>,
         host
     );
 };
+
+function createHostElement(targetDoc: Document, hostId: string, styles: Partial<CSSStyleDeclaration>): HTMLElement {
+    const element = targetDoc.createElement("div");
+    element.id = hostId;
+    Object.assign(element.style, styles);
+    targetDoc.documentElement.appendChild(element);
+
+    return element;
+}
+
+function getOrCreateMuiProviders(targetDoc: Document): MuiProviders {
+    const cached = muiProvidersCache.get(targetDoc);
+    if (cached) return cached;
+
+    const head = targetDoc.head ?? targetDoc.documentElement;
+    const insertionPoint = targetDoc.createElement("style");
+    insertionPoint.setAttribute("data-autogen-forms-jss", "");
+    head.appendChild(insertionPoint);
+
+    const providers: MuiProviders = {
+        jss: create({ ...jssPreset(), insertionPoint }),
+        sheetsManager: new Map(),
+    };
+    muiProvidersCache.set(targetDoc, providers);
+
+    return providers;
+}
 
 const DEFAULT_HOST_STYLES = {
     position: "fixed",
