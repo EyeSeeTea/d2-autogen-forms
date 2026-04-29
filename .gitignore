@@ -38,8 +38,5 @@ bak
 NOTES*
 datastore
 
-# Claude
-.claude/
-
 # Claude Code local settings (per-user permissions, not shared)
 .claude/settings.local.json
