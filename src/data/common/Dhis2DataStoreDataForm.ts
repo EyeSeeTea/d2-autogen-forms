@@ -616,14 +616,14 @@ function getYearlyPeriods(dataSetPeriod: Id, interval: PeriodInterval): Period[]
 }
 
 interface DataFormStoreConfig {
-    custom: NonPartial<DataFormStoreConfigFromCodec>;
+    custom: Omit<NonPartial<DataFormStoreConfigFromCodec>, "prefix"> & { prefix?: string };
     optionSets: OptionSet[];
     constants: Constant[];
     subNationals: SubNational[];
 }
 
 const defaultDataStoreConfig: DataFormStoreConfig["custom"] = {
-    prefix: "",
+    prefix: undefined,
     dataElements: {},
     dataSets: {},
     categoryCombinations: {},
@@ -681,7 +681,7 @@ export class Dhis2DataStoreDataForm {
             },
             Right: async storeConfigFromDataStore => {
                 const storeConfig: DataFormStoreConfig["custom"] = {
-                    prefix: storeConfigFromDataStore.prefix ?? "",
+                    prefix: storeConfigFromDataStore.prefix,
                     dataElements: storeConfigFromDataStore.dataElements || {},
                     dataSets: storeConfigFromDataStore.dataSets || {},
                     categoryCombinations: storeConfigFromDataStore.categoryCombinations || {},
