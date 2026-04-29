@@ -73,7 +73,8 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
 
     return (
         <DataTableSection section={grid} dataFormInfo={dataFormInfo} sectionStyles={section.styles}>
-            <DataTable className={classes.table} layout="fixed" width="100%">
+            <div className={classes.scrollWrapper}>
+            <DataTable className={classes.table} layout="fixed" width="initial">
                 <TableHead>
                     <DataTableRow>
                         <CustomDataTableColumnHeader
@@ -107,6 +108,7 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                         {grid.columns.map(column => (
                             <CustomDataTableColumnHeader
                                 backgroundColor={section.styles.columns.backgroundColor}
+                                className={classes.columnWidth}
                                 key={column.name}
                             >
                                 <div className={classes.header}>
@@ -279,6 +281,7 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
                     ))}
                 </TableBody>
             </DataTable>
+            </div>
         </DataTableSection>
     );
 };
@@ -294,7 +297,9 @@ const useStyles = makeStyles({
     },
     description: { fontWeight: "normal", fontSize: "0.8em" },
     table: { borderWidth: "3px !important", minWidth: "100%" },
+    columnWidth: { minWidth: "8em !important" },
     rowTitle: { fontSize: "1.2em", fontWeight: "bold" },
+    scrollWrapper: { overflowX: "auto" },
 });
 
 export default React.memo(GridWithCatOptionCombos);
