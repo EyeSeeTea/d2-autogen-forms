@@ -19,6 +19,19 @@
                     }
                 ]
             }
+        ],
+        "PostToolUse": [
+            {
+                "matcher": "Edit|Write",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "file=$(jq -r '.tool_input.file_path // empty'); [ -z \"$file\" ] && exit 0; case \"$file\" in *.ts|*.tsx|*.js|*.jsx|*.json|*.css) cd \"$CLAUDE_PROJECT_DIR\" && npx --no-install prettier --write --log-level=error \"$file\" 2>/dev/null || true ;; esac",
+                        "timeout": 30,
+                        "statusMessage": "Running prettier..."
+                    }
+                ]
+            }
         ]
     }
 }
