@@ -3,11 +3,13 @@ import _ from "lodash";
 import { D2Api, D2Constant, MetadataResponse, PartialModel } from "../types/d2-api";
 import { Constant } from "../domain/common/entities/Constant";
 import { getImportModeFromOptions, SaveOptions } from "../domain/common/entities/SaveOptions";
-import { Stats } from "../domain/common/entities/Stats";
+import { ErrorReportEntry, Stats } from "../domain/common/entities/Stats";
 import { ConstantRepository } from "../domain/common/repositories/ConstantRepository";
 import { promiseMap } from "../utils/promises";
 import { getErrorFromResponse } from "./common/utils/d2-api";
 import { writeFileSync } from "fs";
+
+const POST_CHUNK_SIZE = 100;
 
 export class ConstantD2Repository implements ConstantRepository {
     constructor(private api: D2Api) {}
@@ -22,24 +24,31 @@ export class ConstantD2Repository implements ConstantRepository {
     }
 
     async save(constants: Constant[], options: SaveOptions): Promise<Stats> {
-        const constantsToSave = await this.buildConstantPayload(constants);
+        if (constants.length === 0) return Stats.empty();
 
-        const d2PostResponse: Dhis2Response = await this.api.metadata
-            .post({ constants: constantsToSave }, { importMode: getImportModeFromOptions(options.post) })
-            .getData();
-        const response = d2PostResponse.response ? d2PostResponse.response : d2PostResponse;
-        const stats = new Stats({
-            created: response.stats.created,
-            updated: response.stats.updated,
-            ignored: response.stats.ignored,
-            deleted: response.stats.deleted,
-            errorMessage: getErrorFromResponse(response.typeReports),
+        const constantsToSave = await this.buildConstantPayload(constants);
+        if (constantsToSave.length === 0) return Stats.empty();
+
+        const importMode = getImportModeFromOptions(options.post);
+        const chunkStats = await promiseMap(_.chunk(constantsToSave, POST_CHUNK_SIZE), async chunk => {
+            const d2PostResponse: Dhis2Response = await this.api.metadata
+                .post({ constants: chunk }, { importMode })
+                .getData();
+            const response = d2PostResponse.response ?? d2PostResponse;
+            return new Stats({
+                created: response.stats.created,
+                updated: response.stats.updated,
+                ignored: response.stats.ignored,
+                deleted: response.stats.deleted,
+                errorMessage: getErrorFromResponse(response.typeReports),
+                errorReports: extractErrorReports(response.typeReports),
+            });
         });
 
         if (options.export) {
             writeFileSync("constants.json", JSON.stringify({ constants: constantsToSave }, null, 4));
         }
-        return stats;
+        return Stats.combine(chunkStats);
     }
 
     private async buildConstantPayload(constants: readonly Constant[]): Promise<PartialModel<D2Constant>[]> {
@@ -58,7 +67,7 @@ export class ConstantD2Repository implements ConstantRepository {
         if (existingConstants.length === 0) return newPayloads;
 
         const ids = existingConstants.map(constant => constant.id);
-        const existingResult = await promiseMap(_.chunk(ids, 100), async constantIds => {
+        const existingResult = await promiseMap(_.chunk(ids, POST_CHUNK_SIZE), async constantIds => {
             const d2Response = await this.api.metadata
                 .get({ constants: { fields: { $owner: true }, filter: { id: { in: constantIds } } } })
                 .getData();
@@ -84,6 +93,18 @@ export class ConstantD2Repository implements ConstantRepository {
 
         return [...existingResult.flat(), ...newPayloads];
     }
+}
+
+function extractErrorReports(typeReports: MetadataResponse["typeReports"]): ErrorReportEntry[] {
+    return typeReports.flatMap(typeReport =>
+        (typeReport.objectReports ?? []).flatMap(objectReport =>
+            (objectReport.errorReports ?? []).map(errorReport => ({
+                message: errorReport.message,
+                errorCode: errorReport.errorCode,
+                errorProperty: errorReport.errorProperty,
+            }))
+        )
+    );
 }
 
 type Dhis2Response = MetadataResponse & {
