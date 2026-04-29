@@ -213,8 +213,8 @@ export function useAutogenEditor(props: AutogenEditorProps): AutogenEditorState 
     };
 }
 
-const LARGE_FILE_SIZE = 100; // 100KB
-const HUGE_FILE_SIZE = 500; // 500KB
+const LARGE_FILE_SIZE = 100 * 1024; // 100KB
+const HUGE_FILE_SIZE = 500 * 1024; // 500KB
 
 function calculateFileSizeInKB(input: string): number {
     const encoder = new TextEncoder();
