@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-04-29T13:22:34.479Z\n"
-"PO-Revision-Date: 2026-04-29T13:22:34.479Z\n"
+"POT-Creation-Date: 2026-04-29T13:49:21.934Z\n"
+"PO-Revision-Date: 2026-04-29T13:49:21.934Z\n"
 
 msgid "Mark all notifications as read"
 msgstr ""
@@ -131,9 +131,6 @@ msgstr ""
 msgid "Code"
 msgstr ""
 
-msgid "Auto-filled with the project prefix {{prefix}}"
-msgstr ""
-
 msgid "Auto-filled from name"
 msgstr ""
 
@@ -177,12 +174,6 @@ msgid "Description is required"
 msgstr ""
 
 msgid "Open dialog to define a new constant"
-msgstr ""
-
-msgid "Failed to load constants"
-msgstr ""
-
-msgid "Check the network and try again"
 msgstr ""
 
 msgctxt "ADD authority."
