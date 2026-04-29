@@ -82,6 +82,29 @@ type D2DataElementNewType = Omit<D2DataElement, "valueType"> & {
     valueType: D2DataElementTypes;
 };
 
+function normalizeCategoryCombo(categoryCombo: D2DataElement["categoryCombo"]): D2DataElement["categoryCombo"] {
+    const trimCategoryOption = (
+        co: D2DataElement["categoryCombo"]["categories"][number]["categoryOptions"][number]
+    ) => ({
+        ...co,
+        code: co.code.trim(),
+        name: co.name.trim(),
+    });
+
+    return {
+        ...categoryCombo,
+        categories: categoryCombo.categories.map(category => ({
+            ...category,
+            categoryOptions: category.categoryOptions.map(trimCategoryOption),
+        })),
+        categoryOptionCombos: categoryCombo.categoryOptionCombos.map(coc => ({
+            ...coc,
+            name: coc.name.trim(),
+            categoryOptions: coc.categoryOptions.map(trimCategoryOption),
+        })),
+    };
+}
+
 export function makeCocOrderArray(namesArray: string[][]): string[] {
     return namesArray.reduce((prev, current) => {
         return prev
@@ -96,9 +119,22 @@ export function makeCocOrderArray(namesArray: string[][]): string[] {
     });
 }
 
+// Builds a lookup `category-option code → sortOrder` from the parent
+// `Category.categoryOptions` arrays. DHIS2 returns these arrays in their
+// canonical sort order (set in the maintenance app), so the array index is
+// the sortOrder. Used to populate `CategoryOption.sortOrder` independently of
+// the (translated) display label.
+function buildSortOrderByCode(categories: D2DataElement["categoryCombo"]["categories"]): Record<string, number> {
+    return _(categories)
+        .flatMap(cat => cat.categoryOptions.map((co, index) => [co.code, index] as const))
+        .fromPairs()
+        .value();
+}
+
 function getCocOrdered(
     categoryCombo: D2DataElement["categoryCombo"],
-    config: Dhis2DataStoreDataForm
+    config: Dhis2DataStoreDataForm,
+    sortOrderByCode: Record<string, number>
 ): CategoryOptionCombo[] {
     const keyName = config.categoryCombinationsConfig[categoryCombo.code]?.viewType || "formName";
     const allCategoryOptions = categoryCombo.categories.flatMap(c =>
@@ -165,7 +201,11 @@ function getCocOrdered(
         ...x,
         originalName: x.name,
         name: x[keyName] || x.name || "",
-        categoryOptions: x.categoryOptions.map(co => ({ ...co, originalName: co.name })),
+        categoryOptions: x.categoryOptions.map(co => ({
+            ...co,
+            originalName: co.name,
+            sortOrder: sortOrderByCode[co.code] ?? Number.POSITIVE_INFINITY,
+        })),
     }));
 }
 
@@ -175,7 +215,8 @@ function isCategoryOptionHidden(code: string, config: Dhis2DataStoreDataForm) {
 
 function getVisibleCategoryOptionCombos(
     categoryOptionCombos: D2DataElement["categoryCombo"]["categoryOptionCombos"],
-    config: Dhis2DataStoreDataForm
+    config: Dhis2DataStoreDataForm,
+    sortOrderByCode: Record<string, number>
 ): CategoryOptionCombo[] {
     const hiddenCategoryOptions = _(config.categoryOptionsConfig)
         .pickBy(value => value.visible === false)
@@ -191,6 +232,7 @@ function getVisibleCategoryOptionCombos(
                 categoryOptions: item.categoryOptions.map(co => ({
                     ...co,
                     originalName: co.name,
+                    sortOrder: sortOrderByCode[co.code] ?? Number.POSITIVE_INFINITY,
                 })),
             };
         });
@@ -198,6 +240,7 @@ function getVisibleCategoryOptionCombos(
 
 function getDataElement(dataElement: D2DataElementNewType, config: Dhis2DataStoreDataForm): DataElement | null {
     const { valueType } = dataElement;
+    const categoryCombo = normalizeCategoryCombo(dataElement.categoryCombo);
     const deConfig = config.dataElementsConfig[dataElement.code];
     const optionSetFromDataElement = dataElement.optionSet
         ? {
@@ -210,14 +253,15 @@ function getDataElement(dataElement: D2DataElementNewType, config: Dhis2DataStor
         : null;
     const optionSetFromCustomConfig = deConfig?.selection?.optionSet;
     const optionSet = optionSetFromCustomConfig || optionSetFromDataElement;
+    const sortOrderByCode = buildSortOrderByCode(categoryCombo.categories);
     const categoryCombination = {
-        id: dataElement.categoryCombo?.id,
-        name: dataElement.categoryCombo?.name,
-        categories: dataElement.categoryCombo?.categories.map(cat => {
-            const keyName = config.categoryCombinationsConfig[dataElement.categoryCombo.code]?.viewType || "formName";
+        id: categoryCombo?.id,
+        name: categoryCombo?.name,
+        categories: categoryCombo?.categories.map(cat => {
+            const keyName = config.categoryCombinationsConfig[categoryCombo.code]?.viewType || "formName";
             return {
                 ...cat,
-                categoryOptions: cat.categoryOptions.map(co => {
+                categoryOptions: cat.categoryOptions.map((co, index) => {
                     const record = {
                         id: co.id,
                         name: co.displayName,
@@ -231,13 +275,18 @@ function getDataElement(dataElement: D2DataElementNewType, config: Dhis2DataStor
                         code: co.code,
                         name: record[keyName] ?? record.name,
                         displayFormName: record.formName,
+                        sortOrder: index,
                     };
                 }),
             };
         }),
-        categoryOptionCombos: getCocOrdered(dataElement.categoryCombo, config),
+        categoryOptionCombos: getCocOrdered(categoryCombo, config, sortOrderByCode),
     };
-    const categoryOptionCombos = getVisibleCategoryOptionCombos(dataElement.categoryCombo.categoryOptionCombos, config);
+    const categoryOptionCombos = getVisibleCategoryOptionCombos(
+        categoryCombo.categoryOptionCombos,
+        config,
+        sortOrderByCode
+    );
 
     const base = {
         id: dataElement.id,
