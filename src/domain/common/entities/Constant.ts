@@ -1,5 +1,3 @@
-import { Maybe } from "../../../utils/ts-utils";
-
 export const allowedLanguages = ["en", "es", "fr", "pt"] as const;
 export type AllowedLanguage = typeof allowedLanguages[number];
 
@@ -21,8 +19,8 @@ export function deriveShortName(name: string): string {
     return toUpperSnake(name).slice(0, shortNameMaxLength);
 }
 
-export function deriveCode(name: string, prefix: Maybe<string>): string {
-    return `${prefix ?? ""}${toUpperSnake(name)}`;
+export function deriveCode(name: string): string {
+    return toUpperSnake(name);
 }
 
 function toUpperSnake(input: string): string {

@@ -1,14 +1,11 @@
 import i18n from "@eyeseetea/d2-ui-components/locales";
-import { Constant } from "../../../../domain/common/entities/Constant";
 import { Maybe } from "../../../../utils/ts-utils";
-import { extractRootPrefix } from "./extractRootPrefix";
 import { isInlineConstantCodePosition } from "./jsonPathAtCursor";
 import { CodeEditor, CompletionItem, IRange, Monaco, Position, TextModel } from "./types";
 
-export type CreateNewConstantTrigger = (args: { range: IRange; prefix: string }) => void;
+export type CreateNewConstantTrigger = (args: { range: IRange }) => void;
 
 export type InlineConstantCompletionsOptions = {
-    fetchConstants: (prefix: string) => Promise<Constant[]>;
     canCreate: boolean;
     onRequestCreate: CreateNewConstantTrigger;
 };
@@ -21,20 +18,19 @@ export function registerInlineConstantCompletions(
     options: InlineConstantCompletionsOptions
 ): Disposer {
     const commandId = codeEditor.addCommand(0, (_accessor: unknown, ...args: unknown[]) => {
-        const payload = args[0] as { range: IRange; prefix: string };
+        const payload = args[0] as { range: IRange };
         options.onRequestCreate(payload);
     });
 
     const providerDisposable = monaco.languages.registerCompletionItemProvider("json", {
         triggerCharacters: ['"', "_"],
-        provideCompletionItems: async (model: TextModel, position: Position) => {
+        provideCompletionItems: (model: TextModel, position: Position) => {
             if (model !== codeEditor.getModel()) return { suggestions: [] };
 
             const fullText = model.getValue();
             const offset = model.getOffsetAt(position);
             if (!isInlineConstantCodePosition(fullText, offset)) return { suggestions: [] };
 
-            const prefix = extractRootPrefix(fullText);
             const word = model.getWordUntilPosition(position);
             const range: IRange = {
                 startLineNumber: position.lineNumber,
@@ -42,35 +38,8 @@ export function registerInlineConstantCompletions(
                 startColumn: word.startColumn,
                 endColumn: word.endColumn,
             };
-            const createItem = buildCreateNewItem({
-                range,
-                prefix,
-                monaco,
-                canCreate: options.canCreate,
-                commandId,
-            });
 
-            // Without a prefix Monaco's fuzzy filter prunes the create entry against the
-            // full constants list on large files, so list only the create entry.
-            if (!prefix) {
-                return { suggestions: [createItem] };
-            }
-
-            const fetchResult = await options
-                .fetchConstants(prefix)
-                .then(constants => ({ ok: true as const, constants }))
-                .catch(error => ({ ok: false as const, error }));
-
-            if (!fetchResult.ok) {
-                console.error("Failed to load constants for inline completions", fetchResult.error);
-                return { suggestions: [buildFetchErrorItem(range, monaco), createItem] };
-            }
-
-            const existingItems = fetchResult.constants.map((constant, index) =>
-                buildExistingItem(constant, range, index, monaco)
-            );
-
-            return { suggestions: [createItem, ...existingItems] };
+            return { suggestions: [buildCreateNewItem({ range, monaco, canCreate: options.canCreate, commandId })] };
         },
     });
 
@@ -106,26 +75,13 @@ export function registerInlineConstantCompletions(
     };
 }
 
-function buildExistingItem(constant: Constant, range: IRange, index: number, monaco: Monaco): CompletionItem {
-    return {
-        label: constant.code,
-        kind: monaco.languages.CompletionItemKind.Constant,
-        insertText: constant.code,
-        range,
-        detail: constant.name,
-        documentation: constant.description || undefined,
-        sortText: `1_${String(index).padStart(6, "0")}`,
-    };
-}
-
 function buildCreateNewItem(params: {
     range: IRange;
-    prefix: string;
     monaco: Monaco;
     canCreate: boolean;
     commandId: Maybe<string>;
 }): CompletionItem {
-    const { range, prefix, monaco, canCreate, commandId } = params;
+    const { range, monaco, canCreate, commandId } = params;
     const label = i18n.t("Create new constant");
     const base: CompletionItem = {
         label,
@@ -139,20 +95,8 @@ function buildCreateNewItem(params: {
     };
 
     if (canCreate && commandId) {
-        return { ...base, command: { id: commandId, title: label, arguments: [{ range, prefix }] } };
+        return { ...base, command: { id: commandId, title: label, arguments: [{ range }] } };
     }
 
     return { ...base, tags: [monaco.languages.CompletionItemTag.Deprecated] };
-}
-
-function buildFetchErrorItem(range: IRange, monaco: Monaco): CompletionItem {
-    return {
-        label: i18n.t("Failed to load constants"),
-        kind: monaco.languages.CompletionItemKind.Text,
-        insertText: "",
-        range,
-        sortText: "z",
-        detail: i18n.t("Check the network and try again"),
-        tags: [monaco.languages.CompletionItemTag.Deprecated],
-    };
 }

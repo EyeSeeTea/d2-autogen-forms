@@ -7,7 +7,6 @@ import { useAppContext } from "../../../contexts/app-context";
 
 export type CreateConstantFormProps = {
     open: boolean;
-    prefix: string;
     canCreate: boolean;
     onSuccess: (code: string) => void;
 };
@@ -29,7 +28,7 @@ export type CreateConstantFormState = {
 };
 
 export function useCreateConstantForm(props: CreateConstantFormProps): CreateConstantFormState {
-    const { open, prefix, canCreate, onSuccess } = props;
+    const { open, canCreate, onSuccess } = props;
     const { compositionRoot } = useAppContext();
 
     const [name, setName] = useState("");
@@ -60,9 +59,9 @@ export function useCreateConstantForm(props: CreateConstantFormProps): CreateCon
         (next: string) => {
             setName(next);
             if (!shortNameDirty) setShortName(deriveShortName(next));
-            if (!codeDirty) setCode(deriveCode(next, prefix));
+            if (!codeDirty) setCode(deriveCode(next));
         },
-        [shortNameDirty, codeDirty, prefix]
+        [shortNameDirty, codeDirty]
     );
 
     const onShortNameChange = useCallback((next: string) => {

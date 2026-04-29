@@ -25,22 +25,13 @@ describe("Constant", () => {
     });
 
     describe("deriveCode", () => {
-        it("prefixes the derived upper snake case name", () => {
-            expect(deriveCode("Footnote National Policies", "MAL_")).toBe("MAL_FOOTNOTE_NATIONAL_POLICIES");
-        });
-
-        it("omits the prefix when undefined", () => {
-            expect(deriveCode("some name", undefined)).toBe("SOME_NAME");
-        });
-
-        it("omits the prefix when empty string", () => {
-            expect(deriveCode("some name", "")).toBe("SOME_NAME");
+        it("converts a plain name to upper snake case", () => {
+            expect(deriveCode("Footnote National Policies")).toBe("FOOTNOTE_NATIONAL_POLICIES");
         });
 
         it("is not truncated unlike shortName", () => {
             const longName = "a".repeat(100);
-            const code = deriveCode(longName, "TUB_");
-            expect(code.length).toBe("TUB_".length + 100);
+            expect(deriveCode(longName).length).toBe(100);
         });
     });
 });

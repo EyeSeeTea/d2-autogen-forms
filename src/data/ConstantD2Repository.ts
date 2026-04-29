@@ -6,35 +6,19 @@ import { getImportModeFromOptions, SaveOptions } from "../domain/common/entities
 import { ErrorReportEntry, Stats } from "../domain/common/entities/Stats";
 import { ConstantRepository } from "../domain/common/repositories/ConstantRepository";
 import { promiseMap } from "../utils/promises";
-import { Maybe } from "../utils/ts-utils";
 import { getErrorFromResponse } from "./common/utils/d2-api";
 import { writeFileSync } from "fs";
 
 const POST_CHUNK_SIZE = 100;
 
 export class ConstantD2Repository implements ConstantRepository {
-    private allConstants: Maybe<Promise<Constant[]>>;
-
     constructor(private api: D2Api) {}
-
-    async get(prefix?: string): Promise<Constant[]> {
-        if (!this.allConstants) {
-            this.allConstants = this.api.models.constants
-                .get({ fields: constantFields, paging: false })
-                .getData()
-                .then(({ objects }) => objects);
-        }
-        const constants = await this.allConstants;
-        return prefix ? constants.filter(constant => constant.code?.startsWith(prefix)) : constants;
-    }
 
     async save(constants: Constant[], options: SaveOptions): Promise<Stats> {
         if (constants.length === 0) return Stats.empty();
 
         const constantsToSave = await this.buildConstantPayload(constants);
         if (constantsToSave.length === 0) return Stats.empty();
-
-        this.allConstants = undefined;
 
         const importMode = getImportModeFromOptions(options.post);
         const chunkStats = await promiseMap(_.chunk(constantsToSave, POST_CHUNK_SIZE), async chunk => {
@@ -116,14 +100,4 @@ function extractErrorReports(typeReports: MetadataResponse["typeReports"]): Erro
 
 type Dhis2Response = MetadataResponse & {
     response?: { stats: MetadataResponse["stats"]; typeReports: MetadataResponse["typeReports"] };
-};
-
-const constantFields = {
-    id: true,
-    name: true,
-    code: true,
-    description: true,
-    shortName: true,
-    translations: true,
-    value: true,
 };

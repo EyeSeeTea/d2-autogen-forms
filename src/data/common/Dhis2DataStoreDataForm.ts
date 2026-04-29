@@ -268,7 +268,6 @@ const optionSetCodec = Codec.interface({
 });
 
 export const DataStoreConfigCodec = Codec.interface({
-    prefix: optional(string),
     categoryCombinations: optionalRecord({
         viewType: optional(oneOf([exactly("name"), exactly("shortName"), exactly("formName")])),
     }),
@@ -616,14 +615,13 @@ function getYearlyPeriods(dataSetPeriod: Id, interval: PeriodInterval): Period[]
 }
 
 interface DataFormStoreConfig {
-    custom: Omit<NonPartial<DataFormStoreConfigFromCodec>, "prefix"> & { prefix?: string };
+    custom: NonPartial<DataFormStoreConfigFromCodec>;
     optionSets: OptionSet[];
     constants: Constant[];
     subNationals: SubNational[];
 }
 
 const defaultDataStoreConfig: DataFormStoreConfig["custom"] = {
-    prefix: undefined,
     dataElements: {},
     dataSets: {},
     categoryCombinations: {},
@@ -681,7 +679,6 @@ export class Dhis2DataStoreDataForm {
             },
             Right: async storeConfigFromDataStore => {
                 const storeConfig: DataFormStoreConfig["custom"] = {
-                    prefix: storeConfigFromDataStore.prefix,
                     dataElements: storeConfigFromDataStore.dataElements || {},
                     dataSets: storeConfigFromDataStore.dataSets || {},
                     categoryCombinations: storeConfigFromDataStore.categoryCombinations || {},

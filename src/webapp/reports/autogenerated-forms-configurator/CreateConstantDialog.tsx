@@ -8,14 +8,13 @@ import { useCreateConstantForm } from "./hooks/useCreateConstantForm";
 
 type CreateConstantDialogProps = {
     open: boolean;
-    prefix: string;
     canCreate: boolean;
     onClose: () => void;
     onSuccess: (code: string) => void;
 };
 
 export const CreateConstantDialog: React.FC<CreateConstantDialogProps> = React.memo(props => {
-    const { open, prefix, canCreate, onClose } = props;
+    const { open, canCreate, onClose } = props;
     const form = useCreateConstantForm(props);
 
     return (
@@ -70,12 +69,7 @@ export const CreateConstantDialog: React.FC<CreateConstantDialogProps> = React.m
                     value={form.code}
                     onChange={event => form.onCodeChange(event.target.value)}
                     error={Boolean(form.fieldErrors.code)}
-                    helperText={
-                        form.fieldErrors.code ??
-                        (prefix
-                            ? i18n.t("Auto-filled with the project prefix {{prefix}}", { prefix })
-                            : i18n.t("Auto-filled from name"))
-                    }
+                    helperText={form.fieldErrors.code ?? i18n.t("Auto-filled from name")}
                     required
                     fullWidth
                     disabled={!canCreate || form.isSaving}
