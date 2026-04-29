@@ -15,19 +15,6 @@ export type InlineConstantCompletionsOptions = {
 
 type Disposer = { dispose: () => void };
 
-/**
- * Registers a Monaco CompletionItemProvider that fires on `texts.*.code`
- * string values. The list contains existing constants (filtered by the
- * root `prefix` in the current JSON) with a "Create new constant"
- * entry at the top.
- *
- * Selecting an existing constant replaces the typed fragment with its code.
- * Selecting "Create new constant" fires the provided callback with the
- * cursor range; the caller opens its dialog and, on success, inserts the
- * new code via `editor.executeEdits`.
- *
- * Returns a disposer that must be called on unmount.
- */
 export function registerInlineConstantCompletions(
     codeEditor: CodeEditor,
     monaco: Monaco,
@@ -63,10 +50,8 @@ export function registerInlineConstantCompletions(
                 commandId,
             });
 
-            // Only list existing constants when a top-level `"prefix"` is defined in the
-            // datastore config. Without a prefix the API returns the entire constants table
-            // and Monaco's fuzzy filter aggressively prunes the create entry on large files,
-            // so we suppress the existing list and show only the create entry instead.
+            // Without a prefix Monaco's fuzzy filter prunes the create entry against the
+            // full constants list on large files, so list only the create entry.
             if (!prefix) {
                 return { suggestions: [createItem] };
             }

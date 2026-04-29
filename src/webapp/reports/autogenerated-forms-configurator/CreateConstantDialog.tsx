@@ -1,12 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React from "react";
 import styled from "styled-components";
 import { TextField } from "@material-ui/core";
 import { ConfirmationDialog } from "@eyeseetea/d2-ui-components";
 import i18n from "@eyeseetea/d2-ui-components/locales";
-import { Constant, deriveCode, deriveShortName, shortNameMaxLength } from "../../../domain/common/entities/Constant";
-import { ConstantField, fieldError, isConstantSaveError } from "../../../domain/common/entities/ConstantSaveError";
-import { Maybe } from "../../../utils/ts-utils";
-import { useAppContext } from "../../contexts/app-context";
+import { shortNameMaxLength } from "../../../domain/common/entities/Constant";
+import { useCreateConstantForm } from "./hooks/useCreateConstantForm";
 
 type CreateConstantDialogProps = {
     open: boolean;
@@ -17,105 +15,8 @@ type CreateConstantDialogProps = {
 };
 
 export const CreateConstantDialog: React.FC<CreateConstantDialogProps> = React.memo(props => {
-    const { open, prefix, canCreate, onClose, onSuccess } = props;
-    const { compositionRoot } = useAppContext();
-
-    const [name, setName] = useState("");
-    const [shortName, setShortName] = useState("");
-    const [shortNameDirty, setShortNameDirty] = useState(false);
-    const [code, setCode] = useState("");
-    const [codeDirty, setCodeDirty] = useState(false);
-    const [description, setDescription] = useState("");
-    const [isSaving, setIsSaving] = useState(false);
-    const [generalError, setGeneralError] = useState<Maybe<string>>();
-    const [fieldErrors, setFieldErrors] = useState<Partial<Record<ConstantField, string>>>({});
-
-    useEffect(() => {
-        if (!open) {
-            setName("");
-            setShortName("");
-            setShortNameDirty(false);
-            setCode("");
-            setCodeDirty(false);
-            setDescription("");
-            setIsSaving(false);
-            setGeneralError(undefined);
-            setFieldErrors({});
-        }
-    }, [open]);
-
-    const handleNameChange = useCallback(
-        (nextName: string) => {
-            setName(nextName);
-            if (!shortNameDirty) setShortName(deriveShortName(nextName));
-            if (!codeDirty) setCode(deriveCode(nextName, prefix));
-        },
-        [shortNameDirty, codeDirty, prefix]
-    );
-
-    const handleShortNameChange = useCallback((nextShortName: string) => {
-        setShortNameDirty(true);
-        setShortName(nextShortName);
-    }, []);
-
-    const handleCodeChange = useCallback((nextCode: string) => {
-        setCodeDirty(true);
-        setCode(nextCode);
-    }, []);
-
-    const validate = useCallback((): boolean => {
-        const errors: typeof fieldErrors = {};
-        if (!name.trim()) errors.name = i18n.t("Name is required");
-        if (!shortName.trim()) errors.shortName = i18n.t("Short name is required");
-        else if (shortName.length > shortNameMaxLength)
-            errors.shortName = i18n.t("Short name must be {{max}} characters or fewer", { max: shortNameMaxLength });
-        if (!code.trim()) errors.code = i18n.t("Code is required");
-        if (!description.trim()) errors.description = i18n.t("Description is required");
-        setFieldErrors(errors);
-        return Object.keys(errors).length === 0;
-    }, [name, shortName, code, description]);
-
-    const handleSave = useCallback(async () => {
-        setGeneralError(undefined);
-        if (!validate()) return;
-
-        const constant: Constant = {
-            id: "",
-            name: name.trim(),
-            shortName: shortName.trim(),
-            code: code.trim(),
-            description: description.trim(),
-            value: 0,
-            translations: [],
-        };
-
-        setIsSaving(true);
-        try {
-            await compositionRoot.constants.create(constant);
-            onSuccess(constant.code);
-        } catch (error) {
-            if (isConstantSaveError(error)) {
-                const saveError = error;
-                const fields: ReadonlyArray<ConstantField> = ["name", "shortName", "code", "description"];
-                const fieldUpdates = Object.fromEntries(
-                    fields
-                        .map(field => [field, fieldError(saveError, field)] as const)
-                        .filter(([, message]) => message !== undefined)
-                );
-                if (Object.keys(fieldUpdates).length > 0) {
-                    setFieldErrors(prev => ({ ...prev, ...fieldUpdates }));
-                } else {
-                    setGeneralError(saveError.message);
-                }
-            } else {
-                setGeneralError(error instanceof Error ? error.message : String(error));
-            }
-        } finally {
-            setIsSaving(false);
-        }
-    }, [validate, name, shortName, code, description, compositionRoot.constants, onSuccess]);
-
-    const disableSave = useMemo(() => !canCreate || isSaving, [canCreate, isSaving]);
+    const { open, prefix, canCreate, onClose } = props;
+    const form = useCreateConstantForm(props);
 
     return (
         <ConfirmationDialog
@@ -123,10 +24,10 @@ export const CreateConstantDialog: React.FC<CreateConstantDialogProps> = React.m
             title={i18n.t("Create new constant")}
             cancelText={i18n.t("Cancel")}
             saveText={i18n.t("Save")}
-            disableSave={disableSave}
+            disableSave={form.disableSave}
             onClose={onClose}
             onCancel={onClose}
-            onSave={handleSave}
+            onSave={form.onSave}
             fullWidth
             maxWidth="sm"
         >
@@ -138,58 +39,58 @@ export const CreateConstantDialog: React.FC<CreateConstantDialogProps> = React.m
                         )}
                     </ErrorMessage>
                 )}
-                {generalError && <ErrorMessage>{generalError}</ErrorMessage>}
+                {form.generalError && <ErrorMessage>{form.generalError}</ErrorMessage>}
 
                 <TextField
                     label={i18n.t("Name")}
-                    value={name}
-                    onChange={event => handleNameChange(event.target.value)}
-                    error={Boolean(fieldErrors.name)}
-                    helperText={fieldErrors.name}
+                    value={form.name}
+                    onChange={event => form.onNameChange(event.target.value)}
+                    error={Boolean(form.fieldErrors.name)}
+                    helperText={form.fieldErrors.name}
                     required
                     fullWidth
-                    disabled={!canCreate || isSaving}
+                    disabled={!canCreate || form.isSaving}
                 />
                 <TextField
                     label={i18n.t("Short name")}
-                    value={shortName}
-                    onChange={event => handleShortNameChange(event.target.value)}
-                    error={Boolean(fieldErrors.shortName)}
+                    value={form.shortName}
+                    onChange={event => form.onShortNameChange(event.target.value)}
+                    error={Boolean(form.fieldErrors.shortName)}
                     helperText={
-                        fieldErrors.shortName ??
+                        form.fieldErrors.shortName ??
                         i18n.t("Auto-filled from name. Max {{max}} characters.", { max: shortNameMaxLength })
                     }
                     required
                     fullWidth
                     inputProps={{ maxLength: shortNameMaxLength }}
-                    disabled={!canCreate || isSaving}
+                    disabled={!canCreate || form.isSaving}
                 />
                 <TextField
                     label={i18n.t("Code")}
-                    value={code}
-                    onChange={event => handleCodeChange(event.target.value)}
-                    error={Boolean(fieldErrors.code)}
+                    value={form.code}
+                    onChange={event => form.onCodeChange(event.target.value)}
+                    error={Boolean(form.fieldErrors.code)}
                     helperText={
-                        fieldErrors.code ??
+                        form.fieldErrors.code ??
                         (prefix
                             ? i18n.t("Auto-filled with the project prefix {{prefix}}", { prefix })
                             : i18n.t("Auto-filled from name"))
                     }
                     required
                     fullWidth
-                    disabled={!canCreate || isSaving}
+                    disabled={!canCreate || form.isSaving}
                 />
                 <TextField
                     label={i18n.t("Description")}
-                    value={description}
-                    onChange={event => setDescription(event.target.value)}
-                    error={Boolean(fieldErrors.description)}
-                    helperText={fieldErrors.description}
+                    value={form.description}
+                    onChange={event => form.onDescriptionChange(event.target.value)}
+                    error={Boolean(form.fieldErrors.description)}
+                    helperText={form.fieldErrors.description}
                     required
                     multiline
                     minRows={2}
                     fullWidth
-                    disabled={!canCreate || isSaving}
+                    disabled={!canCreate || form.isSaving}
                 />
             </Form>
         </ConfirmationDialog>
