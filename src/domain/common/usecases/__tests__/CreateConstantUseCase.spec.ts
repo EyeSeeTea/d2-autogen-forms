@@ -3,7 +3,7 @@ import { CreateConstantUseCase } from "../CreateConstantUseCase";
 import { Constant } from "../../entities/Constant";
 import { ConstantRepository } from "../../repositories/ConstantRepository";
 import { ConstantD2Repository } from "../../../../data/ConstantD2Repository";
-import { ConstantSaveError } from "../../entities/ConstantSaveError";
+import { isConstantSaveError } from "../../entities/ConstantSaveError";
 import { Stats } from "../../entities/Stats";
 
 let mockConstantRepository: ConstantRepository;
@@ -52,10 +52,15 @@ describe("CreateConstantUseCase", () => {
         when(mockConstantRepository.save(anything(), anything())).thenResolve(failStats);
         const useCase = new CreateConstantUseCase(instance(mockConstantRepository));
 
-        await expect(useCase.execute(newConstant)).rejects.toBeInstanceOf(ConstantSaveError);
-        await expect(useCase.execute(newConstant)).rejects.toMatchObject({
-            reports: [{ errorCode: "E5003", errorProperty: "code" }],
-        });
+        const thrown = await useCase.execute(newConstant).then(
+            () => undefined,
+            (error: unknown) => error
+        );
+        expect(isConstantSaveError(thrown)).toBe(true);
+        if (!isConstantSaveError(thrown)) return;
+        expect(thrown.reports).toEqual([
+            { message: "Property `code` requires unique value", errorCode: "E5003", errorProperty: "code" },
+        ]);
     });
 
     it("falls back to a single-entry ConstantSaveError when only errorMessage is set", async () => {
@@ -69,6 +74,13 @@ describe("CreateConstantUseCase", () => {
         when(mockConstantRepository.save(anything(), anything())).thenResolve(failStats);
         const useCase = new CreateConstantUseCase(instance(mockConstantRepository));
 
-        await expect(useCase.execute(newConstant)).rejects.toThrow("Constant code already exists");
+        const thrown = await useCase.execute(newConstant).then(
+            () => undefined,
+            (error: unknown) => error
+        );
+        expect(isConstantSaveError(thrown)).toBe(true);
+        if (!isConstantSaveError(thrown)) return;
+        expect(thrown.message).toBe("Constant code already exists");
+        expect(thrown.reports).toEqual([{ message: "Constant code already exists", errorCode: "", errorProperty: "" }]);
     });
 });

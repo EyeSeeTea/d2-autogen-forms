@@ -49,6 +49,18 @@ export const Editor: React.FC<EditorProps> = React.memo(props => {
                 };
 
                 monaco.languages.json.jsonDefaults.setDiagnosticsOptions(diagnosticOptions);
+                monaco.languages.json.jsonDefaults.setModeConfiguration({
+                    documentFormattingEdits: true,
+                    documentRangeFormattingEdits: true,
+                    completionItems: !isLargeFile,
+                    hovers: true,
+                    documentSymbols: true,
+                    tokens: true,
+                    colors: true,
+                    foldingRanges: true,
+                    diagnostics: !isLargeFile,
+                    selectionRanges: true,
+                });
             })
             .catch(error => console.error("Monaco initialization error:", error));
     }, [dataSetCode, isLargeFile]);

@@ -4,7 +4,8 @@ import { TextField } from "@material-ui/core";
 import { ConfirmationDialog } from "@eyeseetea/d2-ui-components";
 import i18n from "@eyeseetea/d2-ui-components/locales";
 import { Constant, deriveCode, deriveShortName, shortNameMaxLength } from "../../../domain/common/entities/Constant";
-import { ConstantSaveError } from "../../../domain/common/entities/ConstantSaveError";
+import { ConstantField, fieldError, isConstantSaveError } from "../../../domain/common/entities/ConstantSaveError";
+import { Maybe } from "../../../utils/ts-utils";
 import { useAppContext } from "../../contexts/app-context";
 
 type CreateConstantDialogProps = {
@@ -26,10 +27,8 @@ export const CreateConstantDialog: React.FC<CreateConstantDialogProps> = React.m
     const [codeDirty, setCodeDirty] = useState(false);
     const [description, setDescription] = useState("");
     const [isSaving, setIsSaving] = useState(false);
-    const [generalError, setGeneralError] = useState<string | undefined>();
-    const [fieldErrors, setFieldErrors] = useState<
-        Partial<Record<"name" | "shortName" | "code" | "description", string>>
-    >({});
+    const [generalError, setGeneralError] = useState<Maybe<string>>();
+    const [fieldErrors, setFieldErrors] = useState<Partial<Record<ConstantField, string>>>({});
 
     useEffect(() => {
         if (!open) {
@@ -95,16 +94,18 @@ export const CreateConstantDialog: React.FC<CreateConstantDialogProps> = React.m
             await compositionRoot.constants.create(constant);
             onSuccess(constant.code);
         } catch (error) {
-            if (error instanceof ConstantSaveError) {
-                const fieldUpdates: typeof fieldErrors = {};
-                for (const field of ["name", "shortName", "code", "description"] as const) {
-                    const fieldMessage = error.fieldError(field);
-                    if (fieldMessage) fieldUpdates[field] = fieldMessage;
-                }
+            if (isConstantSaveError(error)) {
+                const saveError = error;
+                const fields: ReadonlyArray<ConstantField> = ["name", "shortName", "code", "description"];
+                const fieldUpdates = Object.fromEntries(
+                    fields
+                        .map(field => [field, fieldError(saveError, field)] as const)
+                        .filter(([, message]) => message !== undefined)
+                );
                 if (Object.keys(fieldUpdates).length > 0) {
                     setFieldErrors(prev => ({ ...prev, ...fieldUpdates }));
                 } else {
-                    setGeneralError(error.message);
+                    setGeneralError(saveError.message);
                 }
             } else {
                 setGeneralError(error instanceof Error ? error.message : String(error));

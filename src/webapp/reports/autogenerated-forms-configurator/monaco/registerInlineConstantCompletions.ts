@@ -1,5 +1,6 @@
 import i18n from "@eyeseetea/d2-ui-components/locales";
 import { Constant } from "../../../../domain/common/entities/Constant";
+import { Maybe } from "../../../../utils/ts-utils";
 import { extractRootPrefix } from "./extractRootPrefix";
 import { isInlineConstantCodePosition } from "./jsonPathAtCursor";
 import { CodeEditor, CompletionItem, IRange, Monaco, Position, TextModel } from "./types";
@@ -32,12 +33,10 @@ export function registerInlineConstantCompletions(
     monaco: Monaco,
     options: InlineConstantCompletionsOptions
 ): Disposer {
-    const commandId = codeEditor.addCommand(
-        0,
-        (_context: unknown, args: { range: IRange; prefix: string }) => {
-            options.onRequestCreate(args);
-        }
-    );
+    const commandId = codeEditor.addCommand(0, (_accessor: unknown, ...args: unknown[]) => {
+        const payload = args[0] as { range: IRange; prefix: string };
+        options.onRequestCreate(payload);
+    });
 
     const providerDisposable = monaco.languages.registerCompletionItemProvider("json", {
         triggerCharacters: ['"', "_"],
@@ -56,20 +55,6 @@ export function registerInlineConstantCompletions(
                 startColumn: word.startColumn,
                 endColumn: word.endColumn,
             };
-
-            const fetchResult = await options
-                .fetchConstants(prefix)
-                .then(constants => ({ ok: true as const, constants }))
-                .catch(error => ({ ok: false as const, error }));
-
-            if (!fetchResult.ok) {
-                console.error("Failed to load constants for inline completions", fetchResult.error);
-                return { suggestions: [buildFetchErrorItem(range, monaco), buildCreateNewItem({ range, prefix, monaco, canCreate: options.canCreate, commandId })] };
-            }
-
-            const existingItems = fetchResult.constants.map((constant, index) =>
-                buildExistingItem(constant, range, index, monaco)
-            );
             const createItem = buildCreateNewItem({
                 range,
                 prefix,
@@ -78,11 +63,34 @@ export function registerInlineConstantCompletions(
                 commandId,
             });
 
+            // Only list existing constants when a top-level `"prefix"` is defined in the
+            // datastore config. Without a prefix the API returns the entire constants table
+            // and Monaco's fuzzy filter aggressively prunes the create entry on large files,
+            // so we suppress the existing list and show only the create entry instead.
+            if (!prefix) {
+                return { suggestions: [createItem] };
+            }
+
+            const fetchResult = await options
+                .fetchConstants(prefix)
+                .then(constants => ({ ok: true as const, constants }))
+                .catch(error => ({ ok: false as const, error }));
+
+            if (!fetchResult.ok) {
+                console.error("Failed to load constants for inline completions", fetchResult.error);
+                return { suggestions: [buildFetchErrorItem(range, monaco), createItem] };
+            }
+
+            const existingItems = fetchResult.constants.map((constant, index) =>
+                buildExistingItem(constant, range, index, monaco)
+            );
+
             return { suggestions: [createItem, ...existingItems] };
         },
     });
 
     let wasEligible = false;
+    let pendingTrigger: Maybe<ReturnType<typeof setTimeout>>;
     const cursorDisposable = codeEditor.onDidChangeCursorPosition(() => {
         const model = codeEditor.getModel();
         const position = codeEditor.getPosition();
@@ -93,7 +101,8 @@ export function registerInlineConstantCompletions(
         const offset = model.getOffsetAt(position);
         const isEligible = isInlineConstantCodePosition(model.getValue(), offset);
         if (isEligible && !wasEligible) {
-            setTimeout(() => {
+            pendingTrigger = setTimeout(() => {
+                pendingTrigger = undefined;
                 codeEditor.trigger("inline-constants", "editor.action.triggerSuggest", {});
             }, 0);
         }
@@ -102,6 +111,10 @@ export function registerInlineConstantCompletions(
 
     return {
         dispose: () => {
+            if (pendingTrigger !== undefined) {
+                clearTimeout(pendingTrigger);
+                pendingTrigger = undefined;
+            }
             providerDisposable.dispose();
             cursorDisposable?.dispose();
         },
@@ -125,7 +138,7 @@ function buildCreateNewItem(params: {
     prefix: string;
     monaco: Monaco;
     canCreate: boolean;
-    commandId: string | null;
+    commandId: Maybe<string>;
 }): CompletionItem {
     const { range, prefix, monaco, canCreate, commandId } = params;
     const label = i18n.t("Create new constant");

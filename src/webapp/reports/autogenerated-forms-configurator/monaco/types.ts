@@ -4,6 +4,7 @@
 // own code without taking on monaco-editor as a devDependency.
 
 import type { Monaco } from "@monaco-editor/react";
+import { Maybe } from "../../../../utils/ts-utils";
 
 export type { Monaco };
 
@@ -27,15 +28,21 @@ export type WordAtPosition = {
 
 export type TextModel = {
     getValue(): string;
+    getValueInRange(range: IRange): string;
     getOffsetAt(position: Position): number;
     getWordUntilPosition(position: Position): WordAtPosition;
+    getWordAtPosition(position: Position): Maybe<WordAtPosition>;
     getLineContent(line: number): string;
 };
 
 export type CodeEditor = {
-    getModel(): TextModel | null;
-    getPosition(): Position | null;
-    addCommand(keybinding: number, handler: (...args: any[]) => void, context?: string): string | null;
+    getModel(): Maybe<TextModel>;
+    getPosition(): Maybe<Position>;
+    addCommand(
+        keybinding: number,
+        handler: (context: unknown, ...args: unknown[]) => void,
+        context?: string
+    ): Maybe<string>;
     onDidChangeCursorPosition(listener: () => void): { dispose(): void };
     onDidChangeModelContent(listener: () => void): { dispose(): void };
     onKeyUp(listener: (e: { keyCode: number }) => void): { dispose(): void };
@@ -56,6 +63,8 @@ export type CompletionItem = {
     detail?: string;
     documentation?: string;
     sortText?: string;
+    filterText?: string;
+    preselect?: boolean;
     tags?: number[];
     command?: { id: string; title: string; arguments?: unknown[] };
 };

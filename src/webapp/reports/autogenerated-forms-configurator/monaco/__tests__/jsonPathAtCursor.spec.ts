@@ -49,16 +49,7 @@ describe("getJsonPathAtCursor — edge cases", () => {
 
     it("handles deeply nested objects", () => {
         const text = `{"a":{"b":{"c":{"d":{"e":{"texts":{"x":{"code":"|"}}}}}}}}`;
-        expect(getJsonPathAtCursor(text, text.indexOf("|"))).toEqual([
-            "a",
-            "b",
-            "c",
-            "d",
-            "e",
-            "texts",
-            "x",
-            "code",
-        ]);
+        expect(getJsonPathAtCursor(text, text.indexOf("|"))).toEqual(["a", "b", "c", "d", "e", "texts", "x", "code"]);
     });
 
     it("returns the path even when the surrounding JSON is malformed (trailing comma)", () => {

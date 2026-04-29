@@ -1,19 +1,27 @@
 import { Constant } from "./Constant";
 import { ErrorReportEntry } from "./Stats";
+import { Maybe } from "../../../utils/ts-utils";
 
-type ConstantField = keyof Pick<Constant, "name" | "shortName" | "code" | "description">;
+export type ConstantField = keyof Pick<Constant, "name" | "shortName" | "code" | "description">;
 
-export class ConstantSaveError extends Error {
-    public readonly reports: readonly ErrorReportEntry[];
+export type ConstantSaveError = {
+    readonly _tag: "ConstantSaveError";
+    readonly reports: ReadonlyArray<ErrorReportEntry>;
+    readonly message: string;
+};
 
-    constructor(reports: readonly ErrorReportEntry[]) {
-        const message = reports.map(report => report.message).join("\n") || "Unknown error";
-        super(message);
-        this.name = "ConstantSaveError";
-        this.reports = reports;
-    }
+export function constantSaveError(reports: ReadonlyArray<ErrorReportEntry>): ConstantSaveError {
+    return {
+        _tag: "ConstantSaveError",
+        reports,
+        message: reports.map(report => report.message).join("\n") || "Unknown error",
+    };
+}
 
-    fieldError(field: ConstantField): string | undefined {
-        return this.reports.find(report => report.errorProperty === field)?.message;
-    }
+export function isConstantSaveError(value: unknown): value is ConstantSaveError {
+    return typeof value === "object" && value !== null && (value as { _tag?: unknown })._tag === "ConstantSaveError";
+}
+
+export function fieldError(error: ConstantSaveError, field: ConstantField): Maybe<string> {
+    return error.reports.find(report => report.errorProperty === field)?.message;
 }

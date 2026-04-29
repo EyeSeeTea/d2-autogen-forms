@@ -88,7 +88,7 @@ export function useAutogenEditor(props: AutogenEditorProps): AutogenEditorState 
                     return;
                 }
 
-                if (jsonContent.length > LARGE_FILE_SIZE) {
+                if (calculateFileSizeInKB(jsonContent) > LARGE_FILE_SIZE) {
                     try {
                         JSON.parse(jsonContent);
                         updateJsonValidity(true);
@@ -141,8 +141,8 @@ export function useAutogenEditor(props: AutogenEditorProps): AutogenEditorState 
                 });
             }
 
-            const fileSize = configValue?.length || 0;
-            if (fileSize < HUGE_FILE_SIZE) {
+            const fileSizeKB = calculateFileSizeInKB(configValue || "");
+            if (fileSizeKB < HUGE_FILE_SIZE) {
                 editor.onKeyUp((e: { keyCode: number }) => {
                     try {
                         const position = editor.getPosition();
@@ -177,7 +177,7 @@ export function useAutogenEditor(props: AutogenEditorProps): AutogenEditorState 
                 }, validationDebounceMs);
             });
         },
-        [isLargeFile, configValue?.length, validationDebounceMs, updateJsonValidity]
+        [isLargeFile, configValue, validationDebounceMs, updateJsonValidity]
     );
 
     const handleEditorValidation = useCallback(
@@ -213,8 +213,8 @@ export function useAutogenEditor(props: AutogenEditorProps): AutogenEditorState 
     };
 }
 
-const LARGE_FILE_SIZE = 100 * 1024; // 100KB
-const HUGE_FILE_SIZE = 500 * 1024; // 500KB
+const LARGE_FILE_SIZE = 100; // 100KB
+const HUGE_FILE_SIZE = 500; // 500KB
 
 function calculateFileSizeInKB(input: string): number {
     const encoder = new TextEncoder();

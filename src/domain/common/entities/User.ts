@@ -8,7 +8,7 @@ export interface User {
     orgUnits: OrgUnit[];
     userRoles: NamedRef[];
     userGroups: NamedRef[];
-    authorities: string[];
+    authorities: ReadonlyArray<string>;
 }
 
 export const CONSTANT_ADD_AUTHORITY = "F_CONSTANT_ADD";
