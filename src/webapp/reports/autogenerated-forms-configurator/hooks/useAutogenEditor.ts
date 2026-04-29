@@ -216,10 +216,4 @@ export function useAutogenEditor(props: AutogenEditorProps): AutogenEditorState 
 const LARGE_FILE_SIZE = 100; // 100KB
 const HUGE_FILE_SIZE = 500; // 500KB
 
-function calculateFileSizeInKB(input: string): number {
-    const encoder = new TextEncoder();
-    const sizeInBytes = encoder.encode(input).length;
-    const sizeInKB = sizeInBytes / 1024;
-
-    return sizeInKB;
-}
+const calculateFileSizeInKB = (input: string): number => new TextEncoder().encode(input).length / 1024;
