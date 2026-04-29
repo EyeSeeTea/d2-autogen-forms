@@ -3,6 +3,7 @@ import { Monaco } from "@monaco-editor/react";
 import { EditorProps } from "../Editor";
 import { useJsonProcessor } from "./useJsonProcessor";
 import { DEFAULT_JSON_VALUE } from "./useConfigurator";
+import { CodeEditor } from "../monaco/types";
 import { Maybe } from "../../../../utils/ts-utils";
 
 type Marker = Record<string, unknown>;
@@ -14,7 +15,7 @@ type AutogenEditorState = {
     editorOptions: Monaco["options"];
     isLargeFile: boolean;
     handleChange: (value: Maybe<string>) => void;
-    handleEditorDidMount: (editor: Monaco["editor"], monaco: Monaco) => void;
+    handleEditorDidMount: (editor: CodeEditor, monaco: Monaco) => void;
     handleEditorValidation: (markers: Marker[]) => void;
     processingError: Maybe<string>;
 };
@@ -131,7 +132,7 @@ export function useAutogenEditor(props: AutogenEditorProps): AutogenEditorState 
     );
 
     const handleEditorDidMount = useCallback(
-        (editor: Monaco["editor"], monaco: Monaco) => {
+        (editor: CodeEditor, monaco: Monaco) => {
             if (isLargeFile) {
                 editor.updateOptions({
                     smoothScrolling: false,

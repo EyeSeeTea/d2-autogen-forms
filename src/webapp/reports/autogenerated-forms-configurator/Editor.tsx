@@ -12,12 +12,10 @@ import {
     InlineConstantCompletionsOptions,
     registerInlineConstantCompletions,
 } from "./monaco/registerInlineConstantCompletions";
+import { CodeEditor, IRange } from "./monaco/types";
 
 export type EditorApi = {
-    insertAtRange: (
-        range: { startLineNumber: number; endLineNumber: number; startColumn: number; endColumn: number },
-        text: string
-    ) => void;
+    insertAtRange: (range: IRange, text: string) => void;
 };
 
 export type EditorProps = {
@@ -33,7 +31,7 @@ export const Editor: React.FC<EditorProps> = React.memo(props => {
     const { dataSetCode, configValue, inlineConstantsOptions, onEditorReady } = props;
 
     const valueGetter = useRef<Monaco>();
-    const [editorInstance, setEditorInstance] = useState<any>();
+    const [editorInstance, setEditorInstance] = useState<CodeEditor>();
     const [monacoInstance, setMonacoInstance] = useState<Monaco>();
 
     const { isProcessing, error } = useJsonProcessor();
@@ -60,7 +58,7 @@ export const Editor: React.FC<EditorProps> = React.memo(props => {
     }, []);
 
     const handleMount = useCallback(
-        (editor: any, monaco: Monaco) => {
+        (editor: CodeEditor, monaco: Monaco) => {
             setEditorInstance(editor);
             setMonacoInstance(monaco);
             handleEditorDidMount(editor, monaco);
