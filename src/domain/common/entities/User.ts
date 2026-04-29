@@ -11,7 +11,6 @@ export interface User {
     authorities: string[];
 }
 
-// check if this is it
 export const CONSTANT_ADD_AUTHORITY = "F_CONSTANT_ADD";
 
 export function canCreateConstants(user: User): boolean {
