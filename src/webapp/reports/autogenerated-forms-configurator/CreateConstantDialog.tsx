@@ -4,6 +4,7 @@ import { TextField } from "@material-ui/core";
 import { ConfirmationDialog } from "@eyeseetea/d2-ui-components";
 import i18n from "@eyeseetea/d2-ui-components/locales";
 import { Constant, deriveCode, deriveShortName, shortNameMaxLength } from "../../../domain/common/entities/Constant";
+import { ConstantSaveError } from "../../../domain/common/entities/ConstantSaveError";
 import { useAppContext } from "../../contexts/app-context";
 
 type CreateConstantDialogProps = {
@@ -94,11 +95,19 @@ export const CreateConstantDialog: React.FC<CreateConstantDialogProps> = React.m
             await compositionRoot.constants.create(constant);
             onSuccess(constant.code);
         } catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
-            if (/code/i.test(message) && /exist|duplicate|unique/i.test(message)) {
-                setFieldErrors(prev => ({ ...prev, code: message }));
+            if (error instanceof ConstantSaveError) {
+                const fieldUpdates: typeof fieldErrors = {};
+                for (const field of ["name", "shortName", "code", "description"] as const) {
+                    const fieldMessage = error.fieldError(field);
+                    if (fieldMessage) fieldUpdates[field] = fieldMessage;
+                }
+                if (Object.keys(fieldUpdates).length > 0) {
+                    setFieldErrors(prev => ({ ...prev, ...fieldUpdates }));
+                } else {
+                    setGeneralError(error.message);
+                }
             } else {
-                setGeneralError(message);
+                setGeneralError(error instanceof Error ? error.message : String(error));
             }
         } finally {
             setIsSaving(false);
