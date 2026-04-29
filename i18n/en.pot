@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-04-17T20:38:16.162Z\n"
-"PO-Revision-Date: 2026-04-17T20:38:16.162Z\n"
+"POT-Creation-Date: 2026-04-29T13:18:27.133Z\n"
+"PO-Revision-Date: 2026-04-29T13:18:27.133Z\n"
 
 msgid "Mark all notifications as read"
 msgstr ""
@@ -116,21 +116,6 @@ msgstr ""
 msgid "? This action cannot be undone."
 msgstr ""
 
-msgid "Name is required"
-msgstr ""
-
-msgid "Short name is required"
-msgstr ""
-
-msgid "Short name must be {{max}} characters or fewer"
-msgstr ""
-
-msgid "Code is required"
-msgstr ""
-
-msgid "Description is required"
-msgstr ""
-
 msgid "Create new constant"
 msgstr ""
 
@@ -176,7 +161,28 @@ msgstr ""
 msgid "Configuration saved"
 msgstr ""
 
+msgid "Name is required"
+msgstr ""
+
+msgid "Short name is required"
+msgstr ""
+
+msgid "Short name must be {{max}} characters or fewer"
+msgstr ""
+
+msgid "Code is required"
+msgstr ""
+
+msgid "Description is required"
+msgstr ""
+
 msgid "Open dialog to define a new constant"
+msgstr ""
+
+msgid "Failed to load constants"
+msgstr ""
+
+msgid "Check the network and try again"
 msgstr ""
 
 msgctxt "ADD authority."

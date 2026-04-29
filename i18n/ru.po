@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: i18next-conv\n"
-"POT-Creation-Date: 2026-04-17T20:38:16.162Z\n"
+"POT-Creation-Date: 2026-04-29T13:18:27.133Z\n"
 "PO-Revision-Date: 2018-10-25T09:02:35.143Z\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -117,21 +117,6 @@ msgstr ""
 msgid "? This action cannot be undone."
 msgstr ""
 
-msgid "Name is required"
-msgstr ""
-
-msgid "Short name is required"
-msgstr ""
-
-msgid "Short name must be {{max}} characters or fewer"
-msgstr ""
-
-msgid "Code is required"
-msgstr ""
-
-msgid "Description is required"
-msgstr ""
-
 msgid "Create new constant"
 msgstr ""
 
@@ -177,7 +162,28 @@ msgstr ""
 msgid "Configuration saved"
 msgstr ""
 
+msgid "Name is required"
+msgstr ""
+
+msgid "Short name is required"
+msgstr ""
+
+msgid "Short name must be {{max}} characters or fewer"
+msgstr ""
+
+msgid "Code is required"
+msgstr ""
+
+msgid "Description is required"
+msgstr ""
+
 msgid "Open dialog to define a new constant"
+msgstr ""
+
+msgid "Failed to load constants"
+msgstr ""
+
+msgid "Check the network and try again"
 msgstr ""
 
 msgctxt "ADD authority."
