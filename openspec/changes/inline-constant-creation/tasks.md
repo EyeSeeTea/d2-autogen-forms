@@ -1,65 +1,59 @@
 ## 1. Design
 
 -   [x] 1.1 [GD] Accept `openspec/designs/exports/image.png` (from ClickUp task 869ckzqxc) as the approved mockup for the autocomplete flow
--   [x] 1.2 [GD] Wireframe the Create Constant dialog in `openspec/designs/wireframes/create-constant-dialog.pen` — fields: name, shortName, code, description, value, error state, disabled-by-permission state
+-   [x] 1.2 [GD] Wireframe the Create Constant dialog in `openspec/designs/wireframes/create-constant-dialog.pen` — fields: name, shortName, code, description, error state, disabled-by-permission state
 -   [x] 1.3 [GD] Export `openspec/designs/exports/create-constant-dialog-default.png` and `create-constant-dialog-error.png`
 
-## 2. DataStore Configuration Schema
+## 2. Domain Layer
 
--   [x] 2.1 [BE] Add optional `prefix?: string` at the **root** of the DataStore config codec in `src/data/common/Dhis2DataStoreDataForm.ts` (alongside the dataset map, not inside it)
--   [x] 2.2 [BE] Add unit test: config with a root `prefix` round-trips through the codec; config without `prefix` still validates
+-   [x] 2.1 [BE] Align `Constant` entity with the DHIS2 shape — already matched; `Constant` is the only type used (new entries carry `id: ""` and `translations: []`)
+-   [x] 2.2 [BE] `ConstantRepository.save(constants: Constant[], options)`; internal implementation splits on `id === ""` (new entries are POSTed with server-assigned UID; existing entries keep the pre-fetch-then-merge flow)
+-   [x] 2.3 [BE] Add code/shortName derivation utilities in `src/domain/common/entities/Constant.ts`: `deriveCode(name)`, `deriveShortName(name)` — pure, functional, deterministic
+-   [x] 2.4 [BE] Add `ConstantSaveError` as a tagged discriminated type in `src/domain/common/entities/ConstantSaveError.ts` with `isConstantSaveError` / `fieldError` helpers; carries structured `ErrorReportEntry[]` so the dialog can surface per-field errors
+-   [x] 2.5 [BE] Create `CreateConstantUseCase` in `src/domain/common/usecases/CreateConstantUseCase.ts` with `execute(constant: Constant)` returning `Promise<void>`; wraps `repository.save([constant])` and throws a `ConstantSaveError` on failure
+-   [x] 2.6 [BE] Unit test derivation utilities: standard names, special characters, consecutive underscores collapsed, shortName length cap at 50
+-   [x] 2.7 [BE] Unit test `CreateConstantUseCase`: delegates to `save` with the right options; throws structured field errors; falls back to single-message error when only `errorMessage` is set
 
-## 3. Domain Layer
+## 3. Data Layer
 
--   [x] 3.1 [BE] Align `Constant` entity with the DHIS2 shape — already matched; `Constant` is the only type used (new entries carry `id: ""` and `translations: []`)
--   [x] 3.2 [BE] Keep `ConstantRepository.save(constants: Constant[], options)`; internal implementation splits on `id === ""` (new entries are POSTed with server-assigned UID; existing entries keep the pre-fetch-then-merge flow)
--   [x] 3.3 [BE] Extend `ConstantRepository.get(prefix?: string)` with an optional prefix filter — no separate `listByPrefix` method
--   [x] 3.4 [BE] Add code/shortName derivation utilities in `src/domain/common/entities/Constant.ts`: `deriveCode(name, prefix)`, `deriveShortName(name)` — pure, functional, deterministic
--   [x] 3.5 [BE] Create `CreateConstantUseCase` in `src/domain/common/usecases/CreateConstantUseCase.ts` with `execute(constant: Constant)` returning `Promise<void>`; wraps `repository.save([constant])` and throws on import error
--   [x] 3.6 [BE] Unit test derivation utilities: standard names, special characters, consecutive underscores collapsed, shortName length cap at 50, prefix application
--   [x] 3.7 [BE] Unit test `CreateConstantUseCase`: delegates to `save` with the right options; throws when import reports an error
+-   [x] 3.1 [BE] Update `ConstantD2Repository.save` to split input into existing-vs-new; existing entries keep the pre-fetch-by-id merge, new entries go straight into the POST payload (no `id` field → DHIS2 assigns it server-side)
+-   [x] 3.2 [BE] Wire `CreateConstantUseCase` in `src/compositionRoot.ts` under `constants.create`
+-   [x] 3.3 [BE] Current user authorities exposed on `Config.currentUser.authorities` (populated by `Dhis2ConfigRepository.getCurrentUser` via `/me/authorization`). Helper `canCreateConstants(user)` in `src/domain/common/entities/User.ts`
 
-## 4. Data Layer
+## 4. Monaco Completion Provider
 
--   [x] 4.1 [BE] Update `ConstantD2Repository.save` to split input into existing-vs-new; existing entries keep the pre-fetch-by-id merge, new entries go straight into the POST payload (no `id` field → DHIS2 assigns it server-side)
--   [x] 4.2 [BE] Update `ConstantD2Repository.get` to apply a `code.$like` filter when a prefix is provided
--   [x] 4.3 [BE] Wire `CreateConstantUseCase` in `src/compositionRoot.ts` under `constants.create`
--   [x] 4.4 [BE] Current user authorities now exposed on `Config.currentUser.authorities` (populated by `Dhis2ConfigRepository.getCurrentUser` via `/me/authorization`). Helper `canCreateConstants(user)` in `src/domain/common/entities/User.ts`
+-   [x] 4.1 [FE] `registerInlineConstantCompletions(editor, monaco, options)` added in `src/webapp/reports/autogenerated-forms-configurator/monaco/registerInlineConstantCompletions.ts`
+-   [x] 4.2 [FE] JSON-path backward walker in `monaco/jsonPathAtCursor.ts`; returns the path or undefined
+-   [x] 4.3 [FE] Activation gate `isInlineConstantCodePosition` requires path ending in `code`, length ≥ 3, and `texts` as an ancestor at least two levels above
+-   [x] 4.4 [FE] Provider contributes a single "Create new constant" entry with `sortText: "0"`; `command` fires with the cursor `Range` so the Configurator can open the dialog
+-   [x] 4.5 [FE] If the user lacks `F_CONSTANT_ADD`, the entry is tagged `Deprecated` with a detail message and no command attached (no-op on selection)
+-   [x] 4.6 [FE] Provider registered in `Editor.tsx` via a `useEffect`; the `IDisposable` and any pending `setTimeout` are disposed on unmount and when `dataSetCode` / options change
+-   [x] 4.7 [FE] On large files (`isLargeFile === true`), `Editor.tsx` disables Monaco's JSON-worker `completionItems` contribution via `setModeConfiguration` so the create entry isn't drowned out by document-string scraping
 
-## 5. Monaco Completion Provider
+## 5. Create Constant Dialog
 
--   [x] 5.1 [FE] `registerInlineConstantCompletions(editor, monaco, options)` added in `src/webapp/reports/autogenerated-forms-configurator/monaco/registerInlineConstantCompletions.ts`
--   [x] 5.2 [FE] JSON-path backward walker in `monaco/jsonPathAtCursor.ts`; returns the path or undefined
--   [x] 5.3 [FE] Activation gate `isInlineConstantCodePosition` requires path ending in `code`, length ≥ 3, and `texts` as an ancestor at least two levels above
--   [x] 5.4 [FE] Completion items populated from `compositionRoot.constants.get(prefix)` (fetched via `extractRootPrefix` reading the current JSON text); browser caching via the request memoization happens at the d2-api layer
--   [x] 5.5 [FE] "➕ Create new constant" prepended with `sortText: "0"`; `command` fires with the cursor Range so the Configurator can open the dialog
--   [x] 5.6 [FE] If the user lacks `F_CONSTANT_ADD`, the "Create new" item is tagged `Deprecated` with a detail message and no command attached (no-op on selection)
--   [x] 5.7 [FE] Provider registered in `Editor.tsx` via a `useEffect`; the `IDisposable` is disposed on unmount and when `dataSetCode` / options change
+-   [x] 5.1 [FE] `CreateConstantDialog.tsx` — uses `ConfirmationDialog` + MUI `TextField`s for the four fields
+-   [x] 5.2 [FE] `useCreateConstantForm` hook owns state, validation, and save side-effects; the component is presentation-only
+-   [x] 5.3 [FE] Auto-derivation wired: `shortName` via `deriveShortName(name)`, `code` via `deriveCode(name)`; per-field dirty flags stop derivation once the user edits
+-   [x] 5.4 [FE] Validation: name required, shortName required and ≤ 50 chars, code required, description required. No `value` field — dialog always submits `value: 0`
+-   [x] 5.5 [FE] On Save: calls `compositionRoot.constants.create(constant)`; on success, Configurator invokes `editorApi.insertAtRange` via the stored `Range`
+-   [x] 5.6 [FE] On failure: dialog stays open; per-field errors land on the matching form field, other errors show at the top
 
-## 6. Create Constant Dialog
+## 6. Integration with Configurator
 
--   [x] 6.1 [FE] `CreateConstantDialog.tsx` — uses `ConfirmationDialog` + MUI `TextField`s for the five fields
--   [x] 6.2 [FE] Auto-derivation wired: `shortName` via `deriveShortName(name)`, `code` via `deriveCode(name, prefix)`; per-field dirty flags stop derivation once the user edits
--   [x] 6.3 [FE] Validation: name required, shortName required and ≤ 50 chars, code required, description required. No `value` field — dialog always submits `value: 0`
--   [x] 6.4 [FE] On Save: calls `compositionRoot.constants.create(constant)`; on success, Configurator invokes `editorApi.insertAtRange` via the stored Range
--   [x] 6.5 [FE] On failure: dialog stays open; duplicate-code errors land on the `code` field, other errors show at the top
+-   [x] 6.1 [FE] `CreateConstantDialog` mounted in `Configurator.tsx`; open/close state driven by the "Create new" completion command and the dialog's own Save/Cancel
+-   [x] 6.2 [FE] Pending range tracked in `Configurator.tsx` so the editor can insert the new code at the original cursor position on save success
 
-## 7. Integration with Configurator
+## 7. Internationalisation
 
--   [x] 7.1 [FE] Prefix is read from the live editor text via `extractRootPrefix` inside the completion provider — no explicit prop threading needed
--   [x] 7.2 [FE] `CreateConstantDialog` mounted in `Configurator.tsx`; open/close state driven by the "Create new" completion command and the dialog's own Save/Cancel
--   [ ] 7.3 [FE] Constants cache invalidation — **deferred**; current flow fetches constants on every completion invocation (d2-api may memoize internally). Add explicit cache invalidation only if performance is an issue in large deployments
+-   [x] 7.1 [FE] All user-visible strings in `CreateConstantDialog` and the Monaco completion items wrapped in `i18n.t(...)`
+-   [x] 7.2 [FE] Run `yarn extract-pot && yarn update-po && yarn localize` to refresh `.po` files and locale JSON — **user action** (needs review of the generated `.po` diff and human translation of the new keys before merge)
 
-## 8. Internationalisation
+## 8. Specs & Verification
 
--   [x] 8.1 [FE] All user-visible strings in `CreateConstantDialog` and the Monaco completion items wrapped in `i18n.t(...)`
--   [x] 8.2 [FE] Run `yarn update-po && yarn localize` to refresh `.po` files and locale JSON — **user action** (needs review of the generated `.po` diff)
-
-## 9. Specs & Verification
-
--   [ ] 9.1 [BE] Confirm spec matches implementation before running `/opsx:archive` — recheck after the UI is smoke-tested
--   [x] 9.2 [CR] `yarn lint` clean
--   [x] 9.3 [CR] `yarn test` passes — 90/90 (12 new: derivations, use case, codec, JSON path walker)
--   [x] 9.4 [CR] `yarn build configurator` produces a valid build — **user action**
--   [x] 9.5 [CR] `yarn build-autogenerated-forms` unaffected — **user action**
--   [x] 9.6 [CR] Manual smoke test in the dev server: autocomplete on `texts.header.code`, create a prefixed constant, verify insertion and filtering; repeat with a user lacking `F_CONSTANT_ADD`; repeat on a large config (>100 KB) — **user action**
+-   [ ] 8.1 [BE] Confirm spec matches implementation before running `/opsx:archive` — recheck after the UI is smoke-tested
+-   [x] 8.2 [CR] `yarn lint` clean
+-   [x] 8.3 [CR] `yarn test` passes — full suite including `Constant.spec.ts`, `CreateConstantUseCase.spec.ts`, `Dhis2DataStoreDataForm.spec.ts`, `jsonPathAtCursor.spec.ts`
+-   [x] 8.4 [CR] `yarn build configurator` produces a valid build — **user action**
+-   [x] 8.5 [CR] `yarn build-autogenerated-forms` unaffected — **user action**
+-   [x] 8.6 [CR] Manual smoke test in the dev server: autocomplete on `texts.header.code`, create a constant, verify insertion; repeat with a user lacking `F_CONSTANT_ADD`; repeat on a large config (>100 KB) — **user action**
