@@ -80,9 +80,12 @@ function getValueAndVerifyCondition(
 ): Maybe<boolean> {
     if (rules.length !== 0) {
         return rules.some(rule => {
+            // Visibility/disabled/enabled rules evaluate against the form's base period,
+            // not the section's offset period. The related data element lives on the base
+            // period, so using the offset would look up the wrong value and break the rule.
             const dataValue = dataFormInfo.data.values.getOrEmpty(rule.relatedDataElement, {
                 orgUnitId: rule.relatedDataElement.orgUnit || dataFormInfo.orgUnitId,
-                period: period || dataFormInfo.period,
+                period: dataFormInfo.period,
                 categoryOptionComboId: dataFormInfo.categoryOptionComboId,
             });
 

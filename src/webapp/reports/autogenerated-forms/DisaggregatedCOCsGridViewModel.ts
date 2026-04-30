@@ -46,6 +46,7 @@ export class DisaggregatedCOCsGridViewModel {
                         code: columnCode,
                         description: getDescription(section.columnsDescriptions, dataFormInfo, categoryOption.formName),
                         isVisible: true,
+                        sortOrder: categoryOption.sortOrder,
                     };
 
                     if (!section.columnsConfig) return columnItem;
@@ -145,7 +146,8 @@ export class DisaggregatedCOCsGridViewModel {
                     rowCatOptionCode
                 );
                 return {
-                    name: rowConfig?.rowName ?? _(catOptionFormName).capitalize(),
+                    name: rowConfig?.rowName ?? _(catOptionFormName.name).capitalize(),
+                    sortOrder: catOptionFormName.sortOrder,
                     items: items,
                 };
             })
@@ -240,6 +242,7 @@ export type ColumnItem = {
     description?: string;
     isVisible: boolean;
     code: string;
+    sortOrder: number;
 };
 
 type Column = {
@@ -249,6 +252,7 @@ type Column = {
 
 type Row = {
     name: string;
+    sortOrder: number;
     items: { cocIdsToSum: string[]; dataElement: DataElement; rowItems: Array<DataElement & { columnName: string }> }[];
 };
 
@@ -259,75 +263,49 @@ type Summary = {
 
 const separator = ", ";
 
-// Unknown patterns: "Other/unknown" will always be at the end. This logic is specific for TUB_ANNUAL_DATA dataSet
-// TO-DO: Move patterns into datastore config when rules vary per dataset.
-const sortItems = <T extends { name: string }>(items: T[], unknownPatterns: string[] = ["unknown", "other"]): T[] => {
-    const itemsWithSortKeys = items.map(item => {
-        const raw = item.name;
-        const lower = raw.toLowerCase();
-        const isUnknown = _.some(unknownPatterns, p => lower.includes(p.toLowerCase()));
-
-        const matches = raw.match(/\d+/g) ?? [];
-        const hasNumber = matches.length > 0 && !isUnknown;
-
-        const start = hasNumber && matches[0] ? parseInt(matches[0], 10) : Number.POSITIVE_INFINITY;
-
-        const end =
-            hasNumber && matches[1]
-                ? parseInt(matches[1], 10)
-                : hasNumber && raw.includes("+")
-                ? Number.POSITIVE_INFINITY
-                : start;
-
-        return {
-            item,
-            sortKey: {
-                isUnknown,
-                hasNumber,
-                start,
-                end,
-                alpha: lower,
-            },
-        };
-    });
-
-    const sortedItems = _.sortBy(itemsWithSortKeys, [
-        x => (x.sortKey.isUnknown ? 1 : 0),
-        x => (x.sortKey.hasNumber ? 0 : 1),
-
-        x => x.sortKey.start,
-        x => x.sortKey.end,
-
-        x => x.sortKey.alpha,
-    ]);
-
-    return sortedItems.map(x => x.item);
+// Sort columns/rows by the DHIS2 metadata sortOrder of the underlying category
+// option. This is independent of the (translated) display label, so column
+// order is stable across languages. Items missing a sortOrder fall to the end.
+const sortItems = <T extends { sortOrder: number }>(items: T[]): T[] => {
+    return _.sortBy(items, item => item.sortOrder);
 };
 
 function getRowCategoryOptionCodeFromCoc(categoryOptionCombo: CategoryOptionCombo): Maybe<string> {
     return categoryOptionCombo.name.split(separator)[1];
 }
 
-function getCocFormNameFromCombos(categoryOptionCombos: CategoryOptionCombo[], optionCode: string): string {
+function getCocFormNameFromCombos(
+    categoryOptionCombos: CategoryOptionCombo[],
+    optionCode: string
+): { name: string; sortOrder: number } {
     const coc = categoryOptionCombos.find(coc => getRowCategoryOptionCodeFromCoc(coc) === optionCode);
-    if (!coc) return optionCode;
-    return getCocFormName(coc, optionCode) || optionCode;
+    if (!coc) return { name: optionCode, sortOrder: Number.POSITIVE_INFINITY };
+    const matchedOption = coc.categoryOptions.find(co => optionCode.includes(co.name));
+    return {
+        name: matchedOption?.displayFormName || optionCode,
+        sortOrder: matchedOption?.sortOrder ?? Number.POSITIVE_INFINITY,
+    };
 }
 
-function getCocFormName(categoryOptionCombo: CategoryOptionCombo, cocName: Maybe<string>): Maybe<string> {
-    const cocFormName = categoryOptionCombo.categoryOptions.find(co => cocName?.includes(co.name))?.displayFormName;
-    return cocFormName || cocName;
-}
-
-function getCocOption(categoryOptionCombo: CategoryOptionCombo): { code: string; name: string; formName: string } {
+function getCocOption(categoryOptionCombo: CategoryOptionCombo): {
+    code: string;
+    name: string;
+    formName: string;
+    sortOrder: number;
+} {
     const cocName = categoryOptionCombo.name.split(separator)[0];
     const cocFormName = categoryOptionCombo.categoryOptions.find(co => cocName?.includes(co.name));
 
     if (!cocFormName) {
-        return { code: "", name: "", formName: "" };
+        return { code: "", name: "", formName: "", sortOrder: Number.POSITIVE_INFINITY };
     }
 
-    return { code: cocFormName.code, name: cocFormName.name, formName: cocFormName.displayFormName };
+    return {
+        code: cocFormName.code,
+        name: cocFormName.name,
+        formName: cocFormName.displayFormName,
+        sortOrder: cocFormName.sortOrder,
+    };
 }
 
 const COLUMNS_CONFIG_SEPARATOR = "||";

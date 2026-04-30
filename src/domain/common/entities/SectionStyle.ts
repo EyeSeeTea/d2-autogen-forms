@@ -1,7 +1,7 @@
 import { Maybe } from "../../../utils/ts-utils";
 
 export const DEFAULT_SECTION_STYLES = {
-    title: { backgroundColor: "transparent", color: "#000000" },
+    title: { backgroundColor: "transparent", color: "#000000", fontSize: "14pt" },
     columns: { backgroundColor: "#f3f5f7", color: "#404b5a" },
     rows: { backgroundColor: "#ffffff", color: "#404b5a" },
     totals: { backgroundColor: "#ffffff", color: "#000000" },
@@ -10,6 +10,7 @@ export const DEFAULT_SECTION_STYLES = {
 export type CssProperties = {
     backgroundColor?: HexColor;
     color?: HexColor;
+    fontSize?: string;
 };
 
 export type SectionStyleAttrs = {

@@ -26,10 +26,11 @@ export function useDataEntrySelector(): DataEntrySelectorRes {
     });
 
     if (isRunningInDataEntry) {
+        const dataEntryPeriod = dhis2.de.currentPeriodId || dhis2.de.getSelectedPeriod()?.iso || "";
         return {
             orgUnitId: dhis2.de.currentOrganisationUnitId,
             dataSetId: dhis2.de.currentDataSetId,
-            period: dhis2.de.getSelectedPeriod()?.iso || "",
+            period: dataEntryPeriod,
             reloadKey,
             initForm: dhis2.de.addEventListeners,
         };
@@ -70,6 +71,7 @@ declare global {
                 currentOrganisationUnitId: Id;
                 currentDataSetId: Id;
                 getSelectedPeriod(): Maybe<Period>;
+                currentPeriodId?: Id; // Available in DHIS2 v42+
                 addEventListeners(): void;
                 event: { dataValuesLoaded: string };
                 displayValidationDialog: (html: string, width: number) => void;
