@@ -21,6 +21,11 @@ type UseApplyRulesProps = {
     dataElementTotalRules?: DataElementTotalRule[];
 };
 
+type FormRuleOptions = Omit<UseApplyRulesProps, "dataElementTotalRules" | "dataElement"> & {
+    rules: Rule[];
+    dataElementTotalRule: Maybe<DataElementTotalRule | SectionTotalRule>;
+};
+
 type UseApplyRulesReturn = { isVisible: boolean; isDisabled: boolean };
 
 export function useApplyRules(props: UseApplyRulesProps): UseApplyRulesReturn {
@@ -52,7 +57,14 @@ export function checkVisibleRule(options: UseApplyRulesProps): boolean {
     const visibleRules = dataElement.rules.filter(rule => rule.type === "visible");
     const visibleDataElementTotalRule = dataElementTotalRules?.find(rule => rule.type === "visible");
 
-    return getValueAndVerifyCondition(visibleRules, dataFormInfo, period, visibleDataElementTotalRule) ?? true;
+    return (
+        getValueAndVerifyCondition({
+            rules: visibleRules,
+            dataElementTotalRule: visibleDataElementTotalRule,
+            dataFormInfo,
+            period,
+        }) ?? true
+    );
 }
 
 function checkDisabledRule(options: UseApplyRulesProps): boolean {
@@ -60,7 +72,14 @@ function checkDisabledRule(options: UseApplyRulesProps): boolean {
     const disabledRules = dataElement.rules.filter(rule => rule.type === "disabled");
     const disabledDataElementTotalRule = totalRules?.find(rule => rule.type === "disabled");
 
-    return getValueAndVerifyCondition(disabledRules, dataFormInfo, period, disabledDataElementTotalRule) ?? false;
+    return (
+        getValueAndVerifyCondition({
+            rules: disabledRules,
+            dataElementTotalRule: disabledDataElementTotalRule,
+            dataFormInfo,
+            period,
+        }) ?? false
+    );
 }
 
 function checkEnabledRule(options: UseApplyRulesProps): Maybe<boolean> {
@@ -69,23 +88,25 @@ function checkEnabledRule(options: UseApplyRulesProps): Maybe<boolean> {
     const enabledDataElementTotalRule = totalRules?.find(rule => rule.type === "enabled");
 
     if (enabledRules.length === 0 && !enabledDataElementTotalRule) return undefined;
-    return getValueAndVerifyCondition(enabledRules, dataFormInfo, period, enabledDataElementTotalRule) ?? false;
+    return (
+        getValueAndVerifyCondition({
+            rules: enabledRules,
+            dataElementTotalRule: enabledDataElementTotalRule,
+            dataFormInfo,
+            period,
+        }) ?? false
+    );
 }
 
-function getValueAndVerifyCondition(
-    rules: Rule[],
-    dataFormInfo: DataFormInfo,
-    period: Maybe<string>,
-    dataElementTotalRule: Maybe<DataElementTotalRule>
-): Maybe<boolean> {
+function getValueAndVerifyCondition(options: FormRuleOptions): Maybe<boolean> {
+    const { rules, dataFormInfo, period, dataElementTotalRule } = options;
+
     if (rules.length !== 0) {
         return rules.some(rule => {
-            // Visibility/disabled/enabled rules evaluate against the form's base period,
-            // not the section's offset period. The related data element lives on the base
-            // period, so using the offset would look up the wrong value and break the rule.
+            const applicablePeriod = getApplicablePeriod(rule.relatedDataElement, dataFormInfo, period);
             const dataValue = dataFormInfo.data.values.getOrEmpty(rule.relatedDataElement, {
                 orgUnitId: rule.relatedDataElement.orgUnit || dataFormInfo.orgUnitId,
-                period: dataFormInfo.period,
+                period: applicablePeriod,
                 categoryOptionComboId: dataFormInfo.categoryOptionComboId,
             });
 
@@ -94,6 +115,20 @@ function getValueAndVerifyCondition(
     } else if (dataElementTotalRule) {
         return evaluateTotalRule(dataElementTotalRule, dataFormInfo, period);
     }
+}
+
+// Use the row period when the trigger's section has data there, else the form base.
+function getApplicablePeriod(
+    triggerDataElement: DataElement,
+    dataFormInfo: DataFormInfo,
+    rowPeriod: Maybe<string>
+): string {
+    const { sections } = dataFormInfo.metadata.dataForm;
+    const triggerSection = sections.find(section => section.dataElements.some(de => de.id === triggerDataElement.id));
+    const triggerPeriods = triggerSection && "periods" in triggerSection ? triggerSection.periods : [];
+
+    if (rowPeriod && triggerPeriods.some(p => p.id === rowPeriod)) return rowPeriod;
+    return dataFormInfo.period;
 }
 
 type VerifyConditionRule = { condition: string; type?: RuleType | DeleteRule["type"] | SectionBase["toggle"]["type"] };
