@@ -122,6 +122,8 @@ export function isToggleMultipleDeDisabled(
         (toggle): toggle is OrgUnitToggle => toggle.type === "orgUnit" && toggle.dataElement.code === dataElement.code
     );
 
+    if (orgUnitToggles.length === 0) return false;
+
     const isToggleDisabledForOrgUnit = (toggle: OrgUnitToggle) => {
         const { orgUnitCodes, dataElement: toggleDe } = toggle;
         if (!toggleDe.disabled) return false;
