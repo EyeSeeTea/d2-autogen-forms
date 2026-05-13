@@ -1,6 +1,6 @@
 # Proposal: "Install custom form" button in the Configurator
 
-**Status:** Draft — pending senior-dev validation
+**Status:** Approved (senior-dev review complete) — ready to implement
 **Branch:** `feature/install-custom-form-button`
 **Author:** Miquel Adell
 
@@ -120,21 +120,43 @@ At runtime the configurator reads it as a static asset via
 ### 2. Install via the DHIS2 API
 
 DHIS2 stores a dataset's custom form on `dataSet.dataEntryForm` (entity
-`DataEntryForm` with field `htmlCode`). Two-step write because the form is a
-related entity, not a plain field on `DataSet`:
+`DataEntryForm` with field `htmlCode`).
 
-1. **If the dataset has no `dataEntryForm`** — `POST /api/dataEntryForms` with
-   `{ name, style: "NORMAL", format: 2, htmlCode: <bundled HTML> }`, then
-   `PATCH /api/dataSets/{id}` to attach the new form's id.
-2. **If the dataset already has one** — `PUT /api/dataEntryForms/{formId}`
-   replacing `htmlCode`.
+**Authority required:** write access to the target `DataSet`. There are no
+separate `F_DATAENTRYFORM_*` authorities — dataset write access is sufficient
+for both creating and updating `dataEntryForm`.
 
-Authority check: writing `dataEntryForm` requires `F_DATAENTRYFORM_ADD`,
-`F_DATAENTRYFORM_DELETE`, and write access on the target `DataSet`. The
-configurator already requires similar authorities to edit dataStore configs.
+**Preferred approach — single metadata request** (handles create and update
+in one call, both for first-time install and re-install):
 
-> **Validate:** API endpoints/field names/required authorities — confirm
-> against the v2.41/v2.42 docs and a smoke test. See [Q1](#open-questions-for-validation).
+```json
+POST /api/metadata
+{
+    "dataSets": [
+        {
+            "id": "<dataSetId>",
+            "dataEntryForm": {
+                "id": "<dataEntryFormId>"
+            }
+        }
+    ],
+    "dataEntryForms": [
+        {
+            "id": "<dataEntryFormId>",
+            "style": "NORMAL",
+            "htmlCode": "<bundled HTML>"
+        }
+    ]
+}
+```
+
+For first-time install, generate a new UID for `dataEntryFormId` (via
+`GET /api/system/id`). For re-install, read the existing
+`dataSet.dataEntryForm.id` and reuse it.
+
+The individual endpoints (`POST /api/dataEntryForms`,
+`PUT /api/dataEntryForms/{id}`, `PATCH /api/dataSets/{id}`) remain a valid
+fallback if the metadata endpoint proves problematic for any reason.
 
 ### 3. Detect installed-form state
 
@@ -174,11 +196,11 @@ These come from the same App Hub review but are tracked separately:
 
 The senior-dev review should focus on these:
 
-1. **API shape** — is the `POST /api/dataEntryForms` + `PATCH /api/dataSets/{id}`
-   sequence correct for v2.41 *and* v2.42? Or is there a single-call endpoint
-   that handles both create and attach?
-2. **Authorities** — are `F_DATAENTRYFORM_ADD/DELETE` plus DataSet write
-   sufficient, or are there other authorities to document for admins?
+1. ~~**API shape**~~ — *Resolved.* Use `POST /api/metadata` with both
+   `dataSets` and `dataEntryForms` objects in one request (see Technical
+   approach §2). Individual endpoints remain a fallback.
+2. ~~**Authorities**~~ — *Resolved.* `F_DATAENTRYFORM_ADD/DELETE` do not
+   exist. Write access to the `DataSet` is the only requirement.
 3. **Confirmation UX for re-install** — overwriting an existing custom form
    is destructive. Plain confirm modal, or modal with diff/preview of what
    will be replaced?
@@ -211,9 +233,9 @@ The senior-dev review should focus on these:
 ## Risks
 
 - **Authority gaps in production** — admins running the configurator may not
-  have `F_DATAENTRYFORM_ADD/DELETE`. Mitigation: the configurator detects
-  insufficient authority on load and disables the install button with an
-  explanatory tooltip; the README documents the required authorities.
+  have write access to the target `DataSet`. Mitigation: the configurator
+  detects insufficient access and disables the install button with an
+  explanatory tooltip; the README documents the required access level.
 - **Existing custom form managed by another app or hand-written** — a dataset
   may have a `dataEntryForm` not produced by this configurator (no version
   marker). Mitigation: detection treats *missing marker* as *Outdated /
@@ -257,11 +279,12 @@ behind feature flags or as separate PRs if preferred:
    (Not installed / Installed (current) / Outdated). Show a status pill on
    the dataset list.
 4. **Install action (no existing form)** — wire the **Install custom form**
-   button to `POST /api/dataEntryForms` + `PATCH /api/dataSets/{id}`. Block
-   on confirmation modal.
-5. **Re-install action (existing form)** — extend (4) to handle the
-   `PUT /api/dataEntryForms/{formId}` path. Confirmation modal warns about
-   overwrite.
+   button to `POST /api/metadata` (generate a new UID via
+   `GET /api/system/id`, then send both `dataSets` and `dataEntryForms`
+   objects in one request). Block on confirmation modal.
+5. **Re-install action (existing form)** — extend (4) to reuse the existing
+   `dataEntryForm.id` in the same `POST /api/metadata` payload. Confirmation
+   modal warns about overwrite.
 6. **Rebrand bits** — `package.json` description, README framing, App Hub
    description. (Can land at any point; lowest risk.)
 7. **Smoke tests** — manual on v2.41 + v2.42/Data Entry app v102+.
@@ -275,7 +298,7 @@ Manual smoke-test for v1, automated tests deferred:
 - v2.42 instance with Data Entry app v102+ — same.
 - Re-install on a dataset that already has the bundled form — confirm the
   state changes from *Outdated* (after a version bump) back to *Installed (current)*.
-- Negative case: user without `F_DATAENTRYFORM_ADD` — install button is
+- Negative case: user without write access to the dataset — install button is
   disabled with a tooltip explaining why.
 
 Automated integration tests against a live DHIS2 instance are tracked as
