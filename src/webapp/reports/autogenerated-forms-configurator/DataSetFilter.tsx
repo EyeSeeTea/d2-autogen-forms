@@ -21,6 +21,7 @@ export const DataSetFilter: React.FC<ConfiguratorFiltersProps> = React.memo(prop
             const dataSet = dataSetItems.find(ds => ds.value === dataSetCode);
             if (dataSet)
                 onChange({
+                    id: dataSet.id,
                     code: dataSet.value,
                     name: dataSet.text,
                 });

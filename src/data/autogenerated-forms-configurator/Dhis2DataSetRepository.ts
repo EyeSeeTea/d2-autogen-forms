@@ -13,11 +13,11 @@ export class Dhis2DataSetRepository implements DataSetRepository {
         return d2DataSets.map(dataSet => {
             const configExists = autogenDatastoreKeys.includes(dataSet.code);
 
-            return { ...dataSet, configExists: configExists };
+            return { ...dataSet, configExists };
         });
     }
 
-    private async getMetadata(): Promise<D2DataSet[]> {
+    private async getMetadata(): Promise<DataSetMetadata[]> {
         const { objects: dataSets } = await this.api.models.dataSets
             .get({
                 fields: dataSetFields,
@@ -30,15 +30,31 @@ export class Dhis2DataSetRepository implements DataSetRepository {
             })
             .getData();
 
-        return dataSets.map(dataSet => ({ name: dataSet.name.trim(), code: dataSet.code.trim() }));
+        return dataSets.map(dataSet => ({
+            id: dataSet.id,
+            name: dataSet.name.trim(),
+            code: dataSet.code.trim(),
+            hasCustomForm: dataSet.formType === "CUSTOM",
+        }));
     }
 }
 
 const dataSetFields = {
+    id: true,
     name: true,
     code: true,
+    formType: true,
 } as const;
 
-type D2DataSet = MetadataPick<{
+// Raw API response type (kept for type-checking the .get() call)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+type _D2DataSet = MetadataPick<{
     dataSets: { fields: typeof dataSetFields };
 }>["dataSets"][number];
+
+type DataSetMetadata = {
+    id: string;
+    name: string;
+    code: string;
+    hasCustomForm: boolean;
+};
