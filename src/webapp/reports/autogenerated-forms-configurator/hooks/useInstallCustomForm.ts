@@ -67,7 +67,7 @@ export function useInstallCustomForm(
         }
     }, [compositionRoot.customForm, dataSetId, bundledHtml, snackbar]);
 
-    const bundledVersion = bundledHtml ? (parseVersionMarker(bundledHtml) ?? undefined) : undefined;
+    const bundledVersion = bundledHtml ? parseVersionMarker(bundledHtml) ?? undefined : undefined;
 
     return { installState, bundledHtml, bundledVersion, isInstalling, installCustomForm };
 }
