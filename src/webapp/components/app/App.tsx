@@ -13,6 +13,7 @@ import { D2Api } from "../../../types/d2-api";
 import { AppContext, AppContextState } from "../../contexts/app-context";
 import Report from "../../reports/Reports";
 import Share from "../share/Share";
+import { HeaderBar } from "./header-bar/HeaderBar";
 import "./App.css";
 import muiThemeLegacy from "./themes/dhis2-legacy.theme";
 import { muiTheme } from "./themes/dhis2.theme";
@@ -53,6 +54,8 @@ const App = ({ api, d2 }: { api: D2Api; d2: D2 }) => {
             <ThemeProvider theme={muiTheme}>
                 <OldMuiThemeProvider muiTheme={muiThemeLegacy}>
                     <SnackbarProvider>
+                        <HeaderBar appName="D2 Autogen Configurator" />
+
                         <div id="app" className="content">
                             <AppContext.Provider value={appContext}>
                                 <Report />
