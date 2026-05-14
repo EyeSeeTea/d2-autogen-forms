@@ -23,7 +23,7 @@ type UseApplyRulesProps = {
 
 type FormRuleOptions = Omit<UseApplyRulesProps, "dataElementTotalRules" | "dataElement"> & {
     rules: Rule[];
-    dataElementTotalRule: Maybe<DataElementTotalRule | SectionTotalRule>;
+    dataElementTotalRule: Maybe<DataElementTotalRule>;
 };
 
 type UseApplyRulesReturn = { isVisible: boolean; isDisabled: boolean };
@@ -168,9 +168,10 @@ export function evaluateTotalRule(
 
     const totalItems = _(relatedDataElements)
         .map(relatedDataElement => {
+            const applicablePeriod = getApplicablePeriod(relatedDataElement, dataFormInfo, period);
             const dataValue = dataFormInfo.data.values.getOrEmpty(relatedDataElement, {
                 orgUnitId: relatedDataElement.orgUnit || dataFormInfo.orgUnitId,
-                period: period || dataFormInfo.period,
+                period: applicablePeriod,
                 categoryOptionComboId: dataFormInfo.categoryOptionComboId,
             });
             const value = getValueAccordingType(dataValue);
