@@ -8,11 +8,5 @@ export interface User {
     orgUnits: OrgUnit[];
     userRoles: NamedRef[];
     userGroups: NamedRef[];
-    authorities: ReadonlyArray<string>;
-}
-
-export const CONSTANT_ADD_AUTHORITY = "F_CONSTANT_ADD";
-
-export function canCreateConstants(user: User): boolean {
-    return user.authorities.includes("ALL") || user.authorities.includes(CONSTANT_ADD_AUTHORITY);
+    canCreateConstant: boolean;
 }

@@ -97,12 +97,14 @@ export class Dhis2ConfigRepository implements ConfigRepository {
             })
             .getData();
 
+        const canCreateConstant = d2User.authorities.includes("ALL") || d2User.authorities.includes("F_CONSTANT_ADD");
+
         return {
             id: d2User.id,
             name: d2User.displayName,
             orgUnits: d2User.dataViewOrganisationUnits,
             userGroups: d2User.userGroups,
-            authorities: d2User.authorities,
+            canCreateConstant: canCreateConstant,
             ...d2User.userCredentials,
         };
     }
