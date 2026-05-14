@@ -1,5 +1,4 @@
 import React from "react";
-// @ts-ignore
 import { HeaderBar as D2HeaderBar } from "@dhis2/ui";
 
 type HeaderBarProps = {
