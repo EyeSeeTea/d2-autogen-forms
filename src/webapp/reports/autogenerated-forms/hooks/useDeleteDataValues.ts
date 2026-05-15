@@ -45,7 +45,9 @@ export function useDeleteDataValues(props: UseDeleteRulesProps): UseDeleteRuleRe
                     _(dataFormInfo.data.values.store)
                         .filter(
                             dataValue =>
-                                dataValue.dataElement.code === deId && dataValue.orgUnitId === dataFormInfo.orgUnitId
+                                dataValue.dataElement.code === deId &&
+                                dataValue.orgUnitId === dataFormInfo.orgUnitId &&
+                                dataValue.period === dataValueCb.period
                         )
                         .compact()
                         .value()
