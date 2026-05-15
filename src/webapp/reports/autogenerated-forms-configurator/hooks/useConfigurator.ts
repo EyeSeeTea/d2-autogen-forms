@@ -6,7 +6,7 @@ import { CodedRef, Id } from "../../../../domain/common/entities/Base";
 import { useSnackbar } from "@eyeseetea/d2-ui-components";
 import i18n from "@eyeseetea/d2-ui-components/locales";
 
-export type DataSetViewModel = CodedRef & { id: Id };
+export type DataSetViewModel = CodedRef & { id: Id; canBeModified: boolean };
 
 type ConfiguratorState = {
     configValue: string;
@@ -128,4 +128,4 @@ export function useConfigurator(): ConfiguratorState {
 }
 
 export const DEFAULT_JSON_VALUE = "{}";
-const emptyDataSetViewModel: DataSetViewModel = { id: "", code: "", name: "" };
+const emptyDataSetViewModel: DataSetViewModel = { id: "", code: "", name: "", canBeModified: false };

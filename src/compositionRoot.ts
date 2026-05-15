@@ -60,7 +60,7 @@ export function getCompositionRoot(api: D2Api) {
         }),
         customForm: getExecute({
             getInstallState: new GetInstallStateUseCase(customFormRepository),
-            install: new InstallCustomFormUseCase(customFormRepository),
+            install: new InstallCustomFormUseCase(customFormRepository, dataSetRepository),
         }),
         orgUnits: getExecute({
             get: new GetOrgUnitsUseCase(orgUnitsRepository),

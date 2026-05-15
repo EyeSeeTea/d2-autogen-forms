@@ -4,4 +4,5 @@ export type DataSet = CodedRef & {
     id: Id;
     configExists: boolean;
     hasCustomForm: boolean;
+    canBeModified: boolean;
 };

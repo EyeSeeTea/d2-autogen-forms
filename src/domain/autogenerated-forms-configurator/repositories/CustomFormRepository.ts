@@ -1,6 +1,7 @@
 import { Id } from "../../common/entities/Base";
+import { CustomForm } from "../entities/CustomForm";
 
 export interface CustomFormRepository {
-    getInstalledHtml(dataSetId: Id): Promise<string | null>;
-    install(dataSetId: Id, htmlCode: string): Promise<void>;
+    get(dataSetId: Id): Promise<CustomForm>;
+    install(dataSetId: Id, htmlCode: string, existingFormId: string | null): Promise<void>;
 }

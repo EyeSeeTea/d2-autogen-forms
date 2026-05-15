@@ -24,6 +24,7 @@ export const DataSetFilter: React.FC<ConfiguratorFiltersProps> = React.memo(prop
                     id: dataSet.id,
                     code: dataSet.value,
                     name: dataSet.text,
+                    canBeModified: dataSet.canBeModified,
                 });
         },
         [dataSetItems, onChange]

@@ -15,6 +15,7 @@ export type Option = {
     text: string;
     id: Id;
     hasCustomForm: boolean;
+    canBeModified: boolean;
 };
 
 export function useFilters(dataSetCode: string, updateLoadingState: (isLoading: boolean) => void): FiltersState {
@@ -41,7 +42,9 @@ export function useFilters(dataSetCode: string, updateLoadingState: (isLoading: 
     return { dataSets: dataSetItems, newDataSets: newDataSetItems };
 }
 
-function useMemoOptionsFromDataSet(options: (CodedRef & { id: Id; hasCustomForm: boolean })[]): Option[] {
+function useMemoOptionsFromDataSet(
+    options: (CodedRef & { id: Id; hasCustomForm: boolean; canBeModified: boolean })[]
+): Option[] {
     return useMemo(
         () =>
             options.map(option => ({
@@ -49,6 +52,7 @@ function useMemoOptionsFromDataSet(options: (CodedRef & { id: Id; hasCustomForm:
                 text: option.name,
                 id: option.id,
                 hasCustomForm: option.hasCustomForm,
+                canBeModified: option.canBeModified,
             })),
         [options]
     );

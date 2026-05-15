@@ -61,7 +61,7 @@ export function useInstallCustomForm(
             setInstallState(state);
         } catch (error: unknown) {
             const message = error instanceof Error ? error.message : String(error);
-            snackbar.error(i18n.t(`Error installing custom form: ${message}`));
+            snackbar.error(i18n.t("Error installing custom form: {{message}}", { message, nsSeparator: false }));
         } finally {
             setIsInstalling(false);
         }

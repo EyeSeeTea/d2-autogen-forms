@@ -4,8 +4,8 @@ import { CustomFormRepository } from "../repositories/CustomFormRepository";
 export type CustomFormInstallState =
     | { type: "not-installed" }
     | { type: "installed"; version: string }
-    | { type: "outdated"; installedVersion: string; bundledVersion: string }
-    | { type: "unknown-version" };
+    | { type: "outdated"; installedVersion: string | null; bundledVersion: string };
+// installedVersion === null means a custom form exists but has no version marker
 
 const VERSION_MARKER_RE = /<!-- d2-autogen-forms-custom-form v([^\s]+) -->/;
 
@@ -17,15 +17,16 @@ export class GetInstallStateUseCase {
     constructor(private customFormRepository: CustomFormRepository) {}
 
     async execute(dataSetId: Id, bundledHtml: string): Promise<CustomFormInstallState> {
-        const installedHtml = await this.customFormRepository.getInstalledHtml(dataSetId);
+        const customForm = await this.customFormRepository.get(dataSetId);
 
-        if (!installedHtml) return { type: "not-installed" };
+        if (!customForm.htmlCode) return { type: "not-installed" };
 
-        const installedVersion = parseVersionMarker(installedHtml);
-        if (!installedVersion) return { type: "unknown-version" };
-
+        const installedVersion = parseVersionMarker(customForm.htmlCode);
         const bundledVersion = parseVersionMarker(bundledHtml);
-        if (!bundledVersion) return { type: "unknown-version" };
+
+        if (!bundledVersion) return { type: "outdated", installedVersion, bundledVersion: "unknown" };
+
+        if (!installedVersion) return { type: "outdated", installedVersion: null, bundledVersion };
 
         return installedVersion === bundledVersion
             ? { type: "installed", version: installedVersion }
