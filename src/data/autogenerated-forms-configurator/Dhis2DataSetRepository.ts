@@ -16,23 +16,21 @@ export class Dhis2DataSetRepository implements DataSetRepository {
             name: dataSet.name.trim(),
             code: dataSet.code.trim(),
             hasCustomForm: dataSet.formType === "CUSTOM",
-            canBeModified: (dataSet as D2DataSetWithAccess).access?.data?.write ?? false,
+            canBeModified: dataSet.access.write,
             configExists: autogenDatastoreKeys.includes(dataSet.code.trim()),
         }));
     }
 
     async getById(id: Id): Promise<DataSet> {
-        type DataSetResponse = {
-            id: string;
-            name: string;
-            code: string;
-            formType: string;
-            access: { data: { write: boolean } };
-        };
-
-        const dataSet = await this.api
-            .get<DataSetResponse>(`/dataSets/${id}`, { fields: "id,name,code,formType,access" })
+        const { objects } = await this.api.models.dataSets
+            .get({
+                fields: dataSetFields,
+                filter: { id: { eq: id } },
+            })
             .getData();
+
+        const dataSet = objects[0];
+        if (!dataSet) throw new Error(`DataSet not found: ${id}`);
 
         const autogenDatastoreKeys = await this.api.dataStore(Namespaces.D2_AUTOGEN_FORMS).getKeys().getData();
 
@@ -41,7 +39,7 @@ export class Dhis2DataSetRepository implements DataSetRepository {
             name: dataSet.name.trim(),
             code: dataSet.code.trim(),
             hasCustomForm: dataSet.formType === "CUSTOM",
-            canBeModified: dataSet.access?.data?.write ?? false,
+            canBeModified: dataSet.access.write,
             configExists: autogenDatastoreKeys.includes(dataSet.code.trim()),
         };
     }
@@ -49,7 +47,7 @@ export class Dhis2DataSetRepository implements DataSetRepository {
     private async getMetadata(): Promise<D2DataSet[]> {
         const { objects: dataSets } = await this.api.models.dataSets
             .get({
-                fields: { ...dataSetFields, access: true } as unknown as typeof dataSetFields,
+                fields: dataSetFields,
                 filter: {
                     code: {
                         "!null": "true",
@@ -68,10 +66,9 @@ const dataSetFields = {
     name: true,
     code: true,
     formType: true,
+    access: true,
 } as const;
 
 type D2DataSet = MetadataPick<{
     dataSets: { fields: typeof dataSetFields };
 }>["dataSets"][number];
-
-type D2DataSetWithAccess = D2DataSet & { access?: { data?: { write?: boolean } } };
