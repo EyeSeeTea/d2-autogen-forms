@@ -8,4 +8,5 @@ export interface User {
     orgUnits: OrgUnit[];
     userRoles: NamedRef[];
     userGroups: NamedRef[];
+    canCreateConstant: boolean;
 }

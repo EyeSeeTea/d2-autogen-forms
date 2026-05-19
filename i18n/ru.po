@@ -141,6 +141,25 @@ msgstr ""
 msgid "? This action cannot be undone."
 msgstr ""
 
+msgid "Create new constant"
+msgstr ""
+
+msgid "Name"
+msgstr ""
+
+msgid "Short name"
+msgstr ""
+
+msgid "Auto-filled from name. Max {{max}} characters."
+msgstr ""
+
+msgid "Code"
+msgstr ""
+
+msgid "Auto-filled from name"
+msgstr ""
+
+msgid "Description"
 msgid "Overwrite and install"
 msgstr ""
 
@@ -180,5 +199,31 @@ msgstr ""
 msgid "Configuration saved"
 msgstr ""
 
+msgid "Name is required"
+msgstr ""
+
+msgid "Short name is required"
+msgstr ""
+
+msgid "Short name must be {{max}} characters or fewer"
+msgstr ""
+
+msgid "Code is required"
+msgstr ""
+
+msgid "Description is required"
+msgstr ""
+
+msgid "Open dialog to define a new constant"
+msgstr ""
+
+msgctxt "ADD authority."
+msgid ""
+"You do not have permission to create constants. Ask your administrator for "
+"the F_CONSTANT"
+msgstr ""
+
+msgctxt "ADD authority"
+msgid "Requires F_CONSTANT"
 msgid "Custom form installed successfully"
 msgstr ""
