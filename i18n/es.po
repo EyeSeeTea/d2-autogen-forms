@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: i18next-conv\n"
-"POT-Creation-Date: 2026-03-31T17:32:04.356Z\n"
+"POT-Creation-Date: 2026-05-13T06:58:59.456Z\n"
 "PO-Revision-Date: 2018-10-25T09:02:35.143Z\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -83,7 +83,28 @@ msgstr "Aplicar a todos"
 msgid "Please enter a valid email address"
 msgstr ""
 
+msgid "Re-install custom form"
+msgstr ""
+
+msgid "Install custom form"
+msgstr ""
+
+msgid ""
+"This dataset already has a custom form. Installing will overwrite it with "
+"the bundled version (v{{version}}). This action cannot be undone."
+msgstr ""
+
+msgid ""
+"Install the bundled custom form (v{{version}}) into this dataset. The form "
+"will be available in the Data Entry app."
+msgstr ""
+
 msgid "Add new data form configuration"
+msgstr ""
+
+msgid ""
+"Bundled custom form not found. Run yarn start-configurator to make it "
+"available."
 msgstr ""
 
 msgid "Save"
@@ -119,6 +140,24 @@ msgstr ""
 msgid "? This action cannot be undone."
 msgstr ""
 
+msgid "Overwrite and install"
+msgstr ""
+
+msgid "Install"
+msgstr ""
+
+msgid "Not installed"
+msgstr ""
+
+msgid "Installed (v{{version}})"
+msgstr ""
+
+msgid "Outdated (v{{installed}} → v{{bundled}})"
+msgstr ""
+
+msgid "Custom form installed (unknown version)"
+msgstr ""
+
 msgid "Select dataset"
 msgstr ""
 
@@ -138,4 +177,7 @@ msgid "Configuration deleted"
 msgstr ""
 
 msgid "Configuration saved"
+msgstr ""
+
+msgid "Custom form installed successfully"
 msgstr ""

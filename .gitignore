@@ -37,6 +37,7 @@ dist
 bak
 NOTES*
 datastore
+public/custom-data-form.html
 
 # Claude
 .claude/

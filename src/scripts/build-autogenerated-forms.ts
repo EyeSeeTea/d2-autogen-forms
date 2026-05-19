@@ -40,7 +40,9 @@ export async function convertReactHtmlToInline() {
     fs.mkdirSync("dist", { recursive: true });
     const dest = defaultOptions.autogenFormOutput;
     log(`Write: ${dest}`);
-    fs.writeFileSync(dest, html3);
+    const { version } = JSON.parse(fs.readFileSync("package.json", "utf8")) as { version: string };
+    const markedHtml = `<!-- d2-autogen-forms-custom-form v${version} -->\n${html3}`;
+    fs.writeFileSync(dest, markedHtml);
 }
 
 function setScriptsAndStylesheetsAsInline(html: string) {
