@@ -3,10 +3,7 @@ import { CustomFormRepository } from "../repositories/CustomFormRepository";
 import { DataSetRepository } from "../repositories/DataSetRepository";
 
 export class InstallCustomFormUseCase {
-    constructor(
-        private customFormRepository: CustomFormRepository,
-        private dataSetRepository: DataSetRepository
-    ) {}
+    constructor(private customFormRepository: CustomFormRepository, private dataSetRepository: DataSetRepository) {}
 
     async execute(dataSetId: Id, htmlCode: string): Promise<void> {
         const dataSet = await this.dataSetRepository.getById(dataSetId);

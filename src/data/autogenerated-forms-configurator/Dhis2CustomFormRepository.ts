@@ -27,7 +27,9 @@ export class Dhis2CustomFormRepository implements CustomFormRepository {
         const formId = existingFormId ?? generateUid();
         await this.api.metadata
             .post({
-                dataEntryForms: [{ id: formId, name: `Custom form (${dataSetId})`, style: "NORMAL" as const, htmlCode }],
+                dataEntryForms: [
+                    { id: formId, name: `Custom form (${dataSetId})`, style: "NORMAL" as const, htmlCode },
+                ],
                 dataSets: [{ id: dataSetId, dataEntryForm: { id: formId } }],
             })
             .getData();

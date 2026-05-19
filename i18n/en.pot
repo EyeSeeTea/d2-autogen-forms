@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-05-13T06:58:59.456Z\n"
-"PO-Revision-Date: 2026-05-13T06:58:59.459Z\n"
+"POT-Creation-Date: 2026-05-19T08:52:24.500Z\n"
+"PO-Revision-Date: 2026-05-19T08:52:24.500Z\n"
 
 msgid "Mark all notifications as read"
 msgstr ""
@@ -102,9 +102,10 @@ msgstr ""
 msgid "Add new data form configuration"
 msgstr ""
 
-msgid ""
-"Bundled custom form not found. Run yarn start-configurator to make it "
-"available."
+msgid "Custom form bundle not available. Please reinstall the application."
+msgstr ""
+
+msgid "You do not have write access to this dataset."
 msgstr ""
 
 msgid "Save"
@@ -140,6 +141,24 @@ msgstr ""
 msgid "? This action cannot be undone."
 msgstr ""
 
+msgid "Overwrite and install"
+msgstr ""
+
+msgid "Install"
+msgstr ""
+
+msgid "not installed"
+msgstr ""
+
+msgid "installed (v{{version}})"
+msgstr ""
+
+msgid "outdated (unknown → v{{bundled}})"
+msgstr ""
+
+msgid "outdated (v{{installed}} → v{{bundled}})"
+msgstr ""
+
 msgid "Create new constant"
 msgstr ""
 
@@ -159,22 +178,6 @@ msgid "Auto-filled from name"
 msgstr ""
 
 msgid "Description"
-msgid "Overwrite and install"
-msgstr ""
-
-msgid "Install"
-msgstr ""
-
-msgid "Not installed"
-msgstr ""
-
-msgid "Installed (v{{version}})"
-msgstr ""
-
-msgid "Outdated (v{{installed}} → v{{bundled}})"
-msgstr ""
-
-msgid "Custom form installed (unknown version)"
 msgstr ""
 
 msgid "Select dataset"
@@ -213,6 +216,12 @@ msgstr ""
 msgid "Description is required"
 msgstr ""
 
+msgid "Custom form installed successfully"
+msgstr ""
+
+msgid "Error installing custom form: {{message}}"
+msgstr ""
+
 msgid "Open dialog to define a new constant"
 msgstr ""
 
@@ -224,5 +233,4 @@ msgstr ""
 
 msgctxt "ADD authority"
 msgid "Requires F_CONSTANT"
-msgid "Custom form installed successfully"
 msgstr ""
