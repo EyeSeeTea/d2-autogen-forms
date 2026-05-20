@@ -13,5 +13,5 @@ export function removePrefixFromWords(text: string, prefix: string): string {
 const INVALID_XML_CHARS_RE = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g;
 
 export function stripInvalidXmlChars(text: string): string {
-    return text.replace(INVALID_XML_CHARS_RE, "");
+    return text.replace(INVALID_XML_CHARS_RE, " ");
 }
