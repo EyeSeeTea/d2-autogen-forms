@@ -14,7 +14,7 @@ import {
 import { DataValueRepository, DataElementRefType } from "../../domain/common/repositories/DataValueRepository";
 import { D2Api, DataValueSetsDataValue } from "../../types/d2-api";
 import { promiseMap } from "../../utils/promises";
-import { stripInvalidXmlChars } from "../../utils/string";
+import { replaceInvalidXmlChars } from "../../utils/string";
 import { assertUnreachable, Maybe } from "../../utils/ts-utils";
 import { Dhis2DataElement } from "./Dhis2DataElement";
 
@@ -473,11 +473,11 @@ export class Dhis2DataValueRepository implements DataValueRepository {
             case "NUMBER":
                 return (dataValue.isMultiple ? dataValue.values.join("; ") : dataValue.value) || "";
             case "TEXT":
-                return stripInvalidXmlChars(
+                return replaceInvalidXmlChars(
                     (dataValue.isMultiple ? dataValue.values.join("; ") : dataValue.value) || ""
                 );
             case "MULTI_TEXT":
-                return dataValue.values.map(value => stripInvalidXmlChars(value)).join(MULTI_TEXT_SEPARATOR);
+                return dataValue.values.map(value => replaceInvalidXmlChars(value)).join(MULTI_TEXT_SEPARATOR);
             case "FILE":
                 return dataValue.file?.id || "";
             case "PERCENTAGE":
