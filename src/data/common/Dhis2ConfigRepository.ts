@@ -88,10 +88,8 @@ export class Dhis2ConfigRepository implements ConfigRepository {
                         path: true,
                         level: true,
                     },
-                    userCredentials: {
-                        username: true,
-                        userRoles: { id: true, name: true },
-                    },
+                    username: true,
+                    userRoles: { id: true, name: true },
                     userGroups: { id: true, name: true },
                 },
             })
@@ -105,7 +103,10 @@ export class Dhis2ConfigRepository implements ConfigRepository {
             orgUnits: d2User.dataViewOrganisationUnits,
             userGroups: d2User.userGroups,
             canCreateConstant: canCreateConstant,
-            ...d2User.userCredentials,
+            // @ts-expect-error - upgrade d2-api for up-to-date types
+            username: d2User.username,
+            // @ts-expect-error - upgrade d2-api for up-to-date types
+            userRoles: d2User.userRoles,
         };
     }
 }
