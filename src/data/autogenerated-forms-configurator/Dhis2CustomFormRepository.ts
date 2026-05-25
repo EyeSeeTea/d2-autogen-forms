@@ -33,20 +33,23 @@ export class Dhis2CustomFormRepository implements CustomFormRepository {
         if (!dataSet) throw new Error(`DataSet not found: ${dataSetId}`);
 
         await this.api.metadata
-            .post({
-                dataEntryForms: [
-                    { id: formId, name: `Custom form (${dataSetId})`, style: "NORMAL" as const, htmlCode },
-                ],
-                dataSets: [
-                    {
-                        id: dataSetId,
-                        name: dataSet.name,
-                        shortName: dataSet.shortName,
-                        periodType: dataSet.periodType,
-                        dataEntryForm: { id: formId },
-                    },
-                ],
-            })
+            .post(
+                {
+                    dataEntryForms: [
+                        { id: formId, name: `Custom form (${dataSetId})`, style: "NORMAL" as const, htmlCode },
+                    ],
+                    dataSets: [
+                        {
+                            id: dataSetId,
+                            name: dataSet.name,
+                            shortName: dataSet.shortName,
+                            periodType: dataSet.periodType,
+                            dataEntryForm: { id: formId },
+                        },
+                    ],
+                },
+                { mergeMode: "MERGE" }
+            )
             .getData();
     }
 }
