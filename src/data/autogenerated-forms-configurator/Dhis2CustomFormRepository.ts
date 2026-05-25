@@ -25,12 +25,27 @@ export class Dhis2CustomFormRepository implements CustomFormRepository {
 
     async install(dataSetId: Id, htmlCode: string, existingFormId: string | null): Promise<void> {
         const formId = existingFormId ?? generateUid();
+
+        const { objects } = await this.api.models.dataSets
+            .get({ fields: dataSetRequiredFields, filter: { id: { eq: dataSetId } }, paging: false })
+            .getData();
+        const dataSet = objects[0];
+        if (!dataSet) throw new Error(`DataSet not found: ${dataSetId}`);
+
         await this.api.metadata
             .post({
                 dataEntryForms: [
                     { id: formId, name: `Custom form (${dataSetId})`, style: "NORMAL" as const, htmlCode },
                 ],
-                dataSets: [{ id: dataSetId, dataEntryForm: { id: formId } }],
+                dataSets: [
+                    {
+                        id: dataSetId,
+                        name: dataSet.name,
+                        shortName: dataSet.shortName,
+                        periodType: dataSet.periodType,
+                        dataEntryForm: { id: formId },
+                    },
+                ],
             })
             .getData();
     }
@@ -39,6 +54,13 @@ export class Dhis2CustomFormRepository implements CustomFormRepository {
 const dataSetFields = {
     id: true,
     dataEntryForm: { id: true, htmlCode: true },
+} as const;
+
+const dataSetRequiredFields = {
+    id: true,
+    name: true,
+    shortName: true,
+    periodType: true,
 } as const;
 
 type _D2DataSet = MetadataPick<{
