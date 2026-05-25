@@ -81,7 +81,7 @@
         "prepare": "husky install"
     },
     "appVersions": {
-        "configurator": "1.5.3"
+        "configurator": "1.6.0"
     },
     "devDependencies": {
         "@babel/core": "7.16.0",
