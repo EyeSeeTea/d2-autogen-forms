@@ -80,6 +80,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
                 fields: {
                     id: true,
                     displayName: true,
+                    authorities: true,
                     dataViewOrganisationUnits: {
                         id: true,
                         code: true,
@@ -87,21 +88,25 @@ export class Dhis2ConfigRepository implements ConfigRepository {
                         path: true,
                         level: true,
                     },
-                    userCredentials: {
-                        username: true,
-                        userRoles: { id: true, name: true },
-                    },
+                    username: true,
+                    userRoles: { id: true, name: true },
                     userGroups: { id: true, name: true },
                 },
             })
             .getData();
+
+        const canCreateConstant = d2User.authorities.includes("ALL") || d2User.authorities.includes("F_CONSTANT_ADD");
 
         return {
             id: d2User.id,
             name: d2User.displayName,
             orgUnits: d2User.dataViewOrganisationUnits,
             userGroups: d2User.userGroups,
-            ...d2User.userCredentials,
+            canCreateConstant: canCreateConstant,
+            // @ts-expect-error - upgrade d2-api for up-to-date types
+            username: d2User.username,
+            // @ts-expect-error - upgrade d2-api for up-to-date types
+            userRoles: d2User.userRoles,
         };
     }
 }

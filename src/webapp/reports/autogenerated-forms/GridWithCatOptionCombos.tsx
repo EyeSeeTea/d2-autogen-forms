@@ -73,212 +73,220 @@ const GridWithCatOptionCombos: React.FC<GridWithCatOptionCombosProps> = props =>
 
     return (
         <DataTableSection section={grid} dataFormInfo={dataFormInfo} sectionStyles={section.styles}>
-            <DataTable className={classes.table} layout="fixed" width="100%">
-                <TableHead>
-                    <DataTableRow>
-                        <CustomDataTableColumnHeader
-                            backgroundColor={section.styles.columns.backgroundColor}
-                            width="400px"
-                            colSpan="2"
-                        ></CustomDataTableColumnHeader>
-
-                        {grid.hasIndicatorsBefore && (
+            <div className={classes.scrollWrapper}>
+                <DataTable className={classes.table} layout="fixed" width="initial">
+                    <TableHead>
+                        <DataTableRow>
                             <CustomDataTableColumnHeader
                                 backgroundColor={section.styles.columns.backgroundColor}
-                                key="column-indicators-before"
-                            >
-                                {grid.indicatorsConfig.before?.headers.map(indicatorHeader => (
-                                    <span className={classes.header} key={indicatorHeader}>
-                                        {indicatorHeader}
-                                    </span>
-                                ))}
-                            </CustomDataTableColumnHeader>
-                        )}
+                                width="400px"
+                                colSpan="2"
+                            ></CustomDataTableColumnHeader>
 
-                        {grid.periods.length > 0 && (
-                            <CustomDataTableColumnHeader
-                                backgroundColor={section.styles.columns.backgroundColor}
-                                width="120px"
-                            >
-                                <div className={classes.header}>{section.texts.periodHeader ?? i18n.t("Period")}</div>
-                            </CustomDataTableColumnHeader>
-                        )}
+                            {grid.hasIndicatorsBefore && (
+                                <CustomDataTableColumnHeader
+                                    backgroundColor={section.styles.columns.backgroundColor}
+                                    key="column-indicators-before"
+                                >
+                                    {grid.indicatorsConfig.before?.headers.map(indicatorHeader => (
+                                        <span className={classes.header} key={indicatorHeader}>
+                                            {indicatorHeader}
+                                        </span>
+                                    ))}
+                                </CustomDataTableColumnHeader>
+                            )}
 
-                        {grid.columns.map(column => (
-                            <CustomDataTableColumnHeader
-                                backgroundColor={section.styles.columns.backgroundColor}
-                                key={column.name}
-                            >
-                                <div className={classes.header}>
-                                    <span>{column.name}</span>
-                                    <span
-                                        className={classes.description}
-                                        dangerouslySetInnerHTML={{ __html: column.description || "" }}
-                                    ></span>
-                                </div>
-                            </CustomDataTableColumnHeader>
-                        ))}
+                            {grid.periods.length > 0 && (
+                                <CustomDataTableColumnHeader
+                                    backgroundColor={section.styles.columns.backgroundColor}
+                                    width="120px"
+                                >
+                                    <div className={classes.header}>
+                                        {section.texts.periodHeader ?? i18n.t("Period")}
+                                    </div>
+                                </CustomDataTableColumnHeader>
+                            )}
 
-                        {grid.hasIndicatorsAfter && (
-                            <CustomDataTableColumnHeader
-                                backgroundColor={section.styles.columns.backgroundColor}
-                                key="column-indicators-after"
-                            >
-                                {grid.indicatorsConfig.after?.headers.map(indicatorHeader => (
-                                    <span className={classes.header} key={indicatorHeader}>
-                                        {indicatorHeader}
-                                    </span>
-                                ))}
-                            </CustomDataTableColumnHeader>
-                        )}
+                            {grid.columns.map(column => (
+                                <CustomDataTableColumnHeader
+                                    backgroundColor={section.styles.columns.backgroundColor}
+                                    className={classes.columnWidth}
+                                    key={column.name}
+                                >
+                                    <div className={classes.header}>
+                                        <span>{column.name}</span>
+                                        <span
+                                            className={classes.description}
+                                            dangerouslySetInnerHTML={{ __html: column.description || "" }}
+                                        ></span>
+                                    </div>
+                                </CustomDataTableColumnHeader>
+                            ))}
 
-                        {showRowTotals && (
-                            <CustomDataTableColumnHeader
-                                backgroundColor={section.styles.columns.backgroundColor}
-                                key="column-row-totals"
-                            >
-                                <div dangerouslySetInnerHTML={{ __html: grid.texts.rowTotals || "" }}></div>
-                            </CustomDataTableColumnHeader>
-                        )}
-                    </DataTableRow>
-                </TableHead>
+                            {grid.hasIndicatorsAfter && (
+                                <CustomDataTableColumnHeader
+                                    backgroundColor={section.styles.columns.backgroundColor}
+                                    key="column-indicators-after"
+                                >
+                                    {grid.indicatorsConfig.after?.headers.map(indicatorHeader => (
+                                        <span className={classes.header} key={indicatorHeader}>
+                                            {indicatorHeader}
+                                        </span>
+                                    ))}
+                                </CustomDataTableColumnHeader>
+                            )}
 
-                <TableBody>
-                    {grid.indicatorsConfig.position === "start" && NonDirectionalIndicators}
+                            {showRowTotals && (
+                                <CustomDataTableColumnHeader
+                                    backgroundColor={section.styles.columns.backgroundColor}
+                                    key="column-row-totals"
+                                >
+                                    <div dangerouslySetInnerHTML={{ __html: grid.texts.rowTotals || "" }}></div>
+                                </CustomDataTableColumnHeader>
+                            )}
+                        </DataTableRow>
+                    </TableHead>
 
-                    {grid.rows.map(row => {
-                        const { groupDescription, groupName, rows } = row;
+                    <TableBody>
+                        {grid.indicatorsConfig.position === "start" && NonDirectionalIndicators}
 
-                        return rows.map((row, idx) => (
-                            <DataTableRow key={`${groupName}-${idx}`}>
-                                {groupName ? (
-                                    <>
-                                        {idx === 0 && (
-                                            <CustomDataTableCell
-                                                backgroundColor={section.styles.rows.backgroundColor}
-                                                rowSpan={rows.length.toString()}
-                                            >
-                                                <span className={classes.rowTitle}>{groupName}</span>
-                                                <Html content={groupDescription} />
+                        {grid.rows.map(row => {
+                            const { groupDescription, groupName, rows } = row;
+
+                            return rows.map((row, idx) => (
+                                <DataTableRow key={`${groupName}-${idx}`}>
+                                    {groupName ? (
+                                        <>
+                                            {idx === 0 && (
+                                                <CustomDataTableCell
+                                                    backgroundColor={section.styles.rows.backgroundColor}
+                                                    rowSpan={rows.length.toString()}
+                                                >
+                                                    <span className={classes.rowTitle}>{groupName}</span>
+                                                    <Html content={groupDescription} />
+                                                </CustomDataTableCell>
+                                            )}
+
+                                            <CustomDataTableCell backgroundColor={section.styles.rows.backgroundColor}>
+                                                <DataTableCellRowName
+                                                    html={row.dataElement.htmlText}
+                                                    name={row.deName}
+                                                />
                                             </CustomDataTableCell>
-                                        )}
-
-                                        <CustomDataTableCell backgroundColor={section.styles.rows.backgroundColor}>
-                                            <DataTableCellRowName html={row.dataElement.htmlText} name={row.deName} />
-                                        </CustomDataTableCell>
-                                    </>
-                                ) : (
-                                    <CustomDataTableCell
-                                        backgroundColor={section.styles.rows.backgroundColor}
-                                        colSpan="2"
-                                    >
-                                        <DataTableCellRowName html={row.dataElement.htmlText} name={row.deName} />
-                                    </CustomDataTableCell>
-                                )}
-
-                                {row.indicators.before.map(indicator => (
-                                    <IndicatorItem
-                                        key={`${indicator.id}-${row.dataElement.code}`}
-                                        indicator={indicator}
-                                        dataFormInfo={dataFormInfo}
-                                        periods={[dataFormInfo.period]}
-                                    />
-                                ))}
-
-                                {row.period && (
-                                    <CustomDataTableCell backgroundColor={section.styles.rows.backgroundColor}>
-                                        <span>{row.period.label}</span>
-                                    </CustomDataTableCell>
-                                )}
-
-                                {grid.columns.map(column => {
-                                    const dataElement = column.dataElements.find(de => de.name === row.name);
-                                    return dataElement ? (
-                                        <CustomDataTableCell
-                                            backgroundColor={section.styles.rows.backgroundColor}
-                                            key={[dataElement.id, column.name].join("-")}
-                                        >
-                                            <DataElementItem
-                                                dataElement={dataElement}
-                                                dataFormInfo={dataFormInfo}
-                                                noComment={dataElement.disabledComments}
-                                                period={row.period?.id || dataFormInfo.period}
-                                                lockException={row.period ? true : false}
-                                                manualyDisabled={dataElement.disabled}
-                                            />
-                                        </CustomDataTableCell>
+                                        </>
                                     ) : (
                                         <CustomDataTableCell
                                             backgroundColor={section.styles.rows.backgroundColor}
-                                            key={`cell-${idx}-${column.name}`}
-                                        ></CustomDataTableCell>
+                                            colSpan="2"
+                                        >
+                                            <DataTableCellRowName html={row.dataElement.htmlText} name={row.deName} />
+                                        </CustomDataTableCell>
+                                    )}
+
+                                    {row.indicators.before.map(indicator => (
+                                        <IndicatorItem
+                                            key={`${indicator.id}-${row.dataElement.code}`}
+                                            indicator={indicator}
+                                            dataFormInfo={dataFormInfo}
+                                            periods={[dataFormInfo.period]}
+                                        />
+                                    ))}
+
+                                    {row.period && (
+                                        <CustomDataTableCell backgroundColor={section.styles.rows.backgroundColor}>
+                                            <span>{row.period.label}</span>
+                                        </CustomDataTableCell>
+                                    )}
+
+                                    {grid.columns.map(column => {
+                                        const dataElement = column.dataElements.find(de => de.name === row.name);
+                                        return dataElement ? (
+                                            <CustomDataTableCell
+                                                backgroundColor={section.styles.rows.backgroundColor}
+                                                key={[dataElement.id, column.name].join("-")}
+                                            >
+                                                <DataElementItem
+                                                    dataElement={dataElement}
+                                                    dataFormInfo={dataFormInfo}
+                                                    noComment={dataElement.disabledComments}
+                                                    period={row.period?.id || dataFormInfo.period}
+                                                    lockException={row.period ? true : false}
+                                                    manualyDisabled={dataElement.disabled}
+                                                />
+                                            </CustomDataTableCell>
+                                        ) : (
+                                            <CustomDataTableCell
+                                                backgroundColor={section.styles.rows.backgroundColor}
+                                                key={`cell-${idx}-${column.name}`}
+                                            ></CustomDataTableCell>
+                                        );
+                                    })}
+
+                                    {row.indicators.after.map(indicator => (
+                                        <IndicatorItem
+                                            key={`${indicator.id}-${row.dataElement.code}`}
+                                            indicator={indicator}
+                                            dataFormInfo={dataFormInfo}
+                                            periods={[dataFormInfo.period]}
+                                        />
+                                    ))}
+
+                                    {showRowTotals && (
+                                        <DataTableCellRowTotal
+                                            dataFormInfo={dataFormInfo}
+                                            styles={section.styles}
+                                            dataElement={row.dataElement}
+                                            period={row.period?.id}
+                                        />
+                                    )}
+                                </DataTableRow>
+                            ));
+                        })}
+
+                        {grid.indicatorsConfig.position === "end" && NonDirectionalIndicators}
+
+                        {grid.summary.map(summary => (
+                            <DataTableRow key={`${summary.cellName}-totals`}>
+                                <CustomDataTableCell
+                                    colSpan={`${grid.hasIndicatorsBefore ? "3" : "2"}`}
+                                    backgroundColor={section.styles.totals.backgroundColor}
+                                    key="total-column-name"
+                                >
+                                    <Html content={summary.cellName} />
+                                </CustomDataTableCell>
+                                {grid.periods.length > 0 && (
+                                    <CustomDataTableCell
+                                        backgroundColor={section.styles.totals.backgroundColor}
+                                        key="total-period-placeholder"
+                                    >
+                                        {summaryPeriodLabel}
+                                    </CustomDataTableCell>
+                                )}
+                                {summary.cells.map(itemTotal => {
+                                    return (
+                                        <DataTableCellFormula
+                                            key={itemTotal.columnName}
+                                            dataFormInfo={dataFormInfo}
+                                            styles={section.styles}
+                                            total={itemTotal}
+                                            formula={itemTotal.formula}
+                                            period={summaryPeriod}
+                                        />
                                     );
                                 })}
-
-                                {row.indicators.after.map(indicator => (
-                                    <IndicatorItem
-                                        key={`${indicator.id}-${row.dataElement.code}`}
-                                        indicator={indicator}
-                                        dataFormInfo={dataFormInfo}
-                                        periods={[dataFormInfo.period]}
-                                    />
-                                ))}
-
                                 {showRowTotals && (
-                                    <DataTableCellRowTotal
+                                    <DataTableCellSummary
                                         dataFormInfo={dataFormInfo}
                                         styles={section.styles}
-                                        dataElement={row.dataElement}
-                                        period={row.period?.id}
+                                        dataElements={summary.cells}
+                                        period={summaryPeriod}
                                     />
                                 )}
                             </DataTableRow>
-                        ));
-                    })}
-
-                    {grid.indicatorsConfig.position === "end" && NonDirectionalIndicators}
-
-                    {grid.summary.map(summary => (
-                        <DataTableRow key={`${summary.cellName}-totals`}>
-                            <CustomDataTableCell
-                                colSpan={`${grid.hasIndicatorsBefore ? "3" : "2"}`}
-                                backgroundColor={section.styles.totals.backgroundColor}
-                                key="total-column-name"
-                            >
-                                <Html content={summary.cellName} />
-                            </CustomDataTableCell>
-                            {grid.periods.length > 0 && (
-                                <CustomDataTableCell
-                                    backgroundColor={section.styles.totals.backgroundColor}
-                                    key="total-period-placeholder"
-                                >
-                                    {summaryPeriodLabel}
-                                </CustomDataTableCell>
-                            )}
-                            {summary.cells.map(itemTotal => {
-                                return (
-                                    <DataTableCellFormula
-                                        key={itemTotal.columnName}
-                                        dataFormInfo={dataFormInfo}
-                                        styles={section.styles}
-                                        total={itemTotal}
-                                        formula={itemTotal.formula}
-                                        period={summaryPeriod}
-                                    />
-                                );
-                            })}
-                            {showRowTotals && (
-                                <DataTableCellSummary
-                                    dataFormInfo={dataFormInfo}
-                                    styles={section.styles}
-                                    dataElements={summary.cells}
-                                    period={summaryPeriod}
-                                />
-                            )}
-                        </DataTableRow>
-                    ))}
-                </TableBody>
-            </DataTable>
+                        ))}
+                    </TableBody>
+                </DataTable>
+            </div>
         </DataTableSection>
     );
 };
@@ -294,7 +302,9 @@ const useStyles = makeStyles({
     },
     description: { fontWeight: "normal", fontSize: "0.8em" },
     table: { borderWidth: "3px !important", minWidth: "100%" },
+    columnWidth: { minWidth: "8em !important" },
     rowTitle: { fontSize: "1.2em", fontWeight: "bold" },
+    scrollWrapper: { overflowX: "auto" },
 });
 
 export default React.memo(GridWithCatOptionCombos);

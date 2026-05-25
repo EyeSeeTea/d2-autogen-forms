@@ -3,6 +3,7 @@ import { Monaco } from "@monaco-editor/react";
 import { EditorProps } from "../Editor";
 import { useJsonProcessor } from "./useJsonProcessor";
 import { DEFAULT_JSON_VALUE } from "./useConfigurator";
+import { CodeEditor } from "../monaco/types";
 import { Maybe } from "../../../../utils/ts-utils";
 
 type Marker = Record<string, unknown>;
@@ -14,7 +15,7 @@ type AutogenEditorState = {
     editorOptions: Monaco["options"];
     isLargeFile: boolean;
     handleChange: (value: Maybe<string>) => void;
-    handleEditorDidMount: (editor: Monaco["editor"], monaco: Monaco) => void;
+    handleEditorDidMount: (editor: CodeEditor, monaco: Monaco) => void;
     handleEditorValidation: (markers: Marker[]) => void;
     processingError: Maybe<string>;
 };
@@ -50,6 +51,7 @@ export function useAutogenEditor(props: AutogenEditorProps): AutogenEditorState 
             folding: !isHugeFile,
             lineNumbers: "on" as const,
             renderWhitespace: isLargeFile ? ("none" as const) : ("selection" as const),
+            quickSuggestions: { other: true, comments: false, strings: true },
             ...(isHugeFile && {
                 renderValidationDecorations: "off" as const,
                 occurrencesHighlight: false,
@@ -86,7 +88,7 @@ export function useAutogenEditor(props: AutogenEditorProps): AutogenEditorState 
                     return;
                 }
 
-                if (jsonContent.length > LARGE_FILE_SIZE) {
+                if (calculateFileSizeInKB(jsonContent) > LARGE_FILE_SIZE) {
                     try {
                         JSON.parse(jsonContent);
                         updateJsonValidity(true);
@@ -130,7 +132,7 @@ export function useAutogenEditor(props: AutogenEditorProps): AutogenEditorState 
     );
 
     const handleEditorDidMount = useCallback(
-        (editor: Monaco["editor"], monaco: Monaco) => {
+        (editor: CodeEditor, monaco: Monaco) => {
             if (isLargeFile) {
                 editor.updateOptions({
                     smoothScrolling: false,
@@ -139,8 +141,8 @@ export function useAutogenEditor(props: AutogenEditorProps): AutogenEditorState 
                 });
             }
 
-            const fileSize = configValue?.length || 0;
-            if (fileSize < HUGE_FILE_SIZE) {
+            const fileSizeKB = calculateFileSizeInKB(configValue || "");
+            if (fileSizeKB < HUGE_FILE_SIZE) {
                 editor.onKeyUp((e: { keyCode: number }) => {
                     try {
                         const position = editor.getPosition();
@@ -175,7 +177,7 @@ export function useAutogenEditor(props: AutogenEditorProps): AutogenEditorState 
                 }, validationDebounceMs);
             });
         },
-        [isLargeFile, configValue?.length, validationDebounceMs, updateJsonValidity]
+        [isLargeFile, configValue, validationDebounceMs, updateJsonValidity]
     );
 
     const handleEditorValidation = useCallback(
@@ -214,10 +216,4 @@ export function useAutogenEditor(props: AutogenEditorProps): AutogenEditorState 
 const LARGE_FILE_SIZE = 100; // 100KB
 const HUGE_FILE_SIZE = 500; // 500KB
 
-function calculateFileSizeInKB(input: string): number {
-    const encoder = new TextEncoder();
-    const sizeInBytes = encoder.encode(input).length;
-    const sizeInKB = sizeInBytes / 1024;
-
-    return sizeInKB;
-}
+const calculateFileSizeInKB = (input: string): number => new TextEncoder().encode(input).length / 1024;

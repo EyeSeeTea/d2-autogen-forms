@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { getTopAccessibleWindow } from "../../../utils/topAccessibleWindow";
 
 /**
  * Injects style overrides into the topmost same-origin document so the new
@@ -8,17 +9,7 @@ import { useEffect } from "react";
  */
 export function useParentDataEntryAppStyles() {
     useEffect(() => {
-        let win: Window = window;
-        try {
-            while (win.parent && win.parent !== win) {
-                const parentDoc = win.parent.document;
-                if (!parentDoc) break;
-                win = win.parent;
-            }
-        } catch {
-            // Cross-origin ancestor — stop at the last accessible window.
-        }
-
+        const win = getTopAccessibleWindow();
         if (win === window) return;
 
         const targetDoc = win.document;

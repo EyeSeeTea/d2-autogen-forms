@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-03-31T17:32:04.356Z\n"
-"PO-Revision-Date: 2026-03-31T17:32:04.356Z\n"
+"POT-Creation-Date: 2026-05-19T08:52:24.500Z\n"
+"PO-Revision-Date: 2026-05-19T08:52:24.500Z\n"
 
 msgid "Mark all notifications as read"
 msgstr ""
@@ -83,7 +83,29 @@ msgstr ""
 msgid "Please enter a valid email address"
 msgstr ""
 
+msgid "Re-install custom form"
+msgstr ""
+
+msgid "Install custom form"
+msgstr ""
+
+msgid ""
+"This dataset already has a custom form. Installing will overwrite it with "
+"the bundled version (v{{version}}). This action cannot be undone."
+msgstr ""
+
+msgid ""
+"Install the bundled custom form (v{{version}}) into this dataset. The form "
+"will be available in the Data Entry app."
+msgstr ""
+
 msgid "Add new data form configuration"
+msgstr ""
+
+msgid "Custom form bundle not available. Please reinstall the application."
+msgstr ""
+
+msgid "You do not have write access to this dataset."
 msgstr ""
 
 msgid "Save"
@@ -119,6 +141,45 @@ msgstr ""
 msgid "? This action cannot be undone."
 msgstr ""
 
+msgid "Overwrite and install"
+msgstr ""
+
+msgid "Install"
+msgstr ""
+
+msgid "not installed"
+msgstr ""
+
+msgid "installed (v{{version}})"
+msgstr ""
+
+msgid "outdated (unknown → v{{bundled}})"
+msgstr ""
+
+msgid "outdated (v{{installed}} → v{{bundled}})"
+msgstr ""
+
+msgid "Create new constant"
+msgstr ""
+
+msgid "Name"
+msgstr ""
+
+msgid "Short name"
+msgstr ""
+
+msgid "Auto-filled from name. Max {{max}} characters."
+msgstr ""
+
+msgid "Code"
+msgstr ""
+
+msgid "Auto-filled from name"
+msgstr ""
+
+msgid "Description"
+msgstr ""
+
 msgid "Select dataset"
 msgstr ""
 
@@ -138,4 +199,38 @@ msgid "Configuration deleted"
 msgstr ""
 
 msgid "Configuration saved"
+msgstr ""
+
+msgid "Name is required"
+msgstr ""
+
+msgid "Short name is required"
+msgstr ""
+
+msgid "Short name must be {{max}} characters or fewer"
+msgstr ""
+
+msgid "Code is required"
+msgstr ""
+
+msgid "Description is required"
+msgstr ""
+
+msgid "Custom form installed successfully"
+msgstr ""
+
+msgid "Error installing custom form: {{message}}"
+msgstr ""
+
+msgid "Open dialog to define a new constant"
+msgstr ""
+
+msgctxt "ADD authority."
+msgid ""
+"You do not have permission to create constants. Ask your administrator for "
+"the F_CONSTANT"
+msgstr ""
+
+msgctxt "ADD authority"
+msgid "Requires F_CONSTANT"
 msgstr ""
