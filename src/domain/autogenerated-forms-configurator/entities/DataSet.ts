@@ -6,3 +6,10 @@ export type DataSet = CodedRef & {
     hasCustomForm: boolean;
     canBeModified: boolean;
 };
+
+export type DataElementRef = { id: Id; name: string };
+
+export type DataSetDetail = DataSet & {
+    sections: Array<{ id: Id }>;
+    dataElements: DataElementRef[];
+};
