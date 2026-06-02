@@ -9,7 +9,6 @@ export class InstallCustomFormUseCase {
         const dataSet = await this.dataSetRepository.getById(dataSetId);
         if (!dataSet.canBeModified) throw new Error("Forbidden: you do not have write access to this dataset");
 
-        const existing = await this.customFormRepository.get(dataSetId);
-        await this.customFormRepository.install(dataSetId, htmlCode, existing.id);
+        await this.customFormRepository.install(dataSetId, htmlCode);
     }
 }
