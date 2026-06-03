@@ -1,11 +1,11 @@
 import { Id } from "../../common/entities/Base";
-import { DataSetDetail } from "../entities/DataSet";
+import { DataSet } from "../entities/DataSet";
 import { DataSetRepository } from "../repositories/DataSetRepository";
 
-export class GetDataSetWithElementsUseCase {
+export class GetDataSetUseCase {
     constructor(private dataSetRepository: DataSetRepository) {}
 
-    execute(id: Id): Promise<DataSetDetail> {
-        return this.dataSetRepository.getWithElements(id);
+    execute(id: Id): Promise<DataSet> {
+        return this.dataSetRepository.getById(id);
     }
 }
