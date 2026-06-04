@@ -1,6 +1,6 @@
 import { Id, CodedRef } from "../../common/entities/Base";
 
-export type DataElementRef = { id: Id; name: string };
+export type DataElementRef = { id: Id };
 
 export type DataSet = CodedRef & {
     id: Id;

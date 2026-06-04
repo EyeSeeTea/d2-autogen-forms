@@ -101,7 +101,7 @@ const dataSetWithElementsFields = {
     formType: true,
     access: true,
     sections: { id: true },
-    dataSetElements: { dataElement: { id: true, name: true } },
+    dataSetElements: { dataElement: { id: true } },
 } as const;
 
 type D2DataSet = MetadataPick<{
