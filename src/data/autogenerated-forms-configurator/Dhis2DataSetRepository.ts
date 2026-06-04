@@ -61,6 +61,7 @@ export class Dhis2DataSetRepository implements DataSetRepository {
             ...(existingSection ?? {}),
             id: sectionId,
             name: "Default",
+            code: `DEFAULT_${dataSet.code}`,
             dataSet: { id: dataSet.id },
             dataElements: dataSet.dataElements.map(de => ({ id: de.id })),
             sortOrder: 0,
