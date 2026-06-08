@@ -4,4 +4,5 @@ import { DataSet } from "../entities/DataSet";
 export interface DataSetRepository {
     get(): Promise<DataSet[]>;
     getById(id: Id): Promise<DataSet>;
+    save(dataSet: DataSet): Promise<void>;
 }

@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-05-19T08:52:24.500Z\n"
-"PO-Revision-Date: 2026-05-19T08:52:24.500Z\n"
+"POT-Creation-Date: 2026-06-02T11:42:58.000Z\n"
+"PO-Revision-Date: 2026-06-02T11:42:58.000Z\n"
 
 msgid "Mark all notifications as read"
 msgstr ""
@@ -147,6 +147,21 @@ msgstr ""
 msgid "Install"
 msgstr ""
 
+msgid "Dataset has no sections"
+msgstr ""
+
+msgid "No"
+msgstr ""
+
+msgid "Yes"
+msgstr ""
+
+msgid ""
+"The target dataset does not have any section. Sections are needed for "
+"d2-autogen-forms to work. Do you want to create a default section with all "
+"data elements?"
+msgstr ""
+
 msgid "not installed"
 msgstr ""
 
@@ -199,6 +214,9 @@ msgid "Configuration deleted"
 msgstr ""
 
 msgid "Configuration saved"
+msgstr ""
+
+msgid "Default section created. Reload the data entry form to see it."
 msgstr ""
 
 msgid "Name is required"
