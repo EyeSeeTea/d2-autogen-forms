@@ -34,6 +34,7 @@ export const CustomInput = styled.input`
     color: rgb(33, 41, 52);
     background-color: white;
     padding: 12px 11px 10px;
+    min-height: 48px;
     outline: 0px;
     border: 1px solid rgb(160, 173, 186);
     border-radius: 3px;
