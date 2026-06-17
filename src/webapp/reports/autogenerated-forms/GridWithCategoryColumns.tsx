@@ -175,6 +175,7 @@ const GridWithCategoryColumns: React.FC<GridWithCategoryColumnsProps> = props =>
                                     className={classes.td}
                                     position={fixRows ? "sticky" : undefined}
                                     left={fixRows ? "0px" : undefined}
+                                    zIndex={fixRows ? 1 : undefined}
                                 >
                                     <span>{row.name}</span>
                                 </CustomDataTableCell>

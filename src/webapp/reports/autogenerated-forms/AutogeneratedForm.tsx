@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import { useAppContext } from "../../contexts/app-context";
 
@@ -189,6 +189,13 @@ function useDataFormInfo() {
 
     const [dataForm, setDataForm] = useState<DataForm>();
     const [dataValues, setDataValues] = useState<DataValueStore>();
+    const dataValuesRef = useRef<Maybe<DataValueStore>>(undefined);
+    const totalSaveQueuesRef = useRef(new Map<string, Promise<void>>());
+
+    useEffect(() => {
+        dataValuesRef.current = dataValues;
+    }, [dataValues]);
+
     const [isLoading, loadingActions] = useBooleanState(false);
     const [orgUnit, setOrgUnit] = useState<OrgUnit>();
 
@@ -355,48 +362,71 @@ function useDataFormInfo() {
     );
 
     const saveWithTotals = useCallback<DataFormInfo["data"]["saveWithTotals"]>(
-        async (
-            dataValue: DataValueNumberSingle,
-            columnTotal: DataElement,
-            columnDataElements: DataElement[],
-            cocId: string
-        ) => {
-            if (!dataValues) return dataValues;
-            return compositionRoot.dataForms
-                .saveWithTotals(dataValues, dataValue, columnTotal, columnDataElements, cocId)
-                .then(saveDataValues => {
-                    setDataValues(prev => {
-                        if (!prev) return undefined;
-                        return prev.merge(saveDataValues);
-                    });
-                })
-                .then(() => {
+        (dataValue, columnTotal, columnDataElements, cocId) => {
+            const queues = totalSaveQueuesRef.current;
+            const previousSave = queues.get(columnTotal.id) ?? Promise.resolve();
+
+            const currentSave = previousSave
+                .catch(error => console.error(`Failed to save totals for column ${columnTotal.id}`, error)) // a failed save must not block later saves in the column
+                .then(async () => {
+                    const store = dataValuesRef.current;
+                    if (!store) return;
+
+                    const savedDataValues = await compositionRoot.dataForms.saveWithTotals(
+                        store,
+                        dataValue,
+                        columnTotal,
+                        columnDataElements,
+                        cocId
+                    );
+
+                    setDataValues(prev => (prev ?? store).merge(savedDataValues));
+                    dataValuesRef.current = (dataValuesRef.current ?? store).merge(savedDataValues);
+
                     if (!dataForm?.disableAutoValidation) {
                         checkValidationRules(dataValue);
                     }
                 });
+
+            queues.set(columnTotal.id, currentSave);
+            return currentSave;
         },
-        [compositionRoot, dataValues, dataForm?.disableAutoValidation, checkValidationRules]
+        [compositionRoot, dataForm?.disableAutoValidation, checkValidationRules]
     );
 
-    const dataFormInfo: Maybe<DataFormInfo> =
-        dataForm && dataValues && orgUnit
-            ? {
-                  metadata: { dataForm },
-                  data: {
-                      values: dataValues,
-                      save: saveDataValue,
-                      delete: deleteDataValues,
-                      stApplyToAll: SourceTypeApplyToAll,
-                      saveWithTotals: saveWithTotals,
-                  },
-                  initForm,
-                  orgUnitId,
-                  orgUnit,
-                  period,
-                  categoryOptionComboId: defaultCategoryOptionComboId,
-              }
-            : undefined;
+    const dataFormInfo = React.useMemo<Maybe<DataFormInfo>>(
+        () =>
+            dataForm && dataValues && orgUnit
+                ? {
+                      metadata: { dataForm },
+                      data: {
+                          values: dataValues,
+                          save: saveDataValue,
+                          delete: deleteDataValues,
+                          stApplyToAll: SourceTypeApplyToAll,
+                          saveWithTotals: saveWithTotals,
+                      },
+                      initForm,
+                      orgUnitId,
+                      orgUnit,
+                      period,
+                      categoryOptionComboId: defaultCategoryOptionComboId,
+                  }
+                : undefined,
+        [
+            dataForm,
+            dataValues,
+            orgUnit,
+            saveDataValue,
+            deleteDataValues,
+            SourceTypeApplyToAll,
+            saveWithTotals,
+            initForm,
+            orgUnitId,
+            period,
+            defaultCategoryOptionComboId,
+        ]
+    );
 
     return {
         dataFormInfo,

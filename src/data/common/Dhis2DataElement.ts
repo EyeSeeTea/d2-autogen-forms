@@ -87,7 +87,7 @@ function normalizeCategoryCombo(categoryCombo: D2DataElement["categoryCombo"]): 
         co: D2DataElement["categoryCombo"]["categories"][number]["categoryOptions"][number]
     ) => ({
         ...co,
-        code: co.code.trim(),
+        code: co.code ? co.code.trim() : "",
         name: co.name.trim(),
     });
 
