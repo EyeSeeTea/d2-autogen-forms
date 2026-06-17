@@ -380,9 +380,8 @@ function useDataFormInfo() {
                         cocId
                     );
 
-                    const updatedStore = store.merge(savedDataValues);
-                    dataValuesRef.current = updatedStore;
-                    setDataValues(updatedStore);
+                    setDataValues(prev => (prev ?? store).merge(savedDataValues));
+                    dataValuesRef.current = (dataValuesRef.current ?? store).merge(savedDataValues);
 
                     if (!dataForm?.disableAutoValidation) {
                         checkValidationRules(dataValue);
