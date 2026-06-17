@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import { useAppContext } from "../../contexts/app-context";
 
@@ -189,6 +189,13 @@ function useDataFormInfo() {
 
     const [dataForm, setDataForm] = useState<DataForm>();
     const [dataValues, setDataValues] = useState<DataValueStore>();
+    const dataValuesRef = useRef<Maybe<DataValueStore>>(undefined);
+    const totalSaveQueuesRef = useRef(new Map<string, Promise<void>>());
+
+    useEffect(() => {
+        dataValuesRef.current = dataValues;
+    }, [dataValues]);
+
     const [isLoading, loadingActions] = useBooleanState(false);
     const [orgUnit, setOrgUnit] = useState<OrgUnit>();
 
@@ -249,31 +256,12 @@ function useDataFormInfo() {
     }, [dataForm, orgUnits, compositionRoot.dataForms, dataSetId, orgUnitId, period]);
 
     React.useEffect(() => {
-        // Hiding arrows for input of type number
-        // adding directly to css works in dev, but not in data entry.
-        const css =
-                'input::-webkit-outer-spin-button,input::-webkit-inner-spin-button {-webkit-appearance: none !important; margin: 0; } input[type=number] { -moz-appearance: textfield !important; }[data-test="dhis2-uicore-layer"] {z-index: 10 !important;}',
+        const css = '[data-test="dhis2-uicore-layer"] {z-index: 10 !important;}',
             head = document.head || document.getElementsByTagName("head")[0],
             style = document.createElement("style");
-        style.setAttribute("id", "disabled-arrows-css");
+        style.setAttribute("id", "dhis2-layer-zindex-css");
         style.appendChild(document.createTextNode(css));
         head.appendChild(style);
-
-        function disableScrollInputs() {
-            if (
-                window.document.activeElement instanceof HTMLInputElement &&
-                window.document.activeElement.type === "number" &&
-                window.document.activeElement.classList.contains("noscroll")
-            ) {
-                window.document.activeElement.blur();
-            }
-        }
-
-        document.addEventListener("wheel", disableScrollInputs);
-
-        return () => {
-            document.removeEventListener("wheel", disableScrollInputs);
-        };
     }, []);
 
     useEffect(() => {
@@ -355,48 +343,71 @@ function useDataFormInfo() {
     );
 
     const saveWithTotals = useCallback<DataFormInfo["data"]["saveWithTotals"]>(
-        async (
-            dataValue: DataValueNumberSingle,
-            columnTotal: DataElement,
-            columnDataElements: DataElement[],
-            cocId: string
-        ) => {
-            if (!dataValues) return dataValues;
-            return compositionRoot.dataForms
-                .saveWithTotals(dataValues, dataValue, columnTotal, columnDataElements, cocId)
-                .then(saveDataValues => {
-                    setDataValues(prev => {
-                        if (!prev) return undefined;
-                        return prev.merge(saveDataValues);
-                    });
-                })
-                .then(() => {
+        (dataValue, columnTotal, columnDataElements, cocId) => {
+            const queues = totalSaveQueuesRef.current;
+            const previousSave = queues.get(columnTotal.id) ?? Promise.resolve();
+
+            const currentSave = previousSave
+                .catch(error => console.error(`Failed to save totals for column ${columnTotal.id}`, error)) // a failed save must not block later saves in the column
+                .then(async () => {
+                    const store = dataValuesRef.current;
+                    if (!store) return;
+
+                    const savedDataValues = await compositionRoot.dataForms.saveWithTotals(
+                        store,
+                        dataValue,
+                        columnTotal,
+                        columnDataElements,
+                        cocId
+                    );
+
+                    setDataValues(prev => (prev ?? store).merge(savedDataValues));
+                    dataValuesRef.current = (dataValuesRef.current ?? store).merge(savedDataValues);
+
                     if (!dataForm?.disableAutoValidation) {
                         checkValidationRules(dataValue);
                     }
                 });
+
+            queues.set(columnTotal.id, currentSave);
+            return currentSave;
         },
-        [compositionRoot, dataValues, dataForm?.disableAutoValidation, checkValidationRules]
+        [compositionRoot, dataForm?.disableAutoValidation, checkValidationRules]
     );
 
-    const dataFormInfo: Maybe<DataFormInfo> =
-        dataForm && dataValues && orgUnit
-            ? {
-                  metadata: { dataForm },
-                  data: {
-                      values: dataValues,
-                      save: saveDataValue,
-                      delete: deleteDataValues,
-                      stApplyToAll: SourceTypeApplyToAll,
-                      saveWithTotals: saveWithTotals,
-                  },
-                  initForm,
-                  orgUnitId,
-                  orgUnit,
-                  period,
-                  categoryOptionComboId: defaultCategoryOptionComboId,
-              }
-            : undefined;
+    const dataFormInfo = React.useMemo<Maybe<DataFormInfo>>(
+        () =>
+            dataForm && dataValues && orgUnit
+                ? {
+                      metadata: { dataForm },
+                      data: {
+                          values: dataValues,
+                          save: saveDataValue,
+                          delete: deleteDataValues,
+                          stApplyToAll: SourceTypeApplyToAll,
+                          saveWithTotals: saveWithTotals,
+                      },
+                      initForm,
+                      orgUnitId,
+                      orgUnit,
+                      period,
+                      categoryOptionComboId: defaultCategoryOptionComboId,
+                  }
+                : undefined,
+        [
+            dataForm,
+            dataValues,
+            orgUnit,
+            saveDataValue,
+            deleteDataValues,
+            SourceTypeApplyToAll,
+            saveWithTotals,
+            initForm,
+            orgUnitId,
+            period,
+            defaultCategoryOptionComboId,
+        ]
+    );
 
     return {
         dataFormInfo,
