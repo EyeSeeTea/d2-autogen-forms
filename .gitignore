@@ -41,3 +41,5 @@ public/custom-data-form.html
 
 # Claude Code local settings (per-user permissions, not shared)
 .claude/settings.local.json
+# Claude Code worktree runtime artifacts
+.claude/worktrees/

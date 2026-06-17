@@ -1,25 +1,5 @@
 {
     "hooks": {
-        "PreToolUse": [
-            {
-                "matcher": "Bash",
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": "jq -r '.tool_input.command // \"\"' | grep -qE '^git commit' || echo '{\"decision\":\"allow\",\"suppressOutput\":true}'",
-                        "timeout": 5,
-                        "statusMessage": "Checking if commit..."
-                    },
-                    {
-                        "type": "agent",
-                        "prompt": "You are a pre-commit architecture reviewer for d2-autogen-forms, a Clean Architecture DHIS2 app. The tool input is: $ARGUMENTS\n\nFirst check: does tool_input.command start with 'git commit'? If NOT, immediately return {\"decision\":\"allow\"} and do nothing else.\n\nIf it IS a git commit, review the staged changes by running: git diff --staged\n\nThen check ONLY these critical rules (read .claude/CLAUDE.md for full context):\n\n1. DEPENDENCY RULE: Domain layer (src/domain/) must have ZERO imports from src/data/ or src/webapp/. No direct DHIS2 API calls outside the data layer. All external access goes through repository interfaces defined in domain.\n2. REPOSITORY PATTERN: Is new external data access going through a repository interface in src/domain/? Is the implementation in src/data/? Is it wired in src/compositionRoot.ts? Domain entities must be types/interfaces, not classes. Use cases must have execute() method.\n3. FUNCTIONAL STYLE: Are there for loops with mutable accumulators (push, let counter) that should be map/flatMap/filter/reduce/Object.fromEntries? Is FutureData used instead of raw Promises where the rest of the codebase does?\n4. TEST QUALITY: Are there weak assertions (toBeDefined, toBeTruthy, toHaveProperty) when a concrete value is knowable? Are use case tests using ts-mockito for repository mocking?\n5. DUPLICATION: Is logic copy-pasted between files instead of extracted into a shared function/hook/utility?\n6. SEPARATION: Is business logic leaking into React components (src/webapp/) instead of living in domain use cases? Are components using the ViewModel pattern for data transformation?\n\nIf you find critical violations (especially #1 dependency rule bypass or #2 repository pattern violations), output JSON: {\"decision\":\"block\",\"reason\":\"[description of violations]\"}\nIf only minor suggestions, output: {\"decision\":\"allow\",\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"additionalContext\":\"Pre-commit review notes: [suggestions]\"}}\nIf no issues, output: {\"decision\":\"allow\"}",
-                        "model": "claude-sonnet-4-6",
-                        "timeout": 120,
-                        "statusMessage": "Reviewing staged changes..."
-                    }
-                ]
-            }
-        ],
         "PostToolUse": [
             {
                 "matcher": "Edit|Write",
