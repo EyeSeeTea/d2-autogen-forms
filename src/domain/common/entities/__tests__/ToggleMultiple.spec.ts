@@ -3,7 +3,7 @@ import { DataElement } from "../DataElement";
 import { dataElementText as dataElementBase } from "./dataFixtures";
 
 // Mock console.warn to catch warnings in test output
-global.console = { ...global.console, warn: jest.fn() };
+global.console = { ...global.console, warn: vi.fn() };
 
 describe("buildToggleMultiple", () => {
     const dataElement1: DataElement = {

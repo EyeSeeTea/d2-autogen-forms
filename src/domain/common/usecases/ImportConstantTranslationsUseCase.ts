@@ -1,6 +1,6 @@
-import fs from "fs";
 import { ConstantRepository } from "../repositories/ConstantRepository";
 import { DataElementRepository } from "../repositories/DataElementRepository";
+import { ExportConstantRepository } from "../repositories/ExportConstantRepository";
 import { ExportDataElementConfigRepository } from "../repositories/ExportDataElementConfigRepository";
 import { ImportConstantRepository } from "../repositories/ImportConstantRepository";
 
@@ -9,13 +9,14 @@ export class ImportConstantTranslationsUseCase {
         private constantRepository: ConstantRepository,
         private importConstantRepository: ImportConstantRepository,
         private dataElementRepository: DataElementRepository,
-        private exportDataElementConfigRepository: ExportDataElementConfigRepository
+        private exportDataElementConfigRepository: ExportDataElementConfigRepository,
+        private exportConstantRepository: ExportConstantRepository
     ) {}
 
     async execute(options: ImportMalariaTranslationsoptions): Promise<void> {
         console.debug(`Getting translations from ${options.path}...`);
         const constants = this.importConstantRepository.import(options.path);
-        fs.writeFileSync("constants_to_import_temp.json", JSON.stringify({ constants: constants }, null, 4));
+        await this.exportConstantRepository.export("constants_to_import_temp.json", constants);
         console.debug("Saving constants with translations...");
         const stats = await this.constantRepository.save(constants, options);
         console.debug("Constants imported:", JSON.stringify(stats, null, 4));

@@ -1,6 +1,5 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
-import "@testing-library/jest-dom/extend-expect";
 import TabNavigation, { VisibleTab, TabNavigationProps } from "../TabNavigation";
 
 const defaultTabs: ReadonlyArray<VisibleTab> = [
@@ -11,7 +10,7 @@ const defaultTabs: ReadonlyArray<VisibleTab> = [
 ];
 
 function renderNavigation(overrides: Partial<TabNavigationProps> = {}) {
-    const onTabChange = jest.fn();
+    const onTabChange = vi.fn();
     const props: TabNavigationProps = {
         activeTabIndex: 0,
         visibleTabs: defaultTabs,
@@ -127,7 +126,7 @@ describe("TabNavigation", () => {
 
     describe("scroll-to-top on navigation", () => {
         beforeEach(() => {
-            window.scrollTo = jest.fn();
+            window.scrollTo = vi.fn();
         });
 
         it("scrolls to top when Next is clicked", () => {
