@@ -56,7 +56,9 @@
         "loader-utils": "1.4.2",
         "minimatch": "3.1.3",
         "qs": "6.14.2",
-        "brace-expansion": "1.1.13"
+        "brace-expansion": "1.1.13",
+        "linkify-it": "5.0.1",
+        "i18next": "19.8.5"
     },
     "scripts": {
         "start": "vite",
