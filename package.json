@@ -16,7 +16,6 @@
         "@dhis2/d2-i18n-extract": "1.0.8",
         "@dhis2/d2-i18n-generate": "1.2.0",
         "@dhis2/d2-ui-core": "7.3.3",
-        "@dhis2/d2-ui-forms": "7.3.3",
         "@dhis2/ui": "7.16.2",
         "@dhis2/ui-core": "6.24.0",
         "@dhis2/ui-widgets": "6.24.0",
@@ -51,7 +50,9 @@
     },
     "resolutions": {
         "axios": "1.18.1",
-        "lodash": "4.18.1"
+        "lodash": "4.18.1",
+        "handlebars": "4.7.9",
+        "@babel/traverse": "^7.23.2"
     },
     "scripts": {
         "start": "vite",
