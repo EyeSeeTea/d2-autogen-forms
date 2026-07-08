@@ -11,7 +11,7 @@
     },
     "dependencies": {
         "@dhis2-ui/calendar": "^8.12.2",
-        "@dhis2/app-runtime": "3.12.0",
+        "@dhis2/app-runtime": "3.2.5",
         "@dhis2/d2-i18n": "1.1.0",
         "@dhis2/d2-ui-core": "7.3.3",
         "@dhis2/ui": "7.16.2",
