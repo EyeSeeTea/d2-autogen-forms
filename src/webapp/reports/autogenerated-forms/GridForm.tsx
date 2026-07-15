@@ -51,7 +51,7 @@ const GridForm: React.FC<GridFormProps> = props => {
     const fixColumns = section.fixedHeaders;
     const fixRows = section.fixedRowNames;
     const mainContentStyles = fixColumns ? fixHeaderClasses.fixedHeaders : {};
-    const firstColumnWidth = section.firstColumnConfig?.width || "auto";
+    const firstColumnWidth = section.firstColumnConfig?.width || 800;
 
     const NonDirectionalIndicators = grid.nonDirectionalIndicators.map(indicator => (
         <RowIndicatorItem
@@ -71,7 +71,7 @@ const GridForm: React.FC<GridFormProps> = props => {
             )}
 
             <div ref={wrapper2Ref} style={mainContentStyles}>
-                <DataTable className={classes.table} layout="fixed">
+                <DataTable className={classes.table}>
                     <TableHead className={fixColumns ? classes.tableHeader : ""}>
                         <DataTableRow>
                             {grid.hasGroups && (
