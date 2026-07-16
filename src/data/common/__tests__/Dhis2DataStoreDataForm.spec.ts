@@ -8,7 +8,9 @@ describe("DataStoreConfigCodec", () => {
             const result = DataStoreConfigCodec.decode(input);
 
             result.caseOf({
-                Left: error => fail(`Decode failed: ${error}`),
+                Left: error => {
+                    throw new Error(`Decode failed: ${error}`);
+                },
                 Right: config => {
                     expect(config.dataSets?.["DS_TEST"]?.showNavigation).toBe(true);
                 },
@@ -21,7 +23,9 @@ describe("DataStoreConfigCodec", () => {
             const result = DataStoreConfigCodec.decode(input);
 
             result.caseOf({
-                Left: error => fail(`Decode failed: ${error}`),
+                Left: error => {
+                    throw new Error(`Decode failed: ${error}`);
+                },
                 Right: config => {
                     expect(config.dataSets?.["DS_TEST"]?.showNavigation).toBe(false);
                 },
@@ -34,7 +38,9 @@ describe("DataStoreConfigCodec", () => {
             const result = DataStoreConfigCodec.decode(input);
 
             result.caseOf({
-                Left: error => fail(`Decode failed: ${error}`),
+                Left: error => {
+                    throw new Error(`Decode failed: ${error}`);
+                },
                 Right: config => {
                     expect(config.dataSets?.["DS_TEST"]?.showNavigation).toBeUndefined();
                 },
@@ -47,7 +53,9 @@ describe("DataStoreConfigCodec", () => {
             const result = DataStoreConfigCodec.decode(input);
 
             result.caseOf({
-                Left: error => fail(`Decode failed: ${error}`),
+                Left: error => {
+                    throw new Error(`Decode failed: ${error}`);
+                },
                 Right: config => {
                     expect(config.dataSets).toBeUndefined();
                 },

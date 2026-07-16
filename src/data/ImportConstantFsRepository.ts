@@ -7,7 +7,7 @@ import { getUid } from "../utils/uid";
 import { Maybe } from "../utils/ts-utils";
 import { Translation } from "../domain/common/entities/Translation";
 
-export class ImportConstantJsonRepository implements ImportConstantRepository {
+export class ImportConstantFsRepository implements ImportConstantRepository {
     import(path: string): Constant[] {
         const translations = this.readTranslationFile(path);
 

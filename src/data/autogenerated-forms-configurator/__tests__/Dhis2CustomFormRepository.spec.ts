@@ -4,8 +4,8 @@ import { D2Api } from "../../../types/d2-api";
 describe("Dhis2CustomFormRepository", () => {
     describe("install", () => {
         it("posts to the dedicated form endpoint without touching dataset metadata", async () => {
-            const postMock = jest.fn().mockReturnValue({ getData: () => Promise.resolve() });
-            const metadataPostMock = jest.fn();
+            const postMock = vi.fn().mockReturnValue({ getData: () => Promise.resolve() });
+            const metadataPostMock = vi.fn();
             const api = { post: postMock, metadata: { post: metadataPostMock } } as unknown as D2Api;
 
             await new Dhis2CustomFormRepository(api).install("dataSetId123", "<html/>");

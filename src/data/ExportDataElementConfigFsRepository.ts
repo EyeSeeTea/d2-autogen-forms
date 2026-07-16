@@ -4,7 +4,7 @@ import fs from "fs";
 import { DataElementIdCode } from "../domain/common/repositories/DataElementRepository";
 import { ExportDataElementConfigRepository } from "../domain/common/repositories/ExportDataElementConfigRepository";
 
-export class ExportDataElementConfigJsonRepository implements ExportDataElementConfigRepository {
+export class ExportDataElementConfigFsRepository implements ExportDataElementConfigRepository {
     async export(path: string, dataElements: DataElementIdCode[]): Promise<void> {
         const autogenformConfig = this.buildAutogenFormConfig(dataElements);
         fs.writeFileSync(path, JSON.stringify({ dataElements: autogenformConfig }, null, 4));
