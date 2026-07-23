@@ -1,4 +1,5 @@
 import _ from "lodash";
+import { Id } from "../entities/Base";
 import { DataValue, DataValueNumberSingle, DataValueStore } from "../entities/DataValue";
 import { DataValueRepository } from "../repositories/DataValueRepository";
 import { DataElement } from "../entities/DataElement";
@@ -11,7 +12,8 @@ export class SaveGridWithTotalsValueUseCase {
         dataValue: DataValueNumberSingle,
         columnTotal: DataElement,
         columnDataElements: DataElement[],
-        _cocId: string
+        _cocId: string,
+        dataSetId: Id
     ): Promise<DataValue[]> {
         const existingDataValue = store.get(dataValue.dataElement, dataValue);
 
@@ -51,8 +53,8 @@ export class SaveGridWithTotalsValueUseCase {
             };
 
             await Promise.all([
-                this.dataValueRepository.save(dataValue),
-                this.dataValueRepository.save(updatedColTotalDataValue),
+                this.dataValueRepository.save(dataValue, dataSetId),
+                this.dataValueRepository.save(updatedColTotalDataValue, dataSetId),
             ]);
 
             return [currentDataValue, updatedColTotalDataValue];
