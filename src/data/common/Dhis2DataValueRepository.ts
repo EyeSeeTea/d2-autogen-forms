@@ -342,7 +342,7 @@ export class Dhis2DataValueRepository implements DataValueRepository {
         return new Dhis2DataElement(this.api).get(uniqDataElementIds, dataSetCode);
     }
 
-    async save(dataValue: DataValue): Promise<DataValue> {
+    async save(dataValue: DataValue, dataSetId: Id): Promise<DataValue> {
         const valueStr = this.getStrValue(dataValue);
         const { type } = dataValue;
 
@@ -351,9 +351,9 @@ export class Dhis2DataValueRepository implements DataValueRepository {
                 const { fileToSave } = dataValue;
 
                 if (fileToSave) {
-                    return this.saveFileDataValue(dataValue, fileToSave);
+                    return this.saveFileDataValue(dataValue, fileToSave, dataSetId);
                 } else {
-                    return this.deleteFileDataValue(dataValue);
+                    return this.deleteFileDataValue(dataValue, dataSetId);
                 }
             }
             default:
@@ -363,6 +363,7 @@ export class Dhis2DataValueRepository implements DataValueRepository {
                         pe: dataValue.period,
                         de: dataValue.dataElement.id,
                         co: dataValue.dataElement.cocId || dataValue.categoryOptionComboId,
+                        ds: dataSetId,
                         value: valueStr,
                     })
                     .getData()
@@ -410,7 +411,7 @@ export class Dhis2DataValueRepository implements DataValueRepository {
             .then(response => response.status);
     }
 
-    private async deleteFileDataValue(dataValue: DataValueFile): Promise<DataValue> {
+    private async deleteFileDataValue(dataValue: DataValueFile, dataSetId: Id): Promise<DataValue> {
         await this.api
             .request<unknown>({
                 method: "delete",
@@ -419,6 +420,7 @@ export class Dhis2DataValueRepository implements DataValueRepository {
                     ou: dataValue.orgUnitId,
                     pe: dataValue.period,
                     de: dataValue.dataElement.id,
+                    ds: dataSetId,
                 },
             })
             .getData();
@@ -426,11 +428,12 @@ export class Dhis2DataValueRepository implements DataValueRepository {
         return { ...dataValue, file: undefined, fileToSave: undefined };
     }
 
-    private async saveFileDataValue(dataValue: DataValueFile, fileToSave: File): Promise<DataValueFile> {
+    private async saveFileDataValue(dataValue: DataValueFile, fileToSave: File, dataSetId: Id): Promise<DataValueFile> {
         const obj = {
             ou: dataValue.orgUnitId,
             pe: dataValue.period,
             de: dataValue.dataElement.id,
+            ds: dataSetId,
             file: fileToSave,
         };
 

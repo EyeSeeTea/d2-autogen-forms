@@ -294,7 +294,7 @@ function useDataFormInfo() {
         async (dataValue: DataValue) => {
             if (!dataValues) return dataValues;
             await compositionRoot.dataForms
-                .saveValue(dataValues, dataValue, dataForm?.compulsoryDataValues ?? [])
+                .saveValue(dataValues, dataValue, dataForm?.compulsoryDataValues ?? [], dataSetId)
                 .then(savedValue => {
                     setDataValues(prev => {
                         if (!prev) return prev;
@@ -311,6 +311,7 @@ function useDataFormInfo() {
             dataForm?.compulsoryDataValues,
             dataForm?.disableAutoValidation,
             checkValidationRules,
+            dataSetId,
         ]
     );
 
@@ -358,7 +359,8 @@ function useDataFormInfo() {
                         dataValue,
                         columnTotal,
                         columnDataElements,
-                        cocId
+                        cocId,
+                        dataSetId
                     );
 
                     setDataValues(prev => (prev ?? store).merge(savedDataValues));
@@ -372,7 +374,7 @@ function useDataFormInfo() {
             queues.set(columnTotal.id, currentSave);
             return currentSave;
         },
-        [compositionRoot, dataForm?.disableAutoValidation, checkValidationRules]
+        [compositionRoot, dataForm?.disableAutoValidation, checkValidationRules, dataSetId]
     );
 
     const dataFormInfo = React.useMemo<Maybe<DataFormInfo>>(

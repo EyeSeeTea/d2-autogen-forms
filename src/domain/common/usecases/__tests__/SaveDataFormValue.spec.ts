@@ -1,9 +1,12 @@
+import { describe, it, expect, beforeEach } from "@jest/globals";
 import { SaveDataFormValueUseCase } from "../SaveDataFormValueUseCase";
 import { DataValue, DataValueStore } from "../../entities/DataValue";
 import { DataValueRepository } from "../../repositories/DataValueRepository";
 import { instance, mock, when, verify, anything, deepEqual } from "ts-mockito";
 import { Dhis2DataValueRepository } from "../../../../data/common/Dhis2DataValueRepository";
 import { dataValueText, dataValueFile } from "./data/dataValue";
+
+const dataSetId = "dataSet1";
 
 let mockDataValueRepository: DataValueRepository;
 let mockDataValueStore: DataValueStore;
@@ -21,11 +24,11 @@ describe("SaveDataFormValueUseCase", () => {
 
         const stubDataValueStore = instance(mockDataValueStore);
 
-        const result = await useCase.execute(stubDataValueStore, dataValue, []);
+        const result = await useCase.execute(stubDataValueStore, dataValue, [], dataSetId);
 
         verify(mockDataValueStore.get(dataValue.dataElement, dataValue)).once();
         verify(mockDataValueStore.set(anything())).never();
-        verify(mockDataValueRepository.save(anything())).never();
+        verify(mockDataValueRepository.save(anything(), anything())).never();
         expect(result).toBe(dataValue);
     });
 
@@ -38,9 +41,9 @@ describe("SaveDataFormValueUseCase", () => {
 
         const dataValueStore = DataValueStore.from([dataValue]);
 
-        const result = await useCase.execute(dataValueStore, saveDataValue, []);
+        const result = await useCase.execute(dataValueStore, saveDataValue, [], dataSetId);
 
-        verify(mockDataValueRepository.save(deepEqual(saveDataValue))).once();
+        verify(mockDataValueRepository.save(deepEqual(saveDataValue), dataSetId)).once();
         expect(result).toStrictEqual(saveDataValue);
     });
 
@@ -61,9 +64,9 @@ describe("SaveDataFormValueUseCase", () => {
 
         const dataValueStore = DataValueStore.from([dataValue]);
 
-        const result = await useCase.execute(dataValueStore, saveDataValue, []);
+        const result = await useCase.execute(dataValueStore, saveDataValue, [], dataSetId);
 
-        verify(mockDataValueRepository.save(deepEqual(saveDataValue))).once();
+        verify(mockDataValueRepository.save(deepEqual(saveDataValue), dataSetId)).once();
         expect(result).toStrictEqual(saveDataValue);
     });
 });
@@ -80,6 +83,6 @@ function givenExistingDataValue(dataValue: DataValue) {
 function givenSavedDataValue(savedDataValue: DataValue) {
     const stubDataValueStore = instance(mockDataValueStore);
 
-    when(mockDataValueRepository.save(savedDataValue)).thenResolve(savedDataValue);
+    when(mockDataValueRepository.save(savedDataValue, dataSetId)).thenResolve(savedDataValue);
     when(mockDataValueStore.set(savedDataValue)).thenReturn(stubDataValueStore);
 }
