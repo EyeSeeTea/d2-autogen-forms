@@ -1,6 +1,5 @@
 import _ from "lodash";
-// @ts-ignore
-import MD5 from "md5.js";
+import { md5 } from "js-md5";
 
 // DHIS2 UID :: /^[a-zA-Z][a-zA-Z0-9]{10}$/
 const asciiLetters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -13,7 +12,7 @@ const maxHashValue = uidStructure.map(cs => cs.length).reduce((acc, n) => acc * 
 
 /* Return pseudo-random UID from seed string */
 export function getUid(seed: string): string {
-    const md5hash: string = new MD5().update(seed).digest("hex");
+    const md5hash: string = md5(seed);
     const nHashChars = Math.ceil(Math.log(maxHashValue) / Math.log(16));
     const hashInteger = parseInt(md5hash.slice(0, nHashChars), 16);
     const result = uidStructure.reduce(

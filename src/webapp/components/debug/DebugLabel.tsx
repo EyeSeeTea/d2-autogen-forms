@@ -1,4 +1,4 @@
-const debugEnabled = !!process.env.REACT_APP_DEBUG;
+const debugEnabled = !!import.meta.env.VITE_DEBUG;
 
 export const DebugLabel: React.FC = props => {
     if (!debugEnabled) return null;

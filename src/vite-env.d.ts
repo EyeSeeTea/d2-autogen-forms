@@ -1,1 +1,13 @@
 /// <reference types="vite/client" />
+/// <reference types="vitest/globals" />
+
+interface ImportMetaEnv {
+    readonly VITE_REPORT_VARIANT?: string;
+    readonly VITE_DHIS2_BASE_URL?: string;
+    readonly VITE_DHIS2_AUTH?: string;
+    readonly VITE_DEBUG?: string;
+}
+
+interface ImportMeta {
+    readonly env: ImportMetaEnv;
+}
