@@ -154,9 +154,9 @@ async function main() {
 
     const { config, rules_sheet, user_auth, url, output } = parser.parse_args();
 
-    const envAuth = process.env.REACT_APP_DHIS2_AUTH || "";
+    const envAuth = process.env.VITE_DHIS2_AUTH || "";
     const [username, password] = user_auth ? user_auth.split(":", 2) : envAuth.split(":", 2);
-    const baseUrl = url || process.env.REACT_APP_DHIS2_BASE_URL;
+    const baseUrl = url || process.env.VITE_DHIS2_BASE_URL;
 
     if (!username || !password) {
         console.error(
