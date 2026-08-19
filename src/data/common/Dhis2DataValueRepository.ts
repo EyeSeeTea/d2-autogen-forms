@@ -22,7 +22,11 @@ export class Dhis2DataValueRepository implements DataValueRepository {
     constructor(private api: D2Api) {}
 
     async get(options: { dataSetId: Id; orgUnits: Id[]; periods: Period[] }): Promise<DataValue[]> {
-        const { dataValues } = await this.api.dataValues
+        const {
+            dataValues,
+            orgUnit: rootOrgUnit,
+            period: rootPeriod,
+        } = await this.api.dataValues
             .getSet({
                 dataSet: [options.dataSetId],
                 orgUnit: options.orgUnits,
@@ -48,7 +52,10 @@ export class Dhis2DataValueRepository implements DataValueRepository {
 
         const dataElements = await this.getDataElements(dataValues, dataSetCode, allDataElementIds);
 
-        const dataValuesFiles = await this.getFileResourcesMapping(dataElements, dataValues);
+        const dataValuesFiles = await this.getFileResourcesMapping(dataElements, dataValues, {
+            rootOrgUnit,
+            rootPeriod,
+        });
 
         const isEmptyStr = (s?: string | null): boolean => !s || s.trim() === "";
 
@@ -66,8 +73,8 @@ export class Dhis2DataValueRepository implements DataValueRepository {
                 const isRequired = isRequiredCombo(dv.dataElement, dv.categoryOptionCombo) && isEmptyStr(dv.value);
 
                 const selector = {
-                    orgUnitId: dv.orgUnit,
-                    period: dv.period,
+                    orgUnitId: dv.orgUnit ?? rootOrgUnit,
+                    period: dv.period ?? rootPeriod,
                     categoryOptionComboId: dv.categoryOptionCombo,
                     isRequired,
                     comment: dv.comment || "",
@@ -296,7 +303,8 @@ export class Dhis2DataValueRepository implements DataValueRepository {
 
     private async getFileResourcesMapping(
         dataElements: Record<Id, DataElement>,
-        dataValues: DataValueSetsDataValue[]
+        dataValues: DataValueSetsDataValue[],
+        root: { rootOrgUnit: Id; rootPeriod: Period }
     ): Promise<Record<Id, FileResource>> {
         const fileResources = await promiseMap(dataValues, async dataValue => {
             const dataElement = dataElements[dataValue.dataElement];
@@ -313,8 +321,8 @@ export class Dhis2DataValueRepository implements DataValueRepository {
                         url: this.getUrl({
                             dataElementId: dataElement.id,
                             categoryOptionComboId: dataValue.categoryOptionCombo,
-                            orgUnitId: dataValue.orgUnit,
-                            period: dataValue.period,
+                            orgUnitId: dataValue.orgUnit ?? root.rootOrgUnit,
+                            period: dataValue.period ?? root.rootPeriod,
                         }),
                     })
                 )
@@ -371,7 +379,7 @@ export class Dhis2DataValueRepository implements DataValueRepository {
         }
     }
 
-    async delete(dataValues: DataValue[]): Promise<void> {
+    async delete(dataValues: DataValue[], dataSetId: Id): Promise<void> {
         const dataValuesToDelete = dataValues.map(dataValue => ({
             dataElement: dataValue.dataElement.id,
             categoryOptionCombo: dataValue.dataElement.cocId || dataValue.categoryOptionComboId,
@@ -380,7 +388,9 @@ export class Dhis2DataValueRepository implements DataValueRepository {
             value: this.getStrValue(dataValue),
         }));
 
-        await this.api.dataValues.postSet({ importStrategy: "DELETE" }, { dataValues: dataValuesToDelete }).getData();
+        await this.api.dataValues
+            .postSet({ importStrategy: "DELETE" }, { dataSet: dataSetId, dataValues: dataValuesToDelete })
+            .getData();
     }
 
     async applyToAll(

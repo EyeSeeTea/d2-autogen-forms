@@ -318,14 +318,14 @@ function useDataFormInfo() {
     const deleteDataValues = useCallback<DataFormInfo["data"]["delete"]>(
         async (dataValuesToDelete: DataValue[]) => {
             if (!dataValues) return dataValues;
-            await compositionRoot.dataForms.deleteValues(dataValuesToDelete).then(savedDataValues => {
+            await compositionRoot.dataForms.deleteValues(dataValuesToDelete, dataSetId).then(savedDataValues => {
                 setDataValues(prev => {
                     if (!prev) return undefined;
                     return prev.merge(savedDataValues);
                 });
             });
         },
-        [compositionRoot, dataValues]
+        [compositionRoot, dataValues, dataSetId]
     );
 
     const SourceTypeApplyToAll = useCallback<DataFormInfo["data"]["stApplyToAll"]>(

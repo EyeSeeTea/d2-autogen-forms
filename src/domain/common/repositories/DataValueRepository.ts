@@ -4,7 +4,7 @@ import { DataValue, DataValueTextMultiple, Period } from "../entities/DataValue"
 export interface DataValueRepository {
     get(options: { dataSetId: Id; orgUnits: Id[]; periods: Period[] }): Promise<DataValue[]>;
     save(dataValue: DataValue, dataSetId: Id): Promise<DataValue>;
-    delete(dataValues: DataValue[]): Promise<void>;
+    delete(dataValues: DataValue[], dataSetId: Id): Promise<void>;
     applyToAll(
         dataValue: DataValueTextMultiple,
         sourceTypeDeList: DataElementRefType[]

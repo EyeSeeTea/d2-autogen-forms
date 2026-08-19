@@ -1,12 +1,13 @@
 import _ from "lodash";
 
+import { Id } from "../entities/Base";
 import { DataValue, getEmpty } from "../entities/DataValue";
 import { DataValueRepository } from "../repositories/DataValueRepository";
 
 export class DeleteDataFormValuesUseCase {
     constructor(private dataValueRepository: DataValueRepository) {}
 
-    async execute(dataValues: DataValue[]): Promise<DataValue[]> {
+    async execute(dataValues: DataValue[], dataSetId: Id): Promise<DataValue[]> {
         if (dataValues.length === 0) {
             return [];
         }
@@ -27,7 +28,7 @@ export class DeleteDataFormValuesUseCase {
             return dataValues;
         }
 
-        await this.dataValueRepository.delete(dataValues);
+        await this.dataValueRepository.delete(dataValues, dataSetId);
 
         return updatedDataValues;
     }
