@@ -350,6 +350,16 @@ export class Dhis2DataValueRepository implements DataValueRepository {
         return new Dhis2DataElement(this.api).get(uniqDataElementIds, dataSetCode);
     }
 
+    /** Query-param form of the dataset, used by the single-value endpoints (/dataValues, /dataValues/file). */
+    private getDatasetQueryParam(dataSetId: Id): { ds: Id } {
+        return { ds: dataSetId };
+    }
+
+    /** JSON-body form of the dataset, used by the dataValueSets endpoints (postSet, postSetAsync). */
+    private getDatasetBodyParam(dataSetId: Id): { dataSet: Id } {
+        return { dataSet: dataSetId };
+    }
+
     async save(dataValue: DataValue, dataSetId: Id): Promise<DataValue> {
         const valueStr = this.getStrValue(dataValue);
         const { type } = dataValue;
@@ -371,7 +381,7 @@ export class Dhis2DataValueRepository implements DataValueRepository {
                         pe: dataValue.period,
                         de: dataValue.dataElement.id,
                         co: dataValue.dataElement.cocId || dataValue.categoryOptionComboId,
-                        ds: dataSetId,
+                        ...this.getDatasetQueryParam(dataSetId),
                         value: valueStr,
                     })
                     .getData()
@@ -389,7 +399,10 @@ export class Dhis2DataValueRepository implements DataValueRepository {
         }));
 
         await this.api.dataValues
-            .postSet({ importStrategy: "DELETE" }, { dataSet: dataSetId, dataValues: dataValuesToDelete })
+            .postSet(
+                { importStrategy: "DELETE" },
+                { ...this.getDatasetBodyParam(dataSetId), dataValues: dataValuesToDelete }
+            )
             .getData();
     }
 
@@ -411,7 +424,7 @@ export class Dhis2DataValueRepository implements DataValueRepository {
         });
 
         const stDataPost = {
-            dataSet: dataSetId,
+            ...this.getDatasetBodyParam(dataSetId),
             period: dataValue.period,
             orgUnit: dataValue.orgUnitId,
             dataValues: stDataValues,
@@ -432,7 +445,7 @@ export class Dhis2DataValueRepository implements DataValueRepository {
                     ou: dataValue.orgUnitId,
                     pe: dataValue.period,
                     de: dataValue.dataElement.id,
-                    ds: dataSetId,
+                    ...this.getDatasetQueryParam(dataSetId),
                 },
             })
             .getData();
@@ -445,7 +458,7 @@ export class Dhis2DataValueRepository implements DataValueRepository {
             ou: dataValue.orgUnitId,
             pe: dataValue.period,
             de: dataValue.dataElement.id,
-            ds: dataSetId,
+            ...this.getDatasetQueryParam(dataSetId),
             file: fileToSave,
         };
 
