@@ -395,7 +395,8 @@ export class Dhis2DataValueRepository implements DataValueRepository {
 
     async applyToAll(
         dataValue: DataValueTextMultiple,
-        sourceTypeDeList: DataElementRefType[]
+        sourceTypeDeList: DataElementRefType[],
+        dataSetId: Id
     ): Promise<"SUCCESS" | "ERROR" | "WARNING" | "OK"> {
         const valueStr = this.getStrValue(dataValue);
 
@@ -410,6 +411,7 @@ export class Dhis2DataValueRepository implements DataValueRepository {
         });
 
         const stDataPost = {
+            dataSet: dataSetId,
             period: dataValue.period,
             orgUnit: dataValue.orgUnitId,
             dataValues: stDataValues,

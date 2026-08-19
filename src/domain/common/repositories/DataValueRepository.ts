@@ -7,7 +7,8 @@ export interface DataValueRepository {
     delete(dataValues: DataValue[], dataSetId: Id): Promise<void>;
     applyToAll(
         dataValue: DataValueTextMultiple,
-        sourceTypeDeList: DataElementRefType[]
+        sourceTypeDeList: DataElementRefType[],
+        dataSetId: Id
     ): Promise<"SUCCESS" | "ERROR" | "WARNING" | "OK">;
 }
 

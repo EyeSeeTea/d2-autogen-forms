@@ -332,7 +332,7 @@ function useDataFormInfo() {
         async (dataValue: DataValueTextMultiple, sourceTypeDEs: DataElementRefType[], rows: Row[]) => {
             if (!dataValues) return undefined;
             return compositionRoot.dataForms
-                .applyToAll(dataValues, dataValue, sourceTypeDEs, rows)
+                .applyToAll(dataValues, dataValue, sourceTypeDEs, rows, dataSetId)
                 .then(savedDataValues => {
                     setDataValues(prev => {
                         if (!prev) return undefined;
@@ -340,7 +340,7 @@ function useDataFormInfo() {
                     });
                 });
         },
-        [compositionRoot, dataValues]
+        [compositionRoot, dataValues, dataSetId]
     );
 
     const saveWithTotals = useCallback<DataFormInfo["data"]["saveWithTotals"]>(
