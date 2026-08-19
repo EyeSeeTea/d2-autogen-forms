@@ -7,14 +7,14 @@ import { DataElement } from "../entities/DataElement";
 export class SaveGridWithTotalsValueUseCase {
     constructor(private dataValueRepository: DataValueRepository) {}
 
-    async execute(
-        store: DataValueStore,
-        dataValue: DataValueNumberSingle,
-        columnTotal: DataElement,
-        columnDataElements: DataElement[],
-        _cocId: string,
-        dataSetId: Id
-    ): Promise<DataValue[]> {
+    async execute(options: {
+        store: DataValueStore;
+        dataValue: DataValueNumberSingle;
+        columnTotal: DataElement;
+        columnDataElements: DataElement[];
+        dataSetId: Id;
+    }): Promise<DataValue[]> {
+        const { store, dataValue, columnTotal, columnDataElements, dataSetId } = options;
         const existingDataValue = store.get(dataValue.dataElement, dataValue);
 
         if (_.isEqual(existingDataValue, dataValue)) {

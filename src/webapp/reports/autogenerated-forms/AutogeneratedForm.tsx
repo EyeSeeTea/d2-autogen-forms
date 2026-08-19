@@ -344,7 +344,7 @@ function useDataFormInfo() {
     );
 
     const saveWithTotals = useCallback<DataFormInfo["data"]["saveWithTotals"]>(
-        (dataValue, columnTotal, columnDataElements, cocId) => {
+        (dataValue, columnTotal, columnDataElements, _cocId) => {
             const queues = totalSaveQueuesRef.current;
             const previousSave = queues.get(columnTotal.id) ?? Promise.resolve();
 
@@ -354,14 +354,13 @@ function useDataFormInfo() {
                     const store = dataValuesRef.current;
                     if (!store) return;
 
-                    const savedDataValues = await compositionRoot.dataForms.saveWithTotals(
+                    const savedDataValues = await compositionRoot.dataForms.saveWithTotals({
                         store,
                         dataValue,
                         columnTotal,
                         columnDataElements,
-                        cocId,
-                        dataSetId
-                    );
+                        dataSetId,
+                    });
 
                     setDataValues(prev => (prev ?? store).merge(savedDataValues));
                     dataValuesRef.current = (dataValuesRef.current ?? store).merge(savedDataValues);
