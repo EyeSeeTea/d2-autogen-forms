@@ -67,6 +67,15 @@ declare global {
         viewHist: (dataElementId: string, cocId: string, period: string) => void;
         // It should be set when rendered in Data Entry App, but not on development.
         dhis2?: {
+            /**
+             * Exposed by the Legacy Custom Forms plugin of the Data Entry app (>= 102.0.0) to
+             * bridge custom forms with the app shell. DHIS2 marks it as internal and unstable, so
+             * it is only used through `utils/dataEntryShim.ts`.
+             */
+            shim?: {
+                setHighlightedField?: (field: { dataElementId: Id; categoryOptionComboId: Id } | null) => void;
+                showDetailsBar?: () => void;
+            };
             de: {
                 currentOrganisationUnitId: Id;
                 currentDataSetId: Id;

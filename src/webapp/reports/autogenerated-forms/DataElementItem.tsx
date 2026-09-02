@@ -11,6 +11,7 @@ import { isDev } from "../../..";
 import { Maybe } from "../../../utils/ts-utils";
 import { DebugLabel } from "../../components/debug/DebugLabel";
 import { MirrorDataElementItem } from "./MirrorDataElementItem";
+import { highlightDataEntryField, isDataEntryShimAvailable, showDataEntryDetails } from "./utils/dataEntryShim";
 
 export interface DataElementItemProps {
     dataElement: DataElement;
@@ -75,8 +76,27 @@ export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props 
         [onChange]
     );
 
+    const highlightedField = { dataElementId: dataElement.id, categoryOptionComboId: dataElementCocId };
+
+    const showDetails = () => {
+        // Highlight explicitly: the gesture may land on the cell padding, where no input is focused.
+        highlightDataEntryField(highlightedField);
+        showDataEntryDetails();
+    };
+
+    const onFocus = () => {
+        highlightDataEntryField(highlightedField);
+    };
+
+    // Mirrors the shortcut of the native cells of the Data Entry app.
+    const onKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+        if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) showDetails();
+    };
+
     const onDoubleClick = () => {
-        if (!isDev) {
+        if (isDataEntryShimAvailable()) {
+            showDetails();
+        } else if (!isDev) {
             const historyPeriod = (window.autogenFormCurrentPeriodId = period || dataFormInfo.period);
             window.viewHist(dataElement.id, dataElementCocId, historyPeriod);
         }
@@ -100,19 +120,22 @@ export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props 
         }
     };
 
+    // React focus events bubble, so these also fire for the input rendered by DataEntryItem.
+    const cellEventHandlers = {
+        onClick: () => onClick(dataElement, rowName),
+        onFocus: onFocus,
+        onBlur: onBlur,
+        onDoubleClick: onDoubleClick,
+        onKeyDown: onKeyDown,
+    };
+
     if (dataElement.mirrorFrom) {
         return <MirrorDataElementItem dataElement={dataElement} dataFormInfo={dataFormInfo} period={period} />;
     }
 
     return !noComment ? (
         <div id={elId} className={classes.valueWrapper}>
-            <div
-                onClick={() => onClick(dataElement, rowName)}
-                onBlur={() => onBlur()}
-                onDoubleClick={() => onDoubleClick()}
-                className={`${classes.valueInput} sourcetype`}
-                id={auditId}
-            >
+            <div {...cellEventHandlers} className={`${classes.valueInput} sourcetype`} id={auditId}>
                 <DebugLabel>{dataElement.code}</DebugLabel>
                 <DataEntryItem
                     dataElement={dataElement}
@@ -137,13 +160,7 @@ export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props 
         </div>
     ) : (
         <div id={elId} className={classes.valueWrapper}>
-            <div
-                onClick={() => onClick(dataElement, rowName)}
-                onBlur={() => onBlur()}
-                onDoubleClick={() => onDoubleClick()}
-                className={`${classes.valueInput} entryfield2`}
-                id={auditId}
-            >
+            <div {...cellEventHandlers} className={`${classes.valueInput} entryfield2`} id={auditId}>
                 <DataEntryItem
                     dataElement={dataElement}
                     dataFormInfo={dataFormInfo}
