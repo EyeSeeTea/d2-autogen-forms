@@ -48,6 +48,21 @@ export default defineConfig(({ mode }) => {
         build: {
             outDir: "build",
             sourcemap: false,
+            // The custom data-entry form is injected by DHIS2's data-entry app, which re-creates the
+            // <script> element copying only its text content (dropping type="module"). An ES-module
+            // bundle would then be executed as a classic script and fail on its `export` statement,
+            // so the form variant is bundled as a self-contained IIFE.
+            ...(isForm
+                ? {
+                      rollupOptions: {
+                          output: {
+                              format: "iife" as const,
+                              inlineDynamicImports: true,
+                              name: "d2AutogenForm",
+                          },
+                      },
+                  }
+                : {}),
         },
         server: {
             port: Number(env.PORT) || 8081,
