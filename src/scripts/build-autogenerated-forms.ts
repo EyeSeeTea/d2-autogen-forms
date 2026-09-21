@@ -28,7 +28,11 @@ export function convertReactHtmlToInline() {
     log(`Read: build/index.html`);
     const html = fs.readFileSync("build/index.html", "utf8");
     const head = getSection(html, "head");
-    const fragment = [getTags(html, "style"), getHtmlBodyContents(html), getTags(head, "script")].join("\n");
+    const fragment = [
+        getTags(html, "style"),
+        getHtmlBodyContents(html),
+        asClassicScripts(getTags(head, "script")),
+    ].join("\n");
 
     fs.mkdirSync("dist", { recursive: true });
     const dest = defaultOptions.autogenFormOutput;
@@ -36,6 +40,15 @@ export function convertReactHtmlToInline() {
     const { version } = JSON.parse(fs.readFileSync("package.json", "utf8")) as { version: string };
     const markedHtml = `<!-- d2-autogen-forms-custom-form v${version} -->\n${fragment}`;
     fs.writeFileSync(dest, markedHtml);
+}
+
+/* DHIS2's data-entry app re-creates each <script> of the custom form copying only its text content
+   (see plugin-legacy-custom-forms/parse-form-content.js), so type="module" is dropped and the code
+   runs as a classic script. Vite always emits type="module" for the entry, so remove it here to keep
+   the form fragment consistent with how it is actually executed. The bundle itself is already an
+   IIFE with no ESM syntax (see build.rollupOptions.output.format in vite.config.ts). */
+function asClassicScripts(scripts: string): string {
+    return scripts.replace(/<script\s+type="module"\s+crossorigin>/g, "<script>");
 }
 
 function getTags(html: string, tag: "script" | "style"): string {
