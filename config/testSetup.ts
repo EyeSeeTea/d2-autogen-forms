@@ -1,5 +1,2 @@
-import { configure } from "enzyme";
-import Adapter from "enzyme-adapter-react-16";
-import "@testing-library/jest-dom/extend-expect";
-
-configure({ adapter: new Adapter() });
+// Vitest global setup: registers @testing-library/jest-dom matchers (toBeInTheDocument, etc.).
+import "@testing-library/jest-dom/vitest";

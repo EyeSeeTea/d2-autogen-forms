@@ -76,7 +76,7 @@ export class Dhis2DataSetRepository implements DataSetRepository {
                 fields: dataSetFields,
                 filter: {
                     code: {
-                        "!null": "true",
+                        "!null": true,
                     },
                 },
                 paging: false,

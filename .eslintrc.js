@@ -1,9 +1,20 @@
 /** @format */
 
 module.exports = {
-    extends: ["react-app", "eslint:recommended", "plugin:react/recommended", "plugin:@typescript-eslint/recommended"],
+    extends: ["eslint:recommended", "plugin:react/recommended", "plugin:@typescript-eslint/recommended"],
     parser: "@typescript-eslint/parser",
+    parserOptions: {
+        ecmaVersion: 2021,
+        sourceType: "module",
+        ecmaFeatures: { jsx: true },
+    },
+    env: {
+        browser: true,
+        node: true,
+        es2021: true,
+    },
     rules: {
+        "no-undef": "off",
         "no-console": ["warn", { allow: ["debug", "warn", "error"] }],
         "@typescript-eslint/camelcase": "off",
         "@typescript-eslint/explicit-function-return-type": ["off"],
@@ -30,7 +41,6 @@ module.exports = {
         "@typescript-eslint/indent": "off",
         "@typescript-eslint/member-delimiter-style": "off",
         "@typescript-eslint/type-annotation-spacing": "off",
-        "@typescript-eslint/explicit-function-return-type": "off",
         "no-use-before-define": "off",
         "no-debugger": "warn",
         "no-extra-semi": "off",
@@ -42,7 +52,7 @@ module.exports = {
     settings: {
         react: {
             pragma: "React",
-            version: "16.6.0",
+            version: "detect",
         },
     },
 };
