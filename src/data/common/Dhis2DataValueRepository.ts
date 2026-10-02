@@ -22,7 +22,11 @@ export class Dhis2DataValueRepository implements DataValueRepository {
     constructor(private api: D2Api) {}
 
     async get(options: { dataSetId: Id; orgUnits: Id[]; periods: Period[] }): Promise<DataValue[]> {
-        const { dataValues } = await this.api.dataValues
+        const {
+            dataValues,
+            orgUnit: rootOrgUnit,
+            period: rootPeriod,
+        } = await this.api.dataValues
             .getSet({
                 dataSet: [options.dataSetId],
                 orgUnit: options.orgUnits,
@@ -48,7 +52,10 @@ export class Dhis2DataValueRepository implements DataValueRepository {
 
         const dataElements = await this.getDataElements(dataValues, dataSetCode, allDataElementIds);
 
-        const dataValuesFiles = await this.getFileResourcesMapping(dataElements, dataValues);
+        const dataValuesFiles = await this.getFileResourcesMapping(dataElements, dataValues, {
+            rootOrgUnit,
+            rootPeriod,
+        });
 
         const isEmptyStr = (s?: string | null): boolean => !s || s.trim() === "";
 
@@ -66,8 +73,8 @@ export class Dhis2DataValueRepository implements DataValueRepository {
                 const isRequired = isRequiredCombo(dv.dataElement, dv.categoryOptionCombo) && isEmptyStr(dv.value);
 
                 const selector = {
-                    orgUnitId: dv.orgUnit,
-                    period: dv.period,
+                    orgUnitId: dv.orgUnit ?? rootOrgUnit,
+                    period: dv.period ?? rootPeriod,
                     categoryOptionComboId: dv.categoryOptionCombo,
                     isRequired,
                     comment: dv.comment || "",
@@ -296,7 +303,8 @@ export class Dhis2DataValueRepository implements DataValueRepository {
 
     private async getFileResourcesMapping(
         dataElements: Record<Id, DataElement>,
-        dataValues: DataValueSetsDataValue[]
+        dataValues: DataValueSetsDataValue[],
+        root: { rootOrgUnit: Id; rootPeriod: Period }
     ): Promise<Record<Id, FileResource>> {
         const fileResources = await promiseMap(dataValues, async dataValue => {
             const dataElement = dataElements[dataValue.dataElement];
@@ -313,8 +321,8 @@ export class Dhis2DataValueRepository implements DataValueRepository {
                         url: this.getUrl({
                             dataElementId: dataElement.id,
                             categoryOptionComboId: dataValue.categoryOptionCombo,
-                            orgUnitId: dataValue.orgUnit,
-                            period: dataValue.period,
+                            orgUnitId: dataValue.orgUnit ?? root.rootOrgUnit,
+                            period: dataValue.period ?? root.rootPeriod,
                         }),
                     })
                 )
@@ -342,7 +350,17 @@ export class Dhis2DataValueRepository implements DataValueRepository {
         return new Dhis2DataElement(this.api).get(uniqDataElementIds, dataSetCode);
     }
 
-    async save(dataValue: DataValue): Promise<DataValue> {
+    /** Query-param form of the dataset, used by the single-value endpoints (/dataValues, /dataValues/file). */
+    private getDatasetQueryParam(dataSetId: Id): { ds: Id } {
+        return { ds: dataSetId };
+    }
+
+    /** JSON-body form of the dataset, used by the dataValueSets endpoints (postSet, postSetAsync). */
+    private getDatasetBodyParam(dataSetId: Id): { dataSet: Id } {
+        return { dataSet: dataSetId };
+    }
+
+    async save(dataValue: DataValue, dataSetId: Id): Promise<DataValue> {
         const valueStr = this.getStrValue(dataValue);
         const { type } = dataValue;
 
@@ -351,9 +369,9 @@ export class Dhis2DataValueRepository implements DataValueRepository {
                 const { fileToSave } = dataValue;
 
                 if (fileToSave) {
-                    return this.saveFileDataValue(dataValue, fileToSave);
+                    return this.saveFileDataValue(dataValue, fileToSave, dataSetId);
                 } else {
-                    return this.deleteFileDataValue(dataValue);
+                    return this.deleteFileDataValue(dataValue, dataSetId);
                 }
             }
             default:
@@ -363,6 +381,7 @@ export class Dhis2DataValueRepository implements DataValueRepository {
                         pe: dataValue.period,
                         de: dataValue.dataElement.id,
                         co: dataValue.dataElement.cocId || dataValue.categoryOptionComboId,
+                        ...this.getDatasetQueryParam(dataSetId),
                         value: valueStr,
                     })
                     .getData()
@@ -370,7 +389,7 @@ export class Dhis2DataValueRepository implements DataValueRepository {
         }
     }
 
-    async delete(dataValues: DataValue[]): Promise<void> {
+    async delete(dataValues: DataValue[], dataSetId: Id): Promise<void> {
         const dataValuesToDelete = dataValues.map(dataValue => ({
             dataElement: dataValue.dataElement.id,
             categoryOptionCombo: dataValue.dataElement.cocId || dataValue.categoryOptionComboId,
@@ -379,12 +398,18 @@ export class Dhis2DataValueRepository implements DataValueRepository {
             value: this.getStrValue(dataValue),
         }));
 
-        await this.api.dataValues.postSet({ importStrategy: "DELETE" }, { dataValues: dataValuesToDelete }).getData();
+        await this.api.dataValues
+            .postSet(
+                { importStrategy: "DELETE" },
+                { ...this.getDatasetBodyParam(dataSetId), dataValues: dataValuesToDelete }
+            )
+            .getData();
     }
 
     async applyToAll(
         dataValue: DataValueTextMultiple,
-        sourceTypeDeList: DataElementRefType[]
+        sourceTypeDeList: DataElementRefType[],
+        dataSetId: Id
     ): Promise<"SUCCESS" | "ERROR" | "WARNING" | "OK"> {
         const valueStr = this.getStrValue(dataValue);
 
@@ -399,6 +424,7 @@ export class Dhis2DataValueRepository implements DataValueRepository {
         });
 
         const stDataPost = {
+            ...this.getDatasetBodyParam(dataSetId),
             period: dataValue.period,
             orgUnit: dataValue.orgUnitId,
             dataValues: stDataValues,
@@ -410,7 +436,7 @@ export class Dhis2DataValueRepository implements DataValueRepository {
             .then(response => response.status);
     }
 
-    private async deleteFileDataValue(dataValue: DataValueFile): Promise<DataValue> {
+    private async deleteFileDataValue(dataValue: DataValueFile, dataSetId: Id): Promise<DataValue> {
         await this.api
             .request<unknown>({
                 method: "delete",
@@ -419,6 +445,7 @@ export class Dhis2DataValueRepository implements DataValueRepository {
                     ou: dataValue.orgUnitId,
                     pe: dataValue.period,
                     de: dataValue.dataElement.id,
+                    ...this.getDatasetQueryParam(dataSetId),
                 },
             })
             .getData();
@@ -426,11 +453,12 @@ export class Dhis2DataValueRepository implements DataValueRepository {
         return { ...dataValue, file: undefined, fileToSave: undefined };
     }
 
-    private async saveFileDataValue(dataValue: DataValueFile, fileToSave: File): Promise<DataValueFile> {
+    private async saveFileDataValue(dataValue: DataValueFile, fileToSave: File, dataSetId: Id): Promise<DataValueFile> {
         const obj = {
             ou: dataValue.orgUnitId,
             pe: dataValue.period,
             de: dataValue.dataElement.id,
+            ...this.getDatasetQueryParam(dataSetId),
             file: fileToSave,
         };
 

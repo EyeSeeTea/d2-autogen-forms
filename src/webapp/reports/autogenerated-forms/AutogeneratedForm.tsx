@@ -294,7 +294,7 @@ function useDataFormInfo() {
         async (dataValue: DataValue) => {
             if (!dataValues) return dataValues;
             await compositionRoot.dataForms
-                .saveValue(dataValues, dataValue, dataForm?.compulsoryDataValues ?? [])
+                .saveValue(dataValues, dataValue, dataForm?.compulsoryDataValues ?? [], dataSetId)
                 .then(savedValue => {
                     setDataValues(prev => {
                         if (!prev) return prev;
@@ -311,27 +311,28 @@ function useDataFormInfo() {
             dataForm?.compulsoryDataValues,
             dataForm?.disableAutoValidation,
             checkValidationRules,
+            dataSetId,
         ]
     );
 
     const deleteDataValues = useCallback<DataFormInfo["data"]["delete"]>(
         async (dataValuesToDelete: DataValue[]) => {
             if (!dataValues) return dataValues;
-            await compositionRoot.dataForms.deleteValues(dataValuesToDelete).then(savedDataValues => {
+            await compositionRoot.dataForms.deleteValues(dataValuesToDelete, dataSetId).then(savedDataValues => {
                 setDataValues(prev => {
                     if (!prev) return undefined;
                     return prev.merge(savedDataValues);
                 });
             });
         },
-        [compositionRoot, dataValues]
+        [compositionRoot, dataValues, dataSetId]
     );
 
     const SourceTypeApplyToAll = useCallback<DataFormInfo["data"]["stApplyToAll"]>(
         async (dataValue: DataValueTextMultiple, sourceTypeDEs: DataElementRefType[], rows: Row[]) => {
             if (!dataValues) return undefined;
             return compositionRoot.dataForms
-                .applyToAll(dataValues, dataValue, sourceTypeDEs, rows)
+                .applyToAll(dataValues, dataValue, sourceTypeDEs, rows, dataSetId)
                 .then(savedDataValues => {
                     setDataValues(prev => {
                         if (!prev) return undefined;
@@ -339,11 +340,11 @@ function useDataFormInfo() {
                     });
                 });
         },
-        [compositionRoot, dataValues]
+        [compositionRoot, dataValues, dataSetId]
     );
 
     const saveWithTotals = useCallback<DataFormInfo["data"]["saveWithTotals"]>(
-        (dataValue, columnTotal, columnDataElements, cocId) => {
+        (dataValue, columnTotal, columnDataElements, _cocId) => {
             const queues = totalSaveQueuesRef.current;
             const previousSave = queues.get(columnTotal.id) ?? Promise.resolve();
 
@@ -353,13 +354,13 @@ function useDataFormInfo() {
                     const store = dataValuesRef.current;
                     if (!store) return;
 
-                    const savedDataValues = await compositionRoot.dataForms.saveWithTotals(
+                    const savedDataValues = await compositionRoot.dataForms.saveWithTotals({
                         store,
                         dataValue,
                         columnTotal,
                         columnDataElements,
-                        cocId
-                    );
+                        dataSetId,
+                    });
 
                     setDataValues(prev => (prev ?? store).merge(savedDataValues));
                     dataValuesRef.current = (dataValuesRef.current ?? store).merge(savedDataValues);
@@ -372,7 +373,7 @@ function useDataFormInfo() {
             queues.set(columnTotal.id, currentSave);
             return currentSave;
         },
-        [compositionRoot, dataForm?.disableAutoValidation, checkValidationRules]
+        [compositionRoot, dataForm?.disableAutoValidation, checkValidationRules, dataSetId]
     );
 
     const dataFormInfo = React.useMemo<Maybe<DataFormInfo>>(

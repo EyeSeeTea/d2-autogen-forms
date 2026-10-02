@@ -6,6 +6,8 @@ import { mock, instance, when, verify, anything, deepEqual } from "ts-mockito";
 import { Dhis2DataValueRepository } from "../../../../data/common/Dhis2DataValueRepository";
 import { dataElement, dataValueNumberSingle, dataValueTextMultiple } from "./data/dataValue";
 
+const dataSetId = "dataSet1";
+
 describe("ApplyToAllUseCase", () => {
     let mockDataValueRepository: DataValueRepository;
     let mockDataValueStore: DataValueStore;
@@ -66,12 +68,13 @@ describe("ApplyToAllUseCase", () => {
 
         const stubDataValueStore = instance(mockDataValueStore);
 
-        const result = await applyToAllUseCase.execute(stubDataValueStore, dataValueTextMultiple, [], [row]);
+        const result = await applyToAllUseCase.execute(stubDataValueStore, dataValueTextMultiple, [], [row], dataSetId);
 
         verify(
             mockDataValueRepository.applyToAll(
                 deepEqual(dataValueTextMultiple),
-                deepEqual([{ id: "de2", name: "Data Element 2" }])
+                deepEqual([{ id: "de2", name: "Data Element 2" }]),
+                dataSetId
             )
         ).once();
         verify(mockDataValueStore.get(anything(), anything())).twice();

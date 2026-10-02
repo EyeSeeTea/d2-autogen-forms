@@ -5,6 +5,8 @@ import { Dhis2DataValueRepository } from "../../../../data/common/Dhis2DataValue
 import { dataValueText, dataValueFile } from "./data/dataValue";
 import { DeleteDataFormValuesUseCase } from "../DeleteDataFormValuesUseCase";
 
+const dataSetId = "dataSet1";
+
 let mockDataValueRepository: DataValueRepository;
 let mockDataValueStore: DataValueStore;
 
@@ -24,9 +26,9 @@ describe("DeleteDataFormValuesUseCase", () => {
 
         givenDeletedDataValue(emptyDataValues);
 
-        const result = await useCase.execute(dataValues);
+        const result = await useCase.execute(dataValues, dataSetId);
 
-        verify(mockDataValueRepository.delete(deepEqual(dataValues))).once();
+        verify(mockDataValueRepository.delete(deepEqual(dataValues), dataSetId)).once();
         expect(result).toStrictEqual(emptyDataValues);
     });
 });
@@ -39,6 +41,6 @@ function givenDeleteDataFormValuesUseCase() {
 function givenDeletedDataValue(emptyDataValues: DataValue[]) {
     const stubDataValueStore = instance(mockDataValueStore);
 
-    when(mockDataValueRepository.delete(emptyDataValues)).thenResolve();
+    when(mockDataValueRepository.delete(emptyDataValues, dataSetId)).thenResolve();
     when(mockDataValueStore.merge(emptyDataValues)).thenReturn(stubDataValueStore);
 }
