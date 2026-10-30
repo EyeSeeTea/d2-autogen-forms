@@ -7,8 +7,11 @@ into DHIS2 and generate templates for datasets and programs.
 
 ```
 $ nvm use # Install node from .nvmrc
+$ corepack enable # Use the Yarn version pinned in package.json (Yarn 4)
 $ yarn install
 ```
+
+The install policy lives in `.yarnrc.yml` (lifecycle scripts disabled, 7-day minimum package age, hardened mode). If a dependency really needs a build script, allow it with `dependenciesMeta.<name>.built: true` in `package.json` instead of re-enabling scripts globally.
 
 ## Development
 
