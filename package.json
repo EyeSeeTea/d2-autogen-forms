@@ -65,7 +65,7 @@
         "start": "vite",
         "prebuild": "yarn localize && yarn test",
         "build-folder": "rm -rf build/ && d2-manifest package.json manifest.webapp && vite build && yarn run manifest && cp -r i18n icon.png build",
-        "build": "VITE_DEBUG='' VITE_DHIS2_BASE_URL='' VITE_DHIS2_AUTH='' yarn build-folder && rm -f $npm_package_name.zip && cd build && zip --quiet -r ../$npm_package_name.zip *",
+        "build": "yarn prebuild && VITE_DEBUG='' VITE_DHIS2_BASE_URL='' VITE_DHIS2_AUTH='' yarn build-folder && rm -f $npm_package_name.zip && cd build && zip --quiet -r ../$npm_package_name.zip *",
         "build-report": "VITE_DEBUG='' VITE_DHIS2_BASE_URL='' VITE_DHIS2_AUTH='' yarn build && gulp build-report",
         "post-metadata": "VITE_DHIS2_BASE_URL='' VITE_DHIS2_AUTH='' npx ts-node -P tsconfig-cli.json src/scripts/post-metadata.ts",
         "build-tub-ou-toggle-hide": "npx ts-node -P tsconfig-cli.json src/scripts/build-tub-ou-toggle-hide.ts",
