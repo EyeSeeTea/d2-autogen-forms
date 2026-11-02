@@ -125,9 +125,19 @@ No advisory in the GitHub database covers the version that comes back without th
 - **Why accepted today:** the fix `17.13.9` was published on 2026-10-28 and is younger than the 7-day `npmMinimalAgeGate`; `yarn up -R joi` keeps `17.13.8`.
 - **Action:** after 2026-11-04 run `yarn up -R joi` and re-audit. No resolution is needed, since `wait-on` requests `joi@^17.4.0`.
 
+### `braces@3.0.3`: withdrawn advisory still reported by Dependency-Track
+
+- **Finding:** GHSA-vfj7-8cjw-p6xm (stack exhaustion on deeply nested patterns, `<= 3.0.3`, no patched version). GitHub marks it **withdrawn**, so `yarn npm audit` does not report it, but Dependency-Track still does, and the CI gate follows Dependency-Track.
+- **Why accepted:** nothing to upgrade to. `3.0.3` is the latest `3.x` and the advisory has no fix.
+- **Revisit when:** Dependency-Track drops the withdrawn advisory.
+
+### CodeQL `js/redos` in `src/utils/codec.ts:79`
+
+- Two high alerts first seen on 2025-01-06, so older than this change. It is a regular expression in the project's own code, not a dependency, and is out of scope for this remediation.
+
 ### Remaining moderate and low findings
 
-29 moderate and 3 low entries in `yarn npm audit -R` on 2026-11-02, none critical. They sit in development tooling (ESLint, Vite/Vitest toolchain, `wait-on`, etc.) and were not addressed in this change. Re-run the audit for the current list.
+29 moderate and 3 low entries in `yarn npm audit -R` on 2026-11-02, none critical (Dependency-Track reports 8 medium and 2 low on the same commit; the two tools count differently). They sit in development tooling (ESLint, Vite/Vitest toolchain, `wait-on`, etc.) and were not addressed in this change. Re-run the audit for the current list.
 
 ## Re-check list
 
