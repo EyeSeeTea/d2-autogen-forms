@@ -60,7 +60,8 @@
         "node-fetch": "2.6.7",
         "glob-parent": "5.1.2",
         "minimist": "1.2.6",
-        "vite": "^7.3.7"
+        "vite": "^7.3.7",
+        "i18next-conv/node-gettext": "^3.0.1"
     },
     "scripts": {
         "start": "vite",
