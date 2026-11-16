@@ -1,4 +1,4 @@
-import { array, Codec, exactly, oneOf, record, string, GetType } from "purify-ts";
+import { array, Codec, exactly, oneOf, record, string } from "purify-ts";
 import { Code } from "../../domain/common/entities/Base";
 
 export const rulesFormulaCodec = record(
@@ -8,8 +8,6 @@ export const rulesFormulaCodec = record(
         dataElements: array(Codec.interface({ code: string })),
     })
 );
-
-export type FromRulesFormulaCodec = GetType<typeof rulesFormulaCodec>;
 
 export type RulesFormula = {
     visible?: FormulaDetails;

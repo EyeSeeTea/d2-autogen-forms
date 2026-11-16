@@ -1,4 +1,3 @@
-import { FromRulesFormulaCodec } from "../../../data/common/RulesFormula";
 import { Maybe } from "../../../utils/ts-utils";
 import { Code, Id, NamedRef } from "./Base";
 import { Option } from "./DataElement";
@@ -17,6 +16,8 @@ import {
 } from "./DataForm";
 import { DataFormRule } from "./DataFormRule";
 import { Period } from "./Period";
+import { RulesFormulaConfig } from "./RulesFormulaConfig";
+import { SectionPeriod } from "./SectionPeriod";
 import { SectionRule } from "./SectionRule";
 import { SectionStyleAttrs } from "./SectionStyle";
 import { TitleVariant } from "./TitleVariant";
@@ -26,10 +27,18 @@ export type AutogenConfig = {
     categoryCombinations?: Record<Code, CategoryCombinationConfig>;
     categoryOptions?: Record<Code, CategoryOptionConfig>;
     dataElements?: Record<Code, DataElementConfig>;
-    dataSets: Record<Code, DataSetConfig | {}>;
+    dataSets: Record<Code, StoredDataSetConfig | {}>;
 };
 
+type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
+
+// The dataStore keeps the periods config, not the periods that the form resolves from it.
+export type StoredSectionConfig = DistributiveOmit<SectionConfig, "periods"> & { periods?: SectionPeriod };
+
+export type StoredDataSetConfig = Omit<DataSetConfig, "sections"> & { sections?: Record<Id, StoredSectionConfig> };
+
 export type DataSetConfig = {
+    viewType?: SectionConfig["viewType"];
     removePrefix: Maybe<string>;
     texts: Texts;
     sections: Record<Id, SectionConfig>;
@@ -107,7 +116,7 @@ export type Toggle = DataElementToggle | DataElementExternalToggle | OrgUnitTogg
 export type BaseSectionConfig = {
     texts: SectionTexts;
     toggle: Toggle;
-    tabs: { active: true; order: string | number; rules?: FromRulesFormulaCodec } | { active: false };
+    tabs: { active: true; order: string | number; rules?: RulesFormulaConfig } | { active: false };
     showIndex: boolean;
     sortRowsBy: string;
     titleVariant: TitleVariant;
@@ -129,7 +138,7 @@ export type BaseSectionConfig = {
 
 type BasicSectionConfig = BaseSectionConfig & {
     viewType: "grid-with-combos" | "matrix-grid";
-    columnsConfig?: Record<string, { rules?: FromRulesFormulaCodec }>;
+    columnsConfig?: Record<string, { rules?: RulesFormulaConfig }>;
 };
 
 type DisaggregatedCocsSectionConfig = BaseSectionConfig & {
@@ -145,7 +154,7 @@ type GridSectionConfig = BaseSectionConfig & {
     columnsConfig?: Record<
         string,
         {
-            rules?: FromRulesFormulaCodec;
+            rules?: RulesFormulaConfig;
         }
     >;
     firstColumnConfig?: {
@@ -181,7 +190,7 @@ type GridIndicatorsCalculated = BaseSectionConfig & {
     virtualColumns: (VirtualColumnDataElement | VirtualColumnCalculated)[];
 };
 
-type GridColumnsConfig = Record<string, { rules?: FromRulesFormulaCodec; columnNameConstant?: string }>;
+type GridColumnsConfig = Record<string, { rules?: RulesFormulaConfig; columnNameConstant?: string }>;
 
 type RowsConfig = Record<string, { cellsVisible?: boolean; rowNameConstant?: string; hide?: boolean }>;
 

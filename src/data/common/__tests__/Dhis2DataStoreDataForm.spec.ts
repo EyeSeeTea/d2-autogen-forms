@@ -1,4 +1,5 @@
-import { DataStoreConfigCodec } from "../Dhis2DataStoreDataForm";
+import { PeriodType } from "../../../domain/common/entities/Period";
+import { DataStoreConfigCodec, getSectionPeriods } from "../Dhis2DataStoreDataForm";
 
 describe("DataStoreConfigCodec", () => {
     describe("showNavigation", () => {
@@ -71,3 +72,47 @@ function buildConfigWithDataSet(dataSetOverrides: Record<string, unknown>): obje
         },
     };
 }
+
+describe("getSectionPeriods", () => {
+    const dataSetPeriod = "2025";
+    const lastThreeYears = { type: "relative-interval", startOffset: -2, endOffset: 0 } as const;
+    const lastThreeYearPeriods = [
+        { id: "2023", label: "2023" },
+        { id: "2024", label: "2024" },
+        { id: "2025", label: "2025" },
+    ];
+
+    describe("relative-interval", () => {
+        it.each(["grid", "table", "grid-with-totals"] as const)(
+            "returns no periods for %s, so the section uses the dataset period",
+            viewType => {
+                expect(getSectionPeriods(viewType, dataSetPeriod, lastThreeYears, PeriodType.YEARLY)).toEqual([]);
+            }
+        );
+
+        it.each(["grid-with-periods", "grid-indicators-calculated", "grid-with-cat-option-combos"] as const)(
+            "returns every period in the interval for %s",
+            viewType => {
+                expect(getSectionPeriods(viewType, dataSetPeriod, lastThreeYears, PeriodType.YEARLY)).toEqual(
+                    lastThreeYearPeriods
+                );
+            }
+        );
+    });
+
+    describe("section-offset", () => {
+        it.each(["grid", "table"] as const)("returns the offset period for %s", viewType => {
+            const offset = { type: "section-offset", offset: -1 } as const;
+
+            expect(getSectionPeriods(viewType, dataSetPeriod, offset, PeriodType.YEARLY)).toEqual([
+                { id: "2024", label: "2024" },
+            ]);
+        });
+    });
+
+    describe("without periods config", () => {
+        it("returns no periods", () => {
+            expect(getSectionPeriods("grid", dataSetPeriod, undefined, PeriodType.YEARLY)).toEqual([]);
+        });
+    });
+});

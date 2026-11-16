@@ -101,6 +101,28 @@ Section contents can be optionally shown/hidden using a dataElement as toggle. I
 }
 ```
 
+#### Section periods
+
+The `periods` key of a section sets the periods that the section shows. The view type sets which `periods` values apply:
+
+| View type                                                                        | `relative-interval` | `section-offset` |
+| -------------------------------------------------------------------------------- | ------------------- | ---------------- |
+| `grid-with-periods`, `grid-indicators-calculated`, `grid-with-cat-option-combos` | Yes                 | Yes              |
+| `grid`, `table`                                                                  | No                  | Yes              |
+| All other view types                                                             | No                  | No               |
+
+-   `relative-interval` shows the periods from `startOffset` to `endOffset`, relative to the dataset period.
+-   `section-offset` moves the section to one period, `offset` periods from the dataset period. Example: `"periods": { "type": "section-offset", "offset": -1 }`.
+-   A `grid` or a `table` section shows one period. By default, this is the dataset period.
+-   A section without a `viewType` and without a dataset `viewType` is a `table`.
+
+If a `periods` value does not apply to the view type, the form ignores it and writes a warning in the browser console. The configurator also does this check when you save:
+
+-   A `relative-interval` that does not apply stops the save. It changes which period the section shows.
+-   A `section-offset` on a view type without periods gives a warning only. The configurator saves the configuration.
+
+To show several periods, use the `grid-with-periods` view type.
+
 ##### View mode: Table
 
 Data elements will be shown in the first column and the value in the second.

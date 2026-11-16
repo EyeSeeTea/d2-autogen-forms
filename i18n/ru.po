@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: i18next-conv\n"
-"POT-Creation-Date: 2026-06-02T11:42:58.000Z\n"
+"POT-Creation-Date: 2026-11-16T13:08:15.967Z\n"
 "PO-Revision-Date: 2026-05-19T08:46:16.542Z\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -215,6 +215,9 @@ msgid "New configuration created"
 msgstr ""
 
 msgid "Configuration deleted"
+msgstr ""
+
+msgid "The configuration is empty. Add a configuration before you save."
 msgstr ""
 
 msgid "Configuration saved"

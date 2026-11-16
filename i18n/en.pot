@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-09-02T01:51:01.291Z\n"
-"PO-Revision-Date: 2026-09-02T01:51:01.291Z\n"
+"POT-Creation-Date: 2026-11-16T13:09:01.662Z\n"
+"PO-Revision-Date: 2026-11-16T13:09:01.664Z\n"
 
 msgid "Mark all notifications as read"
 msgstr ""
@@ -211,6 +211,9 @@ msgid "New configuration created"
 msgstr ""
 
 msgid "Configuration deleted"
+msgstr ""
+
+msgid "The configuration is empty. Add a configuration before you save."
 msgstr ""
 
 msgid "Configuration saved"

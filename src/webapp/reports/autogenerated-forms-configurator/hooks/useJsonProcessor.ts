@@ -7,7 +7,7 @@ type JsonProcessorState = {
     error: Maybe<string>;
     isProcessing: boolean;
     formatJson: (config: AutogenConfig) => Promise<string>;
-    parseJson: (json: string) => Promise<AutogenConfig>;
+    parseJson: (json: string) => Promise<Maybe<AutogenConfig>>;
     validateJson: (json: string) => Promise<boolean>;
 };
 
@@ -54,11 +54,8 @@ export const useJsonProcessor = (): JsonProcessorState => {
     );
 
     const parseJson = useCallback(
-        async (json: string): Promise<AutogenConfig> =>
-            processWithYielding(() => {
-                if (!json.trim()) return null;
-                return JSON.parse(json);
-            }),
+        async (json: string): Promise<Maybe<AutogenConfig>> =>
+            processWithYielding((): Maybe<AutogenConfig> => (json.trim() ? JSON.parse(json) : undefined)),
         [processWithYielding]
     );
 

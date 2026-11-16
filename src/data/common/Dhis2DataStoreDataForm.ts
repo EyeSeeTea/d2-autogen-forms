@@ -24,6 +24,12 @@ import {
     ToggleMultipleCondition,
 } from "../../domain/common/entities/ToggleMultiple";
 import { Period, PeriodType, validatePeriodType } from "../../domain/common/entities/Period";
+import {
+    defaultSectionViewType,
+    getSectionPeriodsIssue,
+    isIntervalViewType,
+} from "../../domain/common/entities/SectionPeriodsConfig";
+import { PeriodInterval, SectionPeriod } from "../../domain/common/entities/SectionPeriod";
 import { DataFormRule } from "../../domain/common/entities/DataFormRule";
 import { SectionRule } from "../../domain/common/entities/SectionRule";
 import { rulesFormulaCodec } from "./RulesFormula";
@@ -51,8 +57,6 @@ export type CalculateTotalConfig = {
 };
 
 export type CalculateTotalType = Record<string, CalculateTotalConfig | undefined> | undefined;
-
-const defaultViewType = "table";
 
 const selector = Codec.interface({ code: string });
 
@@ -439,11 +443,7 @@ type DataFormStoreConfigFromCodec = GetType<typeof DataStoreConfigCodec>;
 type DataSetRuleFromCodec = GetType<typeof dataSetRuleCodec>;
 type SectionRuleFromCodec = GetType<typeof sectionRuleCodec>;
 
-type PeriodInterval = { type: "relative-interval"; startOffset: number; endOffset: number };
-type PeriodSectionOffset = { type: "section-offset"; offset: number };
-type SectionPeriod = PeriodInterval | PeriodSectionOffset;
-
-function getSectionPeriods(
+export function getSectionPeriods(
     viewType: SectionConfig["viewType"],
     dataSetPeriod: Id,
     periodConfig: Maybe<SectionPeriod>,
@@ -474,30 +474,17 @@ function formatSectionOffsetPeriodsByPeriodType(dataSetPeriod: Id, offset: numbe
     }
 }
 
+// A single-period view type renders periods[0], so an interval does not apply to it.
+// Return no periods: the section then uses the dataset period, as before v1.4.0.
 function getRelativeIntervalPeriodsByViewType(
     viewType: SectionConfig["viewType"],
     dataSetPeriod: Id,
     interval: PeriodInterval,
     periodType: PeriodType
 ): Period[] {
-    switch (viewType) {
-        case "grid-indicators-calculated":
-        case "grid-with-periods": {
-            const interval2: PeriodInterval = interval || {
-                type: "relative-interval",
-                startOffset: -2,
-                endOffset: 0,
-            };
-
-            return formatRelativeIntervalPeriodsByPeriodType(dataSetPeriod, interval2, periodType);
-        }
-        case "grid-with-cat-option-combos":
-        case "table":
-            if (!interval) return [];
-            return formatRelativeIntervalPeriodsByPeriodType(dataSetPeriod, interval, periodType);
-        default:
-            throw new Error(`Unsupported viewType ${viewType} for periods calculation`);
-    }
+    return isIntervalViewType(viewType)
+        ? formatRelativeIntervalPeriodsByPeriodType(dataSetPeriod, interval, periodType)
+        : [];
 }
 
 function formatRelativeIntervalPeriodsByPeriodType(
@@ -951,7 +938,7 @@ export class Dhis2DataStoreDataForm {
 
     getDataSetConfig(dataSet: DataSet, period: Id): DataSetConfig {
         const dataSetConfig = this.config.custom.dataSets?.[dataSet.code];
-        const dataSetDefaultViewType = dataSetConfig?.viewType || defaultViewType;
+        const dataSetDefaultViewType = dataSetConfig?.viewType || defaultSectionViewType;
         const constantsByCode = _.keyBy(this.config.constants, getCode);
         const periodType = validatePeriodType(dataSet.periodType);
         const removePrefix = dataSetConfig?.removePrefix;
@@ -962,6 +949,8 @@ export class Dhis2DataStoreDataForm {
                 const section = dataSet.sections.find(section => section.code === code);
                 if (!section) return;
                 const viewType = sectionConfig.viewType || dataSetDefaultViewType;
+                const periodsIssue = getSectionPeriodsIssue(code, { viewType, periods: sectionConfig.periods });
+                if (periodsIssue) console.warn(periodsIssue.message);
 
                 const base: BaseSectionConfig = {
                     toggle: this.getSectionToggle(sectionConfig),
