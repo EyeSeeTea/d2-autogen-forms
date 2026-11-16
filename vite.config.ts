@@ -75,6 +75,11 @@ export default defineConfig(({ mode }) => {
                           rewrite: path => path.replace(/^\/dhis2/, ""),
                           configure: proxy => {
                               proxy.on("proxyReq", (proxyReq, _req, res) => {
+                                  // Browsers send the localhost Origin on writes (PUT/POST/DELETE). DHIS2 does not
+                                  // allow that origin by CORS and answers with an empty 200 without saving.
+                                  if (proxyReq.getHeader("origin")) {
+                                      proxyReq.setHeader("origin", new URL(dhis2BaseUrl).origin);
+                                  }
                                   const path = proxyReq.path;
                                   const shouldRedirect = redirectPaths.some(p => path.startsWith(p));
                                   if (shouldRedirect && "writeHead" in res) {
