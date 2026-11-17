@@ -83,14 +83,14 @@ describe("getSectionPeriods", () => {
     ];
 
     describe("relative-interval", () => {
-        it.each(["grid", "table", "grid-with-totals"] as const)(
+        it.each(["grid", "grid-with-totals"] as const)(
             "returns no periods for %s, so the section uses the dataset period",
             viewType => {
                 expect(getSectionPeriods(viewType, dataSetPeriod, lastThreeYears, PeriodType.YEARLY)).toEqual([]);
             }
         );
 
-        it.each(["grid-with-periods", "grid-indicators-calculated", "grid-with-cat-option-combos"] as const)(
+        it.each(["grid-with-periods", "grid-indicators-calculated", "grid-with-cat-option-combos", "table"] as const)(
             "returns every period in the interval for %s",
             viewType => {
                 expect(getSectionPeriods(viewType, dataSetPeriod, lastThreeYears, PeriodType.YEARLY)).toEqual(

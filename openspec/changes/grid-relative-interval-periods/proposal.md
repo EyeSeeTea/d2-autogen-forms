@@ -1,11 +1,12 @@
 ## Why
 
-A `grid` or `grid-with-totals` section with a `relative-interval` periods config crashed the form. `getRelativeIntervalPeriodsByViewType` did not handle these view types and threw `Unsupported viewType`. A `table` section with a `relative-interval` did not crash, but it read and wrote the first period of the interval, not the dataset period. The user did not get a warning.
+A `grid` or `grid-with-totals` section with a `relative-interval` periods config crashed the form. `getRelativeIntervalPeriodsByViewType` did not handle these view types and threw `Unsupported viewType`.
 
 ## Goals
 
 -   Stop the crash for `grid` and `grid-with-totals`.
--   Make `grid` and `table` use the dataset period when the config has a `relative-interval`, as before v1.4.0.
+-   Make `grid` use the dataset period when the config has a `relative-interval`, as before v1.4.0.
+-   Keep the existing `table` behavior: a `table` with a `relative-interval` uses the period at `startOffset`. Warn when `endOffset` is different, because the table ignores it.
 -   Reject a `relative-interval` that does not apply to the view type when the configurator saves.
 -   Warn about a `section-offset` on a view type without periods, but do not block the save.
 
@@ -18,7 +19,8 @@ A `grid` or `grid-with-totals` section with a `relative-interval` periods config
 
 -   An allow-list in the domain (`SectionPeriodsConfig.ts`) sets which view types accept which `periods` type:
     -   Interval view types (`grid-with-periods`, `grid-indicators-calculated`, `grid-with-cat-option-combos`): `relative-interval` and `section-offset`.
-    -   Single-period view types (`grid`, `table`): `section-offset` only.
+    -   First-period view types (`table`): `relative-interval` (only `startOffset` applies) and `section-offset`.
+    -   Single-period view types (`grid`): `section-offset` only.
     -   All other view types: no `periods`.
 -   The form ignores a `periods` value that does not apply and writes a console warning.
 -   `SaveFormConfigUseCase` rejects a `relative-interval` that does not apply and returns one message for each invalid section. A `section-offset` on a view type without periods is a warning only.
@@ -28,7 +30,7 @@ A `grid` or `grid-with-totals` section with a `relative-interval` periods config
 ## User impact
 
 -   Forms with a `grid` or `grid-with-totals` section and a `relative-interval` load again.
--   A `table` section with a `relative-interval` now uses the dataset period, not the start of the interval.
+-   A `table` section with a `relative-interval` does not change: it uses the period at `startOffset`. If `endOffset` is different, the form writes a console warning.
 -   A stored config that has a `relative-interval` that does not apply cannot be saved again until the user fixes it.
 
 ## Compatibility

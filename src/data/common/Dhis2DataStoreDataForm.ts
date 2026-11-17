@@ -27,7 +27,7 @@ import { Period, PeriodType, validatePeriodType } from "../../domain/common/enti
 import {
     defaultSectionViewType,
     getSectionPeriodsIssue,
-    isIntervalViewType,
+    usesRelativeInterval,
 } from "../../domain/common/entities/SectionPeriodsConfig";
 import { PeriodInterval, SectionPeriod } from "../../domain/common/entities/SectionPeriod";
 import { DataFormRule } from "../../domain/common/entities/DataFormRule";
@@ -474,7 +474,7 @@ function formatSectionOffsetPeriodsByPeriodType(dataSetPeriod: Id, offset: numbe
     }
 }
 
-// A single-period view type renders periods[0], so an interval does not apply to it.
+// A view type that does not use a relative interval gets no interval periods.
 // Return no periods: the section then uses the dataset period, as before v1.4.0.
 function getRelativeIntervalPeriodsByViewType(
     viewType: SectionConfig["viewType"],
@@ -482,7 +482,7 @@ function getRelativeIntervalPeriodsByViewType(
     interval: PeriodInterval,
     periodType: PeriodType
 ): Period[] {
-    return isIntervalViewType(viewType)
+    return usesRelativeInterval(viewType)
         ? formatRelativeIntervalPeriodsByPeriodType(dataSetPeriod, interval, periodType)
         : [];
 }

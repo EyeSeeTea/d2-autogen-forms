@@ -59,6 +59,12 @@ describe("SaveFormConfigUseCase", () => {
             expect(await save(config)).toEqual({ error: undefined, saved: config });
         });
 
+        it("saves a table relative-interval that has an ignored endOffset", async () => {
+            const config = buildConfig({ [SECTION_ID]: section("table", relativeInterval) });
+
+            expect(await save(config)).toEqual({ error: undefined, saved: config });
+        });
+
         it("saves a config that has only warnings", async () => {
             const config = buildConfig({ [SECTION_ID]: section("matrix-grid", sectionOffset) });
 
@@ -78,11 +84,11 @@ describe("SaveFormConfigUseCase", () => {
 
         it("joins the messages of every invalid section into one error", async () => {
             const gridSection = section("grid", relativeInterval);
-            const tableSection = section("table", relativeInterval);
-            const config = buildConfig({ [SECTION_ID]: gridSection, [OTHER_SECTION_ID]: tableSection });
+            const matrixSection = section("matrix-grid", relativeInterval);
+            const config = buildConfig({ [SECTION_ID]: gridSection, [OTHER_SECTION_ID]: matrixSection });
 
             expect(await save(config)).toEqual({
-                error: [errorMessage(SECTION_ID, gridSection), errorMessage(OTHER_SECTION_ID, tableSection)].join(" "),
+                error: [errorMessage(SECTION_ID, gridSection), errorMessage(OTHER_SECTION_ID, matrixSection)].join(" "),
                 saved: undefined,
             });
         });

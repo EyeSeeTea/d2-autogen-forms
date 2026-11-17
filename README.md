@@ -108,18 +108,21 @@ The `periods` key of a section sets the periods that the section shows. The view
 | View type                                                                        | `relative-interval` | `section-offset` |
 | -------------------------------------------------------------------------------- | ------------------- | ---------------- |
 | `grid-with-periods`, `grid-indicators-calculated`, `grid-with-cat-option-combos` | Yes                 | Yes              |
-| `grid`, `table`                                                                  | No                  | Yes              |
+| `table`                                                                          | Yes (first period)  | Yes              |
+| `grid`                                                                           | No                  | Yes              |
 | All other view types                                                             | No                  | No               |
 
 -   `relative-interval` shows the periods from `startOffset` to `endOffset`, relative to the dataset period.
--   `section-offset` moves the section to one period, `offset` periods from the dataset period. Example: `"periods": { "type": "section-offset", "offset": -1 }`.
+-   `section-offset` moves the section to one period, `offset` periods from the dataset period. It supports only yearly datasets. Example: `"periods": { "type": "section-offset", "offset": -1 }`.
 -   A `grid` or a `table` section shows one period. By default, this is the dataset period.
+-   A `table` section with a `relative-interval` reads and saves the period at `startOffset`. It ignores `endOffset`. Example: with `"startOffset": -2` and the dataset period `2025`, the table uses `2023`. Set `endOffset` to the same value as `startOffset`. If they are different, the form writes a warning in the browser console.
 -   A section without a `viewType` and without a dataset `viewType` is a `table`.
 
 If a `periods` value does not apply to the view type, the form ignores it and writes a warning in the browser console. The configurator also does this check when you save:
 
 -   A `relative-interval` that does not apply stops the save. It changes which period the section shows.
 -   A `section-offset` on a view type without periods gives a warning only. The configurator saves the configuration.
+-   A `table` `relative-interval` with an ignored `endOffset` gives a warning only. The configurator saves the configuration.
 
 To show several periods, use the `grid-with-periods` view type.
 
