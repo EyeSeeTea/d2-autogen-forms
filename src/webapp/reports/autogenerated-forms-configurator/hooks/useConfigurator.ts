@@ -104,8 +104,13 @@ export function useConfigurator(): ConfiguratorState {
     const saveConfig = useCallback(async () => {
         if (!dataSet) return;
 
-        updateLoadingState(true);
         const parsedConfig = await parseJson(configValue);
+        if (!parsedConfig) {
+            snackbar.error(i18n.t("The configuration is empty. Add a configuration before you save."));
+            return;
+        }
+
+        updateLoadingState(true);
         await compositionRoot.dataStoreConfig
             .saveFormConfig(dataSet.code, parsedConfig)
             .then(async () => {
